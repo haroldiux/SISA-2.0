@@ -1,0 +1,210 @@
+<div class="scu-apa-manager">
+  <!-- Header with Summary & Actions -->
+  <div class="apa-header flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-bookmark text-primary font-bold"></i>
+      <h4 class="font-bold text-sm m-0">Bibliografía y Referencias Académicas (Norma APA 7ª Edición)</h4>
+      <span
+        *ngIf="validationSummary.hasBasica && validationSummary.validBasicaCount > 0"
+        class="badge-apa-ok text-xs font-semibold px-2 py-1 border-round bg-green-100 text-green-700">
+        <i class="pi pi-check mr-1"></i> {{ validationSummary.validBasicaCount }} Básica(s) Válida(s)
+      </span>
+      <span
+        *ngIf="!validationSummary.hasBasica || validationSummary.validBasicaCount === 0"
+        class="badge-apa-warn text-xs font-semibold px-2 py-1 border-round bg-amber-100 text-amber-800">
+        <i class="pi pi-exclamation-triangle mr-1"></i> Requiere al menos 1 Bibliografía Básica APA 7
+      </span>
+    </div>
+
+    <div class="flex align-items-center gap-2">
+      <button
+        pButton
+        type="button"
+        label="Asistente Generador APA 7"
+        icon="pi pi-plus"
+        class="p-button-outlined p-button-sm p-button-primary"
+        [disabled]="isReadOnly"
+        (click)="openBuilder('BASICA')">
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Manual Add Toolbar -->
+  <div class="quick-add-bar p-3 border-1 border-round surface-card mb-3 surface-border" *ngIf="!isReadOnly">
+    <div class="p-fluid grid align-items-center">
+      <div class="col-12 md:col-3">
+        <select class="p-inputtext p-component text-xs w-full" [(ngModel)]="quickTipo">
+          <option value="BASICA">Bibliografía Básica</option>
+          <option value="COMPLEMENTARIA">Bibliografía Complementaria</option>
+        </select>
+      </div>
+      <div class="col-12 md:col-7">
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="newQuickCitation"
+          placeholder="Escriba la cita completa: Autor, A. (Año). Título. Editorial."
+          class="text-xs w-full"
+          (keydown.enter)="onQuickAdd()" />
+      </div>
+      <div class="col-12 md:col-2">
+        <button
+          pButton
+          type="button"
+          label="Agregar"
+          icon="pi pi-plus"
+          class="p-button-secondary p-button-sm w-full"
+          [disabled]="!newQuickCitation"
+          (click)="onQuickAdd()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Bibliografía Básica Section -->
+  <div class="bib-section mb-4">
+    <div class="section-title flex justify-content-between align-items-center mb-2 pb-1 border-bottom-1 surface-border">
+      <div class="flex align-items-center gap-2">
+        <span class="font-bold text-xs text-green-700 bg-green-50 px-2 py-1 border-round border-1 border-green-200">
+          BIBLIOGRAFÍA BÁSICA (OBLIGATORIA)
+        </span>
+        <span class="text-xs text-color-secondary">({{ basicaList.length }} registradas)</span>
+      </div>
+      <button
+        *ngIf="!isReadOnly"
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        label="Nueva Básica"
+        class="p-button-text p-button-sm text-green-700"
+        (click)="openBuilder('BASICA')">
+      </button>
+    </div>
+
+    <div *ngIf="basicaList.length === 0" class="empty-notice p-3 border-round bg-yellow-50 text-amber-800 text-xs text-center">
+      <i class="pi pi-info-circle mr-1"></i> No se ha registrado bibliografía básica obligatoria. Utilice el asistente APA 7 para agregar el libro base de la materia.
+    </div>
+
+    <div class="citation-list flex flex-column gap-2" *ngIf="basicaList.length > 0">
+      <div
+        *ngFor="let item of basicaList"
+        class="citation-item p-3 border-round border-1 surface-card flex justify-content-between align-items-start gap-2 shadow-1">
+        <div class="flex-grow-1">
+          <div class="citation-apa-text font-serif text-sm text-900 mb-2">
+            <input
+              type="text"
+              pInputText
+              [(ngModel)]="item.citaApa"
+              [disabled]="isReadOnly"
+              (input)="onCitationChange()"
+              class="w-full text-xs font-serif" />
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span *ngIf="validateCitation(item.citaApa).isValid" class="text-xs font-semibold text-green-600">
+              <i class="pi pi-check-circle mr-1"></i> Válido APA 7
+            </span>
+            <span *ngIf="!validateCitation(item.citaApa).isValid" class="text-xs font-semibold text-amber-600" [title]="validateCitation(item.citaApa).errorMessage">
+              <i class="pi pi-exclamation-triangle mr-1"></i> Formato Inválido APA 7
+            </span>
+          </div>
+        </div>
+
+        <div class="flex align-items-center gap-1 flex-shrink-0" *ngIf="!isReadOnly">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-right-arrow-left"
+            class="p-button-text p-button-rounded p-button-sm p-button-secondary"
+            title="Cambiar a Complementaria"
+            (click)="onToggleTipo(item)">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-text p-button-rounded p-button-sm p-button-danger"
+            title="Eliminar Cita"
+            (click)="onRemove(item)">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Bibliografía Complementaria Section -->
+  <div class="bib-section">
+    <div class="section-title flex justify-content-between align-items-center mb-2 pb-1 border-bottom-1 surface-border">
+      <div class="flex align-items-center gap-2">
+        <span class="font-bold text-xs text-blue-700 bg-blue-50 px-2 py-1 border-round border-1 border-blue-200">
+          BIBLIOGRAFÍA COMPLEMENTARIA (RECOMENDADA)
+        </span>
+        <span class="text-xs text-color-secondary">({{ complementariaList.length }} registradas)</span>
+      </div>
+      <button
+        *ngIf="!isReadOnly"
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        label="Nueva Complementaria"
+        class="p-button-text p-button-sm text-blue-700"
+        (click)="openBuilder('COMPLEMENTARIA')">
+      </button>
+    </div>
+
+    <div *ngIf="complementariaList.length === 0" class="empty-notice p-3 border-round bg-gray-50 text-color-secondary text-xs text-center">
+      Sin bibliografía complementaria registrada.
+    </div>
+
+    <div class="citation-list flex flex-column gap-2" *ngIf="complementariaList.length > 0">
+      <div
+        *ngFor="let item of complementariaList"
+        class="citation-item p-3 border-round border-1 surface-card flex justify-content-between align-items-start gap-2 shadow-1">
+        <div class="flex-grow-1">
+          <div class="citation-apa-text font-serif text-sm text-900 mb-2">
+            <input
+              type="text"
+              pInputText
+              [(ngModel)]="item.citaApa"
+              [disabled]="isReadOnly"
+              (input)="onCitationChange()"
+              class="w-full text-xs font-serif" />
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span *ngIf="validateCitation(item.citaApa).isValid" class="text-xs font-semibold text-green-600">
+              <i class="pi pi-check-circle mr-1"></i> Válido APA 7
+            </span>
+            <span *ngIf="!validateCitation(item.citaApa).isValid" class="text-xs font-semibold text-amber-600" [title]="validateCitation(item.citaApa).errorMessage">
+              <i class="pi pi-exclamation-triangle mr-1"></i> Formato Inválido APA 7
+            </span>
+          </div>
+        </div>
+
+        <div class="flex align-items-center gap-1 flex-shrink-0" *ngIf="!isReadOnly">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-right-arrow-left"
+            class="p-button-text p-button-rounded p-button-sm p-button-secondary"
+            title="Cambiar a Básica"
+            (click)="onToggleTipo(item)">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-text p-button-rounded p-button-sm p-button-danger"
+            title="Eliminar Cita"
+            (click)="onRemove(item)">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Builder Modal -->
+  <scu-apa-builder-modal
+    [(visible)]="builderModalVisible"
+    [defaultTipo]="builderDefaultTipo"
+    (scuCitationGenerated)="onCitationGenerated($event)">
+  </scu-apa-builder-modal>
+</div>

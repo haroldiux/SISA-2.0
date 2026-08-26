@@ -1,0 +1,16 @@
+.docx-modal-content {
+  .dropzone {
+    border-color: var(--surface-border, #dee2e6);
+    background-color: var(--surface-50, #f8f9fa);
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      border-color: #2563eb;
+      background-color: var(--surface-100, #f1f5f9);
+    }
+  }
+
+  .surface-ground {
+    background-color: var(--surface-50, #f8f9fa);
+  }
+}

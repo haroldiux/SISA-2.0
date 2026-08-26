@@ -1,0 +1,64 @@
+<div class="scu-login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-box">S</div>
+      <h2>SISA • UNITEPC</h2>
+      <p>Sistema Integrado de Seguimiento Académico</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="p-field mb-3">
+        <label for="username" class="font-semibold text-sm">Usuario Institucional</label>
+        <span class="p-input-icon-left w-full mt-1">
+          <i class="pi pi-user"></i>
+          <input
+            id="username"
+            type="text"
+            pInputText
+            formControlName="username"
+            placeholder="ej. docente.cbb"
+            class="w-full" />
+        </span>
+      </div>
+
+      <div class="p-field mb-4">
+        <label for="password" class="font-semibold text-sm">Contraseña</label>
+        <span class="p-input-icon-left w-full mt-1">
+          <i class="pi pi-lock"></i>
+          <input
+            id="password"
+            type="password"
+            pInputText
+            formControlName="password"
+            placeholder="••••••••"
+            class="w-full" />
+        </span>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-banner mb-3">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        label="Ingresar al Sistema"
+        icon="pi pi-sign-in"
+        [loading]="isLoading"
+        class="w-full p-button-primary scu-submit-btn">
+      </button>
+    </form>
+
+    <div class="demo-personas mt-4">
+      <div class="divider mb-3"><span>Acceso Rápido por Perfil (Demo)</span></div>
+      <div class="personas-grid">
+        <button pButton type="button" label="1. Docente" (click)="onDirectDemoLogin('ROLE_DOCENTE')" class="p-button-outlined p-button-sm"></button>
+        <button pButton type="button" label="2. Dir. Carrera" (click)="onDirectDemoLogin('ROLE_DIR_CARRERA')" class="p-button-outlined p-button-sm"></button>
+        <button pButton type="button" label="3. Dir. Académica" (click)="onDirectDemoLogin('ROLE_DIR_ACADEMICA')" class="p-button-outlined p-button-sm"></button>
+        <button pButton type="button" label="4. Vicerrector Sede" (click)="onDirectDemoLogin('ROLE_VICERRECTOR_SEDE')" class="p-button-outlined p-button-sm"></button>
+        <button pButton type="button" label="5. Vicerrector Nacional" (click)="onDirectDemoLogin('ROLE_VICERRECTOR_NACIONAL')" class="p-button-outlined p-button-sm"></button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,26 @@
+<div class="scu-compliance-chart-card scu-card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="font-bold text-lg">Cumplimiento Académico por Carreras de la Sede</h3>
+      <p class="text-xs text-color-secondary">Porcentaje de concordancia PAC y visitas in situ ejecutadas</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="col-12 md:col-6" *ngFor="let item of careerComplianceList">
+      <div class="career-compliance-row p-3 surface-50 border-round mb-2">
+        <div class="flex justify-content-between align-items-center mb-2">
+          <span class="font-bold text-sm">{{ item.carrera }}</span>
+          <span class="font-mono font-bold text-sm" [ngClass]="item.cumplimiento >= 90 ? 'text-success' : 'text-warning'">
+            {{ item.cumplimiento }}%
+          </span>
+        </div>
+        <p-progressBar [value]="item.cumplimiento" [showValue]="false" [style]="{ 'height': '6px' }"></p-progressBar>
+        <div class="flex justify-content-between align-items-center mt-2 text-xs text-color-secondary">
+          <span><i class="pi pi-eye mr-1"></i> {{ item.auditorias }} auditorías</span>
+          <span><i class="pi pi-exclamation-triangle mr-1"></i> {{ item.strikes }} incidencias</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

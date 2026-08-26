@@ -1,0 +1,50 @@
+<div class="scu-cohort-progress-card scu-card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="font-bold text-lg">Seguimiento por Cohortes Curriculares (1º al 10º Semestre)</h3>
+      <p class="text-xs text-color-secondary">Malla académica semestral • Cumplimiento de planificación PAC</p>
+    </div>
+  </div>
+
+  <p-table [value]="cohortData" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 100px;">Semestre</th>
+        <th>Total Asignaturas</th>
+        <th>PACs Aprobados</th>
+        <th>PACs Pendientes</th>
+        <th style="width: 250px;">Progreso de Cobertura</th>
+        <th>Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-c>
+      <tr>
+        <td>
+          <span class="font-bold text-primary">{{ c.semestre }}º Semestre</span>
+        </td>
+        <td>{{ c.totalMaterias }} asignaturas</td>
+        <td>
+          <span class="text-success font-semibold">{{ c.pacsAprobados }} aprobados</span>
+        </td>
+        <td>
+          <span class="text-warning font-semibold">{{ c.pacsPendientes }} pendientes</span>
+        </td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-progressBar [value]="c.cumplimientoPorcentaje" [showValue]="false" styleClass="w-full" [style]="{ 'height': '8px' }"></p-progressBar>
+            <span class="font-bold text-xs font-mono">{{ c.cumplimientoPorcentaje }}%</span>
+          </div>
+        </td>
+        <td>
+          <button
+            pButton
+            type="button"
+            label="Ver Materias"
+            icon="pi pi-list"
+            class="p-button-text p-button-sm">
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

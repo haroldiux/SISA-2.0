@@ -1,0 +1,12 @@
+.excel-ingest-content {
+  .upload-dropzone {
+    background-color: var(--surface-50);
+    &:hover {
+      background-color: var(--surface-100);
+    }
+  }
+
+  .preview-table-box {
+    max-height: 280px;
+  }
+}

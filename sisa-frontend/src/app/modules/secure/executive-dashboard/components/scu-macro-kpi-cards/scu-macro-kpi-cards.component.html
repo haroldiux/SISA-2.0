@@ -1,0 +1,45 @@
+<div class="scu-macro-kpis grid">
+  <div class="col-12 md:col-3">
+    <div class="kpi-card scu-card">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="kpi-label">Planta Docente Nacional</span>
+        <i class="pi pi-users text-primary text-lg"></i>
+      </div>
+      <div class="kpi-number font-mono">{{ totalDocentesNacional }}</div>
+      <span class="kpi-detail">4 Sedes Activas (CBB, LPZ, EAL, CBJ)</span>
+    </div>
+  </div>
+
+  <div class="col-12 md:col-3">
+    <div class="kpi-card scu-card">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="kpi-label">Cumplimiento PAC Global</span>
+        <i class="pi pi-check-circle text-success text-lg"></i>
+      </div>
+      <div class="kpi-number font-mono text-success">{{ cumplimientoPacGlobal }}%</div>
+      <span class="kpi-detail">1,745 PACs aprobados en 1-2026</span>
+    </div>
+  </div>
+
+  <div class="col-12 md:col-3">
+    <div class="kpi-card scu-card">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="kpi-label">Auditorías In Situ</span>
+        <i class="pi pi-eye text-info text-lg"></i>
+      </div>
+      <div class="kpi-number font-mono text-info">{{ auditoriasEjecutadas }}</div>
+      <span class="kpi-detail">Total visitas selladas digitalmente</span>
+    </div>
+  </div>
+
+  <div class="col-12 md:col-3">
+    <div class="kpi-card scu-card">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="kpi-label">Conformidad In Situ</span>
+        <i class="pi pi-verified text-primary text-lg"></i>
+      </div>
+      <div class="kpi-number font-mono text-primary">{{ tasaConformidadAudit }}%</div>
+      <span class="kpi-detail">Sin desvíos de tema ni atrasos</span>
+    </div>
+  </div>
+</div>

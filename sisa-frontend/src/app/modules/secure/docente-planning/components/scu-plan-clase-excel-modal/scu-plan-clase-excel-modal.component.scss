@@ -1,0 +1,20 @@
+.excel-modal-content {
+  .dropzone {
+    border-color: var(--surface-border, #dee2e6);
+    background-color: var(--surface-50, #f8f9fa);
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      border-color: var(--primary-color, #10b981);
+      background-color: var(--surface-100, #f1f5f9);
+    }
+  }
+
+  .badge-valid {
+    color: #10b981;
+  }
+
+  .badge-invalid {
+    color: #ef4444;
+  }
+}

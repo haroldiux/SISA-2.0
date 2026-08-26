@@ -1,0 +1,26 @@
+.scu-career-oversight-workspace {
+  .kpi-card {
+    .kpi-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--scu-text-secondary);
+      text-transform: uppercase;
+    }
+    .kpi-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0.25rem 0;
+    }
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--scu-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+  }
+
+  .text-success { color: var(--scu-success); }
+  .text-warning { color: var(--scu-warning); }
+  .text-primary { color: var(--scu-primary); }
+}

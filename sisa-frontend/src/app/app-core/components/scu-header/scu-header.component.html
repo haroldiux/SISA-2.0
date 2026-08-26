@@ -1,0 +1,39 @@
+<header class="scu-header">
+  <div class="header-left">
+    <div class="brand-logo">
+      <div class="logo-icon">S</div>
+      <div class="logo-text">
+        <span class="app-title">SISA • UNITEPC</span>
+        <span class="app-subtitle">Sistema Integrado de Seguimiento Académico</span>
+      </div>
+    </div>
+    <div class="sede-pill" *ngIf="currentUser">
+      <i class="pi pi-map-marker"></i>
+      <span>{{ currentUser.sedeNombre || 'Nacional' }}</span>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <scu-role-switcher></scu-role-switcher>
+  </div>
+
+  <div class="header-right">
+    <button
+      pButton
+      type="button"
+      [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'"
+      (click)="toggleTheme()"
+      class="p-button-rounded p-button-text p-button-secondary">
+    </button>
+
+    <div class="user-profile" *ngIf="currentUser">
+      <div class="user-avatar">
+        {{ currentUser.nombres?.charAt(0) }}{{ currentUser.apellidos?.charAt(0) }}
+      </div>
+      <div class="user-details">
+        <span class="user-name">{{ currentUser.nombreCompleto }}</span>
+        <span class="user-role">{{ currentUser.role }}</span>
+      </div>
+    </div>
+  </div>
+</header>

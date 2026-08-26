@@ -1,0 +1,12 @@
+.scu-benchmark-card {
+  .sede-code-badge {
+    background: var(--scu-primary-bg);
+    color: var(--scu-primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .text-success { color: var(--scu-success); }
+  .text-danger { color: var(--scu-danger); }
+}

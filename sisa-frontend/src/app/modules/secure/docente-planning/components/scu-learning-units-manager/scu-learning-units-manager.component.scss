@@ -1,0 +1,34 @@
+.scu-units-manager {
+  .hours-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .unit-card {
+    border-color: var(--surface-border, #e2e8f0);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--primary-color, #10b981);
+    }
+
+    .saber-box {
+      background: #fafafa;
+
+      &.saber-conceptual {
+        border-color: #bfdbfe;
+        background: #f8faff;
+      }
+
+      &.saber-procedimental {
+        border-color: #bbf7d0;
+        background: #f6fef9;
+      }
+
+      &.saber-actitudinal {
+        border-color: #e9d5ff;
+        background: #fbf7ff;
+      }
+    }
+  }
+}

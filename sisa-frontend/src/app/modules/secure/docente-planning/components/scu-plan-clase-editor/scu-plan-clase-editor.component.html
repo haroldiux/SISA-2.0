@@ -1,0 +1,419 @@
+<div class="scu-plan-editor-container">
+
+  <!-- 1. Session Ribbon & Fast Context Navigator -->
+  <div class="session-ribbon-container scu-card mb-3" *ngIf="allSessions && allSessions.length > 0">
+    <div class="ribbon-header flex justify-content-between align-items-center mb-2">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-list text-primary font-bold"></i>
+        <span class="font-bold text-sm">Navegador de Sesiones PAC ({{ allSessions.length }} Sesiones)</span>
+        <span class="text-xs text-color-secondary">(Atajo: Alt + ← / →)</span>
+      </div>
+      <div class="flex align-items-center gap-2">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-chevron-left"
+          label="Anterior"
+          class="p-button-outlined p-button-sm"
+          [disabled]="!hasPrevSession"
+          (click)="onPrevSession()">
+        </button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-chevron-right"
+          iconPos="right"
+          label="Siguiente"
+          class="p-button-outlined p-button-sm"
+          [disabled]="!hasNextSession"
+          (click)="onNextSession()">
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Ribbon Cards -->
+    <div class="ribbon-scroll flex gap-2 pb-1">
+      <div
+        *ngFor="let s of allSessions"
+        class="ribbon-card"
+        [ngClass]="{
+          'active': s.nroSesion === (activePlan$ | async)?.nroSesion,
+          'status-completo': getSessionRibbonStatus(s) === 'COMPLETO',
+          'status-desbalanceado': getSessionRibbonStatus(s) === 'DESBALANCEADO',
+          'status-vacio': getSessionRibbonStatus(s) === 'VACIO'
+        }"
+        (click)="onSelectSessionRibbon(s)">
+        <div class="ribbon-top flex justify-content-between align-items-center">
+          <span class="session-num">S#{{ s.nroSesion }}</span>
+          <span class="week-tag">Sem {{ s.semana }}</span>
+        </div>
+        <div class="ribbon-title text-truncate" [title]="s.unidadTematica">
+          {{ s.unidadTematica || 'Sesión #' + s.nroSesion }}
+        </div>
+        <div class="ribbon-indicator">
+          <i *ngIf="getSessionRibbonStatus(s) === 'COMPLETO'" class="pi pi-check-circle text-green-500" title="180m Balance Válido"></i>
+          <i *ngIf="getSessionRibbonStatus(s) === 'DESBALANCEADO'" class="pi pi-exclamation-triangle text-amber-500" title="Desbalance de Duración"></i>
+          <i *ngIf="getSessionRibbonStatus(s) === 'VACIO'" class="pi pi-circle text-gray-400" title="Sin planificar"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Active Plan Editor Card -->
+  <div class="scu-plan-editor-card scu-card" *ngIf="activePlan$ | async as plan">
+    <div class="editor-header flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <div class="flex align-items-center gap-2 mb-1">
+          <h3 class="font-bold text-lg m-0">Plan de Clase: Sesión #{{ plan.nroSesion }} (Semana {{ plan.semana }})</h3>
+          <scu-status-badge [status]="plan.estado"></scu-status-badge>
+        </div>
+        <p class="text-xs text-color-secondary m-0">{{ plan.unidadTematica || 'Planificación Microdidáctica de 180 min' }}</p>
+      </div>
+
+      <!-- Action Toolbar -->
+      <div class="flex align-items-center gap-2 flex-wrap">
+        <button
+          pButton
+          type="button"
+          label="Plantilla Estándar"
+          icon="pi pi-bolt"
+          class="p-button-outlined p-button-sm p-button-secondary"
+          [disabled]="isReadOnly"
+          (click)="onApplyStandardTemplate()"
+          title="Aplica distribución institucional 25m Inicio / 100m Desarrollo / 55m Cierre">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Clonar a Otra..."
+          icon="pi pi-copy"
+          class="p-button-outlined p-button-sm"
+          [disabled]="isReadOnly"
+          (click)="openCloneModal()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Importar Excel"
+          icon="pi pi-upload"
+          class="p-button-outlined p-button-sm p-button-success"
+          [disabled]="isReadOnly"
+          (click)="openExcelModal()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Exportar XLSX"
+          icon="pi pi-file-excel"
+          class="p-button-outlined p-button-sm"
+          (click)="onExportExcel()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Guardar Plan"
+          icon="pi pi-save"
+          class="p-button-primary p-button-sm"
+          [loading]="isLoading"
+          [disabled]="isReadOnly || !(durationValidation$ | async)?.isValid"
+          (click)="onSave()">
+        </button>
+      </div>
+    </div>
+
+    <!-- Real-time 180 min duration balance pill -->
+    <div class="mb-3" *ngIf="durationValidation$ | async as durVal">
+      <div class="duration-badge-card p-3 border-round flex justify-content-between align-items-center"
+           [ngClass]="{
+             'valid-balance': durVal.isValid,
+             'excess-balance': durVal.status === 'EXCESO',
+             'deficit-balance': durVal.status === 'DEFICIT'
+           }">
+        <div class="flex align-items-center gap-2">
+          <i class="pi text-lg font-bold"
+             [ngClass]="{
+               'pi-check-circle text-green-600': durVal.isValid,
+               'pi-times-circle text-red-600': durVal.status === 'EXCESO',
+               'pi-exclamation-circle text-amber-600': durVal.status === 'DEFICIT'
+             }">
+          </i>
+          <span class="font-bold text-sm">{{ durVal.message }}</span>
+        </div>
+        <div class="text-xs font-mono">
+          <span>Inicio: <strong>{{ getMoment('INICIO')?.duracionMin || 0 }}m</strong></span> +
+          <span>Desarrollo: <strong>{{ getMoment('DESARROLLO')?.duracionMin || 0 }}m</strong></span> +
+          <span>Cierre: <strong>{{ getMoment('CIERRE')?.duracionMin || 0 }}m</strong></span> =
+          <span>Total: <strong>{{ durVal.sum }} / {{ durVal.target }} min</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <div *ngIf="saveSuccessMessage" class="p-message p-message-success mb-3 p-2 text-xs font-semibold">
+      <i class="pi pi-check mr-2"></i> {{ saveSuccessMessage }}
+    </div>
+    <div *ngIf="saveErrorMessage" class="p-message p-message-error mb-3 p-2 text-xs font-semibold">
+      <i class="pi pi-times-circle mr-2"></i> {{ saveErrorMessage }}
+    </div>
+
+    <!-- General Session Details & Objective -->
+    <div class="p-fluid grid mb-3">
+      <div class="col-12 md:col-8">
+        <label class="font-semibold text-xs">Objetivo de Aprendizaje de la Sesión</label>
+        <textarea
+          pInputTextarea
+          [(ngModel)]="plan.objetivoSesion"
+          [disabled]="isReadOnly"
+          (input)="onFieldChange()"
+          rows="2"
+          class="w-full mt-1 text-sm"
+          placeholder="Escriba el objetivo pedagógico observable para esta clase...">
+        </textarea>
+      </div>
+      <div class="col-12 md:col-4">
+        <label class="font-semibold text-xs">Duración Total Planificada (min)</label>
+        <input
+          type="number"
+          pInputText
+          [(ngModel)]="plan.duracionTotalMin"
+          [disabled]="isReadOnly"
+          (input)="onFieldChange()"
+          class="w-full mt-1 font-mono text-sm" />
+      </div>
+    </div>
+
+    <!-- Didactic Resources Chips Selector -->
+    <div class="mb-4">
+      <label class="font-semibold text-xs block mb-2">Recursos Didácticos y Medios de Enseñanza</label>
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let res of predefinedResources"
+          type="button"
+          class="resource-chip"
+          [ngClass]="{ 'selected': isResourceSelected(res) }"
+          [disabled]="isReadOnly"
+          (click)="onToggleResource(res)">
+          <i class="pi mr-1 text-xs" [ngClass]="isResourceSelected(res) ? 'pi-check text-green-600' : 'pi-plus text-gray-400'"></i>
+          {{ res }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Pedagogical Moments Grid -->
+    <div class="moments-grid grid">
+      <!-- Momento 1: Inicio -->
+      <div class="col-12 md:col-4" *ngIf="getMoment('INICIO') as inicio">
+        <div class="moment-box moment-inicio p-3 border-round border-1">
+          <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
+            <div class="flex align-items-center gap-2">
+              <span class="moment-badge inicio-badge font-bold text-xs px-2 py-1 border-round">1. INICIO</span>
+              <span class="text-xs text-color-secondary font-semibold">Motivación y Diagnóstico</span>
+            </div>
+            <div class="duration-input-wrapper flex align-items-center gap-1">
+              <input
+                type="number"
+                pInputText
+                [(ngModel)]="inicio.duracionMin"
+                [disabled]="isReadOnly"
+                (input)="onDurationChange('INICIO', inicio.duracionMin)"
+                min="0"
+                max="180"
+                class="moment-min-input text-center font-bold text-sm" />
+              <span class="text-xs text-color-secondary">min</span>
+            </div>
+          </div>
+
+          <div class="moment-body p-fluid">
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Docente</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="inicio.actividadesDocente"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Motivación, recuperación de saberes previos, formulación de preguntas orientadoras...">
+              </textarea>
+            </div>
+
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Estudiante</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="inicio.actividadesEstudiante"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Participación activa, respuesta a preguntas de diagnóstico, reflexión inicial...">
+              </textarea>
+            </div>
+
+            <div class="field mb-0">
+              <label class="text-xs font-semibold">Indicador de Evaluación Inicial</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="inicio.indicadorEvaluacion"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="2"
+                class="text-xs"
+                placeholder="Evidencia diagnóstica de comprensión o conocimientos previos...">
+              </textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Momento 2: Desarrollo -->
+      <div class="col-12 md:col-4" *ngIf="getMoment('DESARROLLO') as desarrollo">
+        <div class="moment-box moment-desarrollo p-3 border-round border-1">
+          <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
+            <div class="flex align-items-center gap-2">
+              <span class="moment-badge desarrollo-badge font-bold text-xs px-2 py-1 border-round">2. DESARROLLO</span>
+              <span class="text-xs text-color-secondary font-semibold">Construcción y Taller</span>
+            </div>
+            <div class="duration-input-wrapper flex align-items-center gap-1">
+              <input
+                type="number"
+                pInputText
+                [(ngModel)]="desarrollo.duracionMin"
+                [disabled]="isReadOnly"
+                (input)="onDurationChange('DESARROLLO', desarrollo.duracionMin)"
+                min="0"
+                max="180"
+                class="moment-min-input text-center font-bold text-sm" />
+              <span class="text-xs text-color-secondary">min</span>
+            </div>
+          </div>
+
+          <div class="moment-body p-fluid">
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Docente</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="desarrollo.actividadesDocente"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Exposición dialogada, modelado de problemas, guía y asesoramiento en laboratorio...">
+              </textarea>
+            </div>
+
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Estudiante</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="desarrollo.actividadesEstudiante"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Desarrollo de ejercicios prácticos, trabajo colaborativo en equipos, codificación...">
+              </textarea>
+            </div>
+
+            <div class="field mb-0">
+              <label class="text-xs font-semibold">Indicador de Evaluación Formativa</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="desarrollo.indicadorEvaluacion"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="2"
+                class="text-xs"
+                placeholder="Resolución correcta del caso aplicando conceptos técnicos...">
+              </textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Momento 3: Cierre -->
+      <div class="col-12 md:col-4" *ngIf="getMoment('CIERRE') as cierre">
+        <div class="moment-box moment-cierre p-3 border-round border-1">
+          <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
+            <div class="flex align-items-center gap-2">
+              <span class="moment-badge cierre-badge font-bold text-xs px-2 py-1 border-round">3. CIERRE</span>
+              <span class="text-xs text-color-secondary font-semibold">Síntesis y Evaluación</span>
+            </div>
+            <div class="duration-input-wrapper flex align-items-center gap-1">
+              <input
+                type="number"
+                pInputText
+                [(ngModel)]="cierre.duracionMin"
+                [disabled]="isReadOnly"
+                (input)="onDurationChange('CIERRE', cierre.duracionMin)"
+                min="0"
+                max="180"
+                class="moment-min-input text-center font-bold text-sm" />
+              <span class="text-xs text-color-secondary">min</span>
+            </div>
+          </div>
+
+          <div class="moment-body p-fluid">
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Docente</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="cierre.actividadesDocente"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Síntesis conceptual, retroalimentación grupal, asignación de tareas de profundización...">
+              </textarea>
+            </div>
+
+            <div class="field mb-2">
+              <label class="text-xs font-semibold">Actividades del Estudiante</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="cierre.actividadesEstudiante"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="3"
+                class="text-xs"
+                placeholder="Presentación de conclusiones, entrega de producto didáctico / código, coevaluación...">
+              </textarea>
+            </div>
+
+            <div class="field mb-0">
+              <label class="text-xs font-semibold">Indicador de Evaluación Sumativa / Cierre</label>
+              <textarea
+                pInputTextarea
+                [(ngModel)]="cierre.indicadorEvaluacion"
+                [disabled]="isReadOnly"
+                (input)="onFieldChange()"
+                rows="2"
+                class="text-xs"
+                placeholder="Producto didáctico concluido y verificado según rúbrica...">
+              </textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Modals -->
+  <scu-plan-clase-clone-modal
+    [(visible)]="cloneModalVisible"
+    [currentSession]="(activePlan$ | async)?.nroSesion || 1"
+    [allSessions]="allSessions"
+    (scuCloneSession)="onCloneSession($event)">
+  </scu-plan-clase-clone-modal>
+
+  <scu-plan-clase-excel-modal
+    [(visible)]="excelModalVisible"
+    [currentSessionId]="(activePlan$ | async)?.sesionId"
+    (scuPlanesImported)="onPlanesImported($event)">
+  </scu-plan-clase-excel-modal>
+
+</div>

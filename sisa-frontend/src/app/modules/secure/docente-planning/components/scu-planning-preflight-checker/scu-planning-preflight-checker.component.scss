@@ -1,0 +1,28 @@
+.preflight-modal-content {
+  .overall-status-banner {
+    &.status-ready {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+    }
+    &.status-blocked {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+  }
+
+  .pillar-card {
+    border-color: #e2e8f0;
+    background: #fafafa;
+    transition: all 0.2s ease;
+
+    &.pillar-valid {
+      border-color: #a7f3d0;
+      background: #f0fdf4;
+    }
+
+    &.pillar-invalid {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+  }
+}

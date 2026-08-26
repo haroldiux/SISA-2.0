@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fonts and Custom Scrollbars */
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.04);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 999px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.form-section-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+textarea {
+  overflow-y: hidden !important;
+  resize: none !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* PRINT / PDF STYLES */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn {
+    display: none !important;
+  }
+  main, .frame-view {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  .doc-tab-panel {
+    display: none !important;
+  }
+  .doc-tab-panel.print-active {
+    display: block !important;
+    page-break-after: always;
+    margin-bottom: 2rem;
+  }
+  input, textarea {
+    border: 1px solid #CBD5E1 !important;
+    background: #F8FAFC !important;
+    color: black !important;
+    padding: 4px 8px !important;
+    resize: none !important;
+  }
+  .print-header {
+    display: block !important;
+  }
+}
+.print-header {
+  display: none;
+}

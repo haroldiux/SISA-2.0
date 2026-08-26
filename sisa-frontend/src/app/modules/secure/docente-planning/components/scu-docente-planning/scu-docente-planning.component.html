@@ -1,0 +1,117 @@
+<div class="scu-planning-workspace" *ngIf="activeAssignment">
+  <!-- Assignment Banner -->
+  <div class="assignment-banner scu-card mb-3">
+    <div class="banner-left">
+      <div class="assignment-meta">
+        <span class="gestion-tag">{{ activeAssignment.gestionCodigo }}</span>
+        <span class="carrera-name">{{ activeAssignment.carreraNombre }}</span>
+      </div>
+      <h2 class="subject-title">{{ activeAssignment.asignaturaCodigo }} • {{ activeAssignment.asignaturaNombre }}</h2>
+      <div class="schedule-info">
+        <span><i class="pi pi-map-marker"></i> {{ activeAssignment.campusNombre }} ({{ activeAssignment.aula }})</span>
+        <span><i class="pi pi-calendar"></i> {{ activeAssignment.diasSemana }}</span>
+        <span><i class="pi pi-clock"></i> {{ activeAssignment.horarioInicio }} - {{ activeAssignment.horarioFin }}</span>
+        <span><i class="pi pi-users"></i> Grupo {{ activeAssignment.grupoParalelo }} (Turno {{ activeAssignment.turno }})</span>
+      </div>
+    </div>
+
+    <div class="banner-right flex align-items-center gap-2 flex-wrap" *ngIf="pac$ | async as pac">
+      <scu-status-badge [status]="pac.estado"></scu-status-badge>
+
+      <scu-autosave-indicator
+        [state]="(autoSaveState$ | async) || AutoSaveState.SIN_CAMBIOS"
+        (scuRetry)="onSavePac()">
+      </scu-autosave-indicator>
+
+      <button
+        pButton
+        type="button"
+        label="Auditar y Enviar a Revisión"
+        icon="pi pi-send"
+        class="p-button-primary p-button-sm font-bold ml-2"
+        [disabled]="isReadOnly"
+        (click)="openPreflightChecker()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Career Director Review Feedback Alert Viewer -->
+  <div *ngIf="pac$ | async as pac">
+    <scu-director-feedback-viewer
+      [status]="pac.estado"
+      [reviewerName]="pac.revisadoPorNombre"
+      [reviewDate]="pac.revisadoEn"
+      [observationNotes]="pac.observacionesRevision">
+    </scu-director-feedback-viewer>
+  </div>
+
+  <!-- Global Alert Message -->
+  <div *ngIf="alertMessage" class="p-message mb-3 p-3 text-sm font-semibold" [ngClass]="'p-message-' + alertType">
+    <i class="pi mr-2" [ngClass]="alertType === 'success' ? 'pi-check' : 'pi-info-circle'"></i>
+    {{ alertMessage }}
+  </div>
+
+  <!-- Realtime Pedagogical Validation Panel (for Matriz 7) -->
+  <scu-pac-validation-panel
+    [validationResult]="validationResult$ | async"
+    (scuJumpToIssue)="onJumpToIssue($event)">
+  </scu-pac-validation-panel>
+
+  <!-- Planning Trilogy Tabs -->
+  <p-tabView [(activeIndex)]="activeTabIndex" styleClass="scu-planning-tabs">
+    <p-tabPanel header="1. Programa Analítico (Macro)">
+      <scu-programa-analitico-editor
+        [assignmentId]="activeAssignment.id"
+        [isReadOnly]="isReadOnly">
+      </scu-programa-analitico-editor>
+    </p-tabPanel>
+
+    <p-tabPanel header="2. PAC Matriz 7 (Meso - 20 Semanas)">
+      <scu-pac-matrix
+        #matrixGrid
+        [pac]="pac$ | async"
+        [validationResult]="validationResult$ | async"
+        [autoSaveState]="(autoSaveState$ | async) || AutoSaveState.SIN_CAMBIOS"
+        [isReadOnly]="isReadOnly"
+        (scuPacChange)="onPacChange($event)"
+        (scuSessionSelect)="onSessionSelect($event)"
+        (scuManualSave)="onSavePac()"
+        (scuManualSubmit)="openPreflightChecker()"
+        (scuExportExcel)="onExportPac($event)"
+        (scuOpenImportModal)="openImportModal()"
+        (scuOpenCalendarModal)="openCalendarModal()">
+      </scu-pac-matrix>
+    </p-tabPanel>
+
+    <p-tabPanel header="3. Microplan de Clase (3 Momentos)">
+      <scu-plan-clase-editor
+        [session]="selectedSessionForPlan"
+        [allSessions]="allSessions"
+        [isReadOnly]="isReadOnly"
+        (scuSessionSelected)="onSessionSelect($event)">
+      </scu-plan-clase-editor>
+    </p-tabPanel>
+  </p-tabView>
+
+  <!-- Modal Workflows -->
+  <scu-pac-calendar-generator
+    [(visible)]="calendarModalVisible"
+    [totalSessions]="allSessions.length || 38"
+    (scuDatesGenerated)="onDatesGenerated($event)">
+  </scu-pac-calendar-generator>
+
+  <scu-pac-excel-modal
+    [(visible)]="excelModalVisible"
+    [asignacionId]="activeAssignment.id"
+    [currentSessionsCount]="allSessions.length || 0"
+    (scuPacImported)="onPacImported($event)">
+  </scu-pac-excel-modal>
+
+  <scu-planning-preflight-checker
+    [(visible)]="preflightModalVisible"
+    [preflightResult]="preflightResult"
+    [isSubmitting]="isSubmitting"
+    (scuJumpToIssue)="onJumpToIssue($event)"
+    (scuConfirmSubmit)="onConfirmPreflightSubmit()">
+  </scu-planning-preflight-checker>
+</div>

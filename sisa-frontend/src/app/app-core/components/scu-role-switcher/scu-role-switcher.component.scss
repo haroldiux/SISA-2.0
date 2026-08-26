@@ -1,0 +1,31 @@
+.scu-role-switcher-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .switcher-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--scu-text-secondary);
+    white-space: nowrap;
+  }
+
+  ::ng-deep .scu-role-dropdown {
+    width: 280px;
+    border-radius: 8px;
+    border-color: var(--scu-border-color);
+    background: var(--scu-surface-0);
+  }
+
+  .scu-frame-pill {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    background: var(--scu-primary-bg);
+    color: var(--scu-primary);
+  }
+}

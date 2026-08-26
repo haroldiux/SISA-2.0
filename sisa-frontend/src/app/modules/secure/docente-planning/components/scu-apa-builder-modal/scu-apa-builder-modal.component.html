@@ -1,0 +1,141 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  header="Generador Asistido de Citas APA 7ª Edición"
+  [closable]="true"
+  (onHide)="onClose()">
+
+  <div class="apa-builder-content p-fluid">
+    <div class="field mb-3">
+      <label class="font-semibold text-xs">Tipo de Referencia Bibliográfica</label>
+      <div class="flex gap-4 mt-1">
+        <div class="field-radiobutton mb-0">
+          <input type="radio" id="apaBasica" value="BASICA" [(ngModel)]="tipo" name="tipoBib" />
+          <label for="apaBasica" class="text-xs ml-1 cursor-pointer font-bold text-green-700">Bibliografía Básica (Obligatoria)</label>
+        </div>
+        <div class="field-radiobutton mb-0">
+          <input type="radio" id="apaComp" value="COMPLEMENTARIA" [(ngModel)]="tipo" name="tipoBib" />
+          <label for="apaComp" class="text-xs ml-1 cursor-pointer font-semibold text-color-secondary">Bibliografía Complementaria</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Structured Form Grid -->
+    <div class="grid">
+      <div class="col-12 md:col-8">
+        <label class="font-semibold text-xs">Autor(es) (Apellidos e Iniciales)</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="authors"
+          class="w-full mt-1 text-xs"
+          placeholder="ej: Sommerville, I. o Pressman, R. S., & Maxim, B. R." />
+      </div>
+
+      <div class="col-12 md:col-4">
+        <label class="font-semibold text-xs">Año de Publicación</label>
+        <input
+          type="number"
+          pInputText
+          [(ngModel)]="year"
+          class="w-full mt-1 text-xs font-mono"
+          placeholder="ej: 2020" />
+      </div>
+
+      <div class="col-12 md:col-8">
+        <label class="font-semibold text-xs">Título del Libro o Artículo</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="title"
+          class="w-full mt-1 text-xs"
+          placeholder="ej: Software Engineering: A Practitioner's Approach" />
+      </div>
+
+      <div class="col-12 md:col-4">
+        <label class="font-semibold text-xs">Edición / Volumen (Opcional)</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="edition"
+          class="w-full mt-1 text-xs"
+          placeholder="ej: 9th ed. o Vol. 2" />
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="font-semibold text-xs">Editorial / Revista / Institución</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="publisher"
+          class="w-full mt-1 text-xs"
+          placeholder="ej: McGraw-Hill o Pearson Educación" />
+      </div>
+
+      <div class="col-12 md:col-6">
+        <label class="font-semibold text-xs">URL o DOI (Opcional)</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="urlOrDoi"
+          class="w-full mt-1 text-xs"
+          placeholder="ej: https://doi.org/10.1007/... o https://..." />
+      </div>
+    </div>
+
+    <!-- Live Preview Card -->
+    <div class="preview-card mt-3 p-3 border-round border-1 surface-ground">
+      <div class="flex justify-content-between align-items-center mb-1">
+        <span class="text-xs font-bold text-color-secondary">Vista Previa Sintetizada APA 7:</span>
+        <span *ngIf="isValidCitation" class="text-xs font-bold text-green-600">
+          <i class="pi pi-check-circle mr-1"></i> Formato APA 7 Válido
+        </span>
+        <span *ngIf="!isValidCitation && authors && title" class="text-xs font-bold text-amber-600">
+          <i class="pi pi-exclamation-triangle mr-1"></i> Formato Incompleto
+        </span>
+      </div>
+      <p class="citation-preview-text font-italic text-sm m-0 p-2 border-round surface-card border-1 surface-border">
+        {{ generatedCitation || 'Ingrese los datos arriba para generar la cita...' }}
+      </p>
+    </div>
+
+    <div *ngIf="errorMessage" class="p-message p-message-error mt-2 p-2 text-xs font-semibold">
+      <i class="pi pi-times-circle mr-1"></i> {{ errorMessage }}
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-between align-items-center w-full">
+      <button
+        pButton
+        type="button"
+        [label]="copied ? '¡Copiado!' : 'Copiar Cita'"
+        [icon]="copied ? 'pi pi-check' : 'pi pi-copy'"
+        class="p-button-outlined p-button-secondary p-button-sm"
+        [disabled]="!isValidCitation"
+        (click)="onCopyToClipboard()">
+      </button>
+
+      <div class="flex gap-2">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          icon="pi pi-times"
+          class="p-button-text p-button-sm"
+          (click)="onClose()">
+        </button>
+        <button
+          pButton
+          type="button"
+          label="Insertar en Bibliografía"
+          icon="pi pi-plus"
+          class="p-button-primary p-button-sm"
+          [disabled]="!isValidCitation"
+          (click)="onInsert()">
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,2023 @@
+
+    // ── AUTO-GROWING TEXTAREAS ENGINE (ZERO SCROLLBARS) ─────────────────────────
+    window.autoResizeTextarea = function(el) {
+      if (!el || el.tagName !== 'TEXTAREA') return;
+      el.style.height = 'auto';
+      el.style.overflowY = 'hidden';
+      el.style.resize = 'none';
+      const newHeight = Math.max(el.scrollHeight, 32);
+      el.style.height = newHeight + 'px';
+    };
+
+    window.autoResizeAllTextareas = function() {
+      document.querySelectorAll('textarea').forEach(el => {
+        window.autoResizeTextarea(el);
+      });
+    };
+
+    let activeTabId = 'tab-analitico';
+    let activeMateriaKey = 'sis213g1';
+    let activeAsignacionId = 1;
+
+
+    const materiasData = {
+      'sis213g1': {
+        asignacionId: 1,
+        codigo: 'SIS-213',
+        nombre: 'PROGRAMACIÓN III',
+        semestre: '3º',
+        creditos: '12',
+        horasTeoricas: '2',
+        horasPracticas: '4',
+        carrera: 'Ing. de Sistemas',
+        carreraTag: 'CARRERA: ING. DE SISTEMAS',
+        grupoTag: 'Grupo 1 (G1) • Cátedra de Teoría',
+        breadcrumb: 'SIS-213 Programación III (G1)',
+        title: 'SIS-213 • PROGRAMACIÓN III',
+        meta: '<span><strong class="text-white">3º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Teoría)</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: Juan Pablo II (Aula 302)</span>',
+        caracterizacion: 'La asignatura de Programación III profundiza en el paradigma orientado a objetos, arquitecturas multicapa, diseño desacoplado y construcción de software escalable.',
+        macroCompetencia: 'Desarrolla sistemas de software modulares y mantenibles aplicando patrones de diseño, principios SOLID y estructuras de datos eficientes.',
+        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias con proyectos de desarrollo de software.',
+        unidades: [
+          {
+            numeroUnidad: 1,
+            titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 1, titulo: 'Anatomía de la Entidad y el Objeto', contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.\n• Ciclo de vida: de la instanciación a la recolección de memoria.' },
+              { numeroTema: 2, titulo: 'Jerarquías de Especialización y Contratos', contenido: '• Herencia: creación de linajes de entidades para reutilización.\n• Interfaces y Clases Abstractas: definición de contratos.\n• Polimorfismo y composición sobre herencia.' }
+            ]
+          },
+          {
+            numeroUnidad: 2,
+            titulo: 'Robustez y Blindaje de la Lógica de Negocio',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 3, titulo: 'Encapsulamiento y Gestión de Estados Críticos', contenido: '• Visibilidad y protección: niveles de acceso.\n• Validación de estados internos y prevención de corrupción de datos.\n• Manejo de excepciones en tiempo de ejecución.' }
+            ]
+          },
+          {
+            numeroUnidad: 3,
+            titulo: 'Sistemas de Interacción y Despacho de Eventos',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 4, titulo: 'Representación Visual de Objetos y Entornos', contenido: '• Mapeo de objetos lógicos a componentes visuales.\n• Jerarquía de contenedores y orquestación en pantalla.' },
+              { numeroTema: 5, titulo: 'Dinámicas de Interacción y Flujo de Señales', contenido: '• Despacho de eventos y oyentes (listeners).\n• Vinculación bidireccional y reactividad.' }
+            ]
+          },
+          {
+            numeroUnidad: 4,
+            titulo: 'Gestión y Despliegue de Soluciones Integrales',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 6, titulo: 'Ingeniería de Software y Construcción del Mundo', contenido: '• Integración modular y empaquetado de ejecutables.\n• Pruebas unitarias automatizadas y verificación de integración.' }
+            ]
+          }
+        ],
+        bibliografia: [
+          { tipo: 'BASICA', citaApa: 'Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (2020). Patrones de Diseño: Elementos de Software Orientado a Objetos Reutilizable. Pearson.', autor: 'Gamma et al.', anio: 2020, titulo: 'Patrones de Diseño' },
+          { tipo: 'BASICA', citaApa: 'Martin, R. C. (2018). Clean Architecture: A Craftsman\'s Guide to Software Structure and Design. Prentice Hall.', autor: 'Martin, R. C.', anio: 2018, titulo: 'Clean Architecture' },
+          { tipo: 'COMPLEMENTARIA', citaApa: 'Bloch, J. (2018). Effective Java (3rd ed.). Addison-Wesley Professional.', autor: 'Bloch, J.', anio: 2018, titulo: 'Effective Java' }
+        ],
+        elementosCompetencia: [
+          'Modela entidades con estados y ciclos de vida definidos.',
+          'Implementa mecanismos de protección y manejo de errores en la lógica de negocio.',
+          'Diseña interfaces interactivas basadas en el modelo de suscripción y notificación de eventos.',
+          'Aplica patrones de diseño para resolver problemas recurrentes de arquitectura.'
+        ]
+      },
+      'sis213g2': {
+        asignacionId: 2,
+        codigo: 'SIS-213',
+        nombre: 'PROGRAMACIÓN III',
+        semestre: '3º',
+        creditos: '12',
+        horasTeoricas: '2',
+        horasPracticas: '4',
+        carrera: 'Ing. de Sistemas',
+        carreraTag: 'CARRERA: ING. DE SISTEMAS',
+        grupoTag: 'Grupo 2 (G2) • Cátedra Integral (Teoría + Práctica)',
+        breadcrumb: 'SIS-213 Programación III (G2)',
+        title: 'SIS-213 • PROGRAMACIÓN III',
+        meta: '<span><strong class="text-white">3º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Integral)</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: Juan Pablo II (Lab 104)</span>',
+        caracterizacion: 'La asignatura de Programación III en su modalidad integral combina fundamentos teóricos con sesiones intensivas de codificación y laboratorio práctico.',
+        macroCompetencia: 'Desarrolla sistemas de software modulares y mantenibles aplicando patrones de diseño, principios SOLID y estructuras de datos eficientes.',
+        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias con proyectos de desarrollo en laboratorio.',
+        unidades: [
+          {
+            numeroUnidad: 1,
+            titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 1, titulo: 'Anatomía de la Entidad y el Objeto', contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.' },
+              { numeroTema: 2, titulo: 'Jerarquías de Especialización y Contratos', contenido: '• Herencia e interfaces en proyectos de software.' }
+            ]
+          },
+          {
+            numeroUnidad: 2,
+            titulo: 'Laboratorio de Construcción de Software',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 3, titulo: 'Taller Práctico de Patrones y Buenas Prácticas', contenido: '• Implementación guiada en Java 21 y frameworks modernos.' }
+            ]
+          }
+        ],
+        bibliografia: [
+          { tipo: 'BASICA', citaApa: 'Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (2020). Patrones de Diseño: Elementos de Software Orientado a Objetos Reutilizable. Pearson.', autor: 'Gamma et al.', anio: 2020, titulo: 'Patrones de Diseño' }
+        ],
+        elementosCompetencia: [
+          'Modela entidades con estados y ciclos de vida definidos.',
+          'Implementa mecanismos de protección y manejo de errores en la lógica de negocio.',
+          'Diseña interfaces interactivas basadas en el modelo de suscripción y notificación de eventos.',
+          'Aplica patrones de diseño para resolver problemas recurrentes de arquitectura.'
+        ]
+      },
+      'ind211': {
+        asignacionId: 3,
+        codigo: 'IND-211',
+        nombre: 'COMPUTACIÓN APLICADA',
+        semestre: '2º',
+        creditos: '10',
+        horasTeoricas: '2',
+        horasPracticas: '4',
+        carrera: 'Ing. Industrial',
+        carreraTag: 'CARRERA: ING. INDUSTRIAL',
+        grupoTag: 'Grupo 1 (G1) • Cátedra de Teoría',
+        breadcrumb: 'IND-211 Computación Aplicada (G1)',
+        title: 'IND-211 • COMPUTACIÓN APLICADA',
+        meta: '<span><strong class="text-white">2º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Teoría)</span><span>•</span><span><strong class="text-white">100</strong> Horas Totales</span><span>•</span><span>Campus: Central (Aula 204)</span>',
+        caracterizacion: 'Asignatura orientada a la modelación cuantitativa, automatización de procesos industriales, análisis de datos en hojas de cálculo avanzadas y optimización operativa.',
+        macroCompetencia: 'Aplica herramientas computacionales para la modelación, simulación y optimización de procesos de manufactura y servicios en ingeniería industrial.',
+        sistemaEvaluacion: 'Evaluación formativa mediante talleres computacionales, resolución de casos industriales y desarrollo de modelos de optimización.',
+        unidades: [
+          {
+            numeroUnidad: 1,
+            titulo: 'Modelación Cuantitativa y Funciones Avanzadas en Hojas de Cálculo',
+            horasAcademicas: 25,
+            temas: [
+              { numeroTema: 1, titulo: 'Fórmulas Matriciales y Tablas Dinámicas Complejas', contenido: '• Estructuración y limpieza de grandes volúmenes de datos industriales.\n• Fórmulas de búsqueda matricial y funciones lógicas anidadas.' },
+              { numeroTema: 2, titulo: 'Optimización Lineal con Solver', contenido: '• Formulación matemática de funciones objetivo y restricciones de planta.\n• Análisis de sensibilidad y parámetros de holgura operativa.' }
+            ]
+          },
+          {
+            numeroUnidad: 2,
+            titulo: 'Automatización de Tareas con Macros y Scripts',
+            horasAcademicas: 25,
+            temas: [
+              { numeroTema: 3, titulo: 'Automatización de Reportes de Producción', contenido: '• Grabación y depuración de macros de control.\n• Estructuras de control y bucles en Visual Basic / Python scripts.' }
+            ]
+          },
+          {
+            numeroUnidad: 3,
+            titulo: 'Simulación de Procesos Industriales y Análisis Estadístico',
+            horasAcademicas: 25,
+            temas: [
+              { numeroTema: 4, titulo: 'Simulación Monte Carlo y Modelos Estocásticos', contenido: '• Generación de variables aleatorias y simulación de tiempos de ciclo.\n• Evaluación de riesgos operacionales y cuellos de botella.' }
+            ]
+          }
+        ],
+        bibliografia: [
+          { tipo: 'BASICA', citaApa: 'Walkenbach, J. (2019). Excel 2019 Power Programming with VBA. Wiley.', autor: 'Walkenbach, J.', anio: 2019, titulo: 'Excel Power Programming' },
+          { tipo: 'BASICA', citaApa: 'Hillier, F. S., & Lieberman, G. J. (2021). Introducción a la Investigación de Operaciones (11ª ed.). McGraw-Hill.', autor: 'Hillier & Lieberman', anio: 2021, titulo: 'Investigación de Operaciones' },
+          { tipo: 'COMPLEMENTARIA', citaApa: 'Chase, R. B., & Jacobs, F. R. (2018). Administración de Operaciones: Producción y Cadena de Suministros. McGraw-Hill.', autor: 'Chase & Jacobs', anio: 2018, titulo: 'Administración de Operaciones' }
+        ],
+        elementosCompetencia: [
+          'Formula modelos de programación lineal para la asignación óptima de recursos en planta.',
+          'Automatiza reportes de producción e indicadores de productividad mediante macros y scripts.',
+          'Evalúa riesgos operacionales y cuellos de botella empleando simulaciones Monte Carlo.'
+        ]
+      },
+      'idi101': {
+        asignacionId: 4,
+        codigo: 'IDI-101',
+        nombre: 'TALLER DE IDIOMAS',
+        semestre: '1º',
+        creditos: '8',
+        horasTeoricas: '2',
+        horasPracticas: '4',
+        carrera: 'FACEFA',
+        carreraTag: 'CARRERA: FACEFA (ADMINISTRACIÓN / AUDITORÍA)',
+        grupoTag: 'Grupo 1 (G1) • Cátedra Práctica',
+        breadcrumb: 'IDI-101 Taller de Idiomas (G1)',
+        title: 'IDI-101 • TALLER DE IDIOMAS (QUECHUA / AYMARA)',
+        meta: '<span><strong class="text-white">1º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Práctica)</span><span>•</span><span><strong class="text-white">80</strong> Horas Totales</span><span>•</span><span>Campus: Central (Aula 101)</span>',
+        caracterizacion: 'Formación lingüística y comunicativa orientada a la interacción intercultural, el plurilingüismo y la inclusión en el ejercicio profesional administrativo y financiero.',
+        macroCompetencia: 'Comunica ideas, términos técnicos y acuerdos en idioma nativo (Quechua / Aymara) de forma oral y escrita en contextos laborales, comunitarios e interculturales.',
+        sistemaEvaluacion: 'Evaluación formativa y sumativa con diálogos orales, redacción de documentos bilingües y pruebas de comprensión auditiva.',
+        unidades: [
+          {
+            numeroUnidad: 1,
+            titulo: 'Fonética, Fonología y Estructuras Gramaticales Básicas',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 1, titulo: 'Sistema Fonológico y Alfabeto Oficial', contenido: '• Grafías consonánticas y vocálicas del idioma nativo.\n• Reglas de acentuación y pronunciación.' },
+              { numeroTema: 2, titulo: 'Saludos, Presentaciones y Cortesía Intercultural', contenido: '• Fórmulas de saludo en contextos formales y comunitarios.\n• Pronombres personales y sufijos posesivos.' }
+            ]
+          },
+          {
+            numeroUnidad: 2,
+            titulo: 'Morfosintaxis y Comunicación Funcional en el Ámbito Laboral',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 3, titulo: 'Conjugación Verbal y Sufijación Aglutinante', contenido: '• Tiempos verbales: presente, pasado testimonial y futuro.\n• Diálogos situacionales en atención al usuario.' }
+            ]
+          },
+          {
+            numeroUnidad: 3,
+            titulo: 'Terminología Comercial, Administrativa y Normativa Plurilingüe',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 4, titulo: 'Léxico Financiero, Administrativo y Acuerdos de Negociación', contenido: '• Números, transacciones comerciales y redacción de actas breves.\n• Aplicación de la Ley Nº 269 de Políticas Lingüísticas.' }
+            ]
+          }
+        ],
+        bibliografia: [
+          { tipo: 'BASICA', citaApa: 'Cerrón-Palomino, R. (2017). Lingüística Quechua (3ª ed.). Editorial Biblioteca de Tradición Oral Andina.', autor: 'Cerrón-Palomino, R.', anio: 2017, titulo: 'Lingüística Quechua' },
+          { tipo: 'BASICA', citaApa: 'Cochabamba, Q. P. (2020). Runasimi: Gramática quechua para todos. Editorial Itinerarios / UMSS.', autor: 'Cochabamba, Q. P.', anio: 2020, titulo: 'Runasimi' },
+          { tipo: 'COMPLEMENTARIA', citaApa: 'Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia. Editorial Kipus.', autor: 'Plaza Martínez, P.', anio: 2018, titulo: 'Diccionario Quechua' }
+        ],
+        elementosCompetencia: [
+          'Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua.',
+          'Produce mensajes y estructuras oracionales complejas en lengua quechua.',
+          'Aplica léxico comercial, administrativo y acuerdos de negociación en lengua nativa.'
+        ]
+      }
+    };
+
+
+
+    window.applyThemePreference = function() {
+      const html = document.documentElement;
+      const savedTheme = localStorage.getItem('sisa_theme_preference') || (html.classList.contains('dark') ? 'dark' : 'light');
+      const isDark = (savedTheme === 'dark');
+
+      if (isDark) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
+
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (label) {
+        label.innerText = isDark ? 'Tema Claro' : 'Tema Oscuro';
+      }
+      if (icon) {
+        icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+        icon.className = isDark ? 'w-4 h-4 text-amber-400' : 'w-4 h-4 text-purple-300';
+      }
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const willBeDark = !html.classList.contains('dark');
+      localStorage.setItem('sisa_theme_preference', willBeDark ? 'dark' : 'light');
+      window.applyThemePreference();
+      window.showToast(willBeDark ? 'Modo Oscuro activado' : 'Modo Claro activado');
+    };
+
+    // Apply immediately on controller load
+    window.applyThemePreference();
+
+
+    window.switchView = function(viewId) {
+      document.querySelectorAll('.frame-view').forEach(view => view.classList.add('hidden'));
+      const target = document.getElementById(viewId);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.view-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
+        btn.classList.add('text-slate-300');
+      });
+
+      const activeBtn = document.getElementById('btn-' + viewId);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-300');
+        activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+      }
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchDocMainTab = function(tabId) {
+      if (!tabId.startsWith('tab-')) {
+        tabId = 'tab-' + tabId;
+      }
+      activeTabId = tabId;
+      document.querySelectorAll('.doc-tab-panel').forEach(panel => panel.classList.add('hidden'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove('hidden');
+
+      // Top Tab Navigation Bar
+      document.querySelectorAll('.doc-main-tab-btn').forEach(btn => {
+        btn.classList.remove('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
+        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+      });
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
+        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+      }
+
+      // Sidebar Tab Highlights
+      document.querySelectorAll('.sidebar-tab-nav').forEach(btn => {
+        btn.className = 'sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all';
+      });
+      const activeSidebarTab = document.getElementById('sidebar-' + tabId);
+      if (activeSidebarTab) {
+        activeSidebarTab.className = 'sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700/60 font-bold text-xs text-left cursor-pointer transition-all';
+      }
+
+      if (tabId === 'tab-analitico') {
+        const card = document.getElementById('analitico-unidades-card');
+        if (!card || !card.innerHTML.trim()) {
+          if (typeof window.renderAnaliticoUnidades === 'function') {
+            window.renderAnaliticoUnidades();
+          }
+          if (typeof window.renderAnaliticoBibliografia === 'function') {
+            window.renderAnaliticoBibliografia();
+          }
+        }
+      }
+
+      setTimeout(() => {
+        if (typeof window.autoResizeAllTextareas === 'function') {
+          window.autoResizeAllTextareas();
+        }
+      }, 50);
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+
+    // Global Delegated Click Listener for Tabs
+    document.addEventListener('click', function(e) {
+      const tabBtn = e.target.closest('[data-doc-main-tab], .doc-main-tab-btn, .sidebar-tab-nav');
+      if (tabBtn) {
+        let tabId = tabBtn.getAttribute('data-doc-main-tab');
+        if (!tabId && tabBtn.id) {
+          tabId = tabBtn.id.replace('btn-', '').replace('sidebar-', '');
+        }
+        if (tabId) {
+          window.switchDocMainTab(tabId);
+        }
+      }
+    });
+
+
+
+
+
+
+    window.selectDocenteMateria = function(materiaKey) {
+      // 1. Silently persist previous subject state before switching
+      if (typeof window.saveCurrentDocenteData === 'function') {
+        window.saveCurrentDocenteData(true);
+      }
+
+      activeMateriaKey = materiaKey || 'sis213g1';
+      const data = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+      activeAsignacionId = data.asignacionId || 1;
+      
+      // Update Main Subject Cards Highlight
+      document.querySelectorAll('.doc-materia-card').forEach(card => {
+        card.classList.remove('border-2', 'border-brand-600', 'shadow-md');
+        card.classList.add('border', 'border-slate-200', 'dark:border-slate-800', 'shadow-sm');
+      });
+      const selectedCard = document.getElementById('doc-materia-card-' + activeMateriaKey);
+      if (selectedCard) {
+        selectedCard.classList.remove('border', 'border-slate-200', 'dark:border-slate-800', 'shadow-sm');
+        selectedCard.classList.add('border-2', 'border-brand-600', 'shadow-md');
+      }
+
+      // Update Sidebar Subject Buttons Highlight
+      document.querySelectorAll('.sidebar-materia-btn').forEach(btn => {
+        btn.className = 'sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-all cursor-pointer';
+      });
+      const selectedSidebarBtn = document.getElementById('sidebar-materia-' + activeMateriaKey);
+      if (selectedSidebarBtn) {
+        selectedSidebarBtn.className = 'sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between bg-brand-600 text-white shadow-sm transition-all cursor-pointer';
+      }
+
+      // Update Breadcrumbs & Banner
+      if (document.getElementById('docente-carrera-crumb')) document.getElementById('docente-carrera-crumb').innerText = data.carrera;
+      if (document.getElementById('docente-breadcrumb')) document.getElementById('docente-breadcrumb').innerText = data.breadcrumb;
+      if (document.getElementById('banner-carrera-tag')) document.getElementById('banner-carrera-tag').innerText = data.carreraTag;
+      if (document.getElementById('banner-grupo-tag')) document.getElementById('banner-grupo-tag').innerText = data.grupoTag;
+      if (document.getElementById('banner-materia-title')) document.getElementById('banner-materia-title').innerText = data.title;
+      if (document.getElementById('banner-materia-meta')) document.getElementById('banner-materia-meta').innerHTML = data.meta;
+      
+      // Load that specific subject's documents & data
+      if (typeof window.loadSavedDocenteData === 'function') {
+        window.loadSavedDocenteData(activeMateriaKey);
+      }
+
+      // Auto-resize textareas to fit content
+      setTimeout(() => {
+        if (typeof window.autoResizeAllTextareas === 'function') {
+          window.autoResizeAllTextareas();
+        }
+      }, 60);
+
+      window.showToast('📁 Carpeta cargada: ' + data.breadcrumb);
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+
+    window.exportExactFile = function(type) {
+      const files = {
+        'docx': '1. Programa Analitico (.docx)',
+        'pac_cronograma_xlsx': '2 y 3. PAC + Cronograma (.xlsx)',
+        'planes_xlsx': '4. PLAN DE CLASES (.xlsx)'
+      };
+      const fname = files[type] || 'documento';
+      window.showToast('📥 Exportando en formato oficial: ' + fname);
+    };
+
+    /* PDF MODAL & PRINT SELECTION */
+    window.openPdfPrintModal = function() {
+      const modalBody = `
+        <div class="space-y-4 text-xs">
+          <p class="text-slate-700 dark:text-slate-300">Selecciona qué documentos deseas incluir en la exportación PDF o imprimir para la carpeta docente activa:</p>
+          
+          <div class="space-y-2.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <label class="flex items-center gap-3 cursor-pointer select-none">
+              <input type="checkbox" id="chk-print-all" checked onchange="window.toggleAllPrintCheckboxes(this.checked)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500">
+              <span class="font-bold text-slate-900 dark:text-white">Imprimir Toda la Carpeta Docente (Todos los Tabs)</span>
+            </label>
+
+            <div class="pl-6 space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="chk-print-tab w-4 h-4 rounded text-brand-600" data-tab-target="tab-analitico" checked onchange="window.updateMasterPrintCheckbox()">
+                <span>1. Programa Analítico (.docx)</span>
+              </label>
+
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="chk-print-tab w-4 h-4 rounded text-brand-600" data-tab-target="tab-pac-matrix" checked onchange="window.updateMasterPrintCheckbox()">
+                <span>2. PAC - Pedagógico Oficial</span>
+              </label>
+
+
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="chk-print-tab w-4 h-4 rounded text-brand-600" data-tab-target="tab-cronograma-semanas" checked onchange="window.updateMasterPrintCheckbox()">
+                <span>3. Cronograma (20 Semanas / 36 Sesiones)</span>
+              </label>
+
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="chk-print-tab w-4 h-4 rounded text-brand-600" data-tab-target="tab-cronograma-planes" checked onchange="window.updateMasterPrintCheckbox()">
+                <span>4. Planes de Clase por Sesión (.xlsx)</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center pt-2">
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Se generará un documento PDF unificado listo para impresión oficial.</span>
+            <div class="flex gap-2">
+              <button onclick="window.closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+              <button onclick="window.executeSelectedPrint()" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                Generar PDF / Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal-title').innerText = 'Opciones de Impresión y Exportación a PDF';
+      document.getElementById('modal-body').innerHTML = modalBody;
+      document.getElementById('modal-footer').classList.add('hidden');
+      document.getElementById('modal-container').classList.remove('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.toggleAllPrintCheckboxes = function(isChecked) {
+      document.querySelectorAll('.chk-print-tab').forEach(chk => chk.checked = isChecked);
+    };
+
+    window.updateMasterPrintCheckbox = function() {
+      const all = Array.from(document.querySelectorAll('.chk-print-tab'));
+      const master = document.getElementById('chk-print-all');
+      master.checked = all.every(c => c.checked);
+    };
+
+    window.executeSelectedPrint = function() {
+      const selected = [];
+      document.querySelectorAll('.chk-print-tab:checked').forEach(c => {
+        selected.push(c.getAttribute('data-tab-target'));
+      });
+
+      if (selected.length === 0) {
+        window.showToast('⚠️ Por favor selecciona al menos un tab para imprimir');
+        return;
+      }
+
+      window.closeModal();
+      window.showToast('📄 Preparando vista de impresión...');
+
+      // Mark selected tabs as printable
+      document.querySelectorAll('.doc-tab-panel').forEach(panel => {
+        panel.classList.remove('print-active');
+        if (selected.includes(panel.id)) {
+          panel.classList.add('print-active');
+        }
+      });
+
+      setTimeout(() => {
+        window.print();
+        // Restore tab layout
+        document.querySelectorAll('.doc-tab-panel').forEach(panel => panel.classList.remove('print-active'));
+        window.switchDocMainTab(activeTabId);
+      }, 400);
+    };
+
+    window.addCronogramaRow = function() {
+      const tbody = document.getElementById('cronograma-table-body');
+      if (!tbody) return;
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+      tr.innerHTML = `
+        <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs"></td>
+        <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-600 dark:text-brand-400 text-xs"></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Conceptual..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-relaxed overflow-hidden resize-none">RUBRICA</textarea></td>
+      `;
+      tbody.appendChild(tr);
+      setTimeout(() => {
+        tr.querySelectorAll('textarea').forEach(t => window.autoResizeTextarea(t));
+      }, 10);
+      window.showToast('✓ Nueva fila agregada al cronograma');
+    };
+
+
+    window.triggerAutoCapture = function() {
+      const modalBody = `
+        <div class="space-y-4 text-xs">
+          <p class="text-slate-700 dark:text-slate-300">Selecciona qué archivo deseas procesar para poblar automáticamente todas sus secciones:</p>
+          <div class="grid grid-cols-3 gap-3">
+            <div onclick="window.switchDocMainTab('tab-analitico'); window.closeModal(); window.showToast('✓ Programa Analítico .docx capturado');" class="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 hover:border-blue-500 cursor-pointer text-center space-y-2 transition-all">
+              <i data-lucide="file-text" class="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400"></i>
+              <div class="font-bold text-slate-900 dark:text-white">Programa Analítico (.docx)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Unidades 1-4, Bibliografía APA y Complementaria</div>
+            </div>
+            <div onclick="window.switchDocMainTab('tab-pac-matrix'); window.closeModal(); window.showToast('✓ PAC .xlsx y Cronograma capturados');" class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 hover:border-emerald-500 cursor-pointer text-center space-y-2 transition-all">
+              <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto text-emerald-600 dark:text-emerald-400"></i>
+              <div class="font-bold text-slate-900 dark:text-white">PAC + Cronograma (.xlsx)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Estructura Oficial y Matriz de 20 Semanas</div>
+            </div>
+
+            <div onclick="window.switchDocMainTab('tab-cronograma-planes'); window.closeModal(); window.showToast('✓ Planes de Clase .xlsx capturados');" class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 hover:border-purple-500 cursor-pointer text-center space-y-2 transition-all">
+              <i data-lucide="calendar-range" class="w-8 h-8 mx-auto text-purple-600 dark:text-purple-400"></i>
+              <div class="font-bold text-slate-900 dark:text-white">Planes de Clase (.xlsx)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Saberes, Estrategias, Rúbricas y Minutaje</div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('modal-title').innerText = 'Subir y Extraer Datos de los Documentos Base';
+      document.getElementById('modal-body').innerHTML = modalBody;
+      document.getElementById('modal-footer').classList.remove('hidden');
+      document.getElementById('modal-container').classList.remove('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.selectPlanSheet = function(sheetKey) {
+      document.querySelectorAll('.plan-sheet-tab').forEach(b => {
+        b.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all';
+      });
+
+      const btn = document.getElementById('btn-plan-' + sheetKey);
+      if (btn) {
+        btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all';
+      }
+
+      const planSheets = {
+        'tema1': {
+          unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
+          tema: 'TEMA 1: CONCEPTOS DE LINGÜÍSTICA GENERAL',
+          elemento: 'Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua, para comprender la identidad sociocultural y la dinámica de interacción de las comunidades andinas...',
+          resultados: 'Reconoce los fundamentos lingüísticos, culturales y cosmovisión del quechua para valorar su rol como activo estratégico en la identidad regional y económica.',
+          logros: '1. Identifica los pilares de la cosmovisión y cultura quechua.\n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.',
+          indicadores: '1. Clasifica correctamente los elementos básicos de la cosmovisión andina.\n2. Transcribe términos cotidianos respetando el alfabeto unificado.',
+          conceptual: '- Lengua quechua\n- Cultura quechua\n- Cosmovisión quechua\n- Signografia del quechua',
+          procedimental: '- Identificación de los pilares de la cultura quechua.\n- Análisis de la influencia de la lengua.\n- Reconocimiento gráfico del alfabeto.',
+          actitudinal: '- Respeto por los saberes ancestrales.\n- Apertura a formas alternativas de organización social.\n- Rigor en el uso de la grafía oficial.',
+          ensenanza: '- Aprendizaje Basado en Indagación: Preguntas guiadas sobre la presencia del quechua en la economía local.\n- Demostración Gráfica con cartillas didácticas.',
+          aprendizaje: '- Observación Dirigida: Registro de palabras en el entorno comercial.\n- Taller de Escritura: Práctica guiada de grafemas simples.',
+          recursos: '- Diccionarios técnicos bilingües\n- Grabaciones de audio\n- Pizarra\n- Diapositivas',
+          intro: 'Activación cognitiva: Dinámica "¿Qué significa para la sociedad el idioma originario?". Presentación del silabo, objetivos de la clase y la importancia del quechua en la administración pública.',
+          cuerpo: '1. Lengua Quechua: Definición como sistema aglutinante.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza.\n4. Signografía: Introducción al alfabeto unificado.',
+          cierre: '- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.'
+        },
+        'tema2': {
+          unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
+          tema: 'TEMA 2: FONOLOGÍA DEL QUECHUA',
+          elemento: 'Analiza los fundamentos fonológicos para aplicar la correcta pronunciación y transcripción de fonemas glotalizados y aspirados.',
+          resultados: 'Emplea los fundamentos fonológicos y las estructuras morfológicas básicas del quechua para garantizar una comunicación técnica clara.',
+          logros: '1. Diferencia sonidos oclusivos simples, aspirados y glotalizados.\n2. Produce fonemas con precisión articulatoria.',
+          indicadores: '1. Discrimina pares mínimos en ejercicios auditivos.\n2. Lee textos técnicos con fluidez fonética.',
+          conceptual: '- Fonología quechua: simple, aspirada y glotizada.\n- Pares mínimos y contraste fonológico.',
+          procedimental: '- Ejercicios de discriminación auditiva.\n- Práctica articulatoria de consonantes oclusivas.',
+          actitudinal: '- Paciencia y constancia en la práctica articulatoria.\n- Valoración de la riqueza sonora de la lengua.',
+          ensenanza: '- Modelado fonético por parte del docente.\n- Uso de grabaciones de hablantes nativos.',
+          aprendizaje: '- Grabación individual y autoevaluación auditiva.\n- Repetición coral y en parejas.',
+          recursos: '- Audios de práctica fonética\n- Espejos de articulación\n- Diapositivas',
+          intro: 'Activación: Comparación sonora entre el castellano y las consonantes glotizadas del quechua.',
+          cuerpo: '1. Sistema vocálico trivocálico (a, i, u).\n2. Consonantes simples, aspiradas (-h) y glotalizadas (-k\', -p\', -t\', -q\', -ch\').\n3. Práctica de pronunciación guiada.',
+          cierre: 'Evaluación rápida de discriminación auditiva y feedback correctivo.'
+        },
+        'tema6': {
+          unidad: 'Unidad 2: LENGUA ORIGINARIA',
+          tema: 'TEMA 6: ANÁLISIS DE LOS ASPECTOS JURÍDICOS Y EDUCATIVOS',
+          elemento: 'Produce mensajes y estructuras oracionales complejas en lengua originaria para establecer una comunicación efectiva bajo el marco normativo vigente.',
+          resultados: 'Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural.',
+          logros: '1. Reconoce la importancia del estatus legal de la lengua quechua.\n2. Adapta registros lingüísticos según contextos socioeconómicos.',
+          indicadores: '1. Analiza el impacto de la Ley de Derechos y Políticas Lingüísticas.\n2. Identifica variaciones dialectales en simulaciones.',
+          conceptual: '- Lengua en contexto (Registros y situaciones)\n- Lengua y cultura (Marco legal y Ley N° 269)',
+          procedimental: '- Adaptación del habla según el lugar (mercado, oficina, hogar).\n- Integración en proyecto final.',
+          actitudinal: '- Flexibilidad comunicativa.\n- Respeto por las variantes situacionales.\n- Compromiso profesional.',
+          ensenanza: '- Análisis normativo de la Constitución y Ley de Lenguas.\n- Tutoría para el proyecto final.',
+          aprendizaje: '- Mapeo de contextos reales.\n- Redacción de propuesta técnica bilingüe.',
+          recursos: '- Constitución Política del Estado\n- Ley N° 269\n- Glosarios especializados',
+          intro: 'Activación: Caso real sobre "La barrera lingüística en el acceso a servicios financieros y de salud".',
+          cuerpo: '1. Lengua en Contexto: Adecuación pragmática del registro formal vs informal.\n2. Marco Jurídico: Ley N° 269 y derechos lingüísticos en entidades públicas y privadas.',
+          cierre: 'Propuesta de Plan de Atención al Cliente Bilingüe y entrega de resumen ejecutivo.'
+        }
+      };
+
+      const p = planSheets[sheetKey] || planSheets['tema1'];
+      document.getElementById('plan-unidad-input').value = p.unidad;
+      document.getElementById('plan-tema-input').value = p.tema;
+      document.getElementById('plan-elemento-input').value = p.elemento;
+      document.getElementById('plan-resultados-input').value = p.resultados;
+      document.getElementById('plan-logros-input').value = p.logros;
+      document.getElementById('plan-indicadores-input').value = p.indicadores;
+      document.getElementById('plan-conceptual-input').value = p.conceptual;
+      document.getElementById('plan-procedimental-input').value = p.procedimental;
+      document.getElementById('plan-actitudinal-input').value = p.actitudinal;
+      document.getElementById('plan-est-ensenanza').value = p.ensenanza;
+      document.getElementById('plan-est-aprendizaje').value = p.aprendizaje;
+      document.getElementById('plan-est-recursos').value = p.recursos;
+      document.getElementById('plan-sec-intro').value = p.intro;
+      document.getElementById('plan-sec-cuerpo').value = p.cuerpo;
+      document.getElementById('plan-sec-cierre').value = p.cierre;
+
+      window.showToast('Cargada pestaña: ' + p.tema);
+    };
+
+    window.openModal = function(title, content) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerHTML = content;
+      document.getElementById('modal-footer').classList.remove('hidden');
+      document.getElementById('modal-container').classList.remove('hidden');
+    };
+    window.closeModal = function() {
+      document.getElementById('modal-container').classList.add('hidden');
+    };
+
+    window.showToast = function(msg) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold px-4 py-3 rounded-xl border border-slate-700 dark:border-slate-600 shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = '<i data-lucide="info" class="w-4 h-4 text-brand-400"></i><span>' + msg + '</span>';
+      container.appendChild(toast);
+      if (window.lucide) window.lucide.createIcons();
+
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    };
+
+    document.addEventListener('click', function(e) {
+      const viewBtn = e.target.closest('[data-view]');
+      if (viewBtn) {
+        const viewId = viewBtn.getAttribute('data-view');
+        window.switchView(viewId);
+        return;
+      }
+
+      const docMainTab = e.target.closest('[data-doc-main-tab]');
+      if (docMainTab) {
+        const tabId = docMainTab.getAttribute('data-doc-main-tab');
+        window.switchDocMainTab(tabId);
+        return;
+      }
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  
+
+// --- REAL LIVE SISA BACKEND API & OFFICE INGESTION/EXPORT BRIDGE ---
+let activePacData = null;
+let activeProgramaData = null;
+let activePlanesData = [];
+
+// 1. File Upload Helper & Auth
+window.getAuthHeaders = function() {
+  const token = localStorage.getItem('scu_access_token');
+  const headers = {};
+  if (token && token !== 'demo_token') {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
+  return headers;
+};
+
+window.triggerFileUpload = function(accept, callback) {
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = accept;
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    callback(file);
+  };
+  fileInput.click();
+};
+
+// ── DYNAMIC PROGRAMA ANALÍTICO UNIDADES & BIBLIOGRAFÍA ENGINE ──────────────────
+let activeAnaliticoUnidades = [
+  {
+    numeroUnidad: 1,
+    titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
+    horasAcademicas: 20,
+    temas: [
+      {
+        numeroTema: 1,
+        titulo: 'Anatomía de la Entidad y el Objeto',
+        contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.\n• Ciclo de vida: de la instanciación a la recolección de memoria.\n• El "Game Loop" conceptual: métodos de actualización y renderizado de estado.'
+      },
+      {
+        numeroTema: 2,
+        titulo: 'Jerarquías de Especialización y Contratos',
+        contenido: '• Herencia: creación de linajes de entidades para la reutilización de lógica.\n• Interfaces y Clases Abstractas: definición de contratos de comportamiento.\n• Polimorfismo: capacidad de respuesta única ante señales compartidas.\n• Composición sobre herencia: ensamblaje de habilidades dinámicas en un objeto.'
+      }
+    ]
+  },
+  {
+    numeroUnidad: 2,
+    titulo: 'Robustez y Blindaje de la Lógica de Negocio',
+    horasAcademicas: 20,
+    temas: [
+      {
+        numeroTema: 3,
+        titulo: 'Encapsulamiento y Gestión de Estados Críticos',
+        contenido: '• Visibilidad y protección: niveles de acceso para la integridad del sistema.\n• Validación de estados internos y prevención de corrupción de datos.\n• Manejo de excepciones: control de flujos inesperados en sistemas en tiempo real.\n• Estrategias de recuperación y estabilidad ante fallos de lógica.'
+      }
+    ]
+  },
+  {
+    numeroUnidad: 3,
+    titulo: 'Sistemas de Interacción y Despacho de Eventos',
+    horasAcademicas: 20,
+    temas: [
+      {
+        numeroTema: 4,
+        titulo: 'Representación Visual de Objetos y Entornos',
+        contenido: '• Mapeo de objetos lógicos a componentes visuales.\n• Jerarquía de contenedores y orquestación de elementos en pantalla.\n• Estética y retroalimentación: el objeto como receptor de estilos y temas.\n• Layouts dinámicos: el comportamiento espacial de las colecciones de objetos.'
+      },
+      {
+        numeroTema: 5,
+        titulo: 'Dinámicas de Interacción y Flujo de Señales',
+        contenido: '• El modelo de eventos: suscripción y notificación entre objetos.\n• Delegados y manejadores: la respuesta del objeto a estímulos externos.\n• Gestión de periféricos: traducción de entradas físicas a acciones de objeto.\n• Sincronización de hilos y actualización de la vista desde el modelo.'
+      }
+    ]
+  },
+  {
+    numeroUnidad: 4,
+    titulo: 'Gestión y Despliegue de Soluciones Integrales',
+    horasAcademicas: 20,
+    temas: [
+      {
+        numeroTema: 6,
+        titulo: 'Ingeniería de Software y Construcción del Mundo',
+        contenido: '• Análisis de requerimientos y diseño de diagramas de interacción.\n• Patrones de diseño fundamentales (Singleton, Factory, Observer).\n• Control de versiones y flujos de trabajo en equipos técnicos.\n• Pruebas de integración, depuración y optimización de rendimiento final.'
+      }
+    ]
+  }
+];
+
+window.getAnaliticoContainer = function() {
+  let c = document.getElementById('unidades-analiticas-container');
+  if (!c) {
+    const tab = document.getElementById('tab-analitico');
+    if (tab) {
+      const cards = tab.querySelectorAll('.bg-white, .dark\\:bg-slate-900');
+      for (const card of cards) {
+        if (card.textContent.includes('Desglose de Unidades')) {
+          let inner = card.querySelector('.space-y-4');
+          if (inner) {
+            inner.id = 'unidades-analiticas-container';
+            c = inner;
+            break;
+          }
+        }
+      }
+    }
+  }
+  return c;
+};
+
+window.autoResizeTextarea = function(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(el.scrollHeight + 4, 60) + 'px';
+};
+
+window.autoResizeAllTextareas = function() {
+  document.querySelectorAll('textarea').forEach(el => {
+    window.autoResizeTextarea(el);
+  });
+};
+
+window.renderAnaliticoUnidades = function() {
+  const tab = document.getElementById('tab-analitico');
+  if (!tab) return;
+
+  // Find the desglose card
+  let card = null;
+  const cards = tab.querySelectorAll('.p-6.rounded-xl, .rounded-xl, div');
+  for (const c of cards) {
+    if (c.textContent.includes('Desglose de Unidades') && c.classList.contains('p-6')) {
+      card = c;
+      break;
+    }
+  }
+  if (!card) return;
+  card.id = 'analitico-unidades-card';
+
+  let countText = activeAnaliticoUnidades.length + (activeAnaliticoUnidades.length === 1 ? ' Unidad' : ' Unidades');
+  
+  let headerHtml = `
+    <div class="flex items-center justify-between w-full pb-3 border-b border-slate-200 dark:border-slate-800">
+      <div class="form-section-title text-blue-700 dark:text-blue-400 flex items-center gap-2 font-bold text-sm">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>Desglose de Unidades y Temas Analíticos (${countText})</span>
+      </div>
+      <button onclick="window.addAnaliticoUnidad()" type="button" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Unidad
+      </button>
+    </div>
+  `;
+
+  let bodyHtml = '';
+  if (activeAnaliticoUnidades.length === 0) {
+    bodyHtml = `
+      <div class="p-8 text-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl my-4">
+        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-3">No hay unidades cargadas en este Programa Analítico.</p>
+        <button onclick="window.addAnaliticoUnidad()" type="button" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer">
+          + Agregar Primera Unidad
+        </button>
+      </div>
+    `;
+  } else {
+    bodyHtml = '<div id="unidades-analiticas-container" class="space-y-4 pt-3">';
+    activeAnaliticoUnidades.forEach((u, uIdx) => {
+      let temasHtml = '';
+      if (u.temas && u.temas.length > 0) {
+        temasHtml = u.temas.map((t, tIdx) => `
+          <div class="p-3.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2 shadow-xs">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1">
+                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[11px] whitespace-nowrap">Tema ${t.numeroTema || (tIdx + 1)}:</span>
+                <input type="text" value="${escapeHtml(t.titulo || '')}" oninput="window.updateTemaTitle(${uIdx}, ${tIdx}, this.value)" placeholder="Título o nombre del tema analítico..." class="flex-1 p-1.5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:bg-white focus:border-blue-500">
+              </div>
+              <button onclick="window.removeAnaliticoTema(${uIdx}, ${tIdx})" type="button" class="px-2 py-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors" title="Eliminar este tema">
+                <i data-lucide="trash-2" class="w-3 h-3"></i> Quitar
+              </button>
+            </div>
+            <textarea oninput="window.updateTemaContenido(${uIdx}, ${tIdx}, this.value); window.autoResizeTextarea(this);" placeholder="Desglose detallado de contenidos, subtemas o viñetas..." style="overflow:hidden; resize:none; min-height:75px;" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs leading-relaxed focus:bg-white focus:border-blue-500 transition-all">${escapeHtml(t.contenido || '')}</textarea>
+          </div>
+        `).join('');
+      } else {
+        temasHtml = `
+          <div class="p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500">
+            Esta unidad no tiene temas registrados aún. Haz clic en <strong>+ Agregar Tema</strong>.
+          </div>
+        `;
+      }
+
+      bodyHtml += `
+        <div class="p-5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between gap-3 pb-2 border-b border-blue-200/60 dark:border-blue-900/40">
+            <div class="flex items-center gap-2 flex-1">
+              <span class="px-2.5 py-1 rounded bg-blue-600 text-white font-bold text-xs uppercase tracking-wider whitespace-nowrap">UNIDAD ${u.numeroUnidad || (uIdx + 1)}</span>
+              <input type="text" value="${escapeHtml(u.titulo || '')}" oninput="window.updateUnitTitle(${uIdx}, this.value)" placeholder="Título de la unidad temática..." class="flex-1 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-sm focus:border-blue-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.addAnaliticoTema(${uIdx})" type="button" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-sm">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Tema
+              </button>
+              <button onclick="window.removeAnaliticoUnidad(${uIdx})" type="button" class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-sm" title="Eliminar toda la unidad">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2.5">
+            ${temasHtml}
+          </div>
+        </div>
+      `;
+    });
+    bodyHtml += '</div>';
+  }
+
+  card.innerHTML = headerHtml + bodyHtml;
+  setTimeout(() => window.autoResizeAllTextareas(), 10);
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.renderAnaliticoBibliografia = function(biblioList) {
+  const tab = document.getElementById('tab-analitico');
+  if (!tab) return;
+
+  let bibCard = null;
+  const cards = tab.querySelectorAll('.p-6.rounded-xl, .rounded-xl, div');
+  for (const c of cards) {
+    if (c.textContent.includes('Bibliografía Oficial') && c.classList.contains('p-6')) {
+      bibCard = c;
+      break;
+    }
+  }
+  if (!bibCard) return;
+
+  let basicasHtml = '';
+  let compHtml = '';
+  let countBasicas = 0;
+  let countComp = 0;
+
+  if (biblioList !== undefined && biblioList !== null) {
+    const basicas = biblioList.filter(b => b.tipo === 'BASICA');
+    const complementarias = biblioList.filter(b => b.tipo !== 'BASICA');
+    countBasicas = basicas.length;
+    countComp = complementarias.length;
+    basicasHtml = basicas.map(b => b.citaApa || (b.autor + ' (' + b.anio + '). ' + b.titulo)).join('\n\n');
+    compHtml = complementarias.map(b => b.citaApa || (b.autor + ' (' + b.anio + '). ' + b.titulo)).join('\n\n');
+  } else {
+    // Initial pristine default only on first ever load
+    basicasHtml = 'Joyanes Aguilar, L. (2021). Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos (6ª ed.). McGraw-Hill.\n\nGarcía Llinás, L. F. (2022). Todo sobre Patrones de Diseño: Un enfoque práctico orientado a objetos. Ediciones de la U.\n\nVaughan, J. (2023). Object-Oriented Game Development: Real-World Design and Architecture. CRC Press.';
+    compHtml = 'Sznajdleder, P. (2021). Programación Orientada a Objetos y Estructuras de Datos. Alfaomega.\n\nKurniawan, B. (2022). User Interface Design for Developers. Packt Publishing.\n\nGarcía, A. M. (2024). Ingeniería de Software: Metodologías Ágiles y Control de Versiones en la Práctica. Marcombo.';
+    countBasicas = 3;
+    countComp = 3;
+  }
+
+  bibCard.innerHTML = `
+    <div class="form-section-title text-blue-700 dark:text-blue-400 font-bold text-sm flex items-center gap-2 mb-4">
+      <i data-lucide="book-marked" class="w-4 h-4"></i>
+      <span>Bibliografía Oficial del Programa Analítico (Norma APA)</span>
+    </div>
+    <div id="biblio-container" class="grid grid-cols-2 gap-6 text-xs">
+      <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2">
+        <div class="flex items-center justify-between">
+          <strong class="text-blue-800 dark:text-blue-300 text-xs font-bold uppercase tracking-wider">BIBLIOGRAFÍA BÁSICA / OFICIAL:</strong>
+          <span id="biblio-basica-count" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-bold text-[10px]">${countBasicas} Textos Guía</span>
+        </div>
+        <textarea id="analitico-biblio-basica-input" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Escribe aquí la bibliografía básica (formato APA) o deja vacío..." style="overflow:hidden; resize:none; min-height:120px;" class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] leading-relaxed focus:border-blue-500 transition-all">${escapeHtml(basicasHtml)}</textarea>
+      </div>
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <strong class="text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider">BIBLIOGRAFÍA COMPLEMENTARIA:</strong>
+          <span id="biblio-comp-count" class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px]">${countComp} Textos de Consulta</span>
+        </div>
+        <textarea id="analitico-biblio-comp-input" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Escribe aquí la bibliografía complementaria (formato APA) o deja vacío..." style="overflow:hidden; resize:none; min-height:120px;" class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] leading-relaxed focus:border-blue-500 transition-all">${escapeHtml(compHtml)}</textarea>
+      </div>
+    </div>
+  `;
+  setTimeout(() => window.autoResizeAllTextareas(), 10);
+  if (window.lucide) window.lucide.createIcons();
+};
+
+
+window.addAnaliticoUnidad = function() {
+  const newNum = activeAnaliticoUnidades.length + 1;
+  activeAnaliticoUnidades.push({
+    numeroUnidad: newNum,
+    titulo: 'Nueva Unidad ' + newNum,
+    horasAcademicas: 20,
+    temas: [
+      {
+        numeroTema: 1,
+        titulo: 'Tema 1: Introducción y Fundamentos',
+        contenido: '• Conceptos básicos y contextualización de la temática.\n• Aplicaciones iniciales.'
+      }
+    ]
+  });
+  window.renderAnaliticoUnidades();
+  
+  // Synchronize with PAC Elementos de Competencia
+  if (!activePacElementosCompetencia) activePacElementosCompetencia = [];
+  activePacElementosCompetencia.push('Aplica saberes y metodologías correspondientes a la Unidad ' + newNum + '.');
+  if (typeof window.renderPacElementosCompetencia === 'function') {
+    window.renderPacElementosCompetencia();
+  }
+
+  window.scheduleAutoSave(500);
+  window.showToast('➕ Unidad ' + newNum + ' agregada y articulada con Elemento de Competencia ' + newNum);
+};
+
+window.removeAnaliticoUnidad = function(uIdx) {
+  if (confirm('¿Estás seguro de eliminar la Unidad ' + (uIdx + 1) + '?')) {
+    activeAnaliticoUnidades.splice(uIdx, 1);
+    activeAnaliticoUnidades.forEach((u, i) => u.numeroUnidad = i + 1);
+    window.renderAnaliticoUnidades();
+
+    // Synchronize with PAC Elementos de Competencia
+    if (activePacElementosCompetencia && activePacElementosCompetencia[uIdx] !== undefined) {
+      activePacElementosCompetencia.splice(uIdx, 1);
+      if (typeof window.renderPacElementosCompetencia === 'function') {
+        window.renderPacElementosCompetencia();
+      }
+    }
+
+    window.scheduleAutoSave(500);
+    window.showToast('🗑 Unidad eliminada');
+  }
+};
+
+window.addAnaliticoTema = function(uIdx) {
+  const unit = activeAnaliticoUnidades[uIdx];
+  if (!unit) return;
+  if (!unit.temas) unit.temas = [];
+  const nextTemaNum = unit.temas.length + 1;
+  unit.temas.push({
+    numeroTema: nextTemaNum,
+    titulo: 'Tema ' + nextTemaNum + ': Nuevo Tema Analítico',
+    contenido: '• Desglose de contenidos y puntos a desarrollar.'
+  });
+  window.renderAnaliticoUnidades();
+  window.scheduleAutoSave(500);
+};
+
+window.removeAnaliticoTema = function(uIdx, tIdx) {
+  const unit = activeAnaliticoUnidades[uIdx];
+  if (!unit || !unit.temas) return;
+  unit.temas.splice(tIdx, 1);
+  unit.temas.forEach((t, i) => t.numeroTema = i + 1);
+  window.renderAnaliticoUnidades();
+  window.scheduleAutoSave(500);
+};
+
+
+window.updateUnitTitle = function(uIdx, val) {
+  if (activeAnaliticoUnidades[uIdx]) {
+    activeAnaliticoUnidades[uIdx].titulo = val;
+    if (typeof window.renderPacElementosCompetencia === 'function') {
+      window.renderPacElementosCompetencia();
+    }
+    window.scheduleAutoSave();
+  }
+};
+
+
+window.updateTemaTitle = function(uIdx, tIdx, val) {
+  if (activeAnaliticoUnidades[uIdx] && activeAnaliticoUnidades[uIdx].temas[tIdx]) {
+    activeAnaliticoUnidades[uIdx].temas[tIdx].titulo = val;
+    window.scheduleAutoSave();
+  }
+};
+
+window.updateTemaContenido = function(uIdx, tIdx, val) {
+  if (activeAnaliticoUnidades[uIdx] && activeAnaliticoUnidades[uIdx].temas[tIdx]) {
+    activeAnaliticoUnidades[uIdx].temas[tIdx].contenido = val;
+    window.scheduleAutoSave();
+  }
+};
+
+// ── PERSISTENCE ENGINE: GOOGLE-DOCS STYLE AUTO-SAVE & LOAD ───────────────────
+let autoSaveTimer = null;
+
+window.updateAutoSaveStatus = function(status) {
+  // 1. Update Top Bar Badge (if exists)
+  let badge = document.getElementById('autosave-status-badge');
+  if (badge) {
+    if (status === 'SAVING') {
+      badge.className = 'px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-medium text-[11px] flex items-center gap-1.5 transition-all shadow-xs';
+      badge.innerHTML = '<i data-lucide="refresh-cw" class="w-3 h-3 animate-spin text-amber-600 dark:text-amber-400"></i><span>Guardando...</span>';
+    } else if (status === 'SAVED') {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      badge.className = 'px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-medium text-[11px] flex items-center gap-1.5 transition-all shadow-xs';
+      badge.innerHTML = '<i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i><span>Guardado (' + timeStr + ')</span>';
+    } else if (status === 'DIRTY') {
+      badge.className = 'px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700/60 font-medium text-[11px] flex items-center gap-1.5 transition-all shadow-xs';
+      badge.innerHTML = '<i data-lucide="edit-3" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i><span>Editando...</span>';
+    }
+  }
+
+  // 2. Update Bottom-Right Floating Toast Notification
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none';
+    document.body.appendChild(container);
+  }
+
+  let toast = document.getElementById('autosave-live-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'autosave-live-toast';
+    container.appendChild(toast);
+  }
+
+  if (status === 'DIRTY') {
+    toast.className = 'bg-slate-900/95 dark:bg-slate-800/95 text-blue-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-blue-500/40 shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-auto';
+    toast.innerHTML = '<i data-lucide="edit-3" class="w-4 h-4 text-blue-400 animate-pulse"></i><span>✏️ Editando contenido...</span>';
+    toast.style.opacity = '1';
+    toast.style.display = 'flex';
+  } else if (status === 'SAVING') {
+    toast.className = 'bg-slate-900/95 dark:bg-slate-800/95 text-amber-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-amber-500/40 shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-auto';
+    toast.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4 text-amber-400 animate-spin"></i><span>⏳ Guardando automáticamente en la nube...</span>';
+    toast.style.opacity = '1';
+    toast.style.display = 'flex';
+  } else if (status === 'SAVED') {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    toast.className = 'bg-slate-900/95 dark:bg-slate-800/95 text-emerald-300 text-xs font-semibold px-4 py-2.5 rounded-xl border border-emerald-500/40 shadow-2xl flex items-center gap-2.5 transition-all duration-300 pointer-events-auto';
+    toast.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i><span>✓ Cambios guardados automáticamente (' + timeStr + ')</span>';
+    toast.style.opacity = '1';
+    toast.style.display = 'flex';
+
+    if (window._autosaveToastHideTimeout) clearTimeout(window._autosaveToastHideTimeout);
+    window._autosaveToastHideTimeout = setTimeout(() => {
+      if (toast) {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          if (toast && toast.style.opacity === '0') {
+            toast.style.display = 'none';
+          }
+        }, 300);
+      }
+    }, 3500);
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.updateAutoSaveBadge = window.updateAutoSaveStatus;
+
+window.scheduleAutoSave = function(delayMs = 1200) {
+  window.updateAutoSaveStatus('DIRTY');
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+  autoSaveTimer = setTimeout(async () => {
+    window.updateAutoSaveStatus('SAVING');
+    try {
+      await window.saveCurrentDocenteData(true);
+      window.updateAutoSaveStatus('SAVED');
+    } catch (e) {
+      window.updateAutoSaveStatus('SAVED');
+    }
+  }, delayMs);
+};
+
+
+window.saveCurrentDocenteData = async function(silent = false) {
+  if (!silent) {
+    window.showToast('⏳ Guardando cambios en la base de datos...');
+  }
+
+  const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+  const codigo = document.getElementById('analitico-codigo-input')?.value || defData.codigo;
+  const semestre = document.getElementById('analitico-semestre-input')?.value || defData.semestre;
+  const nombre = document.getElementById('analitico-asig-input')?.value || defData.nombre;
+  const creditos = parseInt(document.getElementById('analitico-creditos-input')?.value || defData.creditos) || 12;
+  const ht = parseInt(document.getElementById('analitico-ht-input')?.value?.replace(/\D/g, '') || defData.horasTeoricas) || 2;
+  const hp = parseInt(document.getElementById('analitico-hp-input')?.value?.replace(/\D/g, '') || defData.horasPracticas) || 4;
+  const carac = document.getElementById('programa-caracterizacion')?.value || defData.caracterizacion;
+  const macro = document.getElementById('programa-macrocompetencia')?.value || defData.macroCompetencia;
+  const evalSis = document.getElementById('programa-sistema-evaluacion')?.value || defData.sistemaEvaluacion;
+
+  // Read bibliographies directly from textareas
+  const bibBasicaEl = document.getElementById('analitico-biblio-basica-input');
+  const bibCompEl = document.getElementById('analitico-biblio-comp-input');
+  const bibBasicaText = bibBasicaEl ? bibBasicaEl.value : '';
+  const bibCompText = bibCompEl ? bibCompEl.value : '';
+
+  const bibliografia = [];
+  bibBasicaText.split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
+    bibliografia.push({
+      tipo: 'BASICA',
+      citaApa: line,
+      autor: 'UNITEPC',
+      anio: 2026,
+      titulo: line
+    });
+  });
+
+  bibCompText.split('\n').map(s => s.trim()).filter(Boolean).forEach(line => {
+    bibliografia.push({
+      tipo: 'COMPLEMENTARIA',
+      citaApa: line,
+      autor: 'UNITEPC',
+      anio: 2026,
+      titulo: line
+    });
+  });
+
+  const programaPayload = {
+    asignacionId: activeAsignacionId || defData.asignacionId || 1,
+    codigoAsignatura: codigo,
+    nombreAsignatura: nombre,
+    semestre: semestre,
+    creditos: creditos,
+    horasTeoricas: ht,
+    horasPracticas: hp,
+    caracterizacion: carac,
+    macroCompetencia: macro,
+    sistemaEvaluacion: evalSis,
+    unidades: activeAnaliticoUnidades,
+    bibliografia: bibliografia
+  };
+
+  // Immediate local cache per subject
+  localStorage.setItem('sisa_saved_programa_analitico_' + activeMateriaKey, JSON.stringify(programaPayload));
+  localStorage.setItem('sisa_active_materia_key', activeMateriaKey);
+  localStorage.setItem('sisa_saved_user_configured', 'true');
+
+  // Also persist PAC state including dynamic elementos de competencia
+  const savedPacStr = localStorage.getItem('sisa_saved_pac_' + activeMateriaKey);
+  let curPac = {};
+  if (savedPacStr) {
+    try { curPac = JSON.parse(savedPacStr); } catch(e) {}
+  }
+  curPac.elementosCompetencia = activePacElementosCompetencia;
+  if (document.getElementById('pac-justificacion-input')) curPac.justificacion = document.getElementById('pac-justificacion-input').value;
+  if (document.getElementById('pac-proposito-input')) curPac.propositoGeneral = document.getElementById('pac-proposito-input').value;
+  if (document.getElementById('pac-competencia-global')) curPac.competenciaGlobal = document.getElementById('pac-competencia-global').value;
+  if (document.getElementById('pac-unidad-competencia')) curPac.unidadCompetencia = document.getElementById('pac-unidad-competencia').value;
+  
+  if (typeof window.extractCurrentCronogramaFromDom === 'function') {
+    const liveCron = window.extractCurrentCronogramaFromDom();
+    if (liveCron.length > 0) {
+      curPac.matriz7 = liveCron;
+    }
+  }
+  
+  localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(curPac));
+
+
+  try {
+    const resp = await fetch('/api/v1/planificaciones/programa-analitico', {
+
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...window.getAuthHeaders()
+      },
+      body: JSON.stringify(programaPayload)
+    });
+    
+    if (resp.ok) {
+      if (!silent) window.showToast('✅ ¡Planificación de ' + codigo + ' guardada exitosamente!');
+      window.updateAutoSaveBadge('SAVED');
+    } else {
+      if (!silent) window.showToast('✅ Cambios guardados (Borrador activo: ' + codigo + ')');
+      window.updateAutoSaveBadge('SAVED');
+    }
+  } catch (e) {
+    if (!silent) window.showToast('✅ Cambios guardados localmente (' + codigo + ')');
+    window.updateAutoSaveBadge('SAVED');
+  }
+};
+
+
+window.loadSavedDocenteData = function(materiaKey) {
+  const mKey = materiaKey || localStorage.getItem('sisa_active_materia_key') || activeMateriaKey || 'sis213g1';
+  activeMateriaKey = mKey;
+  const defData = materiasData[mKey] || materiasData['sis213g1'];
+  activeAsignacionId = defData.asignacionId || 1;
+
+  // 1. Programa Analítico
+  const saved = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
+  let pData = defData;
+  if (saved) {
+    try {
+      pData = Object.assign({}, defData, JSON.parse(saved));
+    } catch (e) {}
+  }
+
+  if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = pData.codigoAsignatura || pData.codigo || '';
+  if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '';
+  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = pData.nombreAsignatura || pData.nombre || '';
+  if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '';
+  if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '');
+  if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '');
+  if (document.getElementById('programa-caracterizacion')) document.getElementById('programa-caracterizacion').value = pData.caracterizacion || '';
+  if (document.getElementById('programa-macrocompetencia')) document.getElementById('programa-macrocompetencia').value = pData.macroCompetencia || '';
+  if (document.getElementById('programa-sistema-evaluacion')) document.getElementById('programa-sistema-evaluacion').value = pData.sistemaEvaluacion || '';
+
+  activeAnaliticoUnidades = pData.unidades ? JSON.parse(JSON.stringify(pData.unidades)) : [];
+  window.renderAnaliticoUnidades();
+  window.renderAnaliticoBibliografia(pData.bibliografia || []);
+
+  // 2. PAC Pedagógico
+  const savedPac = localStorage.getItem('sisa_saved_pac_' + mKey);
+  if (savedPac) {
+    try {
+      const pacData = JSON.parse(savedPac);
+      if (!pacData.matriz7 || !Array.isArray(pacData.matriz7) || pacData.matriz7.length === 0) {
+        pacData.matriz7 = window.generateDefaultMatriz7(mKey);
+      }
+      if (typeof window.populatePacDom === 'function') {
+        window.populatePacDom(pacData);
+      }
+    } catch (pe) {}
+  } else {
+    const defPac = {
+      carrera: defData.carrera,
+      nombreAsignatura: defData.nombre,
+      codigoAsignatura: defData.codigo,
+      semestre: defData.semestre,
+      creditos: defData.creditos,
+      horasTeoricasPracticas: (defData.horasTeoricas || '2') + 'T / ' + (defData.horasPracticas || '4') + 'P',
+      justificacion: defData.caracterizacion,
+      propositoGeneral: defData.macroCompetencia,
+      competenciaGlobal: defData.macroCompetencia,
+      unidadCompetencia: 'Maneja conceptos y aplicaciones para el desempeño profesional.',
+      elementoCompetencia1: 'Aplica herramientas teórico-prácticas para la resolución de problemas de la asignatura.',
+      elementoCompetencia2: 'Desarrolla proyectos y actividades integradoras.',
+      metodologiaAula: 'Metodología constructivista socioformativa con talleres prácticos y resolución de problemas.',
+      sistemaEvaluacion: defData.sistemaEvaluacion,
+      normativaCurso: '10 minutos de tolerancia al ingreso a clases.\nLlegar puntual a clase.\nMantener limpio el ambiente de trabajo.\nEntregar trabajos en el tiempo establecido.',
+      p1NotaTeorica: 20, p1NotaPractica: 10,
+      p2NotaTeorica: 20, p2NotaPractica: 10,
+      efNotaTeorica: 30, efNotaPractica: 10,
+      bibliografia: defData.bibliografia,
+      elementosCompetencia: defData.elementosCompetencia || [],
+      matriz7: window.generateDefaultMatriz7(mKey)
+    };
+    if (typeof window.populatePacDom === 'function') {
+      window.populatePacDom(defPac);
+    }
+  }
+
+  return true;
+};
+
+window.generateDefaultMatriz7 = function(mKey) {
+  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? materiasData['sis213g1'] : null);
+  const units = (def && def.unidades) ? def.unidades : [];
+  const sessions = [];
+  let sNum = 1;
+  for (let w = 1; w <= 20; w++) {
+    for (let ses = 1; ses <= 2; ses++) {
+      if (w === 7 && ses === 2) {
+        sessions.push({
+          semana: w,
+          nroSesion: sNum++,
+          unidadTematica: 'EVALUACIÓN PARCIAL',
+          contenidoEspecifico: 'Primer Examen Parcial Teórico y Práctico',
+          saberConceptual: 'Evaluación de saberes conceptuales',
+          saberProcedimental: 'Resolución de problemas técnicos y desarrollo de soluciones',
+          saberActitudinal: 'Rigor ético y probidad académica',
+          criterioDesempeno: 'Demuestra dominio de los contenidos y competencias evaluadas.',
+          instrumentoEvaluacion: 'PRUEBA_ESCRITA'
+        });
+      } else if (w === 14 && ses === 2) {
+        sessions.push({
+          semana: w,
+          nroSesion: sNum++,
+          unidadTematica: 'EVALUACIÓN PARCIAL',
+          contenidoEspecifico: 'Segundo Examen Parcial Teórico y Práctico',
+          saberConceptual: 'Evaluación de saberes avanzados',
+          saberProcedimental: 'Resolución de problemas de alta complejidad',
+          saberActitudinal: 'Rigor ético y probidad académica',
+          criterioDesempeno: 'Demuestra solvencia en el desarrollo y aplicación de saberes.',
+          instrumentoEvaluacion: 'PRUEBA_ESCRITA'
+        });
+      } else if (w === 20 && ses === 2) {
+        sessions.push({
+          semana: w,
+          nroSesion: sNum++,
+          unidadTematica: 'EVALUACIÓN FINAL',
+          contenidoEspecifico: 'Examen Final y Sustentación de Proyecto Integrador',
+          saberConceptual: 'Integración global de saberes del semestre',
+          saberProcedimental: 'Defensa técnica y validación práctica de resultados',
+          saberActitudinal: 'Solvencia profesional y responsabilidad',
+          criterioDesempeno: 'Alcanza la competencia global establecida en el Programa Analítico.',
+          instrumentoEvaluacion: 'RUBRICA'
+        });
+      } else {
+        const uIdx = units.length > 0 ? Math.min(Math.floor((w - 1) / Math.max(1, Math.ceil(20 / units.length))), units.length - 1) : 0;
+        const u = units[uIdx] || { titulo: 'Unidad ' + (uIdx + 1) };
+        sessions.push({
+          semana: w,
+          nroSesion: sNum++,
+          unidadTematica: 'Unidad ' + (uIdx + 1) + ': ' + (u.titulo || 'Contenidos de la Asignatura'),
+          contenidoEspecifico: 'Desarrollo de saberes teórico-prácticos de la Unidad ' + (uIdx + 1),
+          saberConceptual: 'Fundamentos teóricos de ' + (u.titulo || 'la temática'),
+          saberProcedimental: 'Aplicación guiada en entornos prácticos y resolución de problemas',
+          saberActitudinal: 'Participación activa, pensamiento crítico y trabajo en equipo',
+          criterioDesempeno: 'Aplica los procedimientos técnicos en el entorno de aprendizaje.',
+          instrumentoEvaluacion: 'RUBRICA'
+        });
+      }
+    }
+  }
+  return sessions;
+};
+
+
+
+// ── DYNAMIC PAC ELEMENTOS DE COMPETENCIA ENGINE ─────────────────────────────
+let activePacElementosCompetencia = [];
+
+window.renderPacElementosCompetencia = function() {
+  const container = document.getElementById('pac-elementos-competencia-container');
+  if (!container) return;
+
+  if (!activePacElementosCompetencia || activePacElementosCompetencia.length === 0) {
+    const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+    if (defData && defData.elementosCompetencia && defData.elementosCompetencia.length > 0) {
+      activePacElementosCompetencia = [...defData.elementosCompetencia];
+    } else {
+      const defCount = (activeAnaliticoUnidades && activeAnaliticoUnidades.length > 0) ? activeAnaliticoUnidades.length : 2;
+      activePacElementosCompetencia = [];
+      for (let i = 0; i < defCount; i++) {
+        activePacElementosCompetencia.push('');
+      }
+    }
+  }
+
+  container.innerHTML = '';
+  activePacElementosCompetencia.forEach((elemText, idx) => {
+    const num = idx + 1;
+    const unitTitle = (activeAnaliticoUnidades && activeAnaliticoUnidades[idx]) ? ': ' + activeAnaliticoUnidades[idx].titulo : '';
+    const item = document.createElement('div');
+    item.className = 'p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 transition-all';
+    item.innerHTML = `
+      <div class="flex items-center justify-between">
+        <strong class="text-slate-900 dark:text-white flex items-center gap-1.5">
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">Elemento de Competencia ${num} (Unidad ${num}${unitTitle})</span>
+        </strong>
+        <button type="button" onclick="window.removePacElementoCompetencia(${idx})" class="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer" title="Eliminar este elemento">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+      <textarea id="pac-elem-comp-${num}" rows="1" placeholder="Elemento de Competencia ${num}..." 
+        oninput="window.autoResizeTextarea(this); window.updatePacElementoCompetencia(${idx}, this.value)" 
+        class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500 text-xs leading-relaxed overflow-hidden resize-none">${elemText || ''}</textarea>
+    `;
+    container.appendChild(item);
+  });
+
+  setTimeout(() => {
+    if (typeof window.autoResizeAllTextareas === 'function') {
+      window.autoResizeAllTextareas();
+    }
+  }, 10);
+
+  if (window.lucide) window.lucide.createIcons();
+};
+
+
+window.addPacElementoCompetencia = function() {
+  if (!activePacElementosCompetencia) activePacElementosCompetencia = [];
+  activePacElementosCompetencia.push('');
+  window.renderPacElementosCompetencia();
+  if (typeof window.scheduleAutoSave === 'function') window.scheduleAutoSave(500);
+};
+
+window.removePacElementoCompetencia = function(idx) {
+  if (!activePacElementosCompetencia || activePacElementosCompetencia.length <= 1) {
+    activePacElementosCompetencia = [''];
+  } else {
+    activePacElementosCompetencia.splice(idx, 1);
+  }
+  window.renderPacElementosCompetencia();
+  if (typeof window.scheduleAutoSave === 'function') window.scheduleAutoSave(500);
+};
+
+window.updatePacElementoCompetencia = function(idx, val) {
+  if (activePacElementosCompetencia && activePacElementosCompetencia[idx] !== undefined) {
+    activePacElementosCompetencia[idx] = val;
+    if (typeof window.scheduleAutoSave === 'function') window.scheduleAutoSave();
+  }
+};
+
+
+
+
+function cleanText(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/_x0093_/g, '"')
+    .replace(/_x0094_/g, '"')
+    .replace(/_x0092_/g, "'")
+    .replace(/_x0091_/g, "'")
+    .replace(/_x0096_/g, '-')
+    .replace(/_x0097_/g, '-')
+    .replace(/[\u0093]/g, '"')
+    .replace(/[\u0094]/g, '"')
+    .replace(/[\u0092]/g, "'")
+    .replace(/[\u0091]/g, "'")
+    .replace(/[\u0096]/g, '-')
+    .replace(/[\u0097]/g, '-')
+    .replace(/[\u007F-\u009F]/g, '')
+    .trim();
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const cleaned = cleanText(str);
+  return String(cleaned).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+
+
+// 2. Real Word (.docx) Import for Programa Analitico
+window.importProgramaDocx = function() {
+  window.triggerFileUpload('.docx', async (file) => {
+    window.showToast('⏳ Subiendo y procesando Word: ' + file.name + '...');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('asignacionId', String(activeAsignacionId || 1));
+    try {
+      const resp = await fetch('/api/v1/office/import/programa-analitico', {
+        method: 'POST',
+        headers: window.getAuthHeaders(),
+        body: formData
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      const data = json.data || json;
+      activeProgramaData = data;
+      localStorage.setItem('sisa_saved_programa_analitico_' + activeMateriaKey, JSON.stringify(data));
+
+      
+      // Switch tab first so target DOM elements are active
+      window.switchDocMainTab('tab-analitico');
+
+      if (data.codigoAsignatura !== undefined && data.codigoAsignatura !== null) {
+        const el = document.getElementById('analitico-codigo-input');
+        if (el) el.value = data.codigoAsignatura;
+      }
+      if (data.semestre !== undefined && data.semestre !== null) {
+        const el = document.getElementById('analitico-semestre-input');
+        if (el) el.value = data.semestre;
+      }
+      if (data.nombreAsignatura !== undefined && data.nombreAsignatura !== null) {
+        const el = document.getElementById('analitico-asig-input');
+        if (el) el.value = data.nombreAsignatura;
+      }
+      if (data.creditos !== undefined && data.creditos !== null) {
+        const el = document.getElementById('analitico-creditos-input');
+        if (el) el.value = data.creditos;
+      }
+      if (data.horasTeoricas !== undefined && data.horasTeoricas !== null) {
+        const el = document.getElementById('analitico-ht-input');
+        if (el) el.value = data.horasTeoricas + ' Horas';
+      }
+      if (data.horasPracticas !== undefined && data.horasPracticas !== null) {
+        const el = document.getElementById('analitico-hp-input');
+        if (el) el.value = data.horasPracticas + ' Horas';
+      }
+      if (data.horasSemestre !== undefined && data.horasSemestre !== null) {
+        const el = document.getElementById('analitico-hs-input');
+        if (el) el.value = data.horasSemestre + ' Horas';
+      }
+      if (data.macroCompetencia !== undefined && data.macroCompetencia !== null) {
+        const el = document.getElementById('programa-macrocompetencia');
+        if (el) el.value = data.macroCompetencia;
+      }
+      if (data.caracterizacion !== undefined && data.caracterizacion !== null) {
+        const el = document.getElementById('programa-caracterizacion');
+        if (el) el.value = data.caracterizacion;
+      }
+      if (data.sistemaEvaluacion !== undefined && data.sistemaEvaluacion !== null) {
+        const el = document.getElementById('programa-sistema-evaluacion');
+        if (el) el.value = data.sistemaEvaluacion;
+      }
+
+      if (data.unidades && data.unidades.length > 0) {
+        activeAnaliticoUnidades = data.unidades.map((u, i) => {
+          let temas = u.temas;
+          if (!temas || temas.length === 0) {
+            temas = [
+              {
+                numeroTema: 1,
+                titulo: 'Tema 1: ' + (u.titulo || 'Contenidos'),
+                contenido: u.saberesConceptuales || ''
+              }
+            ];
+          }
+          return {
+            numeroUnidad: u.numeroUnidad || (i + 1),
+            titulo: u.titulo || ('Unidad ' + (i + 1)),
+            horasAcademicas: u.horasAcademicas || 20,
+            temas: temas
+          };
+        });
+      } else {
+        activeAnaliticoUnidades = [];
+      }
+      window.renderAnaliticoUnidades();
+
+      // Cleanly replace bibliografía with imported data
+      window.renderAnaliticoBibliografia(data.bibliografia || []);
+
+      // Auto-generate PAC Elementos de Competencia matching the imported learning units
+      if (activeAnaliticoUnidades && activeAnaliticoUnidades.length > 0) {
+        activePacElementosCompetencia = activeAnaliticoUnidades.map((u, i) => {
+          if (activePacElementosCompetencia && activePacElementosCompetencia[i] && activePacElementosCompetencia[i].trim().length > 0) {
+            return activePacElementosCompetencia[i];
+          }
+          return 'Aplica los conceptos, procedimientos y metodologías de ' + (u.titulo || ('la Unidad ' + (i + 1))) + ' en la resolución de problemas de la disciplina.';
+        });
+        if (typeof window.renderPacElementosCompetencia === 'function') {
+          window.renderPacElementosCompetencia();
+        }
+      }
+
+      // Auto-save freshly imported data to database & localStorage
+      await window.saveCurrentDocenteData(true);
+
+      const totalTemas = activeAnaliticoUnidades.reduce((acc, u) => acc + (u.temas ? u.temas.length : 0), 0);
+      window.showToast('✅ ¡Programa Analítico importado! (' + activeAnaliticoUnidades.length + ' unidades articuladas con ' + activeAnaliticoUnidades.length + ' Elementos de Competencia en el PAC)');
+
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      window.showToast('❌ Error al importar Programa Analítico: ' + err.message);
+    }
+  });
+};
+
+
+
+// Helper to populate PAC Pedagógico Oficial in the DOM
+window.populatePacDom = function(data) {
+
+
+  if (!data) return;
+  const setVal = (id, val, placeholderFallback) => {
+    let el = document.getElementById(id);
+    if (!el && placeholderFallback) {
+      el = document.querySelector(placeholderFallback);
+    }
+    if (el) {
+      el.value = (val !== undefined && val !== null) ? cleanText(val) : '';
+    }
+  };
+
+  // 1.- Identificación
+  setVal('pac-carrera-input', data.carrera || 'FACEFA (ADMINISTRACIÓN / AUDITORÍA)');
+  setVal('pac-asig-input', data.nombreAsignatura || 'TALLER DE IDIOMAS');
+  setVal('pac-codigo-input', data.codigoAsignatura || 'ICEC23');
+  setVal('pac-tipo-curso', data.tipoCurso || 'Obligatorio');
+  setVal('pac-modalidad', data.modalidad || 'Presencial');
+  setVal('pac-semestre-input', data.semestre || '4°');
+  setVal('pac-prerequisito', data.preRequisito || 'Ninguno');
+  setVal('pac-creditos', data.creditos || '8.0');
+  setVal('pac-sesiones-sem', data.sesionesSemanales ? data.sesionesSemanales + ' Sesiones (4 Horas)' : '2 Sesiones (4 Horas)');
+  setVal('pac-horas-tp', data.horasTeoricasPracticas || '2T / 4P');
+
+  // 2.- Docente Responsable
+  setVal('pac-docente-nombre', data.nombreDocente);
+  setVal('pac-docente-email', data.emailDocente);
+  setVal('pac-docente-formacion', data.formacionDocente);
+  setVal('pac-docente-telefono', data.telefonoDocente);
+
+  // 3 & 4.- Justificación & Propósito General
+  setVal('pac-justificacion-input', data.justificacion);
+  setVal('pac-proposito-input', data.propositoGeneral);
+
+  // 5 & 6.- Competencias & Elementos
+  setVal('pac-competencia-global', data.competenciaGlobal);
+  setVal('pac-unidad-competencia', data.unidadCompetencia);
+
+  if (data.elementosCompetencia && Array.isArray(data.elementosCompetencia) && data.elementosCompetencia.length > 0) {
+    activePacElementosCompetencia = data.elementosCompetencia.map(e => cleanText(e));
+  } else {
+    const list = [];
+    if (data.elementoCompetencia1) list.push(cleanText(data.elementoCompetencia1));
+    if (data.elementoCompetencia2) list.push(cleanText(data.elementoCompetencia2));
+    if (list.length > 0) {
+      activePacElementosCompetencia = list;
+    } else {
+      const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+      if (defData && defData.elementosCompetencia && defData.elementosCompetencia.length > 0) {
+        activePacElementosCompetencia = [...defData.elementosCompetencia];
+      } else {
+        const count = (activeAnaliticoUnidades && activeAnaliticoUnidades.length > 0) ? activeAnaliticoUnidades.length : 2;
+        activePacElementosCompetencia = [];
+        for (let i = 0; i < count; i++) activePacElementosCompetencia.push('');
+      }
+    }
+  }
+  if (typeof window.renderPacElementosCompetencia === 'function') {
+    window.renderPacElementosCompetencia();
+  }
+
+  // 8, 9, 12, 14.- Metodología, Evaluación, Normativas
+
+  setVal('pac-metodologia-aula', data.metodologiaAula, 'textarea[placeholder*="Enfoque metodológico"]');
+  setVal('pac-sistema-evaluacion', data.sistemaEvaluacion, 'textarea[placeholder*="proceso evaluador"]');
+  setVal('pac-normativa-acuerdos', data.normativaCurso, 'textarea[placeholder*="Normativa y acuerdos"]');
+  
+  // 9.- Ponderaciones Parciales y Final (Selector directo a inputs pts)
+  const ptsInputs = document.querySelectorAll('#tab-pac-matrix input[placeholder*="pts"], #tab-pac-matrix .grid-cols-3 input');
+  if (ptsInputs.length >= 6) {
+    ptsInputs[0].value = data.p1NotaTeorica || '20';
+    ptsInputs[1].value = data.p1NotaPractica || '10';
+    ptsInputs[2].value = data.p2NotaTeorica || '20';
+    ptsInputs[3].value = data.p2NotaPractica || '10';
+    ptsInputs[4].value = data.efNotaTeorica || '30';
+    ptsInputs[5].value = data.efNotaPractica || '10';
+  } else {
+    setVal('pac-p1-teorica', data.p1NotaTeorica || '20');
+    setVal('pac-p1-practica', data.p1NotaPractica || '10');
+    setVal('pac-p2-teorica', data.p2NotaTeorica || '20');
+    setVal('pac-p2-practica', data.p2NotaPractica || '10');
+    setVal('pac-ef-teorica', data.efNotaTeorica || '30');
+    setVal('pac-ef-practica', data.efNotaPractica || '10');
+  }
+
+  // 12.- Criterios y Normativa de la Asignatura
+  const normArea = document.querySelector('#pac-normativa-acuerdos, #tab-pac-matrix textarea[placeholder*="Normativa y acuerdos"], #tab-pac-matrix textarea[placeholder*="Son acuerdos"]');
+  if (normArea) {
+    normArea.value = cleanText(data.normativaCurso || '');
+  }
+
+  // 14.- Bibliografía Oficial (Específica y Complementaria)
+  const bibArea = document.querySelector('#pac-bibliografia-textarea, #tab-pac-matrix textarea[placeholder*="Bibliografía oficial"]');
+  if (bibArea) {
+    if (data.bibliografiaOficial && data.bibliografiaOficial.trim().length > 0) {
+      bibArea.value = cleanText(data.bibliografiaOficial);
+    } else if (data.bibliografia && Array.isArray(data.bibliografia) && data.bibliografia.length > 0) {
+      bibArea.value = data.bibliografia.map(b => b.citaApa || (b.autor + ' (' + b.anio + '). ' + b.titulo)).join('\n\n');
+    }
+  }
+
+
+  // Matriz 7 (Cronograma de 20 Semanas)
+  const tbody = document.getElementById('cronograma-table-body');
+  if (tbody && data.matriz7 && Array.isArray(data.matriz7) && data.matriz7.length > 0) {
+    tbody.innerHTML = '';
+    data.matriz7.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+      tr.innerHTML = `
+        <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.semana || ''))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs"></td>
+        <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.nroSesion || ''))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-600 dark:text-brand-400 text-xs"></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.unidadTematica || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.contenidoEspecifico || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Conceptual..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberConceptual || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberProcedimental || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberActitudinal || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.criterioDesempeno || '')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.instrumentoEvaluacion || 'RUBRICA')}</textarea></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    setTimeout(() => {
+      if (typeof window.autoResizeAllTextareas === 'function') {
+        window.autoResizeAllTextareas();
+      }
+    }, 20);
+  }
+};
+
+
+window.extractCurrentCronogramaFromDom = function() {
+  const tbody = document.getElementById('cronograma-table-body');
+  if (!tbody) return [];
+  const rows = tbody.querySelectorAll('tr');
+  const sessions = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input, textarea');
+    if (inputs.length >= 9) {
+      sessions.push({
+        semana: parseInt(inputs[0].value) || 1,
+        nroSesion: parseInt(inputs[1].value) || 1,
+        unidadTematica: inputs[2].value || '',
+        contenidoEspecifico: inputs[3].value || '',
+        saberConceptual: inputs[4].value || '',
+        saberProcedimental: inputs[5].value || '',
+        saberActitudinal: inputs[6].value || '',
+        criterioDesempeno: inputs[7].value || '',
+        instrumentoEvaluacion: inputs[8].value || 'RUBRICA'
+      });
+    }
+  });
+  return sessions;
+};
+
+// 3. Real Excel Import for PAC Matriz 7
+window.importPacExcel = function(goToCronograma) {
+  window.triggerFileUpload('.xlsx', async (file) => {
+    window.showToast('⏳ Subiendo y procesando PAC Excel: ' + file.name + '...');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('asignacionId', String(activeAsignacionId || 1));
+    try {
+      const resp = await fetch('/api/v1/office/import/pac', {
+        method: 'POST',
+        headers: window.getAuthHeaders(),
+        body: formData
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      const data = json.data || json;
+      activePacData = data;
+      localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(data));
+
+      window.populatePacDom(data);
+
+      // Auto-save this freshly imported state to database & localStorage
+      await window.saveCurrentDocenteData(true);
+
+      // Auto-expand all textareas
+      setTimeout(() => {
+        if (typeof window.autoResizeAllTextareas === 'function') {
+          window.autoResizeAllTextareas();
+        }
+      }, 50);
+
+      const sesCount = (data.matriz7 && Array.isArray(data.matriz7)) ? data.matriz7.length : 0;
+      if (goToCronograma || activeTabId === 'tab-cronograma-semanas') {
+        window.showToast('✅ ¡Cronograma importado con éxito! (' + sesCount + ' sesiones cargadas en la Matriz 7)');
+        window.switchDocMainTab('tab-cronograma-semanas');
+      } else {
+        window.showToast('✅ ¡PAC Pedagógico y Cronograma importados con éxito! (' + sesCount + ' sesiones)');
+        window.switchDocMainTab('tab-pac-matrix');
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      window.showToast('❌ Error al importar PAC: ' + err.message);
+    }
+  });
+};
+
+
+
+
+// 4. Real Excel Import for Planes de Clase
+window.importPlanesExcel = function() {
+  window.triggerFileUpload('.xlsx', async (file) => {
+    window.showToast('⏳ Subiendo y procesando Planes de Clase: ' + file.name + '...');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('asignacionId', String(activeAsignacionId || 1));
+    try {
+      const resp = await fetch('/api/v1/office/import/plan-clase', {
+        method: 'POST',
+        headers: window.getAuthHeaders(),
+        body: formData
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const json = await resp.json();
+      const data = json.data || json;
+      activePlanesData = data;
+      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(data));
+
+      
+      if (data && data.length > 0) {
+        const p = data[0];
+        if (p.unidadTitulo) {
+          const el = document.getElementById('plan-unidad-input');
+          if (el) el.value = p.unidadTitulo;
+        }
+        if (p.contenidoTema) {
+          const el = document.getElementById('plan-tema-input');
+          if (el) el.value = p.contenidoTema;
+        }
+        if (p.nombreAsignatura) {
+          const el = document.getElementById('plan-asig-input');
+          if (el) el.value = p.nombreAsignatura;
+        }
+        if (p.objetivoSesion) {
+          const el = document.getElementById('plan-resultados-input');
+          if (el) el.value = p.objetivoSesion;
+        }
+        
+        if (p.momentos && p.momentos.length > 0) {
+          const mIntro = p.momentos.find(m => m.tipoMomento === 'INICIO' || m.tipoMomento === 'INTRODUCCION');
+          const mDes = p.momentos.find(m => m.tipoMomento === 'DESARROLLO');
+          const mCie = p.momentos.find(m => m.tipoMomento === 'CIERRE');
+          
+          if (mIntro) {
+            const el = document.getElementById('plan-sec-intro');
+            if (el) el.value = mIntro.actividadesDocente || '';
+          }
+          if (mDes) {
+            const el = document.getElementById('plan-sec-cuerpo');
+            if (el) el.value = mDes.actividadesDocente || '';
+          }
+          if (mCie) {
+            const el = document.getElementById('plan-sec-cierre');
+            if (el) el.value = mCie.actividadesDocente || '';
+          }
+        }
+      }
+
+      window.showToast('✅ ¡Planes de Clase importados con éxito! (' + (data ? data.length : 0) + ' hojas procesadas)');
+      window.switchDocMainTab('tab-cronograma-planes');
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      window.showToast('❌ Error al importar Planes de Clase: ' + err.message);
+    }
+  });
+};
+
+
+// 5. Real Export Endpoints
+window.exportDocxOfficial = async function() {
+  window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
+  window.location.href = '/api/v1/office/export/programa-analitico/1';
+};
+
+window.exportPacOfficial = async function() {
+  window.showToast('📥 Generando y descargando PAC + Cronograma (.xlsx)...');
+  window.location.href = '/api/v1/office/export/pac/1';
+};
+
+window.exportPlanesOfficial = async function() {
+  window.showToast('📥 Generando y descargando Plan de Clases (.xlsx)...');
+  window.location.href = '/api/v1/office/export/plan-clase/1';
+};
+
+// Override triggerAutoCapture modal with real actions
+window.triggerAutoCapture = function() {
+  const modalBody = `
+    <div class="space-y-4 text-xs">
+      <p class="text-slate-700 dark:text-slate-300">Selecciona el documento base que deseas importar para extraer su información:</p>
+      <div class="grid grid-cols-3 gap-3">
+        <div onclick="window.closeModal(); window.switchDocMainTab('tab-analitico'); window.importProgramaDocx();" class="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 hover:border-blue-500 cursor-pointer text-center space-y-2 transition-all">
+          <i data-lucide="file-text" class="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400"></i>
+          <div class="font-bold text-slate-900 dark:text-white">Programa Analítico (.docx)</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae Unidades y Bibliografía APA</div>
+        </div>
+        <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.importPacExcel();" class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 hover:border-emerald-500 cursor-pointer text-center space-y-2 transition-all">
+          <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto text-emerald-600 dark:text-emerald-400"></i>
+          <div class="font-bold text-slate-900 dark:text-white">PAC + Cronograma (.xlsx)</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae las 42+ sesiones a la matriz</div>
+        </div>
+        <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-planes'); window.importPlanesExcel();" class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 hover:border-purple-500 cursor-pointer text-center space-y-2 transition-all">
+          <i data-lucide="calendar-range" class="w-8 h-8 mx-auto text-purple-600 dark:text-purple-400"></i>
+          <div class="font-bold text-slate-900 dark:text-white">Planes de Clase (.xlsx)</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae momentos didácticos y tiempos</div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-title').innerText = 'Subir y Extraer Datos de los Documentos Base';
+  document.getElementById('modal-body').innerHTML = modalBody;
+  document.getElementById('modal-footer').classList.add('hidden');
+  document.getElementById('modal-container').classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+};
+
+// Initial auto-render for active subject data & dynamic units
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const initialKey = localStorage.getItem('sisa_active_materia_key') || 'sis213g1';
+    if (typeof window.selectDocenteMateria === 'function') {
+      window.selectDocenteMateria(initialKey);
+    } else if (typeof window.loadSavedDocenteData === 'function') {
+      window.loadSavedDocenteData(initialKey);
+    }
+  }, 100);
+});
+
+
+// Global interceptor for all "Guardar" buttons
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (btn && (btn.textContent.trim().includes('Guardar') || btn.querySelector('[data-lucide="save"]'))) {
+    if (typeof window.saveCurrentDocenteData === 'function') {
+      e.preventDefault();
+      e.stopPropagation();
+      window.saveCurrentDocenteData();
+    }
+  }
+}, true);
+// Global reactive auto-save trigger on any typing or value changes
+document.addEventListener('input', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    if (e.target.tagName === 'TEXTAREA' && typeof window.autoResizeTextarea === 'function') {
+      window.autoResizeTextarea(e.target);
+    }
+    if (typeof window.scheduleAutoSave === 'function') {
+      window.scheduleAutoSave(1200);
+    }
+  }
+}, true);
+
+document.addEventListener('change', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+    if (e.target.tagName === 'TEXTAREA' && typeof window.autoResizeTextarea === 'function') {
+      window.autoResizeTextarea(e.target);
+    }
+    if (typeof window.scheduleAutoSave === 'function') {
+      window.scheduleAutoSave(500);
+    }
+  }
+}, true);
+

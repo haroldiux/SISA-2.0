@@ -1,0 +1,108 @@
+.scu-app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+
+  .scu-layout-body {
+    display: flex;
+    flex: 1;
+    min-height: calc(100vh - 64px);
+
+    .scu-sidebar {
+      width: 260px;
+      background: var(--scu-surface-0);
+      border-right: 1px solid var(--scu-border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+
+      .sidebar-section-title {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: var(--scu-text-secondary);
+        margin-bottom: 0.75rem;
+        padding-left: 0.75rem;
+      }
+
+      .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        flex: 1;
+
+        .nav-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.625rem 0.875rem;
+          border-radius: 8px;
+          color: var(--scu-text-secondary);
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.875rem;
+          transition: all 0.2s ease-in-out;
+
+          .link-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+
+            i {
+              font-size: 1rem;
+            }
+          }
+
+          .nav-badge {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            background: var(--scu-surface-100);
+            color: var(--scu-text-secondary);
+          }
+
+          &:hover {
+            background: var(--scu-surface-50);
+            color: var(--scu-primary);
+          }
+
+          &.active {
+            background: var(--scu-primary-bg);
+            color: var(--scu-primary);
+
+            .nav-badge {
+              background: var(--scu-primary);
+              color: #FFFFFF;
+            }
+          }
+        }
+      }
+
+      .sidebar-footer {
+        padding-top: 1rem;
+        border-top: 1px solid var(--scu-border-color);
+        font-size: 0.6875rem;
+        color: var(--scu-text-secondary);
+
+        .version-tag {
+          font-weight: 600;
+          color: var(--scu-text-primary);
+        }
+      }
+    }
+
+    .scu-main-content {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      background: var(--scu-surface-50);
+      overflow-y: auto;
+
+      .scu-content-container {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+    }
+  }
+}

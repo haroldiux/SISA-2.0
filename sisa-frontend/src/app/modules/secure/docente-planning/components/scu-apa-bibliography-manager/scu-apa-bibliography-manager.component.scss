@@ -1,0 +1,14 @@
+.scu-apa-manager {
+  .citation-item {
+    border-color: var(--surface-border, #e2e8f0);
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: var(--primary-color, #10b981);
+    }
+
+    .font-serif {
+      font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+  }
+}

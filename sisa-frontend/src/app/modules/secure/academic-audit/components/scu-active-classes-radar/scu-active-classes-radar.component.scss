@@ -1,0 +1,12 @@
+.scu-radar-card {
+  .radar-pulse-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--scu-primary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+}

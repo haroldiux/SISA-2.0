@@ -1,0 +1,22 @@
+.scu-validation-panel {
+  .validation-summary-bar {
+    background-color: var(--surface-50);
+    border: 1px solid var(--surface-300);
+  }
+
+  .milestones-checklist {
+    .milestone-badge {
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
+  .issue-item {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}

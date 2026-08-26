@@ -1,0 +1,102 @@
+<p-dialog
+  header="Generador Automático de Calendario Académico"
+  [(visible)]="visible"
+  (onHide)="closeDialog()"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  styleClass="scu-dialog">
+  <div class="calendar-generator-content p-fluid grid mt-1">
+    <div class="col-12 text-sm text-color-secondary mb-3">
+      Proyecte automáticamente las fechas cronológicas para todas las sesiones de la Matriz 7, respetando los días hábiles y el calendario oficial de feriados UNITEPC 2026.
+    </div>
+
+    <!-- Start Date -->
+    <div class="col-12 md:col-6 mb-3">
+      <label class="font-semibold text-sm block mb-1">Fecha de Inicio de Clases</label>
+      <input
+        type="date"
+        pInputText
+        [(ngModel)]="startDate"
+        (ngModelChange)="onGeneratePreview()" />
+    </div>
+
+    <!-- Total Sessions Info -->
+    <div class="col-12 md:col-6 mb-3">
+      <label class="font-semibold text-sm block mb-1">Total Sesiones a Programar</label>
+      <input
+        type="number"
+        pInputText
+        [(ngModel)]="totalSessions"
+        (ngModelChange)="onGeneratePreview()"
+        min="10"
+        max="60" />
+    </div>
+
+    <!-- Weekdays Selection -->
+    <div class="col-12 mb-3">
+      <label class="font-semibold text-sm block mb-2">Días de Clase Semanales</label>
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let day of weekdayOptions"
+          pButton
+          type="button"
+          [label]="day.label"
+          [icon]="isDaySelected(day.value) ? 'pi pi-check' : ''"
+          [ngClass]="isDaySelected(day.value) ? 'p-button-primary' : 'p-button-outlined p-button-secondary'"
+          (click)="toggleDay(day.value)"
+          class="p-button-sm text-xs py-1 px-3">
+        </button>
+      </div>
+    </div>
+
+    <!-- Holiday Exclusion Toggle -->
+    <div class="col-12 mb-3">
+      <div class="flex align-items-center gap-2">
+        <input
+          type="checkbox"
+          id="excludeHolidays"
+          [(ngModel)]="excludeHolidays"
+          (ngModelChange)="onGeneratePreview()" />
+        <label for="excludeHolidays" class="text-sm font-semibold cursor-pointer">
+          Excluir feriados nacionales y universitarios 2026 (Carnaval, Viernes Santo, Corpus Christi, etc.)
+        </label>
+      </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="col-12">
+      <label class="font-semibold text-sm block mb-1">
+        Vista Previa de Fechas Generadas ({{ generatedPreviewDates.length }} fechas):
+      </label>
+      <div class="preview-dates-box p-2 border-1 border-200 border-round surface-50 max-h-12rem overflow-y-auto">
+        <div class="flex flex-wrap gap-1">
+          <span
+            *ngFor="let d of generatedPreviewDates; let idx = index"
+            class="text-xs p-1 px-2 border-round surface-card border-1 border-300 font-mono">
+            #{{ idx + 1 }}: {{ d }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      icon="pi pi-times"
+      (click)="closeDialog()"
+      class="p-button-text p-button-secondary">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="Aplicar a Matriz 7"
+      icon="pi pi-check"
+      [disabled]="generatedPreviewDates.length === 0"
+      (click)="onConfirm()"
+      class="p-button-primary">
+    </button>
+  </ng-template>
+</p-dialog>

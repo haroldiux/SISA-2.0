@@ -1,0 +1,92 @@
+<div class="scu-validation-panel mb-3" *ngIf="validationResult">
+  <!-- Header Bar -->
+  <div class="validation-summary-bar flex align-items-center justify-content-between p-3 border-round">
+    <div class="flex align-items-center gap-3 flex-wrap">
+      <div class="flex align-items-center gap-2">
+        <i
+          class="pi text-xl"
+          [ngClass]="validationResult.isValid ? 'pi-check-circle text-green-500' : 'pi-exclamation-triangle text-red-500'">
+        </i>
+        <span class="font-bold text-sm">
+          {{ validationResult.isValid ? 'Validación Pedagógica Conforme' : 'Observaciones Pedagógicas Detectadas' }}
+        </span>
+      </div>
+
+      <div class="flex align-items-center gap-2">
+        <p-tag
+          [value]="validationResult.totalErrors + ' Errores'"
+          [severity]="validationResult.totalErrors > 0 ? 'danger' : 'success'"
+          styleClass="text-xs px-2">
+        </p-tag>
+        <p-tag
+          [value]="validationResult.totalWarnings + ' Advertencias'"
+          [severity]="validationResult.totalWarnings > 0 ? 'warning' : 'info'"
+          styleClass="text-xs px-2">
+        </p-tag>
+      </div>
+
+      <!-- Evaluative Milestones Checklist -->
+      <div class="milestones-checklist flex align-items-center gap-2 pl-3 border-left-1 border-300">
+        <span class="text-xs font-semibold text-color-secondary">Hitos:</span>
+        <span
+          class="milestone-badge text-xs px-2 py-1 border-round"
+          [ngClass]="validationResult.milestonesFound.primerParcial ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+          <i class="pi mr-1" [ngClass]="validationResult.milestonesFound.primerParcial ? 'pi-check' : 'pi-times'"></i>
+          1er Parcial (S7)
+        </span>
+        <span
+          class="milestone-badge text-xs px-2 py-1 border-round"
+          [ngClass]="validationResult.milestonesFound.segundoParcial ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+          <i class="pi mr-1" [ngClass]="validationResult.milestonesFound.segundoParcial ? 'pi-check' : 'pi-times'"></i>
+          2do Parcial (S14)
+        </span>
+        <span
+          class="milestone-badge text-xs px-2 py-1 border-round"
+          [ngClass]="validationResult.milestonesFound.examenFinal ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+          <i class="pi mr-1" [ngClass]="validationResult.milestonesFound.examenFinal ? 'pi-check' : 'pi-times'"></i>
+          Ex. Final (S20)
+        </span>
+      </div>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      [icon]="isExpanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+      [label]="isExpanded ? 'Ocultar Detalle' : 'Ver Detalle (' + validationResult.issues.length + ')'"
+      (click)="togglePanel()"
+      class="p-button-text p-button-sm text-xs">
+    </button>
+  </div>
+
+  <!-- Detailed Issues List -->
+  <div class="validation-issues-body p-3 mt-2 border-round surface-card border-1 border-200" *ngIf="isExpanded && validationResult.issues.length > 0">
+    <div class="issues-list flex flex-column gap-2">
+      <div
+        *ngFor="let issue of validationResult.issues"
+        class="issue-item flex align-items-center justify-content-between p-2 border-round hover:surface-100 cursor-pointer"
+        [ngClass]="issue.severity === 'ERROR' ? 'border-left-3 border-red-500 bg-red-50' : 'border-left-3 border-yellow-500 bg-yellow-50'"
+        (click)="onJumpToIssue(issue)">
+        <div class="flex align-items-center gap-2">
+          <p-tag
+            [severity]="issue.severity === 'ERROR' ? 'danger' : 'warning'"
+            [value]="issue.severity"
+            styleClass="text-xs">
+          </p-tag>
+          <span *ngIf="issue.sessionNumber" class="font-bold text-xs">
+            Sesión #{{ issue.sessionNumber }}:
+          </span>
+          <span class="text-xs text-700">{{ issue.message }}</span>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-arrow-circle-right"
+          label="Ir a fila"
+          class="p-button-text p-button-xs text-xs py-1 px-2">
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

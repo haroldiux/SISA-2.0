@@ -1,0 +1,48 @@
+<div class="scu-benchmark-card scu-card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="font-bold text-lg">Benchmark Comparativo Inter-Sedes (Nacional)</h3>
+      <p class="text-xs text-color-secondary">Cochabamba • La Paz • El Alto • Cobija</p>
+    </div>
+  </div>
+
+  <p-table [value]="benchmarkList" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 80px;">Sede</th>
+        <th>Nombre Institucional</th>
+        <th>Docentes</th>
+        <th>Carreras</th>
+        <th style="width: 180px;">Cobertura PAC</th>
+        <th>Auditorías</th>
+        <th style="width: 180px;">Índice Conformidad</th>
+        <th style="text-align: center;">Escalamientos Nivel 3</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-b>
+      <tr>
+        <td><span class="sede-code-badge font-mono font-bold">{{ b.codigo }}</span></td>
+        <td><span class="font-semibold">{{ b.nombre }}</span></td>
+        <td>{{ b.docentes }}</td>
+        <td>{{ b.carreras }}</td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-progressBar [value]="b.coberturaPac" [showValue]="false" styleClass="w-full" [style]="{ 'height': '6px' }"></p-progressBar>
+            <span class="font-mono font-bold text-xs">{{ b.coberturaPac }}%</span>
+          </div>
+        </td>
+        <td>{{ b.auditoriasRealizadas }}</td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-progressBar [value]="b.indiceConformidad" [showValue]="false" styleClass="w-full" [style]="{ 'height': '6px' }"></p-progressBar>
+            <span class="font-mono font-bold text-xs">{{ b.indiceConformidad }}%</span>
+          </div>
+        </td>
+        <td class="text-center">
+          <span *ngIf="b.casosEscalados === 0" class="text-success font-semibold text-xs">0 activos</span>
+          <span *ngIf="b.casosEscalados > 0" class="text-danger font-bold text-xs"><i class="pi pi-exclamation-triangle"></i> {{ b.casosEscalados }} caso</span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

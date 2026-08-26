@@ -1,0 +1,10 @@
+<button
+  pButton
+  type="button"
+  [icon]="isExporting ? 'pi pi-spin pi-spinner' : (documentType === 'PROGRAMA' ? 'pi pi-file-word' : 'pi pi-file-excel')"
+  [label]="isExporting ? 'Generando...' : label"
+  [disabled]="isExporting || !resourceId"
+  (click)="onExport()"
+  [ngClass]="documentType === 'PROGRAMA' ? 'p-button-outlined p-button-info' : 'p-button-outlined p-button-success'"
+  class="scu-office-btn p-button-sm">
+</button>

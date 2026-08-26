@@ -1,0 +1,55 @@
+<div class="scu-audit-workspace">
+  <!-- Active Classes Radar -->
+  <div class="mb-4">
+    <scu-active-classes-radar
+      (classMatched)="onClassMatched($event)">
+    </scu-active-classes-radar>
+  </div>
+
+  <!-- In Situ Audit Form (When class matched) -->
+  <div class="mb-4" *ngIf="matchedClassData">
+    <scu-in-situ-audit-form
+      [matchedData]="matchedClassData"
+      (auditFinalized)="onAuditFinalized($event)">
+    </scu-in-situ-audit-form>
+  </div>
+
+  <!-- Recent Audits Log Table -->
+  <div class="scu-card">
+    <div class="flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="font-bold text-lg">Historial de Auditorías In Situ Registradas</h3>
+        <p class="text-xs text-color-secondary">Trazabilidad de visitas, firmas digitales y dictámenes</p>
+      </div>
+    </div>
+
+    <p-table [value]="recentAudits" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha/Hora</th>
+          <th>Aula</th>
+          <th>Docente</th>
+          <th>Asignatura</th>
+          <th>Puntualidad</th>
+          <th>Concordancia PAC</th>
+          <th>Asistencia</th>
+          <th>Estado</th>
+          <th>Hash Firma</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-a>
+        <tr>
+          <td><span class="text-xs font-mono">{{ a.fechaHoraAuditoria | slice:0:16 }}</span></td>
+          <td><span class="font-bold">{{ a.aula }}</span></td>
+          <td>{{ a.docenteNombre }}</td>
+          <td>{{ a.asignaturaNombre }}</td>
+          <td><scu-status-badge [status]="a.puntualidadDocente"></scu-status-badge></td>
+          <td><scu-status-badge [status]="a.concordanciaTema"></scu-status-badge></td>
+          <td><span class="font-mono font-bold">{{ a.estudiantesPresentes }}/{{ a.estudiantesInscritos }}</span> ({{ a.porcentajeAsistencia }}%)</td>
+          <td><scu-status-badge [status]="a.estado"></scu-status-badge></td>
+          <td><span class="text-xs font-mono text-color-secondary">{{ a.hashFirmaDigital | slice:0:12 }}...</span></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

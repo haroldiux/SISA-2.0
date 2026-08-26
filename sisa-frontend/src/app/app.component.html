@@ -1,0 +1,1753 @@
+
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- INTERACTIVE MODAL -->
+  <div id="modal-container" class="fixed inset-0 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div id="modal-box" class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-3xl w-full p-6 space-y-4 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 id="modal-title" class="text-base font-bold text-slate-900 dark:text-white font-display">Título del Diálogo</h3>
+        <button onclick="window.closeModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="modal-body" class="text-xs text-slate-600 dark:text-slate-300 space-y-3"></div>
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800" id="modal-footer">
+        <button onclick="window.closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cerrar</button>
+        <button onclick="window.closeModal(); window.showToast('Acción confirmada')" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm hover:bg-brand-700 transition-colors">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP PROTOTYPE BAR & CONTROLLER -->
+  <header class="w-full bg-slate-900 border-b border-slate-800 text-white px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40 shadow-md no-print">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white shadow-sm font-display">
+        <i data-lucide="layers" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-slate-100 font-display">SISA • Sistema Integrado de Seguimiento Académico</h1>
+        <p class="text-xs text-slate-400">Plataforma Institucional Multirrol • UNITEPC</p>
+      </div>
+    </div>
+
+    <!-- Role / View Switcher -->
+    <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700">
+      <button data-view="view1" id="btn-view1" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 bg-brand-600 text-white shadow-sm">
+        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+        <span>1. Docente</span>
+      </button>
+      <button data-view="view2" id="btn-view2" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
+        <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+        <span>2. Dir. Carrera</span>
+      </button>
+      <button data-view="view3" id="btn-view3" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
+        <i data-lucide="search-check" class="w-3.5 h-3.5"></i>
+        <span>3. Dir. Académica</span>
+      </button>
+      <button data-view="view4" id="btn-view4" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
+        <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+        <span>4. Vicerrectorado Sede</span>
+      </button>
+      <button data-view="view5" id="btn-view5" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
+        <i data-lucide="globe-2" class="w-3.5 h-3.5"></i>
+        <span>5. Vicerrectorado Nal.</span>
+      </button>
+    </div>
+
+    <!-- Theme Switcher & Status Badge -->
+    <div class="flex items-center gap-3">
+      <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
+        <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+        <span id="theme-label" class="text-slate-200">Tema Claro</span>
+      </button>
+      <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-medium">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        SISA Live
+      </span>
+    </div>
+  </header>
+
+  <!-- WORKSPACE CANVAS CONTAINER -->
+  <main class="w-full flex-1 p-6 flex justify-center items-start overflow-auto">
+    
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: [DOCENTE] GESTIÓN CURRICULAR Y 4 TABS DE DOCUMENTOS               -->
+    <!-- ========================================================================= -->
+    <div id="view1" class="frame-view w-[1440px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative transition-colors duration-200 min-h-[920px]">
+      
+      <!-- Component/SidebarNavigation: CARPETAS DOCENTES POR CARRERA Y MATERIA -->
+      <aside class="w-[280px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors no-print">
+        <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
+          
+          <!-- App Header -->
+          <div class="flex items-center gap-3 px-2 py-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+            <div>
+              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
+              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Carpetas Docentes</div>
+            </div>
+          </div>
+
+          <!-- Section: CARPETAS ORGANIZADAS POR CARRERA & MATERIA -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between px-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Carreras & Cátedras</span>
+              <span class="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/60">3 Carreras • 16h</span>
+            </div>
+
+            <!-- CARRERA 1: ING. DE SISTEMAS -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden">
+              <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
+                <span class="flex items-center gap-1.5"><i data-lucide="code-2" class="w-3.5 h-3.5 text-brand-600"></i> Ing. de Sistemas</span>
+                <span class="text-[10px] text-purple-700 dark:text-purple-400 font-bold">8h Sem.</span>
+              </div>
+              <div class="p-1 space-y-1">
+                <button onclick="window.selectDocenteMateria('sis213g1')" id="sidebar-materia-sis213g1" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between bg-brand-600 text-white shadow-sm transition-all cursor-pointer">
+                  <div class="truncate">
+                    <div class="truncate font-bold">SIS-213 Programación III</div>
+                    <div class="text-[10px] opacity-90">G1 • Teoría (3º Semestre)</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                </button>
+
+                <button onclick="window.selectDocenteMateria('sis213g2')" id="sidebar-materia-sis213g2" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                  <div class="truncate">
+                    <div class="truncate font-bold">SIS-213 Programación III</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">G2 • Integral (3º Semestre)</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0 opacity-40"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARRERA 2: ING. INDUSTRIAL -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden">
+              <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
+                <span class="flex items-center gap-1.5"><i data-lucide="factory" class="w-3.5 h-3.5 text-amber-600"></i> Ing. Industrial</span>
+                <span class="text-[10px] text-amber-700 dark:text-amber-400 font-bold">4h Sem.</span>
+              </div>
+              <div class="p-1">
+                <button onclick="window.selectDocenteMateria('ind211')" id="sidebar-materia-ind211" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                  <div class="truncate">
+                    <div class="truncate font-bold">IND-211 Computación Aplicada</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">G1 • Teoría (2º Semestre)</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0 opacity-40"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARRERA 3: FACEFA / COMPLEMENTARIAS -->
+            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden">
+              <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
+                <span class="flex items-center gap-1.5"><i data-lucide="languages" class="w-3.5 h-3.5 text-purple-600"></i> FACEFA</span>
+                <span class="text-[10px] text-purple-700 dark:text-purple-400 font-bold">4h Sem.</span>
+              </div>
+              <div class="p-1">
+                <button onclick="window.selectDocenteMateria('idi101')" id="sidebar-materia-idi101" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                  <div class="truncate">
+                    <div class="truncate font-bold">IDI-101 Taller de Idiomas</div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400">G1 • Práctica (1º Semestre)</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0 opacity-40"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section: PESTAÑAS DE LA CARPETA ACTIVA -->
+          <div class="space-y-1 pt-2.5 border-t border-slate-200 dark:border-slate-800">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2 mb-1.5">Documentos de la Carpeta</div>
+            
+            <button onclick="window.switchDocMainTab('tab-analitico')" id="sidebar-tab-analitico" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700/60 font-bold text-xs text-left cursor-pointer transition-all">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
+              <span class="truncate">1. Prog. Analítico (.docx)</span>
+            </button>
+
+            <button onclick="window.switchDocMainTab('tab-pac-matrix')" id="sidebar-tab-pac-matrix" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
+              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+              <span class="truncate">2. PAC Pedagógico (1-14)</span>
+            </button>
+
+            <button onclick="window.switchDocMainTab('tab-cronograma-semanas')" id="sidebar-tab-cronograma-semanas" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i>
+              <span class="truncate">3. Cronograma (20 Sem)</span>
+            </button>
+
+            <button onclick="window.switchDocMainTab('tab-cronograma-planes')" id="sidebar-tab-cronograma-planes" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
+              <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"></i>
+              <span class="truncate">4. Planes de Clase (.xlsx)</span>
+            </button>
+          </div>
+
+          <!-- Direct Export Center -->
+          <div class="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-[11px]">
+            <div class="font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i>
+              <span>Exportar Carpeta Activa:</span>
+            </div>
+            <button onclick="window.exportExactFile('docx')" class="w-full text-left py-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
+              <i data-lucide="file-text" class="w-3 h-3 flex-shrink-0"></i> 1. Analítico (.docx)
+            </button>
+            <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
+              <i data-lucide="table" class="w-3 h-3 flex-shrink-0"></i> 2 y 3. PAC + Cronograma (.xlsx)
+            </button>
+            <button onclick="window.exportExactFile('planes_xlsx')" class="w-full text-left py-1 text-purple-600 dark:text-purple-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
+              <i data-lucide="calendar-range" class="w-3 h-3 flex-shrink-0"></i> 4. Planes de Clase (.xlsx)
+            </button>
+            <button onclick="window.openPdfPrintModal()" class="w-full text-left py-1 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-700 truncate">
+              <i data-lucide="printer" class="w-3 h-3 flex-shrink-0"></i> 📄 Imprimir en PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- User Profile Footer -->
+        <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">MR</div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[130px]">Ing. Marcos Rojas</div>
+              <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">16h • 3 Carreras</div>
+            </div>
+          </div>
+          <button onclick="window.showToast('Sesión activa: Ing. Marcos Rojas')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Layout -->
+      <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- TopHeader -->
+        <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors no-print">
+          <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>Docencia</span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span id="docente-carrera-crumb" class="font-medium text-slate-700 dark:text-slate-300">Ing. de Sistemas</span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span id="docente-breadcrumb" class="font-semibold text-slate-900 dark:text-white">SIS-213 Programación III (G1)</span>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div onclick="window.openModal('Gestión Académica', '<p>Estás operando en el semestre activo <strong>Gestión II-2026</strong>.</p>')" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold shadow-sm cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
+              <i data-lucide="calendar-check" class="w-4 h-4 text-purple-700 dark:text-purple-400"></i>
+              <span>GESTIÓN: II-2026 (Activa)</span>
+            </div>
+            <button onclick="window.openModal('Notificaciones Recientes', '<div class=\'p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-lg text-emerald-800 dark:text-emerald-200 text-xs font-medium\'>✓ Programa Analítico, PAC, Cronograma y Planes sincronizados.</div>')" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors">
+              <i data-lucide="bell" class="w-4 h-4"></i>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-2 right-2 border-2 border-white dark:border-slate-900"></span>
+            </button>
+          </div>
+        </header>
+
+        <!-- PRINT HEADER (Only appears when printing to PDF) -->
+        <div class="print-header p-6 border-b-2 border-slate-900 mb-6 bg-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-xl font-bold text-black uppercase">UNIVERSIDAD TÉCNICA PRIVADA COSMOS</h1>
+              <h2 id="print-doc-title" class="text-sm font-semibold text-slate-700">CARPETA DOCENTE INSTITUCIONAL • SIS-213 PROGRAMACIÓN III</h2>
+            </div>
+            <div class="text-right text-xs text-black">
+              <div>Gestión: II-2026</div>
+              <div>Fecha de Emisión: 25/08/2026</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Body Container for Docente Sub-sections -->
+        <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          
+          <!-- SUBSECTION: MIS ASIGNATURAS & LOS 4 TABS -->
+          <div id="doc-sec-asignaturas" class="doc-sec-content space-y-6">
+            
+            <!-- TEACHER'S SUBJECTS SELECTOR CARDS (no-print) -->
+            <div class="space-y-2 no-print">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Asignaturas & Cátedras Asignadas:</h3>
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">16 Hrs / Semana • 3 Carreras</span>
+                </div>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Selecciona materia para gestionar su documentación:</span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-3.5">
+                
+                <!-- SIS-213 G1 -->
+                <div id="doc-materia-card-sis213g1" onclick="window.selectDocenteMateria('sis213g1')" class="doc-materia-card p-3.5 rounded-xl border-2 border-brand-600 bg-white dark:bg-slate-900 shadow-md cursor-pointer relative transition-all">
+                  <div class="flex items-start justify-between">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">ING. SISTEMAS</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">Teoría (4h)</span>
+                  </div>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">SIS-213 Programación III</h4>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo 1 (G1) • 3º Sem</div>
+                  <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
+                    <span class="text-brand-600 dark:text-brand-400 font-bold">Activa ➔</span>
+                  </div>
+                </div>
+
+                <!-- SIS-213 G2 -->
+                <div id="doc-materia-card-sis213g2" onclick="window.selectDocenteMateria('sis213g2')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 cursor-pointer transition-all">
+                  <div class="flex items-start justify-between">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">ING. SISTEMAS</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300">Integral (4h)</span>
+                  </div>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">SIS-213 Programación III</h4>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo 2 (G2) • 3º Sem</div>
+                  <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                    <span class="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> En Edición</span>
+                    <span class="text-slate-400">Ver Carga</span>
+                  </div>
+                </div>
+
+                <!-- IND-211 -->
+                <div id="doc-materia-card-ind211" onclick="window.selectDocenteMateria('ind211')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 cursor-pointer transition-all">
+                  <div class="flex items-start justify-between">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">ING. INDUSTRIAL</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">Teoría (4h)</span>
+                  </div>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">IND-211 Computación Aplicada</h4>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo 1 (G1) • 2º Sem</div>
+                  <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
+                    <span class="text-slate-400">Ver Carga</span>
+                  </div>
+                </div>
+
+                <!-- IDI-101 -->
+                <div id="doc-materia-card-idi101" onclick="window.selectDocenteMateria('idi101')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 cursor-pointer transition-all">
+                  <div class="flex items-start justify-between">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">FACEFA</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">Práctica (4h)</span>
+                  </div>
+                  <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">IDI-101 Taller de Idiomas</h4>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo 1 (G1) • 1º Sem</div>
+                  <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
+                    <span class="text-slate-400">Ver Carga</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Subject Banner (High contrast gradient, perfect in light & dark) -->
+            <div id="subject-banner-container" class="bg-gradient-to-r from-brand-700 via-brand-800 to-purple-900 rounded-2xl p-6 text-white shadow-lg flex justify-between items-center relative overflow-hidden transition-all no-print">
+              <div class="space-y-1 relative z-10">
+                <div class="flex items-center gap-3">
+                  <span id="banner-carrera-tag" class="px-2.5 py-0.5 rounded-md bg-white/20 text-xs font-bold tracking-wide backdrop-blur-sm">CARRERA: ING. DE SISTEMAS</span>
+                  <span id="banner-grupo-tag" class="text-xs text-purple-200">Grupo 1 (G1) • Cátedra de Teoría</span>
+                </div>
+                <h2 id="banner-materia-title" class="text-2xl font-bold font-display tracking-tight text-white">SIS-213 • PROGRAMACIÓN III</h2>
+                <p id="banner-materia-meta" class="text-xs text-purple-100 flex items-center gap-4 pt-1">
+                  <span><strong class="text-white">3º</strong> Semestre</span>
+                  <span>•</span>
+                  <span><strong class="text-white">4</strong> Horas Semanales (Teoría)</span>
+                  <span>•</span>
+                  <span><strong class="text-white">120</strong> Horas Totales</span>
+                  <span>•</span>
+                  <span>Campus: Juan Pablo II (Aula 302)</span>
+                </p>
+              </div>
+
+              <!-- Upload & Print Actions ALIGNED TOGETHER -->
+              <div class="flex items-center gap-3 relative z-10">
+                
+                <!-- BOTÓN IMPRIMIR EN PDF -->
+                <button onclick="window.openPdfPrintModal()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer">
+                  <i data-lucide="printer" class="w-4 h-4 text-white"></i>
+                  <span>Imprimir en PDF</span>
+                  <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-80"></i>
+                </button>
+
+                <!-- BOTÓN SUBIR DOCUMENTACIÓN -->
+                <button onclick="window.triggerAutoCapture()" class="px-4 py-2.5 rounded-xl bg-white text-brand-700 font-extrabold text-xs shadow-lg hover:bg-purple-50 flex items-center gap-2 transition-all cursor-pointer">
+                  <i data-lucide="upload-cloud" class="w-4 h-4 text-brand-600"></i>
+                  <span>Subir Documentación</span>
+                </button>
+              </div>
+              <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+            </div>
+
+            <!-- THE 4 CLEAN TABS CONTAINER -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+              
+              <!-- Tab Navigation Bar (no-print) -->
+              <div class="px-6 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/50 no-print">
+                <div class="flex items-center gap-4">
+                  
+                  <!-- TAB 1: PROGRAMA ANALÍTICO (WORD) -->
+                  <button onclick="window.switchDocMainTab('tab-analitico')" data-doc-main-tab="tab-analitico" id="btn-tab-analitico" class="doc-main-tab-btn py-4 text-xs font-bold text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 flex items-center gap-2 cursor-pointer transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span>1. Programa Analítico (.docx)</span>
+                  </button>
+
+                  <!-- TAB 2: PAC PEDAGÓGICO OFICIAL (EXCEL) -->
+                  <button onclick="window.switchDocMainTab('tab-pac-matrix')" data-doc-main-tab="tab-pac-matrix" id="btn-tab-pac-matrix" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span>2. PAC - Pedagógico Oficial</span>
+                  </button>
+
+
+                  <!-- TAB 3: CRONOGRAMA INDEPENDIENTE (20 SEMANAS / 36 SESIONES) -->
+                  <button onclick="window.switchDocMainTab('tab-cronograma-semanas')" data-doc-main-tab="tab-cronograma-semanas" id="btn-tab-cronograma-semanas" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
+                    <i data-lucide="calendar" class="w-4 h-4 text-amber-500"></i>
+                    <span>3. Cronograma (20 Semanas / 36 Sesiones)</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold">Matriz 7</span>
+                  </button>
+
+                  <!-- TAB 4: PLANES DE CLASE POR SESIÓN (EXCEL 2) -->
+                  <button onclick="window.switchDocMainTab('tab-cronograma-planes')" data-doc-main-tab="tab-cronograma-planes" id="btn-tab-cronograma-planes" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
+                    <i data-lucide="calendar-range" class="w-4 h-4 text-purple-500"></i>
+                    <span>4. Planes de Clase (.xlsx)</span>
+                  </button>
+
+
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="flex items-center gap-2 py-2">
+                  <div id="autosave-status-badge" class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-medium text-[11px] flex items-center gap-1.5 transition-all shadow-xs">
+                    <i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+                    <span>Guardado automático activo</span>
+                  </div>
+                  <button onclick="window.saveCurrentDocenteData()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    Guardar
+                  </button>
+                </div>
+
+
+              </div>
+
+              <!-- ================================================================= -->
+              <!-- TAB 1: PROGRAMA ANALÍTICO (WORD BASE COMPLETO CON BIBLIOGRAFÍAS)  -->
+              <!-- ================================================================= -->
+              <div id="tab-analitico" class="doc-tab-panel p-8 space-y-6">
+                
+                <!-- Tab Top Action Bar: Export Specific Document -->
+                <div class="p-4 bg-blue-50/70 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-xs text-blue-900 dark:text-blue-200 no-print">
+                  <div class="flex items-center gap-2.5">
+                    <i data-lucide="file-text" class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0"></i>
+                    <div>
+                      <strong>Documento 1: Programa Analítico Oficial (.docx):</strong> Macro-estructura curricular, Unidades 1 a 4 y Bibliografías Básica y Complementaria.
+                    </div>
+                  </div>
+                  <button onclick="window.exportExactFile('docx')" class="px-3.5 py-1.5 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 flex items-center gap-1.5 shadow-sm transition-colors">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Programa Analítico (.docx)
+                  </button>
+                </div>
+
+                <!-- 1. Encabezado Oficial del Word -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-blue-700 dark:text-blue-400">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    <span>Encabezado de Identificación Curricular (Programa Analítico)</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-4 text-xs">
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CÓDIGO:</label><input id="analitico-codigo-input" type="text" value="" placeholder="ej. SIS-213" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">SEMESTRE:</label><input id="analitico-semestre-input" type="text" value="" placeholder="ej. 3º Semestre" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">ASIGNATURA:</label><input id="analitico-asig-input" type="text" value="" placeholder="ej. PROGRAMACIÓN III" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                  <div class="grid grid-cols-5 gap-4 text-xs">
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CRÉDITOS:</label><input id="analitico-creditos-input" type="text" value="" placeholder="ej. 12" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">HORAS TEÓRICAS:</label><input id="analitico-ht-input" type="text" value="" placeholder="ej. 2 Horas" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">HORAS PRÁCTICAS:</label><input id="analitico-hp-input" type="text" value="" placeholder="ej. 4 Horas" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">HRS. SEMESTRE:</label><input id="analitico-hs-input" type="text" value="" placeholder="ej. 120 Horas" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Nº HOJAS:</label><input id="analitico-hojas-input" type="text" value="" placeholder="ej. 3" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                </div>
+
+                <!-- 2. Unidades y Temas Analíticos (TODAS LAS 4 UNIDADES) -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-blue-700 dark:text-blue-400"><i data-lucide="layers" class="w-4 h-4"></i><span>Desglose de Unidades y Temas Analíticos (Unidades 1 a 4)</span></div>
+                  
+                  <div id="unidades-analiticas-container" class="space-y-4 text-xs">
+                    <!-- UNIDAD 1 -->
+
+                    <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <strong class="text-blue-800 dark:text-blue-300 text-sm">UNIDAD 1: Arquitectura de Entidades y Modelado de Sistemas</strong>
+                        <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-semibold text-[10px]">Temas 1 y 2</span>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <strong class="text-slate-900 dark:text-white block mb-1">Tema 1: Anatomía de la Entidad y el Objeto</strong>
+                          <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                        </div>
+                        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <strong class="text-slate-900 dark:text-white block mb-1">Tema 2: Jerarquías de Especialización y Contratos</strong>
+                          <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- UNIDAD 2 -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <strong class="text-slate-900 dark:text-white text-sm">UNIDAD 2: Robustez y Blindaje de la Lógica de Negocio</strong>
+                        <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[10px]">Tema 3</span>
+                      </div>
+                      <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <strong class="text-slate-900 dark:text-white block mb-1">Tema 3: Encapsulamiento y Gestión de Estados Críticos</strong>
+                        <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                      </div>
+                    </div>
+
+                    <!-- UNIDAD 3 -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <strong class="text-slate-900 dark:text-white text-sm">UNIDAD 3: Sistemas de Interacción y Despacho de Eventos</strong>
+                        <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[10px]">Temas 4 y 5</span>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <strong class="text-slate-900 dark:text-white block mb-1">Tema 4: Representación Visual de Objetos y Entornos</strong>
+                          <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                        </div>
+                        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <strong class="text-slate-900 dark:text-white block mb-1">Tema 5: Dinámicas de Interacción y Flujo de Señales</strong>
+                          <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- UNIDAD 4 -->
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <strong class="text-slate-900 dark:text-white text-sm">UNIDAD 4: Gestión y Despliegue de Soluciones Integrales</strong>
+                        <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[10px]">Tema 6</span>
+                      </div>
+                      <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <strong class="text-slate-900 dark:text-white block mb-1">Tema 6: Ingeniería de Software y Construcción del Mundo</strong>
+                        <textarea rows="2" placeholder="Descripción del tema analítico (se extraerá del archivo .docx o escribe aquí)..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <!-- 3. BIBLIOGRAFÍA Y BIBLIOGRAFÍA COMPLEMENTARIA (EDITABLES) -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                  <div class="form-section-title text-blue-700 dark:text-blue-400">
+                    <i data-lucide="book-marked" class="w-4 h-4"></i>
+                    <span>Bibliografía Oficial del Programa Analítico (Norma APA)</span>
+                  </div>
+
+                  <div id="biblio-container" class="grid grid-cols-2 gap-6 text-xs">
+                    <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2">
+
+                      <div class="flex items-center justify-between">
+                        <strong class="text-blue-800 dark:text-blue-300 text-xs font-bold uppercase tracking-wider">BIBLIOGRAFÍA BÁSICA / OFICIAL:</strong>
+                        <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-bold text-[10px]">3 Textos Guía</span>
+                      </div>
+                      <textarea rows="5" placeholder="Bibliografía (se extraerá del archivo .docx o escribe aquí en formato APA)..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <strong class="text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider">BIBLIOGRAFÍA COMPLEMENTARIA:</strong>
+                        <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px]">3 Textos de Consulta</span>
+                      </div>
+                      <textarea rows="5" placeholder="Bibliografía (se extraerá del archivo .docx o escribe aquí en formato APA)..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[11px] leading-relaxed"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- ================================================================= -->
+              <!-- TAB 2: PAC - PEDAGÓGICO COMPLETO (PUNTOS 1 AL 14 - 100% EDITABLE) -->
+              <!-- ================================================================= -->
+              <div id="tab-pac-matrix" class="doc-tab-panel p-8 space-y-6 hidden">
+                
+                <!-- Tab Top Action Bar: Export PAC + Cronograma unified -->
+                <div class="p-4 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-200 no-print">
+                  <div class="flex items-center gap-2.5">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0"></i>
+                    <div>
+                      <strong>Documento 2 y 3: PAC Pedagógico & Cronograma de 20 Semanas (.xlsx):</strong> Se exportan en conjunto como el libro de trabajo oficial institucional.
+                    </div>
+                  </div>
+                  <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors">
+                    <i data-lucide="table" class="w-3.5 h-3.5"></i> Exportar PAC + Cronograma (.xlsx)
+                  </button>
+                </div>
+
+                <!-- 1.- Identificación de la Asignatura -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="check-circle" class="w-4 h-4"></i><span>1.- Identificación de la Asignatura</span></div>
+                  <div class="grid grid-cols-4 gap-4 text-xs">
+                    <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CARRERA:</label><input id="pac-carrera-input" type="text" value="" placeholder="ej. INGENIERÍA DE SISTEMAS" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CÓDIGO:</label><input id="pac-codigo-input" type="text" value="" placeholder="ej. SIS-213" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">SEMESTRE:</label><input id="pac-semestre-input" type="text" value="" placeholder="ej. 3°" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                  <div class="grid grid-cols-4 gap-4 text-xs">
+                    <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">ASIGNATURA:</label><input id="pac-asig-input" type="text" value="" placeholder="ej. PROGRAMACIÓN III" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">TIPO DE CURSO:</label><input id="pac-tipo-curso" type="text" value="" placeholder="ej. Obligatorio" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">MODALIDAD:</label><input id="pac-modalidad" type="text" value="" placeholder="ej. Presencial" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                  <div class="grid grid-cols-4 gap-4 text-xs">
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">PRE-REQUISITO:</label><input id="pac-prerequisito" type="text" value="" placeholder="ej. Pre-requisito" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CRÉDITOS:</label><input id="pac-creditos" type="text" value="" placeholder="ej. 8.0" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">SESIONES SEMANALES:</label><input id="pac-sesiones-sem" type="text" value="" placeholder="ej. 2 Sesiones (4 Horas)" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">TEÓRICAS / PRÁCTICAS:</label><input id="pac-horas-tp" type="text" value="" placeholder="ej. 1.0 T / 2.0 P" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                </div>
+
+                <!-- 2.- Docente Responsable -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="user-check" class="w-4 h-4"></i><span>2.- Docente Responsable de la Asignatura</span></div>
+                  <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">NOMBRE DEL DOCENTE:</label><input id="pac-docente-nombre" type="text" value="" placeholder="Nombre del docente..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">EMAIL INSTITUCIONAL:</label><input id="pac-docente-email" type="text" value="" placeholder="correo@unitepc.edu.bo" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">FORMACIÓN:</label><input id="pac-docente-formacion" type="text" value="" placeholder="Grado académico y formación..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">TELÉFONO / CELULAR:</label><input id="pac-docente-telefono" type="text" value="" placeholder="+591 ..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+                </div>
+
+                <!-- 3 & 4.- Justificación & Propósito -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="align-left" class="w-4 h-4"></i><span>3 y 4.- Justificación & Propósito General</span></div>
+                  <div class="space-y-3 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">3.- JUSTIFICACIÓN DE LA ASIGNATURA:</label>
+                      <textarea id="pac-justificacion-input" rows="3" placeholder="3.- Justificación de la asignatura..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">4.- PROPÓSITO GENERAL DE LA UNIDAD DE FORMACIÓN:</label>
+                      <textarea id="pac-proposito-input" rows="3" placeholder="4.- Propósito general de la unidad de formación..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 5.- Competencias -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="award" class="w-4 h-4"></i><span>5.- Competencias</span></div>
+                  <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">COMPETENCIA GLOBAL ESPECÍFICA:</label>
+                      <textarea id="pac-competencia-global" rows="3" placeholder="Competencia global específica..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">UNIDAD DE COMPETENCIA ESPECÍFICA:</label>
+                      <textarea id="pac-unidad-competencia" rows="3" placeholder="Unidad de competencia específica..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 6.- Elementos de Competencia (Dinámico por Unidades) -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="flex items-center justify-between">
+                    <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="list-checks" class="w-4 h-4"></i><span>6.- Elementos de Competencia (Articulados por Unidad)</span></div>
+                    <button type="button" onclick="window.addPacElementoCompetencia()" class="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                      <span>Agregar Elemento</span>
+                    </button>
+                  </div>
+                  <div id="pac-elementos-competencia-container" class="space-y-3 text-xs">
+                    <!-- Dynamic Elementos de Competencia will be rendered here -->
+                  </div>
+                </div>
+
+
+                <!-- 8.- Metodología General -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="compass" class="w-4 h-4"></i><span>8.- Metodología General de la Asignatura</span></div>
+                  <div class="space-y-3 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">En el Aula (Si corresponde):</label>
+                      <textarea id="pac-metodologia-aula" rows="3" placeholder="Enfoque metodológico en el aula..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Laboratorios / Centro de Simulación (Si corresponde):</label>
+                      <textarea id="pac-metodologia-lab" rows="2" placeholder="Metodología en laboratorios / centro de simulación..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Hospital y Centros de Salud (Si corresponde):</label>
+                      <input id="pac-metodologia-salud" type="text" value="" placeholder="Hospital y centros de salud (si corresponde)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 9.- Sistema de Evaluación & Ponderaciones (EDITABLE) -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="check-square" class="w-4 h-4"></i><span>9.- Sistema de Evaluación & Ponderaciones</span></div>
+                  <div class="text-xs">
+                    <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Proceso Evaluador (Diagnóstica, Formativa y Sumativa):</label>
+                    <textarea id="pac-sistema-evaluacion" rows="3" placeholder="Descripción del proceso evaluador (Diagnóstica, Formativa y Sumativa)..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
+                  </div>
+                  <div class="grid grid-cols-3 gap-4 text-xs">
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-center space-y-2">
+                      <div class="font-bold text-slate-900 dark:text-white">1er PARCIAL (30 Puntos)</div>
+                      <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200 dark:border-slate-700">
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Teórica:</span><input id="pac-p1-teorica" type="text" value="20" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Práctica:</span><input id="pac-p1-practica" type="text" value="10" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                      </div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-center space-y-2">
+                      <div class="font-bold text-slate-900 dark:text-white">2do PARCIAL (30 Puntos)</div>
+                      <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200 dark:border-slate-700">
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Teórica:</span><input id="pac-p2-teorica" type="text" value="20" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Práctica:</span><input id="pac-p2-practica" type="text" value="10" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                      </div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-center space-y-2">
+                      <div class="font-bold text-slate-900 dark:text-white">EXAMEN FINAL (40 Puntos)</div>
+                      <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200 dark:border-slate-700">
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Teórica:</span><input id="pac-ef-teorica" type="text" value="30" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                        <div><span class="block text-[10px] text-slate-500 dark:text-slate-400">Nota Práctica:</span><input id="pac-ef-practica" type="text" value="10" placeholder="pts" class="w-full text-center p-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-brand-600 dark:text-brand-400"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 12.- Criterios y Normativa de la Asignatura -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="alert-triangle" class="w-4 h-4"></i><span>12.- Criterios y Normativa de la Asignatura</span></div>
+                  <div class="space-y-3 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Normativa y Acuerdos de Aula:</label>
+                      <textarea id="pac-normativa-acuerdos" rows="4" placeholder="Son acuerdos que se establecen junto con los estudiantes para poder convivir de manera armónica el proceso de enseñanza-aprendizaje..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 14.- Bibliografía Oficial (Específica y Complementaria) -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="book-marked" class="w-4 h-4"></i><span>14.- Bibliografía Oficial</span></div>
+                  <div class="text-xs space-y-2">
+                    <label class="font-bold text-slate-700 dark:text-slate-300 block">Bibliografía Específica y Complementaria:</label>
+                    <textarea id="pac-bibliografia-textarea" rows="6" placeholder="Bibliografía oficial específica y complementaria del PAC..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-[12px] leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                  </div>
+                </div>
+
+
+
+              </div>
+
+              <!-- ================================================================= -->
+              <!-- TAB 3: CRONOGRAMA INDEPENDIENTE (20 SEMANAS / 36 SESIONES)        -->
+              <!-- ================================================================= -->
+              <div id="tab-cronograma-semanas" class="doc-tab-panel p-8 space-y-6 hidden">
+                
+                <!-- Tab Top Action Bar: Export PAC + Cronograma unified -->
+                <div class="p-4 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/60 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 no-print">
+                  <div class="flex items-center gap-2.5">
+                    <i data-lucide="calendar" class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0"></i>
+                    <div>
+                      <strong>Documento 3: Cronograma de 20 Semanas (Sección 7 del PAC):</strong> Matriz curricular editable de 20 semanas y sesiones extraídas del PAC.
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.addCronogramaRow()" class="px-3 py-1.5 bg-amber-600 text-white font-bold rounded-lg text-xs hover:bg-amber-700 flex items-center gap-1 shadow-sm transition-colors cursor-pointer">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Fila
+                    </button>
+                    <button type="button" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                      <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar PAC + Cronograma (.xlsx)
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Matriz Editable -->
+                <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-x-auto bg-white dark:bg-slate-900 shadow-sm">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th class="py-3 px-2 w-14 text-center">Sem.</th>
+                        <th class="py-3 px-2 w-14 text-center">Ses.</th>
+                        <th class="py-3 px-3 w-40">Unidad Temática</th>
+                        <th class="py-3 px-3 w-44">Tema Específico</th>
+                        <th class="py-3 px-3 w-44">Saber Conceptual</th>
+                        <th class="py-3 px-3 w-48">Saber Procedimental</th>
+                        <th class="py-3 px-3 w-40">Saber Actitudinal</th>
+                        <th class="py-3 px-3 w-44">Criterio Desempeño</th>
+                        <th class="py-3 px-3 w-40">Instrumento</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cronograma-table-body" class="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+                    <tr>
+                      <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                        <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                        <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma</p>
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Subir Documentación" para importar tu archivo PAC (.xlsx) o presiona "+ Agregar Fila".</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                  </table>
+                </div>
+              </div>
+
+
+
+              <!-- ================================================================= -->
+              <!-- TAB 4: PLANES DE CLASE POR SESIÓN (EXCEL 2 COMPLETO AL 100%)      -->
+              <!-- ================================================================= -->
+              <div id="tab-cronograma-planes" class="doc-tab-panel p-8 space-y-6 hidden">
+                
+                <!-- Tab Top Action Bar: Export Planes de Clase specific -->
+                <div class="p-4 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-900/60 flex items-center justify-between text-xs text-purple-900 dark:text-purple-200 no-print">
+                  <div class="flex items-center gap-2.5">
+                    <i data-lucide="calendar-range" class="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0"></i>
+                    <div>
+                      <strong>Documento 4: Planes de Clase por Sesión (.xlsx):</strong> Microdidáctica completa sesión a sesión con hojas de trabajo por tema.
+                    </div>
+                  </div>
+                  <button onclick="window.exportExactFile('planes_xlsx')" class="px-3.5 py-1.5 bg-purple-600 text-white font-bold rounded-lg text-xs hover:bg-purple-700 flex items-center gap-1.5 shadow-sm transition-colors">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Planes de Clase (.xlsx)
+                  </button>
+                </div>
+
+                <!-- Selector de Pestañas de Temas -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar no-print">
+                  <button onclick="window.selectPlanSheet('tema1')" id="btn-plan-tema1" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all">
+                    UA-1 Tema 1: Conceptos Generales
+                  </button>
+                  <button onclick="window.selectPlanSheet('tema2')" id="btn-plan-tema2" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
+                    UA-1 Tema 2: Fonología & Morfología
+                  </button>
+                  <button onclick="window.selectPlanSheet('tema3')" id="btn-plan-tema3" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
+                    UA-2 Tema 3: Morfología Nominal
+                  </button>
+                  <button onclick="window.selectPlanSheet('tema4')" id="btn-plan-tema4" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
+                    UA-2 Tema 4: Sintaxis & Sufijos
+                  </button>
+                  <button onclick="window.selectPlanSheet('tema5')" id="btn-plan-tema5" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
+                    UA-2 Tema 5: Sociolingüística
+                  </button>
+                  <button onclick="window.selectPlanSheet('tema6')" id="btn-plan-tema6" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
+                    UA-2 Tema 6: Aspectos Jurídicos & Educativos
+                  </button>
+                </div>
+
+                <!-- FICHA DEL PLAN DE CLASE -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                  
+                  <!-- 1. Encabezado -->
+                  <div class="grid grid-cols-4 gap-4 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Nombre del Docente:</span><input id="plan-docente-input" type="text" value="" placeholder="Nombre del Docente..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Fecha:</span><input id="plan-fecha-input" type="date" value="" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Asignatura:</span><input id="plan-asig-input" type="text" value="" placeholder="Asignatura..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Carrera:</span><input id="plan-carrera-input" type="text" value="" placeholder="Carrera..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+
+                  <!-- 2. Unidad & Tema -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div class="grid grid-cols-3 gap-4">
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unidad:</label><input id="plan-unidad-input" type="text" value="" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-700 dark:text-brand-400 focus:bg-white dark:focus:bg-slate-900"></div>
+                      <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Tema:</label><input id="plan-tema-input" type="text" value="" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    </div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Elemento de Competencia:</label><textarea id="plan-elemento-input" rows="2" placeholder="Elemento de Competencia..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                  </div>
+
+                  <!-- 3. Resultados, Logros & Indicadores -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Resultados de Aprendizaje:</label><textarea id="plan-resultados-input" rows="2" placeholder="Resultados de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Logros Esperados:</label><textarea id="plan-logros-input" rows="2" placeholder="Criterios de Desempeño / Logros..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Indicadores de Logro:</label><textarea id="plan-indicadores-input" rows="2" placeholder="Indicadores de Logro..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    </div>
+                  </div>
+
+                  <!-- 4. Los 3 Saberes -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="layers" class="w-4 h-4"></i><span>Contenidos de la Sesión (Los 3 Saberes)</span></div>
+                    <div class="grid grid-cols-3 gap-4">
+                      <div class="p-3 bg-blue-50/60 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/60"><strong class="text-blue-800 dark:text-blue-300 block mb-1">Saber Conceptual:</strong><textarea id="plan-conceptual-input" rows="3" placeholder="Saberes Conceptuales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/60"><strong class="text-emerald-800 dark:text-emerald-300 block mb-1">Saber Procedimental:</strong><textarea id="plan-procedimental-input" rows="3" placeholder="Saberes Procedimentales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div class="p-3 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/60"><strong class="text-purple-800 dark:text-purple-300 block mb-1">Saber Actitudinal:</strong><textarea id="plan-actitudinal-input" rows="3" placeholder="Saberes Actitudinales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    </div>
+                  </div>
+
+                  <!-- 5. Estrategias Didácticas -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="compass" class="w-4 h-4"></i><span>Estrategias Didácticas (Docente, Estudiante y Recursos)</span></div>
+                    <div class="grid grid-cols-3 gap-4">
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">De Enseñanza (Docentes):</label><textarea id="plan-est-ensenanza" rows="2" placeholder="Estrategias de Enseñanza..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">De Aprendizaje (Estudiante):</label><textarea id="plan-est-aprendizaje" rows="2" placeholder="Estrategias de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Recursos de Enseñanza:</label><textarea id="plan-est-recursos" rows="2" placeholder="Recursos Didácticos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    </div>
+                  </div>
+
+                  <!-- 6. Evaluación Formativa y Sumativa -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="check-square" class="w-4 h-4"></i><span>Evaluación de los Aprendizajes</span></div>
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                      <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-800 font-bold border-b border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                          <tr>
+                            <th class="py-2.5 px-3 w-36">TIPO DE EVALUACIÓN</th>
+                            <th class="py-2.5 px-3">Actividades y Técnicas</th>
+                            <th class="py-2.5 px-3 w-48">Instrumentos</th>
+                            <th class="py-2.5 px-3 w-48">Evidencias</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="py-2 px-3 font-bold text-blue-700 dark:text-blue-400">FORMATIVA</td>
+                            <td class="py-2 px-3"><input id="plan-eval-form-act" type="text" value="" placeholder="Actividades de evaluación formativa..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                            <td class="py-2 px-3"><input id="plan-eval-form-inst" type="text" value="" placeholder="Instrumento formativo..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                            <td class="py-2 px-3"><input id="plan-eval-form-evid" type="text" value="" placeholder="Evidencia formativa..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                          </tr>
+                          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="py-2 px-3 font-bold text-emerald-700 dark:text-emerald-400">SUMATIVA</td>
+                            <td class="py-2 px-3"><input id="plan-eval-sum-act" type="text" value="" placeholder="Actividades de evaluación sumativa..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                            <td class="py-2 px-3"><input id="plan-eval-sum-inst" type="text" value="" placeholder="Instrumento sumativo..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                            <td class="py-2 px-3"><input id="plan-eval-sum-evid" type="text" value="" placeholder="Evidencia sumativa..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- 7. Secuencia Didáctica con Minutos -->
+                  <div class="space-y-3 pt-2">
+                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="clock" class="w-4 h-4"></i><span>Secuencia Didáctica (Momentos & Minutaje)</span></div>
+                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-1 text-xs">
+                      <div class="flex items-center justify-between"><strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN (25 min):</strong><span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-bold">25 Minutos</span></div>
+                      <textarea id="plan-sec-intro" rows="3" placeholder="Actividades de Inicio / Motivación (25 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-1 text-xs">
+                      <div class="flex items-center justify-between"><strong class="text-purple-800 dark:text-purple-300">2. CUERPO DE CONTENIDOS (100 min):</strong><span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold">100 Minutos</span></div>
+                      <textarea id="plan-sec-cuerpo" rows="4" placeholder="Actividades de Desarrollo (100 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-1 text-xs">
+                      <div class="flex items-center justify-between"><strong class="text-emerald-800 dark:text-emerald-300">3. CONCLUSIÓN O CIERRE (55 min):</strong><span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold">55 Minutos</span></div>
+                      <textarea id="plan-sec-cierre" rows="3" placeholder="Actividades de Cierre / Evaluación (55 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: [DIRECCIÓN DE CARRERA] SUPERVISIÓN & APROBACIÓN POR SEMESTRE       -->
+    <!-- ========================================================================= -->
+    <div id="view2" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+      
+      <!-- Sidebar -->
+      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 px-2 py-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+            <div>
+              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
+              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Dirección de Carrera</div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Supervisión</div>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
+              <i data-lucide="layout-grid" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+              <span>Monitoreo Curricular</span>
+            </a>
+            <a href="#" onclick="window.showToast('Visualizando 32 docentes asignados a la carrera')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="users" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Plantel Docente (32)</span>
+            </a>
+            <a href="#" onclick="window.showToast('Aprobaciones finales del semestre')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="check-circle" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Aprobaciones Finales</span>
+            </a>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">DC</div>
+          <div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white">Dr. Carlos Meneses</div>
+            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Director • Ing. de Sistemas</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Area -->
+      <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
+          <div class="flex items-center gap-3">
+            <h2 class="text-base font-bold font-display text-slate-900 dark:text-white">Supervisión y Aprobación Curricular por Semestre</h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">Ing. de Sistemas</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold">
+              GESTIÓN: II-2026 (Activa)
+            </div>
+            <button onclick="window.showToast('✓ Todo el semestre 3º ha sido formalmente aprobado')" class="px-4 py-2 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 flex items-center gap-2 transition-colors cursor-pointer">
+              <i data-lucide="check-check" class="w-4 h-4"></i>
+              Aprobar Todo el Semestre
+            </button>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          
+          <!-- Filter Tabs Toolbar -->
+          <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm">Todos (48)</button>
+              <button class="px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold">Completados (38)</button>
+              <button class="px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold">Pendientes (7)</button>
+              <button class="px-3 py-1.5 rounded-lg text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-xs font-semibold flex items-center gap-1 border border-amber-200 dark:border-amber-800/60">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                Con Observaciones (3)
+              </button>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Cumplimiento General: <strong class="text-emerald-600 dark:text-emerald-400 font-bold">87.5%</strong>
+            </div>
+          </div>
+
+          <!-- Semester Accordions -->
+          <div class="space-y-4">
+            
+            <!-- 1° Semestre -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+              <div class="flex items-center gap-3">
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">1º SEMESTRE (6 Asignaturas)</h3>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">100% Cumplimiento</span>
+                <span class="text-xs px-2.5 py-1 rounded-md bg-emerald-600 text-white font-bold">APROBADO</span>
+              </div>
+            </div>
+
+            <!-- 2° Semestre -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+              <div class="flex items-center gap-3">
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">2º SEMESTRE (6 Asignaturas)</h3>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">100% Cumplimiento</span>
+                <span class="text-xs px-2.5 py-1 rounded-md bg-emerald-600 text-white font-bold">APROBADO</span>
+              </div>
+            </div>
+
+            <!-- EXPANDED: 3° SEMESTRE -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl border-2 border-brand-500 shadow-md overflow-hidden transition-colors">
+              <div class="bg-purple-50/70 dark:bg-slate-800 p-4 border-b border-purple-100 dark:border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <i data-lucide="chevron-down" class="w-5 h-5 text-brand-600 dark:text-brand-400"></i>
+                  <h3 class="text-sm font-bold text-purple-900 dark:text-purple-200">3º SEMESTRE (6 Asignaturas - 83% Cumplimiento)</h3>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-brand-600 dark:text-brand-400 font-semibold">5 de 6 validadas</span>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">EN REVISIÓN</span>
+                </div>
+              </div>
+
+              <!-- Table Inside Accordion -->
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 uppercase text-[10px]">
+                  <tr>
+                    <th class="py-3 px-4">Asignatura</th>
+                    <th class="py-3 px-4">Docente Titular</th>
+                    <th class="py-3 px-4">Documentos Cargados</th>
+                    <th class="py-3 px-4 text-center">Estado</th>
+                    <th class="py-3 px-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  <!-- Row 1: SIS-213 Aprobado -->
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="py-3 px-4">
+                      <div class="font-bold text-slate-900 dark:text-white">SIS-213 Programación III</div>
+                      <div class="text-[11px] text-slate-500 dark:text-slate-400">4 Hrs/Semana • Presencial</div>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">Ing. Marcos Rojas</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Analítico: OK</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">PAC: OK</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Planes: OK</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">APROBADO</span>
+                    </td>
+                    <td class="py-3 px-4 text-right space-x-2">
+                      <button onclick="window.switchView('view1'); window.selectDocenteMateria('sis213g1');" class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer">Ver Carpeta</button>
+                      <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-2.5 py-1 rounded bg-slate-800 dark:bg-slate-700 text-white font-medium hover:bg-slate-900 cursor-pointer">Descargar</button>
+                    </td>
+                  </tr>
+
+                  <!-- Row 2: SIS-214 Observado -->
+                  <tr class="hover:bg-amber-50/40 dark:hover:bg-amber-950/20 bg-amber-50/10 dark:bg-amber-950/10">
+                    <td class="py-3 px-4">
+                      <div class="font-bold text-slate-900 dark:text-white">SIS-214 Base de Datos I</div>
+                      <div class="text-[11px] text-slate-500 dark:text-slate-400">4 Hrs/Semana • Presencial</div>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">Lic. Sandra Morales</td>
+                    <td class="py-3 px-4">
+                      <div class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Analítico: OK</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">PAC: Pendiente</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/60">Planes: Falta</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/60">OBSERVADO</span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                      <button onclick="window.showToast('📧 Notificación formal enviada a Lic. Sandra Morales')" class="px-3 py-1 rounded bg-amber-600 text-white font-bold hover:bg-amber-700 flex items-center gap-1 ml-auto cursor-pointer">
+                        <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
+                        Notificar Docente
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Accordion Footer -->
+              <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <div class="text-xs text-slate-500 dark:text-slate-400">
+                  Al completar todas las materias podrás emitir la resolución curricular de carrera.
+                </div>
+                <button onclick="window.showToast('✓ Planificación del 3º semestre aprobada por Dirección')" class="px-4 py-2 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 transition-colors cursor-pointer">
+                  Aprobar y Finalizar Planificación del Semestre
+                </button>
+              </div>
+            </div>
+
+            <!-- 4° Semestre -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+              <div class="flex items-center gap-3">
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">4º SEMESTRE (6 Asignaturas)</h3>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700">50% Cumplimiento</span>
+                <span class="text-xs px-2.5 py-1 rounded-md bg-amber-500 text-white font-bold">EN REVISIÓN</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: [DIRECCIÓN ACADÉMICA] AUDITORÍA DE CLASES IN SITU & CONTROL       -->
+    <!-- ========================================================================= -->
+    <div id="view3" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+      
+      <!-- Sidebar -->
+      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 px-2 py-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+            <div>
+              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
+              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Dirección Académica</div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Auditoría & Control</div>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
+              <i data-lucide="radar" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+              <span>Auditoría In Situ</span>
+            </a>
+            <a href="#" onclick="window.showToast('Monitoreando 42 aulas simultáneas en Campus Central')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="building" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Monitoreo de Campus</span>
+            </a>
+            <a href="#" onclick="window.showToast('Consolidando informe semanal de sede')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="file-check-2" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Informes de Sede</span>
+            </a>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 font-bold flex items-center justify-center text-xs border border-blue-200 dark:border-blue-800/60">DA</div>
+          <div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white">Lic. Rodrigo Morales</div>
+            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Auditor • Sede Cochabamba</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main View Area + Drawer -->
+      <div class="flex-1 flex h-full overflow-hidden relative">
+        
+        <!-- Center Monitoring Panel -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+          <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
+            <div class="flex items-center gap-3">
+              <h2 class="text-base font-bold font-display text-slate-900 dark:text-white">Auditoría Curricular en Tiempo Real</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                Turno Mañana Activo
+              </span>
+            </div>
+            <button onclick="window.showToast('Abriendo panel para nueva auditoría')" class="px-3.5 py-1.5 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Nueva Auditoría In Situ
+            </button>
+          </header>
+
+          <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+            
+            <!-- Filters Toolbar -->
+            <div class="grid grid-cols-3 gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Campus</label>
+                <select class="w-full text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white">
+                  <option>Campus Juan Pablo II (Principal)</option>
+                  <option>Campus Tupuraya</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Sede Regional</label>
+                <input type="text" value="Cochabamba" disabled class="w-full text-xs font-semibold bg-slate-100 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-700 dark:text-slate-300">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Bloque Horario Actual</label>
+                <div class="text-xs font-bold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 rounded-lg p-2 flex items-center justify-between">
+                  <span>10:00 - 11:30 (En curso)</span>
+                  <i data-lucide="clock" class="w-4 h-4"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Class Grid -->
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Clases en Curso en Campus Juan Pablo II</h3>
+              
+              <div class="grid grid-cols-2 gap-4">
+                
+                <!-- Class Card 1 (Selected for Audit) -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border-2 border-brand-600 shadow-md relative transition-colors">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="text-xs font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800/60">AULA 302</span>
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white mt-1">SIS-213 Programación III</h4>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Ing. de Sistemas • 3º Semestre</p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Docente Activo</span>
+                  </div>
+
+                  <div class="mt-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Tema Programado en PAC (Sesión 2):</div>
+                    <div class="text-xs font-bold text-slate-900 dark:text-white">"Anatomía de la Entidad y el Objeto (SOLID / DDD)"</div>
+                  </div>
+
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Docente: Ing. Marcos Rojas</span>
+                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                      <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                      Auditoría Abierta
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Class Card 2 -->
+                <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="text-xs font-extrabold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">AULA 104</span>
+                      <h4 class="text-sm font-bold text-slate-900 dark:text-white mt-1">ODO-101 Morfología Dental</h4>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Odontología • 1º Semestre</p>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Docente Activo</span>
+                  </div>
+
+                  <div class="mt-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Tema Programado en PAC (Sesión 4):</div>
+                    <div class="text-xs font-bold text-slate-900 dark:text-white">"Anatomía Coronaria y Oclusal de Premolares"</div>
+                  </div>
+
+                  <div class="mt-4 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400">Docente: Dra. Valeria Paz</span>
+                    <button onclick="window.showToast('Cargando datos de ODO-101 para auditoría')" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer">Auditar esta aula</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Component/InSituAuditDrawer (Width: 440px Panel) -->
+        <div class="w-[440px] h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-drawer flex flex-col justify-between p-6 z-20 overflow-y-auto custom-scrollbar transition-colors">
+          <div class="space-y-5">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 flex items-center justify-center font-bold">
+                  <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Auditoría en Progreso</h3>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">Aula 302 • Campus Juan Pablo II</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-time Matched Subject Card -->
+            <div class="bg-purple-50/60 dark:bg-purple-950/40 rounded-xl p-4 border border-purple-200 dark:border-purple-800/60 space-y-1">
+              <div class="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Cruce con PAC Oficial</div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">SIS-213 Programación III</div>
+              <div class="text-[11px] text-slate-600 dark:text-slate-400">Docente Titular: <strong class="text-slate-900 dark:text-white">Ing. Marcos Rojas</strong></div>
+              <div class="text-[11px] text-purple-800 dark:text-purple-300 font-medium pt-1">Tema: Anatomía de la Entidad y el Objeto</div>
+            </div>
+
+            <!-- Verification Checklist / Form -->
+            <div class="space-y-4">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Verificación Presencial</div>
+
+              <!-- Switch 1 -->
+              <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                <div>
+                  <div class="text-xs font-bold text-slate-900 dark:text-white">Docente en Aula</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">Verificado puntualmente</div>
+                </div>
+                <div class="w-10 h-6 bg-brand-600 rounded-full flex items-center justify-end p-1 cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                </div>
+              </div>
+
+              <!-- Switch 2 -->
+              <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                <div>
+                  <div class="text-xs font-bold text-slate-900 dark:text-white">Tema Coincidente con PAC</div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400">Contenido impartido coincide</div>
+                </div>
+                <div class="w-10 h-6 bg-brand-600 rounded-full flex items-center justify-end p-1 cursor-pointer">
+                  <div class="w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                </div>
+              </div>
+
+              <!-- Checkboxes: Recursos -->
+              <div>
+                <label class="text-xs font-bold text-slate-900 dark:text-white block mb-2">Material Didáctico Utilizado:</label>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <label class="flex items-center gap-2 p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" checked class="text-brand-600 rounded">
+                    <span class="text-slate-800 dark:text-slate-200">Proyector</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" checked class="text-brand-600 rounded">
+                    <span class="text-slate-800 dark:text-slate-200">Código en Vivo</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" checked class="text-brand-600 rounded">
+                    <span class="text-slate-800 dark:text-slate-200">Pizarra / Diagrama</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer">
+                    <input type="checkbox" class="text-brand-600 rounded">
+                    <span class="text-slate-800 dark:text-slate-200">Guía Práctica</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Observations Field -->
+              <div>
+                <label class="text-xs font-bold text-slate-900 dark:text-white block mb-1">Observaciones de la Auditoría:</label>
+                <textarea rows="3" class="w-full text-xs p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 outline-none" placeholder="El docente inició puntualmente y los estudiantes se encuentran desarrollando el modelo de dominio en IDE..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Button -->
+          <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+            <button onclick="window.showToast('✓ Reporte de auditoría enviado a Vicerrectorado')" class="w-full py-3 rounded-xl bg-brand-600 text-white font-bold text-xs shadow-md hover:bg-brand-700 flex items-center justify-center gap-2 transition-all cursor-pointer">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              Enviar Reporte Instantáneo a Vicerrectorado Sede
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: [VICERRECTORADO SEDE] PANEL REGIONAL & REINCIDENCIAS              -->
+    <!-- ========================================================================= -->
+    <div id="view4" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+      
+      <!-- Sidebar -->
+      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 px-2 py-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+            <div>
+              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
+              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Vicerrectorado Sede</div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Gestión Regional</div>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
+              <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+              <span>Tablero Regional CBBA</span>
+            </a>
+            <a href="#" onclick="window.showToast('Revisando 3 casos reincidentes para dictamen')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Casos Reincidentes (3)</span>
+            </a>
+            <a href="#" onclick="window.showToast('Emisión de dictámenes e informes de acreditación')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="file-signature" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Dictámenes & Informes</span>
+            </a>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-200 dark:border-amber-800/60">VS</div>
+          <div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white">Dr. Gonzalo Siles</div>
+            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Vicerrector Sede CBBA</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Area -->
+      <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
+          <div>
+            <h2 class="text-base font-bold font-display text-slate-900 dark:text-white">Panel de Control Regional • Sede Cochabamba</h2>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Monitoreo de Cumplimiento Curricular y Régimen Disciplinario</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="window.showToast('Generando dictamen disciplinario institucional')" class="px-3.5 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs shadow-sm hover:bg-red-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              Generar Dictamen / Sanción
+            </button>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          
+          <!-- Top KPI Cards Row -->
+          <div class="grid grid-cols-4 gap-5">
+            
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cumplimiento Sede</span>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200 dark:border-emerald-800/60">
+                  <i data-lucide="trending-up" class="w-3 h-3"></i> +4.2%
+                </span>
+              </div>
+              <div class="text-2xl font-extrabold font-display text-slate-900 dark:text-white mt-2">92.4%</div>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: 92.4%"></div>
+              </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Docentes Habilitados</div>
+              <div class="text-2xl font-extrabold font-display text-slate-900 dark:text-white mt-2">348</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">12 Carreras en 2 Campus</div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-amber-200 dark:border-amber-800/60 shadow-sm bg-amber-50/20 dark:bg-amber-950/20 transition-colors">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Con Atraso / Incumplimiento</span>
+                <i data-lucide="clock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+              </div>
+              <div class="text-2xl font-extrabold font-display text-amber-700 dark:text-amber-400 mt-2">14</div>
+              <div class="text-xs text-amber-800 dark:text-amber-300 font-medium mt-2">4.02% del total de docentes</div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-red-200 dark:border-red-800/60 shadow-sm bg-red-50/20 dark:bg-red-950/20 transition-colors">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-red-800 dark:text-red-300">Casos Reincidentes</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white animate-pulse">ALERTA</span>
+              </div>
+              <div class="text-2xl font-extrabold font-display text-red-600 dark:text-red-400 mt-2">3</div>
+              <div class="text-xs text-red-700 dark:text-red-300 font-medium mt-2">Sujetos a No Recontratación</div>
+            </div>
+
+          </div>
+
+          <!-- Career Compliance Comparison Table -->
+          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Cumplimiento Comparativo por Carrera</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Supervisión de entregas de PAC y auditorías presenciales</p>
+              </div>
+              <button onclick="window.showToast('📥 Descargando informe regional de sede Cochabamba')" class="text-xs px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                Descargar Informe Regional
+              </button>
+            </div>
+
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 uppercase text-[10px]">
+                <tr>
+                  <th class="py-3 px-4">Carrera</th>
+                  <th class="py-3 px-4">Campus</th>
+                  <th class="py-3 px-4">Docentes</th>
+                  <th class="py-3 px-4">% Entrega a Tiempo</th>
+                  <th class="py-3 px-4">Incumplimientos</th>
+                  <th class="py-3 px-4">Reincidencias</th>
+                  <th class="py-3 px-4 text-right">Decisiones & Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">Ingeniería de Sistemas</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">Juan Pablo II</td>
+                  <td class="py-3 px-4">32</td>
+                  <td class="py-3 px-4">
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">100%</span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-slate-500">0</td>
+                  <td class="py-3 px-4"><span class="text-slate-400">-</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <span class="text-xs text-emerald-700 dark:text-emerald-400 font-bold">Felicitación Institucional</span>
+                  </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">Medicina</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">Tupuraya</td>
+                  <td class="py-3 px-4">84</td>
+                  <td class="py-3 px-4">
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">94%</span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-amber-600 dark:text-amber-400">5</td>
+                  <td class="py-3 px-4"><span class="text-slate-400">1</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button onclick="window.showToast('Revisando casos de Medicina')" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-semibold cursor-pointer">Revisar Casos</button>
+                  </td>
+                </tr>
+
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">Derecho</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">Juan Pablo II</td>
+                  <td class="py-3 px-4">42</td>
+                  <td class="py-3 px-4">
+                    <span class="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">88%</span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-amber-600 dark:text-amber-400">5</td>
+                  <td class="py-3 px-4"><span class="font-bold text-amber-600 dark:text-amber-400">1</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button onclick="window.showToast('Llamada de atención generada para Derecho')" class="text-xs text-amber-700 dark:text-amber-400 hover:underline font-semibold cursor-pointer">Llamada de Atención</button>
+                  </td>
+                </tr>
+
+                <tr class="hover:bg-red-50/30 dark:hover:bg-red-950/20 bg-red-50/10 dark:bg-red-950/10">
+                  <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">Odontología</td>
+                  <td class="py-3 px-4 text-slate-600 dark:text-slate-400">Tupuraya</td>
+                  <td class="py-3 px-4">28</td>
+                  <td class="py-3 px-4">
+                    <span class="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/70 px-2 py-0.5 rounded border border-red-200 dark:border-red-800/60">79%</span>
+                  </td>
+                  <td class="py-3 px-4 font-semibold text-red-600 dark:text-red-400">6</td>
+                  <td class="py-3 px-4"><span class="font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded border border-red-200 dark:border-red-800/60">2 Críticos</span></td>
+                  <td class="py-3 px-4 text-right">
+                    <button onclick="window.showToast('Generando dictamen para Odontología')" class="px-2.5 py-1 rounded bg-red-600 text-white font-bold hover:bg-red-700 cursor-pointer">Emitir Dictamen</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 5: [VICERRECTORADO NACIONAL] TABLERO EJECUTIVO & ANÁLISIS MULTISEDE -->
+    <!-- ========================================================================= -->
+    <div id="view5" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+      
+      <!-- Sidebar -->
+      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3 px-2 py-1">
+            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+            <div>
+              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA NACIONAL</div>
+              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Alta Dirección Universitaria</div>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Consolidado Nacional</div>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
+              <i data-lucide="globe" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
+              <span>Tablero Multisede</span>
+            </a>
+            <a href="#" onclick="window.showToast('Ranking y acreditación de sedes universitarias')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Ranking & Calidad</span>
+            </a>
+            <a href="#" onclick="window.showToast('Descargando matriz nacional de docentes')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+              <span>Matriz Consolidada</span>
+            </a>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">VN</div>
+          <div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white">Vicerrectorado Nacional</div>
+            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Sede Central • Bolivia</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Area -->
+      <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
+          <div>
+            <h2 class="text-base font-bold font-display text-slate-900 dark:text-white">Tablero Nacional de Gestión y Planificación Universitaria</h2>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Consolidado Multisede: Cochabamba, La Paz, El Alto, Cobija</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="window.showToast('📥 Generando Informe Ejecutivo Nacional en PDF')" class="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="file-text" class="w-4 h-4 text-red-600"></i>
+              Exportar Informe Ejecutivo (.PDF)
+            </button>
+            <button onclick="window.showToast('📥 Descargando Matriz Consolidada Multisede (.XLSX)')" class="px-3.5 py-2 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="table" class="w-4 h-4"></i>
+              Descargar Matriz Consolidada (.XLSX)
+            </button>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          
+          <!-- Global Multiselect Filter Toolbar -->
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Filtros Globales:</span>
+              <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                Todas las Sedes (4)
+              </span>
+              <span class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                Todas las Facultades
+              </span>
+              <span class="px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 text-xs font-bold border border-purple-200 dark:border-purple-800/60">
+                Gestión: II-2026
+              </span>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Última sincronización nacional: <strong class="text-slate-800 dark:text-slate-200">Hoy 11:00 AM</strong>
+            </div>
+          </div>
+
+          <!-- Executive Ranking Cards Grid (4 Sedes) -->
+          <div class="grid grid-cols-4 gap-5">
+            
+            <!-- 1° Cochabamba -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border-2 border-emerald-500 shadow-sm relative overflow-hidden transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">1º LUGAR</span>
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">96.2%</span>
+              </div>
+              <h3 class="text-base font-bold font-display text-slate-900 dark:text-white mt-2">Sede Cochabamba</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">348 Docentes • 12 Carreras</p>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: 96.2%"></div>
+              </div>
+            </div>
+
+            <!-- 2° La Paz -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">2º LUGAR</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">91.4%</span>
+              </div>
+              <h3 class="text-base font-bold font-display text-slate-900 dark:text-white mt-2">Sede La Paz</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">410 Docentes • 15 Carreras</p>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="bg-blue-500 h-full rounded-full" style="width: 91.4%"></div>
+              </div>
+            </div>
+
+            <!-- 3° El Alto -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">3º LUGAR</span>
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">88.0%</span>
+              </div>
+              <h3 class="text-base font-bold font-display text-slate-900 dark:text-white mt-2">Sede El Alto</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">215 Docentes • 9 Carreras</p>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="bg-amber-500 h-full rounded-full" style="width: 88.0%"></div>
+              </div>
+            </div>
+
+            <!-- 4° Cobija -->
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-red-200 dark:border-red-800/60 shadow-sm bg-red-50/10 dark:bg-red-950/10 transition-colors">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/70 px-2 py-0.5 rounded border border-red-200 dark:border-red-800/60">4º LUGAR</span>
+                <span class="text-xs font-bold text-red-600 dark:text-red-400">82.1%</span>
+              </div>
+              <h3 class="text-base font-bold font-display text-slate-900 dark:text-white mt-2">Sede Cobija</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">98 Docentes • 5 Carreras</p>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div class="bg-red-500 h-full rounded-full" style="width: 82.1%"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- National Live Audit Log Stream -->
+          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4 transition-colors">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Registro Nacional de Auditorías en Vivo</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Feed continuo de verificaciones presenciales realizadas en las 4 sedes</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 flex items-center gap-1.5">
+                <i data-lucide="radio" class="w-3.5 h-3.5 text-blue-600 animate-pulse"></i>
+                Feed en Tiempo Real
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              
+              <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sede Cochabamba • Campus Juan Pablo II (Aula 302)</span>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Ing. Marcos Rojas (SIS-213 Programación III) • Tema coincidente al 100%</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">Verificado OK</span>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Hace 4 minutos</div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sede La Paz • Campus Miraflores (Aula 201)</span>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400">Dr. Fernando Aguilar (MED-301 Anatomía Humana II) • Práctica en anfiteatro</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">Verificado OK</span>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Hace 12 minutos</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Complete Interactive Scripts -->
+  

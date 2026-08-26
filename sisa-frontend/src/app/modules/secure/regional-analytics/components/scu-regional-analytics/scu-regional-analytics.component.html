@@ -1,0 +1,46 @@
+<div class="scu-regional-analytics-workspace">
+  <!-- Macro KPI Summary -->
+  <div class="kpi-grid grid mb-4">
+    <div class="col-12 md:col-3">
+      <div class="kpi-card scu-card">
+        <span class="kpi-title">Docentes Activos en Sede</span>
+        <div class="kpi-value font-mono">142</div>
+        <span class="kpi-sub"><i class="pi pi-users text-primary"></i> Plantel docente regular</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="kpi-card scu-card">
+        <span class="kpi-title">Auditorías In Situ Realizadas</span>
+        <div class="kpi-value font-mono text-primary">198</div>
+        <span class="kpi-sub"><i class="pi pi-check-circle text-primary"></i> 92.4% Conformes</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="kpi-card scu-card">
+        <span class="kpi-title">Planes de Acción Activos</span>
+        <div class="kpi-value font-mono text-warning">4</div>
+        <span class="kpi-sub"><i class="pi pi-file-edit text-warning"></i> En seguimiento Sede</span>
+      </div>
+    </div>
+    <div class="col-12 md:col-3">
+      <div class="kpi-card scu-card">
+        <span class="kpi-title">Casos Escalados a Nacional</span>
+        <div class="kpi-value font-mono text-danger">1</div>
+        <span class="kpi-sub"><i class="pi pi-ban text-danger"></i> Nivel 3 (Strike 3)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Career Compliance Chart -->
+  <div class="mb-4">
+    <scu-branch-compliance-chart></scu-branch-compliance-chart>
+  </div>
+
+  <!-- Disciplinary Recurrence Panel (3-Strike System) -->
+  <div>
+    <scu-disciplinary-recurrence-panel
+      [recurrences]="recurrences"
+      (resolved)="onRecurrenceResolved($event)">
+    </scu-disciplinary-recurrence-panel>
+  </div>
+</div>

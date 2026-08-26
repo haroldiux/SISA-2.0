@@ -1,0 +1,56 @@
+<p-dialog
+  header="Dictamen y Revisión de Plan Académico Curricular (PAC)"
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  (onHide)="onClose()"
+  styleClass="scu-review-dialog">
+  <div *ngIf="pac" class="p-fluid">
+    <div class="pac-summary-card mb-3 p-3 surface-50 border-round">
+      <div class="flex justify-content-between align-items-center mb-2">
+        <span class="font-bold text-sm">Estado Actual:</span>
+        <scu-status-badge [status]="pac.estado"></scu-status-badge>
+      </div>
+      <div class="text-xs text-color-secondary mb-1">
+        <strong>Sesiones Planificadas:</strong> {{ pac.matriz7.length }} sesiones (20 Semanas)
+      </div>
+      <div class="text-xs text-color-secondary">
+        <strong>Estrategias:</strong> {{ pac.estrategiasMetodologicas?.join(', ') || 'N/A' }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="font-semibold text-sm">Observaciones y Retroalimentación Pedagógica</label>
+      <p class="text-xs text-color-secondary mb-1">Obligatorio si el dictamen es "OBSERVAR CON CORRECCIONES"</p>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="observaciones"
+        rows="4"
+        placeholder="Ingrese observaciones para el docente..."
+        class="w-full">
+      </textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" (click)="onClose()" class="p-button-text p-button-sm"></button>
+    <button
+      pButton
+      label="Observar con Cambios"
+      icon="pi pi-exclamation-triangle"
+      [disabled]="!observaciones.trim() || isProcessing"
+      [loading]="isProcessing"
+      (click)="onObserve()"
+      class="p-button-warning p-button-sm mr-2">
+    </button>
+    <button
+      pButton
+      label="Aprobar PAC"
+      icon="pi pi-check-circle"
+      [disabled]="isProcessing"
+      [loading]="isProcessing"
+      (click)="onApprove()"
+      class="p-button-success p-button-sm">
+    </button>
+  </ng-template>
+</p-dialog>

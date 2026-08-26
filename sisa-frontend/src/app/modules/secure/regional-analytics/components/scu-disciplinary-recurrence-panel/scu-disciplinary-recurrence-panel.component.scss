@@ -1,0 +1,26 @@
+.scu-recurrence-panel {
+  .strike-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    display: inline-block;
+
+    &.strike-1 {
+      background: var(--scu-info-bg);
+      color: var(--scu-info);
+    }
+    &.strike-2 {
+      background: var(--scu-warning-bg);
+      color: var(--scu-warning);
+    }
+    &.strike-3 {
+      background: var(--scu-danger-bg);
+      color: var(--scu-danger);
+    }
+  }
+
+  .text-info { color: var(--scu-info); }
+  .text-warning { color: var(--scu-warning); }
+  .text-danger { color: var(--scu-danger); }
+}

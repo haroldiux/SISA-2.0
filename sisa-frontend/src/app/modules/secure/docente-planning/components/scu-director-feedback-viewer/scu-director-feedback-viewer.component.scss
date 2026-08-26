@@ -1,0 +1,27 @@
+.scu-feedback-viewer {
+  .feedback-banner {
+    &.banner-observado {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    &.banner-rechazado {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    &.banner-enviado {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    &.banner-aprobado {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+  }
+
+  .observation-box {
+    line-height: 1.4;
+  }
+}

@@ -1,0 +1,17 @@
+<div class="scu-duration-box" [ngClass]="{ 'valid': isValid, 'invalid': !isValid }">
+  <div class="duration-display">
+    <span class="label">Suma Momentos:</span>
+    <span class="sum-value">{{ currentSum }} / {{ targetDurationMin }} min</span>
+  </div>
+  <div class="status-indicator">
+    <span *ngIf="isValid" class="status-tag valid-tag">
+      <i class="pi pi-check-circle"></i> Duración Exacta (180 min)
+    </span>
+    <span *ngIf="!isValid && difference < 0" class="status-tag invalid-tag">
+      <i class="pi pi-exclamation-triangle"></i> Faltan {{ -difference }} min
+    </span>
+    <span *ngIf="!isValid && difference > 0" class="status-tag invalid-tag">
+      <i class="pi pi-exclamation-circle"></i> Exceso de {{ difference }} min
+    </span>
+  </div>
+</div>

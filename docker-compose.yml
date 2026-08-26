@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sisa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sisa_db
+      POSTGRES_USER: sisa_admin
+      POSTGRES_PASSWORD: sisa_secret_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - sisa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sisa_admin -d sisa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./sisa-backend
+      dockerfile: Dockerfile
+    container_name: sisa-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sisa_db
+      DB_USER: sisa_admin
+      DB_PASS: sisa_secret_pass
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./sisa-frontend
+      dockerfile: Dockerfile
+    container_name: sisa-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  sisa_pgdata:
+    driver: local

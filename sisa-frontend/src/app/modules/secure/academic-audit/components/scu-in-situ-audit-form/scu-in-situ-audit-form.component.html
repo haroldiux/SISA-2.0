@@ -1,0 +1,118 @@
+<div class="scu-audit-form-card scu-card" *ngIf="matchedData">
+  <div class="form-header mb-4">
+    <div class="flex justify-content-between align-items-center">
+      <div>
+        <h3 class="font-bold text-lg">Registro de Auditoría In Situ en Tiempo Real</h3>
+        <p class="text-xs text-color-secondary">Verificación directa del avance pedagógico y firma digital institucional</p>
+      </div>
+      <div class="classroom-pill font-bold">
+        <i class="pi pi-desktop text-primary mr-1"></i> Aula {{ matchedData.aula }}
+      </div>
+    </div>
+
+    <!-- Scheduled Context info -->
+    <div class="matched-summary grid mt-2 p-3 surface-50 border-round">
+      <div class="col-12 md:col-4">
+        <span class="text-xs text-color-secondary block">Docente Observado:</span>
+        <span class="font-bold text-sm">{{ matchedData.docenteNombre }}</span>
+      </div>
+      <div class="col-12 md:col-4">
+        <span class="text-xs text-color-secondary block">Asignatura:</span>
+        <span class="font-bold text-sm">{{ matchedData.asignaturaNombre }}</span>
+      </div>
+      <div class="col-12 md:col-4">
+        <span class="text-xs text-color-secondary block">Sesión Programada en PAC:</span>
+        <span class="font-bold text-sm text-primary">Semana {{ matchedData.semanaProgramada }} • {{ matchedData.temaProgramado }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-fluid grid">
+    <!-- Puntualidad -->
+    <div class="col-12 md:col-4 mb-3">
+      <label class="font-semibold text-sm">Puntualidad Docente</label>
+      <p-dropdown
+        [options]="puntualidadOptions"
+        [(ngModel)]="puntualidad"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full mt-1">
+      </p-dropdown>
+    </div>
+
+    <!-- Concordancia PAC -->
+    <div class="col-12 md:col-4 mb-3">
+      <label class="font-semibold text-sm">Concordancia con Tema PAC</label>
+      <p-dropdown
+        [options]="concordanciaOptions"
+        [(ngModel)]="concordancia"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full mt-1">
+      </p-dropdown>
+    </div>
+
+    <!-- Momento Pedagógico -->
+    <div class="col-12 md:col-4 mb-3">
+      <label class="font-semibold text-sm">Momento Pedagógico Observado</label>
+      <p-dropdown
+        [options]="momentoOptions"
+        [(ngModel)]="momento"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full mt-1">
+      </p-dropdown>
+    </div>
+
+    <!-- Asistencia -->
+    <div class="col-12 md:col-6 mb-3">
+      <label class="font-semibold text-sm">Estudiantes Presentes</label>
+      <input type="number" pInputText [(ngModel)]="estudiantesPresentes" min="0" class="w-full mt-1 font-mono" />
+    </div>
+    <div class="col-12 md:col-6 mb-3">
+      <label class="font-semibold text-sm">Estudiantes Inscritos en Lista</label>
+      <input type="number" pInputText [(ngModel)]="estudiantesInscritos" min="1" class="w-full mt-1 font-mono" />
+    </div>
+
+    <!-- Observaciones -->
+    <div class="col-12 mb-4">
+      <label class="font-semibold text-sm">Observaciones Técnicas del Auditor</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="observacionesAuditor"
+        rows="3"
+        placeholder="Describa el clima de aula, uso de recursos didácticos y retroalimentación..."
+        class="w-full mt-1">
+      </textarea>
+    </div>
+  </div>
+
+  <div class="flex justify-content-end gap-2">
+    <button
+      pButton
+      type="button"
+      label="Finalizar y Generar Firma Digital (SHA-256)"
+      icon="pi pi-lock"
+      [loading]="isSaving"
+      (click)="onSubmitAudit()"
+      class="p-button-primary p-button-sm">
+    </button>
+  </div>
+
+  <!-- Signed Result Box -->
+  <div *ngIf="auditResult" class="audit-signed-result mt-4 p-3 border-round">
+    <div class="flex align-items-center justify-content-between mb-2">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-shield text-success text-xl"></i>
+        <span class="font-bold text-sm">Auditoría Registrada y Sellada Criptográficamente</span>
+      </div>
+      <scu-status-badge [status]="auditResult.estado"></scu-status-badge>
+    </div>
+    <div class="hash-display text-xs font-mono p-2 surface-100 border-round mb-2">
+      <strong>Hash Firma Digital (SHA-256):</strong> {{ auditResult.hashFirmaDigital }}
+    </div>
+    <p class="text-xs text-color-secondary">
+      Esta auditoría queda bloqueada para edición y disponible para firma de conformidad docente.
+    </p>
+  </div>
+</div>

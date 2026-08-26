@@ -1,0 +1,33 @@
+<div class="scu-app-layout">
+  <scu-header></scu-header>
+
+  <div class="scu-layout-body">
+    <aside class="scu-sidebar">
+      <div class="sidebar-section-title">MÓDULOS DEL SISTEMA</div>
+      <nav class="sidebar-nav">
+        <a
+          *ngFor="let item of navItems"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          class="nav-link">
+          <div class="link-left">
+            <i [class]="item.icon"></i>
+            <span>{{ item.label }}</span>
+          </div>
+          <span class="nav-badge">{{ item.frameBadge }}</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="version-tag">SISA v1.0.0-LTS</div>
+        <div class="institution-name">UNITEPC • Bolivia</div>
+      </div>
+    </aside>
+
+    <main class="scu-main-content">
+      <div class="scu-content-container">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

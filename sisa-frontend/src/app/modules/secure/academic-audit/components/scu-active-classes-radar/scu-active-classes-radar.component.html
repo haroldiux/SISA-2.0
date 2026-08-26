@@ -1,0 +1,61 @@
+<div class="scu-radar-card scu-card">
+  <div class="radar-header flex align-items-center gap-2 mb-3">
+    <div class="radar-pulse-icon">
+      <i class="pi pi-compass text-primary"></i>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg">Radar de Aulas Activas en Tiempo Real</h3>
+      <p class="text-xs text-color-secondary">Localización cruzada de horario y sesión PAC programada</p>
+    </div>
+  </div>
+
+  <div class="p-fluid grid">
+    <div class="col-12 md:col-3">
+      <label class="font-semibold text-sm">Campus Universitario</label>
+      <p-dropdown
+        [options]="campusOptions"
+        [(ngModel)]="selectedCampusId"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full mt-1 p-inputtext-sm">
+      </p-dropdown>
+    </div>
+
+    <div class="col-12 md:col-3">
+      <label class="font-semibold text-sm">Aula / Laboratorio</label>
+      <input type="text" pInputText [(ngModel)]="selectedAula" placeholder="ej. Lab-302" class="w-full mt-1 p-inputtext-sm" />
+    </div>
+
+    <div class="col-12 md:col-2">
+      <label class="font-semibold text-sm">Día</label>
+      <p-dropdown
+        [options]="diaOptions"
+        [(ngModel)]="selectedDia"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full mt-1 p-inputtext-sm">
+      </p-dropdown>
+    </div>
+
+    <div class="col-12 md:col-2">
+      <label class="font-semibold text-sm">Hora Actual</label>
+      <input type="text" pInputText [(ngModel)]="selectedHora" class="w-full mt-1 p-inputtext-sm font-mono" />
+    </div>
+
+    <div class="col-12 md:col-2 flex align-items-end">
+      <button
+        pButton
+        type="button"
+        label="Escanear Aula"
+        icon="pi pi-search"
+        [loading]="isSearching"
+        (click)="onScanRoom()"
+        class="w-full p-button-primary p-button-sm">
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="matchError" class="p-message p-message-error mt-3 p-2 text-xs">
+    {{ matchError }}
+  </div>
+</div>

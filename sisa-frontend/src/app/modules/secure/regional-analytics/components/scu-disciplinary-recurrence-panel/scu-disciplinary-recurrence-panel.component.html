@@ -1,0 +1,99 @@
+<div class="scu-recurrence-panel scu-card">
+  <div class="flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="font-bold text-lg">Panel de Control de Reincidencias Docentes (3-Strike System)</h3>
+      <p class="text-xs text-color-secondary">Escalamiento disciplinario automático ante inasistencias o desviaciones del PAC</p>
+    </div>
+  </div>
+
+  <p-table [value]="recurrences" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 90px;">Strike</th>
+        <th>Docente</th>
+        <th>Gestión</th>
+        <th>Nivel Escalamiento</th>
+        <th>Motivo de Infracción</th>
+        <th>Estado del Caso</th>
+        <th style="width: 140px; text-align: center;">Plan de Acción</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-r>
+      <tr>
+        <td>
+          <span class="strike-badge" [ngClass]="'strike-' + r.nroInfraccion">
+            Strike #{{ r.nroInfraccion }}
+          </span>
+        </td>
+        <td><span class="font-semibold">{{ r.docenteNombre }}</span></td>
+        <td>{{ r.gestionCodigo }}</td>
+        <td>
+          <span class="font-bold text-xs" [ngClass]="{
+            'text-info': r.nivel === 'NIVEL_1',
+            'text-warning': r.nivel === 'NIVEL_2',
+            'text-danger': r.nivel === 'NIVEL_3'
+          }">
+            {{ r.nivel }}
+          </span>
+        </td>
+        <td><span class="text-xs">{{ r.motivo }}</span></td>
+        <td><scu-status-badge [status]="r.estado"></scu-status-badge></td>
+        <td class="text-center">
+          <button
+            *ngIf="r.nivel === 'NIVEL_2'"
+            pButton
+            type="button"
+            label="Ver Plan"
+            icon="pi pi-file-edit"
+            (click)="onViewActionPlan(r)"
+            class="p-button-warning p-button-sm">
+          </button>
+          <span *ngIf="r.nivel === 'NIVEL_3'" class="text-xs font-bold text-danger">
+            <i class="pi pi-ban mr-1"></i> Escalado
+          </span>
+          <span *ngIf="r.nivel === 'NIVEL_1'" class="text-xs text-color-secondary">
+            Notificado
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Plan Accion Modal -->
+<p-dialog
+  header="Plan de Acción Correctivo (Strike 2)"
+  [(visible)]="actionPlanDialogVisible"
+  [modal]="true"
+  [style]="{ width: '550px' }">
+  <div *ngIf="selectedRecurrence" class="p-fluid">
+    <div class="mb-3 p-3 surface-50 border-round">
+      <span class="font-bold text-sm block mb-1">Docente: {{ selectedRecurrence.docenteNombre }}</span>
+      <span class="text-xs text-color-secondary">Infracción: {{ selectedRecurrence.motivo }}</span>
+    </div>
+
+    <div class="mb-3">
+      <label class="font-semibold text-sm">Compromiso de Mejora Presentado</label>
+      <div class="p-3 surface-100 border-round text-sm mt-1">
+        {{ selectedRecurrence.planCompromisoMejora || 'Compromiso de recuperación de horas y ajuste estricto al avance semanal de la Matriz 7 del PAC.' }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="font-semibold text-sm">Fecha Límite de Cumplimiento</label>
+      <div class="font-mono text-sm mt-1">{{ selectedRecurrence.planFechaLimite || '2026-04-15' }}</div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cerrar" (click)="actionPlanDialogVisible = false" class="p-button-text p-button-sm"></button>
+    <button
+      pButton
+      label="Aprobar y Levantar Observación"
+      icon="pi pi-check"
+      [loading]="isProcessing"
+      (click)="onApproveActionPlan()"
+      class="p-button-success p-button-sm">
+    </button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,98 @@
+.scu-login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--scu-surface-50) 0%, var(--scu-surface-100) 100%);
+  padding: 1.5rem;
+
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--scu-surface-0);
+    border: 1px solid var(--scu-border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+
+      .logo-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--scu-primary), var(--scu-primary-dark));
+        color: #FFFFFF;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--scu-text-primary);
+        letter-spacing: -0.025em;
+      }
+
+      p {
+        font-size: 0.8125rem;
+        color: var(--scu-text-secondary);
+        margin-top: 0.25rem;
+      }
+    }
+
+    .error-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: var(--scu-danger-bg);
+      color: var(--scu-danger);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .scu-submit-btn {
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .demo-personas {
+      .divider {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        font-size: 0.75rem;
+        color: var(--scu-text-secondary);
+        &::before, &::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid var(--scu-border-color);
+        }
+        span {
+          padding: 0 0.5rem;
+        }
+      }
+
+      .personas-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        button {
+          justify-content: flex-start;
+          font-size: 0.75rem;
+          padding: 0.5rem 0.75rem;
+        }
+      }
+    }
+  }
+}

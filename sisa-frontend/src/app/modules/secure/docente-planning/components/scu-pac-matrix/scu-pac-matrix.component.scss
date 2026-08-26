@@ -1,0 +1,98 @@
+.scu-pac-matrix-card {
+  .matrix-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+  }
+
+  .scu-matriz-grid {
+    font-size: 0.8125rem;
+
+    .p-datatable-thead > tr > th {
+      background-color: var(--surface-100);
+      color: var(--text-color);
+      font-weight: 600;
+      padding: 0.5rem 0.4rem;
+      white-space: nowrap;
+      border: 1px solid var(--surface-border);
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: 0.25rem 0.35rem;
+      vertical-align: top;
+      border: 1px solid var(--surface-border);
+    }
+  }
+
+  .scu-cell-input,
+  .scu-cell-select,
+  .scu-cell-textarea {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.3rem 0.4rem;
+    font-family: inherit;
+    font-size: 0.775rem;
+    background-color: transparent;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    resize: vertical;
+
+    &:hover:not(:disabled) {
+      border-color: var(--surface-400);
+      background-color: var(--surface-50);
+    }
+
+    &:focus:not(:disabled) {
+      outline: none;
+      border-color: var(--primary-color);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb, 30, 64, 175), 0.2);
+    }
+
+    &:disabled {
+      background-color: transparent;
+      color: var(--text-color);
+      border-color: transparent;
+      cursor: default;
+    }
+  }
+
+  .scu-cell-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+    }
+  }
+
+  .scu-cell-warning {
+    border-color: #f59e0b !important;
+    background-color: #fffbeb !important;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
+    }
+  }
+
+  .scu-row-highlight {
+    animation: flash-highlight 2.5s ease;
+  }
+
+  .p-button-xs {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+  }
+}
+
+@keyframes flash-highlight {
+  0% {
+    background-color: #fef08a;
+  }
+  50% {
+    background-color: #fef9c3;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

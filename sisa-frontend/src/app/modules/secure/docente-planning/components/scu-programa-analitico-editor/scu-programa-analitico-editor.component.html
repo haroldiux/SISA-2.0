@@ -1,0 +1,133 @@
+<div class="scu-programa-editor-container" *ngIf="programa$ | async as prog">
+  <div class="editor-header scu-card mb-3">
+    <div class="flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <div class="flex align-items-center gap-2 mb-1">
+          <h3 class="font-bold text-lg m-0">Programa Analítico (Nivel Macrocurricular)</h3>
+          <scu-status-badge [status]="prog.estado"></scu-status-badge>
+        </div>
+        <p class="text-xs text-color-secondary m-0">
+          Estructura curricular, macro-competencias, unidades de aprendizaje (1..12) y bibliografía norma APA 7.
+        </p>
+      </div>
+
+      <!-- Toolbar Actions -->
+      <div class="flex align-items-center gap-2">
+        <button
+          pButton
+          type="button"
+          label="Importar Word (.docx)"
+          icon="pi pi-upload"
+          class="p-button-outlined p-button-sm p-button-info"
+          [disabled]="isReadOnly"
+          (click)="openDocxModal()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Exportar DOCX"
+          icon="pi pi-file-word"
+          class="p-button-outlined p-button-sm"
+          (click)="onExportDocx()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Guardar Programa"
+          icon="pi pi-save"
+          class="p-button-primary p-button-sm"
+          [loading]="isLoading"
+          [disabled]="isReadOnly"
+          (click)="onSave()">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div *ngIf="saveSuccessMessage" class="p-message p-message-success mb-3 p-2 text-xs font-semibold">
+    <i class="pi pi-check mr-2"></i> {{ saveSuccessMessage }}
+  </div>
+  <div *ngIf="saveErrorMessage" class="p-message p-message-error mb-3 p-2 text-xs font-semibold">
+    <i class="pi pi-times-circle mr-2"></i> {{ saveErrorMessage }}
+  </div>
+
+  <!-- 1. Macro-Competency & Subject Characterization -->
+  <div class="characterization-card scu-card mb-3 p-fluid">
+    <h4 class="font-bold text-sm mb-3 text-900 border-bottom-1 surface-border pb-2">
+      <i class="pi pi-compass mr-1 text-primary"></i> 1. Identificación y Perfil de Competencias
+    </h4>
+
+    <div class="field mb-3">
+      <label class="font-semibold text-xs">Caracterización de la Asignatura</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="prog.caracterizacion"
+        [disabled]="isReadOnly"
+        (input)="onFieldChange('caracterizacion', prog.caracterizacion)"
+        rows="3"
+        class="w-full mt-1 text-xs"
+        placeholder="Descripción sintética del aporte de la asignatura al perfil profesional del egresado...">
+      </textarea>
+    </div>
+
+    <div class="field mb-3">
+      <label class="font-semibold text-xs">Macro-Competencia de la Asignatura (Obligatorio, mín. 20 caracteres)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="prog.macroCompetencia"
+        [disabled]="isReadOnly"
+        (input)="onFieldChange('macroCompetencia', prog.macroCompetencia)"
+        rows="3"
+        class="w-full mt-1 text-xs font-semibold"
+        placeholder="Redactar en verbo de acción, objeto conceptual, finalidad contextual y condición de calidad...">
+      </textarea>
+    </div>
+
+    <div class="field mb-0">
+      <label class="font-semibold text-xs">Sistema y Criterios de Evaluación</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="prog.sistemaEvaluacion"
+        [disabled]="isReadOnly"
+        (input)="onFieldChange('sistemaEvaluacion', prog.sistemaEvaluacion)"
+        rows="2"
+        class="w-full mt-1 text-xs"
+        placeholder="Estrategias de evaluación diagnóstica, formativa continua y sumativa de productos...">
+      </textarea>
+    </div>
+  </div>
+
+  <!-- 2. Dynamic Learning Units Manager (1..12) -->
+  <div class="units-container scu-card mb-3">
+    <scu-learning-units-manager
+      [units]="prog.unidades"
+      [isReadOnly]="isReadOnly"
+      (scuAddUnit)="onAddUnit()"
+      (scuRemoveUnit)="onRemoveUnit($event)"
+      (scuDuplicateUnit)="onDuplicateUnit($event)"
+      (scuMoveUnit)="onMoveUnit($event)"
+      (scuUnitsChanged)="onUnitsChanged($event)">
+    </scu-learning-units-manager>
+  </div>
+
+  <!-- 3. Interactive APA 7th Edition Bibliography Manager -->
+  <div class="bib-container scu-card mb-3">
+    <scu-apa-bibliography-manager
+      [bibliography]="prog.bibliografia"
+      [isReadOnly]="isReadOnly"
+      (scuAddBibliography)="onAddBibliography($event)"
+      (scuRemoveBibliography)="onRemoveBibliography($event)"
+      (scuBibliographyChanged)="onBibliographyChanged($event)">
+    </scu-apa-bibliography-manager>
+  </div>
+
+  <!-- Word Ingestion Modal -->
+  <scu-programa-docx-modal
+    [(visible)]="docxModalVisible"
+    [assignmentId]="assignmentId"
+    (scuProgramaImported)="onProgramaImported($event)">
+  </scu-programa-docx-modal>
+</div>

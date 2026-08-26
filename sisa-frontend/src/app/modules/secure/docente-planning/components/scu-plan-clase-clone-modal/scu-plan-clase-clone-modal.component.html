@@ -1,0 +1,63 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+  header="Duplicar / Clonar Plan de Clase"
+  [closable]="true"
+  (onHide)="onClose()">
+
+  <div class="clone-modal-body p-fluid">
+    <div class="mb-3 p-3 surface-ground border-round">
+      <p class="text-sm font-semibold mb-1">
+        <i class="pi pi-copy mr-1 text-primary"></i>
+        Sesión Origen: <span class="text-primary font-bold">Sesión #{{ currentSession }}</span>
+      </p>
+      <p class="text-xs text-color-secondary">
+        Se copiará la distribución de 3 momentos (Inicio, Desarrollo, Cierre) y sus actividades.
+      </p>
+    </div>
+
+    <div class="field mb-3">
+      <label class="font-semibold text-sm">Seleccionar Sesión de Destino</label>
+      <p-dropdown
+        [options]="availableTargetSessions"
+        [(ngModel)]="targetSessionNumber"
+        placeholder="Seleccione sesión de destino..."
+        [filter]="true"
+        filterBy="label"
+        appendTo="body"
+        styleClass="w-full mt-1">
+      </p-dropdown>
+    </div>
+
+    <div class="field-checkbox mb-3">
+      <input type="checkbox" id="cloneAll" [(ngModel)]="cloneAll" />
+      <label for="cloneAll" class="text-sm cursor-pointer ml-2">
+        Copiar también Objetivo de Sesión y Recursos Didácticos
+      </label>
+    </div>
+
+    <div *ngIf="errorMessage" class="p-message p-message-error mb-3 p-2 text-xs font-semibold">
+      <i class="pi pi-times-circle mr-1"></i> {{ errorMessage }}
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="Cancelar"
+      icon="pi pi-times"
+      class="p-button-text p-button-sm"
+      (click)="onClose()">
+    </button>
+    <button
+      pButton
+      type="button"
+      label="Duplicar Plan"
+      icon="pi pi-check"
+      class="p-button-primary p-button-sm"
+      (click)="onConfirmClone()">
+    </button>
+  </ng-template>
+</p-dialog>

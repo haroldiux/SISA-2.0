@@ -1,0 +1,23 @@
+.scu-audit-form-card {
+  .classroom-pill {
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    background: var(--scu-primary-bg);
+    color: var(--scu-primary);
+    font-size: 0.8125rem;
+  }
+
+  .matched-summary {
+    border: 1px solid var(--scu-border-color);
+  }
+
+  .audit-signed-result {
+    border: 1px solid var(--scu-success);
+    background: var(--scu-success-bg);
+
+    .hash-display {
+      word-break: break-all;
+      color: var(--scu-text-primary);
+    }
+  }
+}

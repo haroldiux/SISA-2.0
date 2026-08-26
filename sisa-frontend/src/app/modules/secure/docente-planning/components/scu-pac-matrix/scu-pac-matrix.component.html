@@ -1,0 +1,350 @@
+<div class="scu-pac-matrix-card scu-card">
+  <!-- Toolbar -->
+  <div class="matrix-header flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h3 class="font-bold text-lg m-0">Matriz 7: Cronograma y Planificación Pedagógica</h3>
+      <p class="text-xs text-color-secondary m-0 mt-1">20 semanas de calendario académico • Mínimo 36 sesiones programadas</p>
+    </div>
+
+    <div class="flex align-items-center gap-2 flex-wrap">
+      <p-dropdown
+        [options]="weekOptions"
+        [(ngModel)]="selectedWeekFilter"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Filtrar por Semana"
+        styleClass="p-inputtext-sm">
+      </p-dropdown>
+
+      <button
+        pButton
+        type="button"
+        label="Añadir Sesión"
+        icon="pi pi-plus"
+        [disabled]="isReadOnly"
+        (click)="onAddSession()"
+        class="p-button-sm p-button-outlined">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Auto-Secuenciar"
+        icon="pi pi-sort-numeric-down"
+        [disabled]="isReadOnly"
+        (click)="onAutoSequence()"
+        pTooltip="Normaliza números de sesión y semanas secuencialmente"
+        class="p-button-sm p-button-outlined p-button-secondary">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Generar Calendario"
+        icon="pi pi-calendar"
+        [disabled]="isReadOnly"
+        (click)="onTriggerCalendarModal()"
+        class="p-button-sm p-button-outlined p-button-info">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Importar Excel"
+        icon="pi pi-file-import"
+        [disabled]="isReadOnly"
+        (click)="onTriggerImportModal()"
+        class="p-button-sm p-button-outlined p-button-warning">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Descargar Excel"
+        icon="pi pi-file-excel"
+        (click)="onTriggerExport()"
+        class="p-button-sm p-button-outlined p-button-success">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Guardar Borrador"
+        icon="pi pi-save"
+        [disabled]="isReadOnly"
+        (click)="onTriggerSave()"
+        class="p-button-sm p-button-outlined">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Enviar a Revisión"
+        icon="pi pi-send"
+        [disabled]="isReadOnly || (validationResult?.hasErrors ?? false)"
+        (click)="onTriggerSubmit()"
+        class="p-button-sm p-button-primary">
+      </button>
+    </div>
+  </div>
+
+  <!-- Interactive Spreadsheet Grid -->
+  <div class="matrix-table-wrapper">
+    <p-table
+      [value]="filteredSessions"
+      [rowTrackBy]="trackBySessionNumber"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm p-datatable-gridlines scu-matriz-grid">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 55px; text-align: center;">Sem.</th>
+          <th style="width: 55px; text-align: center;">Ses.</th>
+          <th style="width: 130px;">Fecha Prog.</th>
+          <th style="width: 110px;">Tipo</th>
+          <th style="width: 160px;">Unidad Temática</th>
+          <th style="width: 180px;">Contenido Específico</th>
+          <th style="width: 180px;">Saber Conceptual</th>
+          <th style="width: 180px;">Saber Procedimental</th>
+          <th style="width: 180px;">Saber Actitudinal</th>
+          <th style="width: 160px;">Criterio Desempeño</th>
+          <th style="width: 160px;">Evidencia Aprendizaje</th>
+          <th style="width: 130px;">Instrumento</th>
+          <th style="width: 140px;">Hito Evaluativo</th>
+          <th style="width: 110px; text-align: center;">Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-s>
+        <tr [id]="'matriz7-row-' + s.nroSesion">
+          <!-- 1. Semana -->
+          <td class="text-center font-bold">
+            <span *ngIf="isReadOnly">S{{ s.semana }}</span>
+            <input
+              *ngIf="!isReadOnly"
+              type="number"
+              min="1"
+              max="20"
+              [(ngModel)]="s.semana"
+              (ngModelChange)="onCellChange()"
+              class="scu-cell-input text-center w-full" />
+          </td>
+
+          <!-- 2. Nro Sesion -->
+          <td class="text-center">
+            <span class="font-semibold text-xs text-primary">#{{ s.nroSesion }}</span>
+          </td>
+
+          <!-- 3. Fecha Programada -->
+          <td>
+            <input
+              type="date"
+              [(ngModel)]="s.fechaProgramada"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              [attr.data-field]="'fechaProgramada'"
+              class="scu-cell-input w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'fechaProgramada'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'fechaProgramada')
+              }" />
+          </td>
+
+          <!-- 4. Tipo Sesion -->
+          <td>
+            <select
+              [(ngModel)]="s.tipoSesion"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              class="scu-cell-select w-full text-xs">
+              <option *ngFor="let opt of tipoSesionOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </td>
+
+          <!-- 5. Unidad Tematica -->
+          <td>
+            <textarea
+              [(ngModel)]="s.unidadTematica"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="1"
+              [attr.data-field]="'unidadTematica'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'unidadTematica'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'unidadTematica')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 6. Contenido Especifico -->
+          <td>
+            <textarea
+              [(ngModel)]="s.contenidoEspecifico"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="1"
+              [attr.data-field]="'contenidoEspecifico'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'contenidoEspecifico'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'contenidoEspecifico')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 7. Saber Conceptual -->
+          <td>
+            <textarea
+              [(ngModel)]="s.saberConceptual"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="2"
+              [attr.data-field]="'saberConceptual'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'saberConceptual'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'saberConceptual')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 8. Saber Procedimental -->
+          <td>
+            <textarea
+              [(ngModel)]="s.saberProcedimental"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="2"
+              [attr.data-field]="'saberProcedimental'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'saberProcedimental'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'saberProcedimental')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 9. Saber Actitudinal -->
+          <td>
+            <textarea
+              [(ngModel)]="s.saberActitudinal"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="2"
+              [attr.data-field]="'saberActitudinal'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'saberActitudinal'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'saberActitudinal')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 10. Criterio Desempeno -->
+          <td>
+            <textarea
+              [(ngModel)]="s.criterioDesempeno"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="1"
+              [attr.data-field]="'criterioDesempeno'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'criterioDesempeno'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'criterioDesempeno')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 11. Evidencia Aprendizaje -->
+          <td>
+            <textarea
+              [(ngModel)]="s.evidenciaAprendizaje"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              rows="1"
+              [attr.data-field]="'evidenciaAprendizaje'"
+              class="scu-cell-textarea w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'evidenciaAprendizaje'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'evidenciaAprendizaje')
+              }">
+            </textarea>
+          </td>
+
+          <!-- 12. Instrumento Evaluacion -->
+          <td>
+            <select
+              [(ngModel)]="s.instrumentoEvaluacion"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              [attr.data-field]="'instrumentoEvaluacion'"
+              class="scu-cell-select w-full text-xs"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'instrumentoEvaluacion'),
+                'scu-cell-warning': hasFieldWarning(s.nroSesion, 'instrumentoEvaluacion')
+              }">
+              <option *ngFor="let opt of instrumentoOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </td>
+
+          <!-- 13. Hito Evaluativo -->
+          <td>
+            <select
+              [(ngModel)]="s.hitoEvaluativo"
+              (ngModelChange)="onCellChange()"
+              [disabled]="isReadOnly"
+              [attr.data-field]="'hitoEvaluativo'"
+              class="scu-cell-select w-full text-xs font-semibold"
+              [ngClass]="{
+                'scu-cell-error': hasFieldError(s.nroSesion, 'hitoEvaluativo'),
+                'text-primary font-bold': s.hitoEvaluativo !== 'REGULAR'
+              }">
+              <option *ngFor="let opt of hitoOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </td>
+
+          <!-- 14. Actions -->
+          <td class="text-center">
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-calendar-plus"
+                pTooltip="Microplan de Clase (3 Momentos)"
+                (click)="onSelectForPlanClase(s)"
+                class="p-button-text p-button-xs p-button-rounded p-button-success">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-copy"
+                pTooltip="Duplicar Sesión"
+                [disabled]="isReadOnly"
+                (click)="onDuplicateSession(s)"
+                class="p-button-text p-button-xs p-button-rounded p-button-secondary">
+              </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                pTooltip="Eliminar Sesión"
+                [disabled]="isReadOnly || (pac?.matriz7?.length ?? 0) <= 1"
+                (click)="onRemoveSession(s)"
+                class="p-button-text p-button-xs p-button-rounded p-button-danger">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="14" class="text-center py-4 text-color-secondary">
+            No hay sesiones programadas en este filtro.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

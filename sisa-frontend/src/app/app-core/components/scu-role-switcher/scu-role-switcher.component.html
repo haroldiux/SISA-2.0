@@ -1,0 +1,29 @@
+<div class="scu-role-switcher-container">
+  <label class="switcher-label">
+    <i class="pi pi-users text-primary"></i>
+    <span>Perfil Activo:</span>
+  </label>
+  <p-dropdown
+    [options]="roleOptions"
+    [(ngModel)]="selectedRole"
+    optionValue="role"
+    optionLabel="label"
+    (onChange)="onRoleChange($event.value)"
+    styleClass="scu-role-dropdown p-inputtext-sm">
+    <ng-template let-item pTemplate="selectedItem">
+      <div class="flex align-items-center gap-2">
+        <i [class]="item.icon + ' text-primary'"></i>
+        <span class="font-semibold">{{ item.label }}</span>
+      </div>
+    </ng-template>
+    <ng-template let-item pTemplate="item">
+      <div class="flex align-items-center justify-content-between w-full py-1">
+        <div class="flex align-items-center gap-2">
+          <i [class]="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </div>
+        <span class="scu-frame-pill">{{ item.badge }}</span>
+      </div>
+    </ng-template>
+  </p-dropdown>
+</div>

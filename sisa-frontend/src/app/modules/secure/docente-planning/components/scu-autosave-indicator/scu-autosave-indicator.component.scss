@@ -1,0 +1,14 @@
+.scu-autosave-indicator-container {
+  display: inline-flex;
+  align-items: center;
+
+  .p-tag {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .p-button-xs {
+    height: 1.6rem;
+    font-size: 0.75rem;
+  }
+}

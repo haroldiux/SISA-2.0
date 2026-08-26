@@ -1,0 +1,83 @@
+<div class="scu-feedback-viewer mb-3" *ngIf="shouldDisplay">
+
+  <!-- 1. OBSERVADO (Amber Alert Banner) -->
+  <div *ngIf="isObservado" class="feedback-banner banner-observado p-3 border-round border-1">
+    <div class="flex justify-content-between align-items-start gap-3">
+      <div class="flex align-items-start gap-3">
+        <i class="pi pi-exclamation-triangle text-3xl text-amber-600 mt-1"></i>
+        <div>
+          <div class="flex align-items-center gap-2 mb-1">
+            <h4 class="font-bold text-sm m-0 text-amber-900">Planificación con Observaciones de Dirección de Carrera</h4>
+            <span class="status-tag font-bold text-xs px-2 py-0 border-round bg-amber-200 text-amber-900">OBSERVADO</span>
+          </div>
+          <p class="text-xs text-amber-800 m-0 mb-2">
+            Revisado por: <strong>{{ reviewerName || 'Dirección de Carrera' }}</strong>
+            <span *ngIf="reviewDate"> el {{ reviewDate | date:'dd/MM/yyyy HH:mm' }}</span>
+          </p>
+          <div class="observation-box p-2 border-round bg-white border-1 border-amber-200 text-xs text-900 mb-2 font-medium">
+            <i class="pi pi-comment mr-1 text-amber-600"></i>
+            {{ observationNotes || 'Se requiere subsanar las observaciones curriculares indicadas antes de solicitar una nueva revisión.' }}
+          </div>
+          <div class="component-tags flex gap-2 flex-wrap" *ngIf="observedComponents && observedComponents.length > 0">
+            <span *ngFor="let tag of observedComponents" class="tag-comp text-xs font-semibold px-2 py-0 border-round bg-amber-100 text-amber-800">
+              {{ tag }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. RECHAZADO (Red Alert Banner) -->
+  <div *ngIf="isRechazado" class="feedback-banner banner-rechazado p-3 border-round border-1">
+    <div class="flex align-items-start gap-3">
+      <i class="pi pi-times-circle text-3xl text-red-600 mt-1"></i>
+      <div>
+        <div class="flex align-items-center gap-2 mb-1">
+          <h4 class="font-bold text-sm m-0 text-red-900">Planificación Rechazada por Dirección</h4>
+          <span class="status-tag font-bold text-xs px-2 py-0 border-round bg-red-200 text-red-900">RECHAZADO</span>
+        </div>
+        <p class="text-xs text-red-800 m-0 mb-2">
+          Revisado por: <strong>{{ reviewerName || 'Dirección de Carrera' }}</strong>
+          <span *ngIf="reviewDate"> el {{ reviewDate | date:'dd/MM/yyyy HH:mm' }}</span>
+        </p>
+        <div class="observation-box p-2 border-round bg-white border-1 border-red-200 text-xs text-900 mb-2 font-medium">
+          {{ observationNotes || 'La planificación no cumple los requisitos institucionales mínimos y debe ser reestructurada.' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ENVIADO_REVISION (Blue Info Banner) -->
+  <div *ngIf="isEnviado" class="feedback-banner banner-enviado p-3 border-round border-1">
+    <div class="flex align-items-center gap-3">
+      <i class="pi pi-info-circle text-3xl text-blue-600"></i>
+      <div>
+        <div class="flex align-items-center gap-2 mb-1">
+          <h4 class="font-bold text-sm m-0 text-blue-900">Planificación en Revisión por Dirección de Carrera</h4>
+          <span class="status-tag font-bold text-xs px-2 py-0 border-round bg-blue-200 text-blue-900">EN REVISIÓN</span>
+        </div>
+        <p class="text-xs text-blue-800 m-0">
+          El dossier académico ha sido enviado oficialmente y se encuentra bloqueado en <strong>Modo Solo Lectura</strong> mientras la Dirección de Carrera evalúa el cumplimiento pedagógico.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. APROBADO (Green Success Banner) -->
+  <div *ngIf="isAprobado" class="feedback-banner banner-aprobado p-3 border-round border-1">
+    <div class="flex align-items-center gap-3">
+      <i class="pi pi-check-circle text-3xl text-green-600"></i>
+      <div>
+        <div class="flex align-items-center gap-2 mb-1">
+          <h4 class="font-bold text-sm m-0 text-green-900">Planificación Aprobada Oficialmente</h4>
+          <span class="status-tag font-bold text-xs px-2 py-0 border-round bg-green-200 text-green-900">APROBADO</span>
+        </div>
+        <p class="text-xs text-green-800 m-0">
+          La Trilogía de Planificación Docente (Programa Analítico, PAC Matriz 7 y Planes de Clase) ha sido aprobada por la Dirección de Carrera para la presente gestión académica.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,172 @@
+<div class="scu-units-manager">
+  <div class="units-header flex justify-content-between align-items-center mb-3">
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-th-large text-primary font-bold"></i>
+      <h4 class="font-bold text-sm m-0">Unidades de Aprendizaje Curriculares ({{ (units && units.length) || 0 }} / 12)</h4>
+      <span class="hours-badge text-xs font-semibold px-2 py-1 border-round">
+        Total: {{ totalHoras }} Horas Académicas
+      </span>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      label="Agregar Unidad"
+      icon="pi pi-plus"
+      class="p-button-outlined p-button-sm p-button-primary"
+      [disabled]="!canAdd"
+      (click)="onAdd()">
+    </button>
+  </div>
+
+  <!-- Units Accordion / List -->
+  <div class="units-list flex flex-column gap-3">
+    <div
+      *ngFor="let unit of units; let idx = index"
+      class="unit-card border-1 border-round surface-card p-3 shadow-1"
+      [ngClass]="{ 'active-unit': activeUnitIndex === idx }">
+
+      <!-- Unit Card Header -->
+      <div class="unit-card-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1 surface-border">
+        <div class="flex align-items-center gap-2">
+          <span class="unit-number-badge font-bold text-xs px-2 py-1 border-round bg-primary text-white">
+            Unidad {{ unit.numeroUnidad || idx + 1 }}
+          </span>
+          <span class="font-bold text-sm text-color">{{ unit.titulo || 'Nueva Unidad' }}</span>
+        </div>
+
+        <!-- Unit Toolbar Actions -->
+        <div class="flex align-items-center gap-1">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-up"
+            class="p-button-text p-button-rounded p-button-sm"
+            [disabled]="isReadOnly || idx === 0"
+            (click)="onMoveUp(idx, $event)"
+            title="Mover Arriba">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-arrow-down"
+            class="p-button-text p-button-rounded p-button-sm"
+            [disabled]="isReadOnly || idx === units.length - 1"
+            (click)="onMoveDown(idx, $event)"
+            title="Mover Abajo">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-copy"
+            class="p-button-text p-button-rounded p-button-sm p-button-secondary"
+            [disabled]="!canAdd"
+            (click)="onDuplicate(idx, $event)"
+            title="Duplicar Unidad">
+          </button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-text p-button-rounded p-button-sm p-button-danger"
+            [disabled]="!canRemove"
+            (click)="onRemove(idx, $event)"
+            title="Eliminar Unidad">
+          </button>
+        </div>
+      </div>
+
+      <!-- Unit Form Fields -->
+      <div class="unit-card-body p-fluid grid">
+        <div class="col-12 md:col-9">
+          <label class="font-semibold text-xs">Título de la Unidad Temática</label>
+          <input
+            type="text"
+            pInputText
+            [(ngModel)]="unit.titulo"
+            [disabled]="isReadOnly"
+            (input)="onUnitFieldChange()"
+            class="w-full mt-1 text-sm font-semibold"
+            placeholder="ej: Unidad 1: Fundamentos y Arquitectura de Microservicios" />
+        </div>
+        <div class="col-12 md:col-3">
+          <label class="font-semibold text-xs">Horas Académicas</label>
+          <input
+            type="number"
+            pInputText
+            [(ngModel)]="unit.horasAcademicas"
+            [disabled]="isReadOnly"
+            (input)="onUnitFieldChange()"
+            min="1"
+            max="120"
+            class="w-full mt-1 font-mono text-sm" />
+        </div>
+
+        <!-- 3 Saberes Dimensions -->
+        <div class="col-12 md:col-4">
+          <div class="saber-box saber-conceptual p-2 border-round border-1">
+            <label class="font-semibold text-xs text-blue-700 block mb-1">
+              <i class="pi pi-book mr-1"></i> Saberes Conceptuales (Saber)
+            </label>
+            <textarea
+              pInputTextarea
+              [(ngModel)]="unit.saberesConceptuales"
+              [disabled]="isReadOnly"
+              (input)="onUnitFieldChange()"
+              rows="4"
+              class="w-full text-xs"
+              placeholder="Teorías, conceptos, leyes, principios y marcos normativos...">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-4">
+          <div class="saber-box saber-procedimental p-2 border-round border-1">
+            <label class="font-semibold text-xs text-green-700 block mb-1">
+              <i class="pi pi-cog mr-1"></i> Saberes Procedimentales (Saber Hacer)
+            </label>
+            <textarea
+              pInputTextarea
+              [(ngModel)]="unit.saberesProcedimentales"
+              [disabled]="isReadOnly"
+              (input)="onUnitFieldChange()"
+              rows="4"
+              class="w-full text-xs"
+              placeholder="Habilidades técnicas, procedimientos, algoritmos, métodos y resolución...">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-4">
+          <div class="saber-box saber-actitudinal p-2 border-round border-1">
+            <label class="font-semibold text-xs text-purple-700 block mb-1">
+              <i class="pi pi-heart mr-1"></i> Saberes Actitudinales (Saber Ser)
+            </label>
+            <textarea
+              pInputTextarea
+              [(ngModel)]="unit.saberesActitudinales"
+              [disabled]="isReadOnly"
+              (input)="onUnitFieldChange()"
+              rows="4"
+              class="w-full text-xs"
+              placeholder="Ética profesional, responsabilidad, trabajo en equipo, rigor técnico...">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="font-semibold text-xs">Criterios de Desempeño y Evidencias de Evaluación</label>
+          <textarea
+            pInputTextarea
+            [(ngModel)]="unit.criteriosDesempeno"
+            [disabled]="isReadOnly"
+            (input)="onUnitFieldChange()"
+            rows="2"
+            class="w-full mt-1 text-xs"
+            placeholder="Criterios observables que evidencian la adquisición de la competencia...">
+          </textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+.scu-macro-kpis {
+  .kpi-card {
+    .kpi-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--scu-text-secondary);
+      text-transform: uppercase;
+    }
+    .kpi-number {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .kpi-detail {
+      font-size: 0.75rem;
+      color: var(--scu-text-secondary);
+    }
+  }
+
+  .text-success { color: var(--scu-success); }
+  .text-info { color: var(--scu-info); }
+  .text-primary { color: var(--scu-primary); }
+}

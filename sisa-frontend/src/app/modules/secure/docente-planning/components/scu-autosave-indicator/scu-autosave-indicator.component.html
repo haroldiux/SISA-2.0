@@ -1,0 +1,46 @@
+<div class="scu-autosave-indicator-container flex align-items-center gap-2">
+  <!-- SIN CAMBIOS -->
+  <ng-container *ngIf="state === AutoSaveState.SIN_CAMBIOS">
+    <p-tag severity="secondary" icon="pi pi-check" value="Sin cambios pendientes" styleClass="text-xs px-2 py-1"></p-tag>
+  </ng-container>
+
+  <!-- CAMBIOS PENDIENTES -->
+  <ng-container *ngIf="state === AutoSaveState.CAMBIOS_PENDIENTES">
+    <p-tag severity="warning" icon="pi pi-pencil" value="Cambios sin guardar" styleClass="text-xs px-2 py-1"></p-tag>
+  </ng-container>
+
+  <!-- GUARDANDO -->
+  <ng-container *ngIf="state === AutoSaveState.GUARDANDO">
+    <p-tag severity="info" icon="pi pi-spin pi-spinner" value="Guardando borrador..." styleClass="text-xs px-2 py-1"></p-tag>
+  </ng-container>
+
+  <!-- GUARDADO -->
+  <ng-container *ngIf="state === AutoSaveState.GUARDADO">
+    <p-tag
+      severity="success"
+      icon="pi pi-check-circle"
+      [value]="'Borrador guardado ' + (lastSavedAt ? (lastSavedAt | date:'HH:mm:ss') : '')"
+      styleClass="text-xs px-2 py-1">
+    </p-tag>
+  </ng-container>
+
+  <!-- ERROR -->
+  <ng-container *ngIf="state === AutoSaveState.ERROR">
+    <div class="flex align-items-center gap-1">
+      <p-tag
+        severity="danger"
+        icon="pi pi-exclamation-triangle"
+        [value]="errorMessage || 'Error al guardar borrador'"
+        styleClass="text-xs px-2 py-1">
+      </p-tag>
+      <button
+        pButton
+        type="button"
+        label="Reintentar"
+        icon="pi pi-refresh"
+        (click)="onRetry()"
+        class="p-button-danger p-button-outlined p-button-xs text-xs py-1 px-2">
+      </button>
+    </div>
+  </ng-container>
+</div>
