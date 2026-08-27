@@ -2640,15 +2640,49 @@ document.addEventListener('change', (e) => {
       const selector = document.getElementById('docente-api-selector');
       if (selector && window.__API_DOCENTES__.length > 0) {
         selector.innerHTML = '';
-        window.__API_DOCENTES__.forEach((d, idx) => {
-          const opt = document.createElement('option');
-          opt.value = d.ci;
-          opt.textContent = `${d.nombreCompleto} (${d.ci})`;
-          selector.appendChild(opt);
+
+        // Highlight the 3 representative test docentes
+        const featuredCis = ['3065087', '6293388', '7977612']; // Rosmery Luizaga, Sidgry Toledo, Efrain Loza
+        const featuredGroup = document.createElement('optgroup');
+        featuredGroup.label = '🏛️ DOCENTES PRINCIPALES (INGENIERÍA, MEDICINA, FACEFA)';
+
+        const otherGroup = document.createElement('optgroup');
+        otherGroup.label = '👥 OTROS DOCENTES REALES (UNITEPC GATEWAY)';
+
+        // Add featured teachers first
+        featuredCis.forEach(ci => {
+          const d = window.__API_DOCENTES__.find(doc => doc.ci === ci);
+          if (d) {
+            const opt = document.createElement('option');
+            opt.value = d.ci;
+            let tag = '[FACULTAD]';
+            if (d.ci === '3065087') tag = '💻 [INGENIERÍA]';
+            if (d.ci === '6293388') tag = '🩺 [MEDICINA]';
+            if (d.ci === '7977612') tag = '📊 [FACEFA]';
+            opt.textContent = `${tag} ${d.nombreCompleto} (${d.ci})`;
+            featuredGroup.appendChild(opt);
+          }
         });
 
+        // Add the rest
+        window.__API_DOCENTES__.forEach((d) => {
+          if (!featuredCis.includes(d.ci)) {
+            const opt = document.createElement('option');
+            opt.value = d.ci;
+            opt.textContent = `${d.nombreCompleto} (${d.ci}) - ${d.sedeCodigo || 'CBA'}`;
+            otherGroup.appendChild(opt);
+          }
+        });
+
+        selector.appendChild(featuredGroup);
+        if (otherGroup.children.length > 0) {
+          selector.appendChild(otherGroup);
+        }
+
         const savedCi = localStorage.getItem('sisa_active_docente_ci');
-        const defaultDocente = window.__API_DOCENTES__.find(d => d.ci === savedCi) || window.__API_DOCENTES__[0];
+        const defaultDocente = window.__API_DOCENTES__.find(d => d.ci === savedCi) || 
+                               window.__API_DOCENTES__.find(d => d.ci === '3065087') || 
+                               window.__API_DOCENTES__[0];
         selector.value = defaultDocente.ci;
         window.selectDocenteFromApi(defaultDocente.ci, true);
       }
@@ -2716,46 +2750,53 @@ document.addEventListener('change', (e) => {
     const resolveCarreraInfo = (code, careerCode) => {
       const cUpper = (careerCode || '').toUpperCase();
       const codeUpper = (code || '').toUpperCase();
-      if (cUpper.includes('MED') || codeUpper.startsWith('MED')) {
+      if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT')) {
         return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
+      }
+      if (cUpper.includes('ADM') || cUpper.includes('CCP') || cUpper.includes('COM') || cUpper.includes('FAC') || codeUpper.includes('ADMIN') || codeUpper.includes('FINANC') || codeUpper.includes('CONTAB')) {
+        return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
+      }
+      if (cUpper.includes('ELE') || codeUpper.startsWith('ELE')) {
+        return { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' };
+      }
+      if (cUpper.includes('SON') || codeUpper.startsWith('SON')) {
+        return { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' };
+      }
+      if (cUpper.includes('IBI') || codeUpper.startsWith('IBI') || cUpper.includes('BIO')) {
+        return { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' };
       }
       if (cUpper.includes('IND') || codeUpper.startsWith('IND')) {
         return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', color: 'amber' };
       }
-      if (cUpper.includes('FAC') || codeUpper.startsWith('IDI')) {
-        return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
+      if (cUpper.includes('VET') || codeUpper.startsWith('VET')) {
+        return { name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' };
       }
-      if (cUpper.includes('DER') || codeUpper.startsWith('DER')) {
-        return { name: 'Derecho', tag: 'DERECHO', color: 'indigo' };
+      if (cUpper.includes('ENL') || codeUpper.startsWith('ENF')) {
+        return { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', color: 'pink' };
       }
-      return { name: 'Ing. de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' };
+      return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
     };
 
     // Synthesize course-group items for this teacher
-    let items = [];
-    if (groups && groups.length > 0) {
-      groups.forEach((g, idx) => {
-        const matchingCourse = (courses || []).find(c => c.id === g.materiaId) || (courses || [])[idx] || {
-          id: g.materiaId || 'mat-' + idx,
-          code: g.name ? g.name.split(' ')[0] : 'MAT-10' + idx,
-          name: g.teacherName ? 'CÁTEDRA ASIGNADA' : 'Materia Asignada',
-          semester: 1
-        };
-        items.push({
-          group: g,
-          course: matchingCourse
-        });
-      });
-    } else if (courses && courses.length > 0) {
-      courses.forEach((c, idx) => {
-        items.push({
-          group: { id: 'grp-' + idx, name: 'G1', classType: 'TEORICA', classroom: 'Aula 201', campus: 'Campus Central', teacherName: docente.nombreCompleto },
-          course: c
-        });
-      });
-    }
+    let rawList = (groups && groups.length > 0) ? groups : (courses || []);
+    if (rawList.length === 0) return;
 
-    if (items.length === 0) return;
+    let items = rawList.map((g, idx) => {
+      const courseName = g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada';
+      const cleanCode = (g.code && g.code.includes('-') && !g.code.startsWith('P') && !g.code.startsWith('T')) 
+          ? g.code 
+          : (courseName ? courseName.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (idx + 1) : 'MAT-10' + (idx + 1));
+      return {
+        group: g,
+        course: {
+          id: g.syllabusCourseId || g.id || 'mat-' + idx,
+          code: cleanCode.toUpperCase(),
+          name: courseName.toUpperCase(),
+          semester: 1,
+          careerCode: g.careerCode || docente.carreraPrincipal
+        }
+      };
+    });
 
     // Calculate totals
     const uniqueCarreras = [...new Set(items.map(it => resolveCarreraInfo(it.course.code, it.course.careerCode).name))];
@@ -2798,11 +2839,15 @@ document.addEventListener('change', (e) => {
       const c = item.course;
       const grp = item.group;
       const car = resolveCarreraInfo(c.code, c.careerCode);
-      const isTheory = (grp.classType || 'TEORICA').toUpperCase().includes('TEOR');
-      const isPractice = (grp.classType || '').toUpperCase().includes('PRACT');
+      const isTheory = (grp.classType || 'TEORICA').toUpperCase().includes('TEOR') || (grp.classType || '').toUpperCase().startsWith('T');
+      const isPractice = (grp.classType || '').toUpperCase().includes('PRACT') || (grp.classType || '').toUpperCase().startsWith('P');
       const tipoLabel = isPractice ? 'Práctica (4h)' : (isTheory ? 'Teoría (4h)' : 'Integral (4h)');
       const tipoBadgeClass = isPractice ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300';
-      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (grp.name ? grp.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1');
+      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (grp.name ? grp.name.toLowerCase().replace(/[^a-z0-9]/g, '') : (grp.code ? grp.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1'));
+
+      const classroomText = grp.classroom || 'Aula / Lab 201';
+      const campusText = grp.campus || 'Campus Central / Juan Pablo II';
+      const groupCodeText = grp.name || grp.code || 'G1';
 
       // Register or update in canonical materiasData
       materiasData[mKey] = {
@@ -2815,10 +2860,10 @@ document.addEventListener('change', (e) => {
         horasPracticas: isPractice ? '4' : '2',
         carrera: car.name,
         carreraTag: `CARRERA: ${car.tag}`,
-        grupoTag: `Grupo ${grp.name || 'G1'} • Cátedra de ${isPractice ? 'Práctica' : 'Teoría'}`,
-        breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${grp.name || 'G1'})`,
+        grupoTag: `Grupo ${groupCodeText} • Cátedra de ${isPractice ? 'Práctica' : 'Teoría'}`,
+        breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${groupCodeText})`,
         title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
-        meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (${isPractice ? 'Práctica' : 'Teoría'})</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: ${grp.campus || 'Central'} (${grp.classroom || 'Aula 201'})</span>`,
+        meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (${isPractice ? 'Práctica' : 'Teoría'})</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: ${campusText} (${classroomText})</span>`,
         caracterizacion: `Asignatura oficial ${c.name} del plan curricular de ${car.name} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
         macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${c.name}.`,
         sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
@@ -2859,7 +2904,7 @@ document.addEventListener('change', (e) => {
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tipoBadgeClass}">${tipoLabel}</span>
           </div>
           <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">${c.code} ${c.name}</h4>
-          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${grp.name || 'G1'} • ${c.semester || 1}º Sem • ${grp.classroom || 'Aula 201'}</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${groupCodeText} • ${c.semester || 1}º Sem • ${classroomText}</div>
           <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
             <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
             <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
@@ -2878,7 +2923,7 @@ document.addEventListener('change', (e) => {
             <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
               <div class="truncate">
                 <div class="truncate font-bold">${c.code} ${c.name}</div>
-                <div class="text-[10px] opacity-90">${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Aula 201'}</div>
+                <div class="text-[10px] opacity-90">${groupCodeText} • ${grp.classType || 'Teoría'} • ${classroomText}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
@@ -2894,7 +2939,7 @@ document.addEventListener('change', (e) => {
     // Auto-select first subject of this teacher
     const firstItem = items[0];
     if (firstItem) {
-      const firstMKey = (firstItem.course.code ? firstItem.course.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (firstItem.group.name ? firstItem.group.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1');
+      const firstMKey = (firstItem.course.code ? firstItem.course.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (firstItem.group.name ? firstItem.group.name.toLowerCase().replace(/[^a-z0-9]/g, '') : (firstItem.group.code ? firstItem.group.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1'));
       window.selectDocenteMateria(firstMKey);
     }
   };
@@ -2905,5 +2950,6 @@ document.addEventListener('change', (e) => {
     window.loadDocentesFromApi();
   }, 150);
 })();
+
 
 
