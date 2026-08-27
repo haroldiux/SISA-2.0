@@ -143,13 +143,8 @@ public class PlanesClaseExcelParser {
         if (plan.getObjetivoSesion() == null || plan.getObjetivoSesion().isBlank()) {
             plan.setObjetivoSesion("Desarrollo de competencias según planificación");
         }
-        if (plan.getContenidoTema() == null || plan.getContenidoTema().isBlank() || plan.getContenidoTema().matches("(?i)^TEMA\\s*\\d*\\s*:?\\s*$")) {
-            String sn = plan.getNombreHoja();
-            if (sn != null && sn.contains(":")) {
-                plan.setContenidoTema(sn.substring(sn.indexOf(":") + 1).trim());
-            } else if (sn != null) {
-                plan.setContenidoTema(sn);
-            }
+        if (plan.getContenidoTema() != null && plan.getContenidoTema().matches("(?i)^TEMA\\s*\\d*\\s*:?\\s*$")) {
+            plan.setContenidoTema("");
         }
 
     }
