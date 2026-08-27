@@ -205,9 +205,57 @@ public class CatalogoAcademicoController {
 
     /**
      * List all distinct teachers (Docentes) available in the system catalog.
+     * Prioritizes live UNITEPC Gateway data and updates PostgreSQL local mirror cache.
      */
     @GetMapping("/docentes")
     public ResponseEntity<List<DocenteItemDto>> getDocentes() {
+        List<GroupItemDto> allGruposDtos = null;
+        try {
+            List<GroupItemDto> remote = this.gatewayClient.getGroups("2-2026", null, null, null);
+            if (remote != null && !remote.isEmpty()) {
+                allGruposDtos = remote;
+                // Sync remote groups to local cache
+                updateLocalGroupsCache(remote);
+            }
+        } catch (Exception ex) {
+            log.warn("Gateway groups unreachable for docentes list ({}), falling back to local database", ex.getMessage());
+        }
+
+        if (allGruposDtos != null && !allGruposDtos.isEmpty()) {
+            // Group by teacher CI from remote gateway response
+            Map<String, List<GroupItemDto>> porCi = allGruposDtos.stream()
+                    .filter(g -> g.teacherCi() != null && !g.teacherCi().isBlank())
+                    .collect(java.util.stream.Collectors.groupingBy(GroupItemDto::teacherCi));
+
+            List<DocenteItemDto> remoteDocentes = porCi.entrySet().stream()
+                    .map(entry -> {
+                        String ci = entry.getKey();
+                        var gruposDocente = entry.getValue();
+                        var primerGrupo = gruposDocente.get(0);
+                        String nombre = primerGrupo.teacherName();
+                        String email = deriveTeacherEmail(nombre, ci);
+
+                        List<String> materiasNombres = gruposDocente.stream()
+                                .map(g -> (g.courseName() != null ? g.courseName() : (g.name() != null ? g.name() : "Materia Asignada")))
+                                .distinct()
+                                .toList();
+
+                        return new DocenteItemDto(
+                                ci,
+                                nombre,
+                                email,
+                                "CBA",
+                                primerGrupo.careerCode() != null ? primerGrupo.careerCode() : "Facultad de Tecnología",
+                                materiasNombres,
+                                gruposDocente
+                        );
+                    })
+                    .toList();
+
+            return ResponseEntity.ok(remoteDocentes);
+        }
+
+        // Local mirror fallback
         var allGrupos = this.seaGrupoRepository.findAll();
         Map<String, List<bo.edu.unitepc.sisa.domain.model.SeaGrupo>> porCi = allGrupos.stream()
                 .filter(g -> g.getDocenteCi() != null && !g.getDocenteCi().isBlank())
@@ -398,6 +446,32 @@ public class CatalogoAcademicoController {
             }
         } catch (Exception e) {
             log.debug("Could not persist courses cache: {}", e.getMessage());
+        }
+    }
+
+    private void updateLocalGroupsCache(List<GroupItemDto> remoteGroups) {
+        if (remoteGroups == null || remoteGroups.isEmpty()) return;
+        try {
+            for (GroupItemDto dto : remoteGroups) {
+                if (dto.id() == null) continue;
+                var existing = this.seaGrupoRepository.findById(dto.id());
+                if (existing.isEmpty()) {
+                    var nuevo = new bo.edu.unitepc.sisa.domain.model.SeaGrupo(
+                            dto.id(),
+                            dto.name() != null ? dto.name() : "G1",
+                            dto.classType() != null ? dto.classType() : "TEORICA",
+                            dto.teacherName() != null ? dto.teacherName() : "DOCENTE UNITEPC",
+                            dto.teacherCi() != null ? dto.teacherCi() : "0000000",
+                            dto.schedule() != null ? dto.schedule() : "Horario regular",
+                            dto.classroom() != null ? dto.classroom() : "Aula 101",
+                            dto.campus() != null ? dto.campus() : "Campus Central",
+                            dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen"
+                    );
+                    this.seaGrupoRepository.save(nuevo);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not sync remote groups to local cache: {}", e.getMessage());
         }
     }
 }

@@ -87,14 +87,15 @@ public class UnitepcGatewayClient {
             }
             log.info("Requesting new OAuth2 token from UNITEPC Gateway: {}{}", this.baseUrl, this.tokenEndpoint);
             try {
+                org.springframework.util.MultiValueMap<String, String> form = new org.springframework.util.LinkedMultiValueMap<>();
+                form.add("grant_type", "client_credentials");
+                form.add("client_id", this.clientId);
+                form.add("client_secret", this.clientSecret);
+
                 TokenResponseDto response = this.restClient.post()
                         .uri(this.tokenEndpoint)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(Map.of(
-                                "grant_type", "client_credentials",
-                                "client_id", this.clientId,
-                                "client_secret", this.clientSecret
-                        ))
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .body(form)
                         .retrieve()
                         .body(TokenResponseDto.class);
 
@@ -152,10 +153,15 @@ public class UnitepcGatewayClient {
         String token = getToken();
         try {
             List<CareerDto> result = this.restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/university/externals/research/careers")
-                            .queryParam("branchOfficeCode", branchOfficeCode != null ? branchOfficeCode : "")
-                            .build())
+                    .uri(uriBuilder -> {
+                        uriBuilder.path("/api/v1/university/externals/research/careers");
+                        if (branchOfficeCode != null && !branchOfficeCode.isBlank()) {
+                            uriBuilder.queryParam("branchOfficeCode", branchOfficeCode);
+                        } else {
+                            uriBuilder.queryParam("branchOfficeCode", "CBA");
+                        }
+                        return uriBuilder.build();
+                    })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header("clientId", this.clientId)
                     .header("X-Client-Id", this.clientId)
@@ -175,11 +181,18 @@ public class UnitepcGatewayClient {
         String token = getToken();
         try {
             List<CourseDto> result = this.restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/university/externals/research/courses")
-                            .queryParam("branchOfficeCode", branchOfficeCode != null ? branchOfficeCode : "")
-                            .queryParam("careerCode", careerCode != null ? careerCode : "")
-                            .build())
+                    .uri(uriBuilder -> {
+                        uriBuilder.path("/api/v1/university/externals/research/courses");
+                        if (branchOfficeCode != null && !branchOfficeCode.isBlank()) {
+                            uriBuilder.queryParam("branchOfficeCode", branchOfficeCode);
+                        } else {
+                            uriBuilder.queryParam("branchOfficeCode", "CBA");
+                        }
+                        if (careerCode != null && !careerCode.isBlank()) {
+                            uriBuilder.queryParam("careerCode", careerCode);
+                        }
+                        return uriBuilder.build();
+                    })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header("clientId", this.clientId)
                     .header("X-Client-Id", this.clientId)
@@ -199,13 +212,24 @@ public class UnitepcGatewayClient {
         String token = getToken();
         try {
             List<GroupItemDto> result = this.restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/student/externals/research/groups")
-                            .queryParam("term", term != null ? term : "2-2026")
-                            .queryParam("branchOfficeId", branchOfficeId != null ? branchOfficeId : "")
-                            .queryParam("careerId", careerId != null ? careerId : "")
-                            .queryParam("syllabusCourseId", syllabusCourseId != null ? syllabusCourseId : "")
-                            .build())
+                    .uri(uriBuilder -> {
+                        uriBuilder.path("/api/v1/student/externals/research/groups");
+                        if (term != null && !term.isBlank()) {
+                            uriBuilder.queryParam("term", term);
+                        } else {
+                            uriBuilder.queryParam("term", "2-2026");
+                        }
+                        if (branchOfficeId != null && !branchOfficeId.isBlank()) {
+                            uriBuilder.queryParam("branchOfficeId", branchOfficeId);
+                        }
+                        if (careerId != null && !careerId.isBlank()) {
+                            uriBuilder.queryParam("careerId", careerId);
+                        }
+                        if (syllabusCourseId != null && !syllabusCourseId.isBlank()) {
+                            uriBuilder.queryParam("syllabusCourseId", syllabusCourseId);
+                        }
+                        return uriBuilder.build();
+                    })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header("clientId", this.clientId)
                     .header("X-Client-Id", this.clientId)

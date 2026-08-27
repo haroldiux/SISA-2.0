@@ -2695,8 +2695,9 @@ document.addEventListener('change', (e) => {
 
       const courses = coursesRes.ok ? await coursesRes.json() : [];
       const groups = groupsRes.ok ? await groupsRes.json() : [];
+      const activeGroups = (groups && groups.length > 0) ? groups : (docente.grupos || []);
 
-      window.renderDynamicSidebarForDocente(docente, courses, groups);
+      window.renderDynamicSidebarForDocente(docente, courses, activeGroups);
 
       if (!silent && typeof window.showToast === 'function') {
         window.showToast(`👨‍🏫 Sesión Docente API: ${docente.nombreCompleto} (${docente.email})`);

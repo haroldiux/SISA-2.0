@@ -1,5 +1,6 @@
 package bo.edu.unitepc.sisa.api.dto.gateway;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -14,10 +15,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CourseDto(
+        @JsonAlias({"courseId", "syllabusCourseId", "id"})
         String id,
         String code,
+        @JsonAlias({"courseName", "name"})
         String name,
         Integer semester,
         String syllabusCourseId,
         String careerCode
 ) {}
+
