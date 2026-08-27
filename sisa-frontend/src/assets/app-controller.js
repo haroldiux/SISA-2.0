@@ -2707,82 +2707,177 @@ document.addEventListener('change', (e) => {
   };
 
   window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
-    const container = document.getElementById('sidebar-materias-container');
-    if (!container) return;
+    const sidebarContainer = document.getElementById('sidebar-materias-container');
+    const cardsGrid = document.getElementById('doc-materia-cards-grid');
+    if (!docente) return;
 
-    if (!courses || courses.length === 0) {
-      // If no courses directly returned, synthesize from groups
-      if (groups && groups.length > 0) {
-        courses = groups.map(g => ({
-          id: g.id,
-          code: g.name || 'MAT',
-          name: g.name || 'Materia Asignada',
-          semester: 1
-        }));
+    // Helper: Carrera name resolution
+    const resolveCarreraInfo = (code, careerCode) => {
+      const cUpper = (careerCode || '').toUpperCase();
+      const codeUpper = (code || '').toUpperCase();
+      if (cUpper.includes('MED') || codeUpper.startsWith('MED')) {
+        return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
       }
+      if (cUpper.includes('IND') || codeUpper.startsWith('IND')) {
+        return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', color: 'amber' };
+      }
+      if (cUpper.includes('FAC') || codeUpper.startsWith('IDI')) {
+        return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
+      }
+      if (cUpper.includes('DER') || codeUpper.startsWith('DER')) {
+        return { name: 'Derecho', tag: 'DERECHO', color: 'indigo' };
+      }
+      return { name: 'Ing. de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' };
+    };
+
+    // Synthesize course-group items for this teacher
+    let items = [];
+    if (groups && groups.length > 0) {
+      groups.forEach((g, idx) => {
+        const matchingCourse = (courses || []).find(c => c.id === g.materiaId) || (courses || [])[idx] || {
+          id: g.materiaId || 'mat-' + idx,
+          code: g.name ? g.name.split(' ')[0] : 'MAT-10' + idx,
+          name: g.teacherName ? 'CÁTEDRA ASIGNADA' : 'Materia Asignada',
+          semester: 1
+        };
+        items.push({
+          group: g,
+          course: matchingCourse
+        });
+      });
+    } else if (courses && courses.length > 0) {
+      courses.forEach((c, idx) => {
+        items.push({
+          group: { id: 'grp-' + idx, name: 'G1', classType: 'TEORICA', classroom: 'Aula 201', campus: 'Campus Central', teacherName: docente.nombreCompleto },
+          course: c
+        });
+      });
     }
 
-    let html = `
+    if (items.length === 0) return;
+
+    // Calculate totals
+    const uniqueCarreras = [...new Set(items.map(it => resolveCarreraInfo(it.course.code, it.course.careerCode).name))];
+    const totalHours = items.length * 4;
+
+    // Update Profile Footer & Top Summary Badges
+    const initials = docente.nombreCompleto
+      .replace(/(Ing\.|Lic\.|Dr\.|Dra\.|Msc\.)/gi, '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(p => p.charAt(0).toUpperCase())
+      .join('') || 'UN';
+
+    const avatarEl = document.getElementById('user-profile-avatar');
+    if (avatarEl) avatarEl.textContent = initials;
+
+    const profileNameEl = document.getElementById('user-profile-name');
+    if (profileNameEl) profileNameEl.textContent = docente.nombreCompleto;
+
+    const profileInfoEl = document.getElementById('user-profile-info');
+    if (profileInfoEl) profileInfoEl.textContent = `${totalHours}h • ${uniqueCarreras.length} Carrera(s)`;
+
+    const summaryBadgeEl = document.getElementById('docente-summary-badge');
+    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalHours} Hrs / Semana • ${uniqueCarreras.length} Carrera(s)`;
+
+    const sidebarHoursEl = document.getElementById('sidebar-summary-hours');
+    if (sidebarHoursEl) sidebarHoursEl.textContent = `${uniqueCarreras.length} Carreras • ${totalHours}h`;
+
+    // 1. Build Top Horizontal Cards Grid
+    let cardsHtml = '';
+    let sidebarHtml = `
       <div class="flex items-center justify-between px-2">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Cátedras Asignadas</span>
-        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${courses.length} Materias API</span>
+        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Cátedras API</span>
       </div>
     `;
 
-    // Group courses by carrera or code
-    courses.forEach((c, idx) => {
-      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (groups[idx]?.name?.toLowerCase() || 'g1');
-      const grp = groups.find(g => g.materiaId === c.id) || groups[idx] || { name: 'G1', classType: 'TEORICA', classroom: 'Aula 201' };
+    items.forEach((item, idx) => {
+      const c = item.course;
+      const grp = item.group;
+      const car = resolveCarreraInfo(c.code, c.careerCode);
+      const isTheory = (grp.classType || 'TEORICA').toUpperCase().includes('TEOR');
+      const isPractice = (grp.classType || '').toUpperCase().includes('PRACT');
+      const tipoLabel = isPractice ? 'Práctica (4h)' : (isTheory ? 'Teoría (4h)' : 'Integral (4h)');
+      const tipoBadgeClass = isPractice ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300';
+      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (grp.name ? grp.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1');
 
-      // Register or update canonical data entry in materiasData dynamically
-      if (!materiasData[mKey]) {
-        materiasData[mKey] = {
-          asignacionId: idx + 1,
-          codigo: c.code || 'MAT-100',
-          nombre: c.name || 'MATERIA ASIGNADA',
-          semestre: (c.semester || 1) + 'º',
-          creditos: '12',
-          horasTeoricas: '2',
-          horasPracticas: '4',
-          carrera: docente.carreraPrincipal || 'Facultad de Tecnología',
-          carreraTag: `DOCENTE: ${docente.nombreCompleto}`,
-          grupoTag: `Grupo ${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Aula 201'}`,
-          breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${grp.name || 'G1'})`,
-          title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
-          meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">${grp.name || 'G1'}</strong></span><span>•</span><span>Docente: ${docente.nombreCompleto}</span>`,
-          caracterizacion: `Asignatura oficial ${c.name} del plan curricular UNITEPC impartida por ${docente.nombreCompleto}.`,
-          macroCompetencia: `Aplica competencias profesionales y habilidades técnicas en ${c.name}.`,
-          sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
-          unidades: [
-            {
-              numeroUnidad: 1,
-              titulo: 'Fundamentos y Bases Conceptuales',
-              horasAcademicas: 20,
-              temas: [
-                { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de la materia.\n• Marco teórico y metodológico.' }
-              ]
-            }
-          ],
-          bibliografia: [
-            { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' }
-          ],
-          elementosCompetencia: [
-            `Domina los fundamentos de ${c.name}.`
-          ]
-        };
-      }
+      // Register or update in canonical materiasData
+      materiasData[mKey] = {
+        asignacionId: idx + 1,
+        codigo: c.code || 'MAT-100',
+        nombre: c.name || 'MATERIA ASIGNADA',
+        semestre: (c.semester || 1) + 'º',
+        creditos: '12',
+        horasTeoricas: isTheory ? '4' : '2',
+        horasPracticas: isPractice ? '4' : '2',
+        carrera: car.name,
+        carreraTag: `CARRERA: ${car.tag}`,
+        grupoTag: `Grupo ${grp.name || 'G1'} • Cátedra de ${isPractice ? 'Práctica' : 'Teoría'}`,
+        breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${grp.name || 'G1'})`,
+        title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
+        meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (${isPractice ? 'Práctica' : 'Teoría'})</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: ${grp.campus || 'Central'} (${grp.classroom || 'Aula 201'})</span>`,
+        caracterizacion: `Asignatura oficial ${c.name} del plan curricular de ${car.name} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
+        macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${c.name}.`,
+        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
+        unidades: [
+          {
+            numeroUnidad: 1,
+            titulo: 'Fundamentos y Bases Conceptuales de ' + (c.name || 'la Materia'),
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de ' + (c.name || 'la materia') + '.\n• Marco teórico y metodológico.' },
+              { numeroTema: 2, titulo: 'Modelado y Aplicaciones Prácticas', contenido: '• Aplicación de competencias en casos reales.\n• Desarrollo guiado y resolución de problemas.' }
+            ]
+          },
+          {
+            numeroUnidad: 2,
+            titulo: 'Desarrollo Avanzado y Ejercitación Práctica',
+            horasAcademicas: 20,
+            temas: [
+              { numeroTema: 3, titulo: 'Técnicas y Métodos Especializados', contenido: '• Técnicas avanzadas de la disciplina.\n• Prácticas de laboratorio y talleres aplicados.' }
+            ]
+          }
+        ],
+        bibliografia: [
+          { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial de ' + car.name + '. Fondo Editorial UNITEPC.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' },
+          { tipo: 'COMPLEMENTARIA', citaApa: 'Ministerio de Educación. (2025). Normas Académicas de Educación Superior.', autor: 'Min. Educación', anio: 2025, titulo: 'Normas Académicas' }
+        ],
+        elementosCompetencia: [
+          `Modela problemas y soluciones en el ámbito de ${c.name}.`,
+          `Ejecuta procedimientos técnicos y metodologías estándar con rigor profesional.`
+        ]
+      };
 
-      html += `
+      // HTML for Top Horizontal Card
+      cardsHtml += `
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
+          <div class="flex items-start justify-between">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">${car.tag}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tipoBadgeClass}">${tipoLabel}</span>
+          </div>
+          <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">${c.code} ${c.name}</h4>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${grp.name || 'G1'} • ${c.semester || 1}º Sem • ${grp.classroom || 'Aula 201'}</div>
+          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
+            <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
+          </div>
+        </div>
+      `;
+
+      // HTML for Sidebar Button
+      sidebarHtml += `
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2">
           <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
             <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${c.code}</span>
             <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${c.semester || 1}º Sem.</span>
           </div>
           <div class="p-1">
-            <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${idx === 0 ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800'}">
+            <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
               <div class="truncate">
                 <div class="truncate font-bold">${c.code} ${c.name}</div>
-                <div class="text-[10px] opacity-90">${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Campus Central'}</div>
+                <div class="text-[10px] opacity-90">${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Aula 201'}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
@@ -2791,13 +2886,14 @@ document.addEventListener('change', (e) => {
       `;
     });
 
-    container.innerHTML = html;
+    if (cardsGrid) cardsGrid.innerHTML = cardsHtml;
+    if (sidebarContainer) sidebarContainer.innerHTML = sidebarHtml;
     if (window.lucide) window.lucide.createIcons();
 
-    // Auto-select first subject
-    const firstCourse = courses[0];
-    if (firstCourse) {
-      const firstMKey = (firstCourse.code ? firstCourse.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (groups[0]?.name?.toLowerCase() || 'g1');
+    // Auto-select first subject of this teacher
+    const firstItem = items[0];
+    if (firstItem) {
+      const firstMKey = (firstItem.course.code ? firstItem.course.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (firstItem.group.name ? firstItem.group.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1');
       window.selectDocenteMateria(firstMKey);
     }
   };
