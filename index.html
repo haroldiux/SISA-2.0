@@ -499,42 +499,53 @@
             <!-- THE 4 CLEAN TABS CONTAINER -->
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
               
-              <!-- Tab Navigation Bar (no-print) -->
-              <div class="px-6 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/50 no-print">
-                <div class="flex items-center gap-4">
+              <!-- Tab Navigation Bar (High Visibility Segmented Pill Design) -->
+              <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-100/80 dark:bg-slate-950/90 no-print">
+                <div class="inline-flex p-1.5 bg-slate-200/80 dark:bg-slate-900/90 rounded-2xl border border-slate-300/80 dark:border-slate-800 shadow-inner gap-1.5 max-w-full overflow-x-auto">
                   
                   <!-- TAB 1: PROGRAMA ANALÍTICO (WORD) -->
-                  <button data-doc-main-tab="tab-analitico" id="btn-tab-analitico" class="doc-main-tab-btn py-4 text-xs font-bold text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 flex items-center gap-2 cursor-pointer transition-all">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
-                    <span>1. Programa Analítico (.docx)</span>
+                  <button onclick="window.switchDocMainTab('tab-analitico')" data-doc-main-tab="tab-analitico" id="btn-tab-analitico" class="doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md border border-slate-300/80 dark:border-slate-700 font-bold scale-[1.02] ring-2 ring-blue-500/20">
+                    <span class="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950/90 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shadow-xs">
+                      <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="whitespace-nowrap">1. Programa Analítico</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold">.docx</span>
                   </button>
 
                   <!-- TAB 2: PAC PEDAGÓGICO COMPLETO (EXCEL) -->
-                  <button data-doc-main-tab="tab-pac-matrix" id="btn-tab-pac-matrix" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                    <span>2. PAC - Pedagógico (Puntos 1 al 14)</span>
+                  <button onclick="window.switchDocMainTab('tab-pac-matrix')" data-doc-main-tab="tab-pac-matrix" id="btn-tab-pac-matrix" class="doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/90 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shadow-xs">
+                      <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="whitespace-nowrap">2. PAC - Pedagógico</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold">Ptos 1-14</span>
                   </button>
 
                   <!-- TAB 3: CRONOGRAMA INDEPENDIENTE (20 SEMANAS / 36 SESIONES) -->
-                  <button data-doc-main-tab="tab-cronograma-semanas" id="btn-tab-cronograma-semanas" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
-                    <i data-lucide="calendar" class="w-4 h-4 text-amber-500"></i>
-                    <span>3. Cronograma (20 Semanas / 36 Sesiones)</span>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold">Matriz 7</span>
+                  <button onclick="window.switchDocMainTab('tab-cronograma-semanas')" data-doc-main-tab="tab-cronograma-semanas" id="btn-tab-cronograma-semanas" class="doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent">
+                    <span class="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-950/90 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shadow-xs">
+                      <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="whitespace-nowrap">3. Cronograma (20 Semanas)</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500 text-white shadow-xs">Matriz 7</span>
                   </button>
 
                   <!-- TAB 4: PLANES DE CLASE POR SESIÓN (EXCEL 2) -->
-                  <button data-doc-main-tab="tab-cronograma-planes" id="btn-tab-cronograma-planes" class="doc-main-tab-btn py-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 cursor-pointer transition-all">
-                    <i data-lucide="calendar-range" class="w-4 h-4 text-purple-500"></i>
-                    <span>4. Planes de Clase (.xlsx)</span>
+                  <button onclick="window.switchDocMainTab('tab-cronograma-planes')" data-doc-main-tab="tab-cronograma-planes" id="btn-tab-cronograma-planes" class="doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent">
+                    <span class="w-6 h-6 rounded-lg bg-purple-100 dark:bg-purple-950/90 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs shadow-xs">
+                      <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="whitespace-nowrap">4. Planes de Clase</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-600 text-white shadow-xs">.xlsx</span>
                   </button>
 
                 </div>
 
                 <!-- Right Action Buttons -->
-                <div class="flex items-center gap-2 py-2">
-                  <button onclick="window.showToast('✓ Información de la carpeta docente guardada exitosamente')" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors">
-                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                    Guardar
+                <div class="flex items-center gap-2.5 py-1">
+                  <button onclick="window.showToast('✓ Información de la carpeta docente guardada exitosamente')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Guardar Todo</span>
                   </button>
                 </div>
               </div>
@@ -2123,15 +2134,18 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
       const target = document.getElementById(tabId);
       if (target) target.classList.remove('hidden');
 
-      // Top Tab Navigation Bar
+      // Top Tab Navigation Bar (Segmented High Visibility Control)
       document.querySelectorAll('.doc-main-tab-btn').forEach(btn => {
-        btn.classList.remove('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
-        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+        btn.className = 'doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent';
       });
       const activeBtn = document.getElementById('btn-' + tabId);
       if (activeBtn) {
-        activeBtn.classList.add('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
-        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+        let ringColor = 'ring-blue-500/20';
+        if (tabId === 'tab-pac-matrix') ringColor = 'ring-emerald-500/20';
+        else if (tabId === 'tab-cronograma-semanas') ringColor = 'ring-amber-500/20';
+        else if (tabId === 'tab-cronograma-planes') ringColor = 'ring-purple-500/20';
+
+        activeBtn.className = 'doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md border border-slate-300/80 dark:border-slate-700 font-bold scale-[1.02] ring-2 ' + ringColor;
       }
 
       // Sidebar Tab Highlights
@@ -2337,12 +2351,12 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
 
     window.selectPlanSheet = function(sheetKey) {
       document.querySelectorAll('.plan-sheet-tab').forEach(b => {
-        b.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all';
+        b.className = 'plan-sheet-tab px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-150 bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300/40 dark:border-slate-700';
       });
 
       const btn = document.getElementById('btn-plan-' + sheetKey);
       if (btn) {
-        btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all';
+        btn.className = 'plan-sheet-tab px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 bg-purple-600 text-white shadow-md ring-2 ring-purple-400/40 scale-[1.02]';
       }
 
       window.updateSecuenciaTotals = function() {

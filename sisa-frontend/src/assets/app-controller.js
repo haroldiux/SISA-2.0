@@ -308,15 +308,18 @@
       const target = document.getElementById(tabId);
       if (target) target.classList.remove('hidden');
 
-      // Top Tab Navigation Bar
+      // Top Tab Navigation Bar (Segmented High Visibility Control)
       document.querySelectorAll('.doc-main-tab-btn').forEach(btn => {
-        btn.classList.remove('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
-        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+        btn.className = 'doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent';
       });
       const activeBtn = document.getElementById('btn-' + tabId);
       if (activeBtn) {
-        activeBtn.classList.add('text-brand-600', 'dark:text-brand-400', 'border-b-2', 'border-brand-600', 'dark:border-brand-400', 'font-bold');
-        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+        let ringColor = 'ring-blue-500/20';
+        if (tabId === 'tab-pac-matrix') ringColor = 'ring-emerald-500/20';
+        else if (tabId === 'tab-cronograma-semanas') ringColor = 'ring-amber-500/20';
+        else if (tabId === 'tab-cronograma-planes') ringColor = 'ring-purple-500/20';
+
+        activeBtn.className = 'doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md border border-slate-300/80 dark:border-slate-700 font-bold scale-[1.02] ring-2 ' + ringColor;
       }
 
       // Sidebar Tab Highlights
@@ -608,8 +611,10 @@
         const btn = document.createElement('button');
         btn.id = 'btn-plan-sheet-' + idx;
         const isActive = (idx === activePlanSheetIndex);
-        btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all ' +
-          (isActive ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700');
+        btn.className = 'plan-sheet-tab px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all duration-150 ' +
+          (isActive
+            ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-400/40 font-bold scale-[1.02]'
+            : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300/40 dark:border-slate-700 font-semibold');
         
         let label = plan.nombreHoja || ('Tema ' + (idx + 1));
         if (plan.contenidoTema && !label.toLowerCase().includes(plan.contenidoTema.toLowerCase())) {
