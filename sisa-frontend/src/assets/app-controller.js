@@ -421,6 +421,10 @@
       if (document.getElementById('banner-materia-title')) document.getElementById('banner-materia-title').innerText = data.title;
       if (document.getElementById('banner-materia-meta')) document.getElementById('banner-materia-meta').innerHTML = data.meta;
       
+      // Update form header inputs
+      if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = data.codigo;
+      if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = data.nombre;
+
       // Load that specific subject's documents & data
       if (typeof window.loadSavedDocenteData === 'function') {
         window.loadSavedDocenteData(activeMateriaKey);
@@ -1445,16 +1449,25 @@ window.loadSavedDocenteData = function(materiaKey) {
   let pData = defData;
   if (saved) {
     try {
-      pData = Object.assign({}, defData, JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      // Clean obsolete P- codes from previous temporary seeds
+      if (parsed.codigoAsignatura && (parsed.codigoAsignatura.startsWith('P-') || parsed.codigoAsignatura.startsWith('MAT-'))) {
+        delete parsed.codigoAsignatura;
+      }
+      if (parsed.codigo && (parsed.codigo.startsWith('P-') || parsed.codigo.startsWith('MAT-'))) {
+        delete parsed.codigo;
+      }
+      pData = Object.assign({}, defData, parsed);
     } catch (e) {}
   }
 
-  if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = pData.codigoAsignatura || pData.codigo || '';
-  if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '';
-  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = pData.nombreAsignatura || pData.nombre || '';
-  if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '';
-  if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '');
-  if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '');
+  const officialCode = defData.codigo || pData.codigoAsignatura || pData.codigo || 'SIS-113';
+  if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = officialCode;
+  if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '1º Semestre';
+  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = defData.nombre || pData.nombreAsignatura || pData.nombre || '';
+  if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '8';
+  if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '2 Horas');
+  if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '4 Horas');
   if (document.getElementById('programa-caracterizacion')) document.getElementById('programa-caracterizacion').value = pData.caracterizacion || '';
   if (document.getElementById('programa-macrocompetencia')) document.getElementById('programa-macrocompetencia').value = pData.macroCompetencia || '';
   if (document.getElementById('programa-sistema-evaluacion')) document.getElementById('programa-sistema-evaluacion').value = pData.sistemaEvaluacion || '';
@@ -1468,6 +1481,9 @@ window.loadSavedDocenteData = function(materiaKey) {
   if (savedPac) {
     try {
       const pacData = JSON.parse(savedPac);
+      if (pacData.codigoAsignatura && (pacData.codigoAsignatura.startsWith('P-') || pacData.codigoAsignatura.startsWith('MAT-'))) {
+        pacData.codigoAsignatura = officialCode;
+      }
       if (!pacData.matriz7 || !Array.isArray(pacData.matriz7) || pacData.matriz7.length === 0) {
         pacData.matriz7 = window.generateDefaultMatriz7(mKey);
       }
@@ -1479,7 +1495,7 @@ window.loadSavedDocenteData = function(materiaKey) {
     const defPac = {
       carrera: defData.carrera,
       nombreAsignatura: defData.nombre,
-      codigoAsignatura: defData.codigo,
+      codigoAsignatura: officialCode,
       semestre: defData.semestre,
       creditos: defData.creditos,
       horasTeoricasPracticas: (defData.horasTeoricas || '2') + 'T / ' + (defData.horasPracticas || '4') + 'P',
