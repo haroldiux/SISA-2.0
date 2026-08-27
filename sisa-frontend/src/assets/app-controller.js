@@ -2642,7 +2642,7 @@ document.addEventListener('change', (e) => {
         selector.innerHTML = '';
 
         // Highlight the 3 representative test docentes
-        const featuredCis = ['3065087', '6293388', '7977612']; // Rosmery Luizaga, Sidgry Toledo, Efrain Loza
+        const featuredCis = ['3065087', '4421998', '7977612']; // Rosmery Luizaga, Martin Xavier Sanchez, Efrain Loza
         const featuredGroup = document.createElement('optgroup');
         featuredGroup.label = '🏛️ DOCENTES PRINCIPALES (INGENIERÍA, MEDICINA, FACEFA)';
 
@@ -2657,7 +2657,7 @@ document.addEventListener('change', (e) => {
             opt.value = d.ci;
             let tag = '[FACULTAD]';
             if (d.ci === '3065087') tag = '💻 [INGENIERÍA]';
-            if (d.ci === '6293388') tag = '🩺 [MEDICINA]';
+            if (d.ci === '4421998') tag = '🩺 [MEDICINA]';
             if (d.ci === '7977612') tag = '📊 [FACEFA]';
             opt.textContent = `${tag} ${d.nombreCompleto} (${d.ci})`;
             featuredGroup.appendChild(opt);
