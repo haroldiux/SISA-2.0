@@ -47,6 +47,8 @@ export const SCU_API = {
     BRANCH_OFFICES: '/api/v1/catalogo-academico/branchOffices',
     CAREERS: '/api/v1/catalogo-academico/careers',
     COURSES: '/api/v1/catalogo-academico/courses',
+    GROUPS: '/api/v1/catalogo-academico/groups',
+    DOCENTES: '/api/v1/catalogo-academico/docentes',
     STUDENTS_BY_GROUP: '/api/v1/catalogo-academico/students/byGroup',
     CAMPUSES: '/api/v1/catalogo-academico/campuses',
     TIME_FRAMES: '/api/v1/catalogo-academico/timeFrames'

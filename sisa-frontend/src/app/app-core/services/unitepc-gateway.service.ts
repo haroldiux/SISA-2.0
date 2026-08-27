@@ -10,6 +10,7 @@ import {
   GroupItemDto,
   StudentItemDto,
   CampusDto,
+  DocenteItemDto,
   TimeFrameDto,
   SeaGatewayStatus
 } from '@shared/models/scu-gateway.model';
@@ -162,6 +163,73 @@ export class UnitepcGatewayService {
       params = params.set('branchOfficeId', branchOfficeId);
     }
     return this._http.get<CampusDto[]>(SCU_API.CATALOGO_ACADEMICO.CAMPUSES, { params }).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves all available teachers (Docentes) from the API.
+   */
+  public getDocentes(): Observable<DocenteItemDto[]> {
+    return this._http.get<DocenteItemDto[]>(SCU_API.CATALOGO_ACADEMICO.DOCENTES).pipe(
+      tap(docentes => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves groups filtered by term, branchOffice, career, syllabus, or teacherCi.
+   */
+  public getGroups(
+    term?: string,
+    branchOfficeId?: string,
+    careerId?: string,
+    syllabusCourseId?: string,
+    teacherCi?: string
+  ): Observable<GroupItemDto[]> {
+    let params = new HttpParams();
+    if (term) params = params.set('term', term);
+    if (branchOfficeId) params = params.set('branchOfficeId', branchOfficeId);
+    if (careerId) params = params.set('careerId', careerId);
+    if (syllabusCourseId) params = params.set('syllabusCourseId', syllabusCourseId);
+    if (teacherCi) params = params.set('teacherCi', teacherCi);
+
+    return this._http.get<GroupItemDto[]>(SCU_API.CATALOGO_ACADEMICO.GROUPS, { params }).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves assigned courses for a specific teacher CI.
+   */
+  public getDocenteMaterias(ci: string): Observable<CourseDto[]> {
+    return this._http.get<CourseDto[]>(`${SCU_API.CATALOGO_ACADEMICO.DOCENTES}/${ci}/materias`).pipe(
       tap(() => {
         this.seaStatus.set('online');
         this.lastChecked.set(new Date());

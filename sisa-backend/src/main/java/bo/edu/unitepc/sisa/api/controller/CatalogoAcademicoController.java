@@ -159,6 +159,158 @@ public class CatalogoAcademicoController {
     }
 
     /**
+     * List groups filtered by term, branchOfficeId, careerId, syllabusCourseId, or teacherCi.
+     */
+    @GetMapping("/groups")
+    public ResponseEntity<List<GroupItemDto>> getGroups(
+            @RequestParam(required = false) String term,
+            @RequestParam(required = false) String branchOfficeId,
+            @RequestParam(required = false) String careerId,
+            @RequestParam(required = false) String syllabusCourseId,
+            @RequestParam(required = false) String teacherCi) {
+        try {
+            List<GroupItemDto> remote = this.gatewayClient.getGroups(term, branchOfficeId, careerId, syllabusCourseId);
+            if (remote != null && !remote.isEmpty()) {
+                if (teacherCi != null && !teacherCi.isBlank()) {
+                    remote = remote.stream()
+                            .filter(g -> teacherCi.equalsIgnoreCase(g.teacherCi()))
+                            .toList();
+                }
+                return ResponseEntity.ok(remote);
+            }
+        } catch (Exception ex) {
+            log.warn("Gateway groups unreachable ({}), activating local mirror fallback", ex.getMessage());
+        }
+
+        // Local mirror fallback
+        var query = (teacherCi != null && !teacherCi.isBlank())
+                ? this.seaGrupoRepository.findByDocenteCi(teacherCi)
+                : this.seaGrupoRepository.findAll();
+
+        List<GroupItemDto> fallback = query.stream()
+                .map(g -> new GroupItemDto(
+                        g.getId(),
+                        g.getCodigoGrupo(),
+                        g.getTipoClase(),
+                        g.getDocenteNombre(),
+                        g.getDocenteCi(),
+                        g.getAula(),
+                        g.getHorario(),
+                        g.getCampus(),
+                        35
+                ))
+                .toList();
+        return ResponseEntity.ok(fallback);
+    }
+
+    /**
+     * List all distinct teachers (Docentes) available in the system catalog.
+     */
+    @GetMapping("/docentes")
+    public ResponseEntity<List<DocenteItemDto>> getDocentes() {
+        var allGrupos = this.seaGrupoRepository.findAll();
+        Map<String, List<bo.edu.unitepc.sisa.domain.model.SeaGrupo>> porCi = allGrupos.stream()
+                .filter(g -> g.getDocenteCi() != null && !g.getDocenteCi().isBlank())
+                .collect(java.util.stream.Collectors.groupingBy(bo.edu.unitepc.sisa.domain.model.SeaGrupo::getDocenteCi));
+
+        List<DocenteItemDto> result = porCi.entrySet().stream()
+                .map(entry -> {
+                    String ci = entry.getKey();
+                    var gruposDocente = entry.getValue();
+                    var primerGrupo = gruposDocente.get(0);
+                    String nombre = primerGrupo.getDocenteNombre();
+                    String email = deriveTeacherEmail(nombre, ci);
+
+                    List<String> materiasNombres = gruposDocente.stream()
+                            .map(g -> {
+                                if (g.getMateriaId() != null) {
+                                    return this.seaMateriaRepository.findById(g.getMateriaId())
+                                            .map(m -> m.getCodigo() + " - " + m.getNombre())
+                                            .orElse(g.getMateriaId());
+                                }
+                                return "Materia Asignada";
+                            })
+                            .distinct()
+                            .toList();
+
+                    List<GroupItemDto> groupDtos = gruposDocente.stream()
+                            .map(g -> new GroupItemDto(
+                                    g.getId(),
+                                    g.getCodigoGrupo(),
+                                    g.getTipoClase(),
+                                    g.getDocenteNombre(),
+                                    g.getDocenteCi(),
+                                    g.getAula(),
+                                    g.getHorario(),
+                                    g.getCampus(),
+                                    35
+                            ))
+                            .toList();
+
+                    return new DocenteItemDto(
+                            ci,
+                            nombre,
+                            email,
+                            "CBBA",
+                            "Facultad de Ingeniería y Tecnología",
+                            materiasNombres,
+                            groupDtos
+                    );
+                })
+                .toList();
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * List courses assigned to a specific teacher by CI.
+     */
+    @GetMapping("/docentes/{ci}/materias")
+    public ResponseEntity<List<CourseDto>> getDocenteMaterias(@PathVariable String ci) {
+        var grupos = this.seaGrupoRepository.findByDocenteCi(ci);
+        List<String> materiaIds = grupos.stream()
+                .map(bo.edu.unitepc.sisa.domain.model.SeaGrupo::getMateriaId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+
+        List<CourseDto> courses = materiaIds.stream()
+                .map(this.seaMateriaRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(m -> new CourseDto(
+                        m.getId(),
+                        m.getCodigo(),
+                        m.getNombre(),
+                        m.getSemestre() != null ? m.getSemestre().intValue() : 1,
+                        m.getSyllabusCourseId(),
+                        m.getCarreraId()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(courses);
+    }
+
+    /**
+     * Helper to derive an official institutional email for display.
+     */
+    private String deriveTeacherEmail(String nombreCompleto, String ci) {
+        if (nombreCompleto == null) return "docente@unitepc.edu.bo";
+        String clean = nombreCompleto.toLowerCase()
+                .replace("ing.", "")
+                .replace("lic.", "")
+                .replace("dr.", "")
+                .replace("dra.", "")
+                .replace("msc.", "")
+                .trim();
+        String[] parts = clean.split("\\s+");
+        if (parts.length >= 2) {
+            return parts[0] + "." + parts[1] + "@unitepc.edu.bo";
+        }
+        return "docente." + ci.replaceAll("[^0-9]", "") + "@unitepc.edu.bo";
+    }
+
+    /**
      * List enrolled students by group ID.
      */
     @GetMapping("/students/byGroup")

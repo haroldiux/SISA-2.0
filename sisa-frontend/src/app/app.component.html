@@ -54,8 +54,17 @@
       </button>
     </div>
 
-    <!-- Theme Switcher & Status Badge -->
+    <!-- Theme Switcher, Docente API Selector & Status Badge -->
     <div class="flex items-center gap-3">
+      <!-- Docente Selector (100% Consuming SEA Gateway API) -->
+      <div class="flex items-center gap-2 bg-slate-800/90 px-3 py-1 rounded-xl border border-slate-700">
+        <i data-lucide="user-check" class="w-4 h-4 text-brand-400"></i>
+        <label for="docente-api-selector" class="text-xs text-slate-300 font-medium hidden sm:inline">Docente API:</label>
+        <select id="docente-api-selector" onchange="window.onDocenteSelectorChange(this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1 focus:ring-1 focus:ring-brand-500 focus:outline-none cursor-pointer">
+          <option value="" disabled selected>Cargando docentes del API...</option>
+        </select>
+      </div>
+
       <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
         <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
         <span id="theme-label" class="text-slate-200">Tema Claro</span>
@@ -98,11 +107,11 @@
             </div>
           </div>
 
-          <!-- Section: CARPETAS ORGANIZADAS POR CARRERA & MATERIA -->
-          <div class="space-y-2.5">
+          <!-- Section: CARPETAS ORGANIZADAS POR CARRERA & MATERIA (DYNAMIC VIA API) -->
+          <div id="sidebar-materias-container" class="space-y-2.5">
             <div class="flex items-center justify-between px-2">
               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Carreras & Cátedras</span>
-              <span class="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/60">3 Carreras • 16h</span>
+              <span id="sidebar-summary-hours" class="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/60">3 Carreras • 16h</span>
             </div>
 
             <!-- CARRERA 1: ING. DE SISTEMAS -->

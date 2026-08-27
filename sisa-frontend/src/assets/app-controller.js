@@ -2605,7 +2605,6 @@ document.addEventListener('change', (e) => {
         }
       })
       .catch(() => {
-        // Fallback check: if navigator is online, keep state or set offline if proxy fails
         if (!navigator.onLine) {
           window.updateSeaGatewayStatus('offline');
         }
@@ -2627,9 +2626,186 @@ document.addEventListener('change', (e) => {
     }
   });
 
+  // ── 100% API DOCENTE ENGINE & DYNAMIC WORKSPACE SYNC ────────────────────────
+  window.__API_DOCENTES__ = [];
+  window.__ACTIVE_DOCENTE__ = null;
+
+  window.loadDocentesFromApi = async function() {
+    try {
+      const res = await fetch('/api/v1/catalogo-academico/docentes');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const docentes = await res.json();
+      window.__API_DOCENTES__ = Array.isArray(docentes) ? docentes : [];
+
+      const selector = document.getElementById('docente-api-selector');
+      if (selector && window.__API_DOCENTES__.length > 0) {
+        selector.innerHTML = '';
+        window.__API_DOCENTES__.forEach((d, idx) => {
+          const opt = document.createElement('option');
+          opt.value = d.ci;
+          opt.textContent = `${d.nombreCompleto} (${d.ci})`;
+          selector.appendChild(opt);
+        });
+
+        const savedCi = localStorage.getItem('sisa_active_docente_ci');
+        const defaultDocente = window.__API_DOCENTES__.find(d => d.ci === savedCi) || window.__API_DOCENTES__[0];
+        selector.value = defaultDocente.ci;
+        window.selectDocenteFromApi(defaultDocente.ci, true);
+      }
+    } catch (err) {
+      console.warn('Could not load docentes from API:', err);
+    }
+  };
+
+  window.onDocenteSelectorChange = function(ci) {
+    window.selectDocenteFromApi(ci, false);
+  };
+
+  window.selectDocenteFromApi = async function(ci, silent = false) {
+    if (!ci) return;
+    localStorage.setItem('sisa_active_docente_ci', ci);
+    const docente = window.__API_DOCENTES__.find(d => d.ci === ci);
+    if (!docente) return;
+    window.__ACTIVE_DOCENTE__ = docente;
+
+    // Update teacher headers & labels across DOM
+    document.querySelectorAll('.docente-nombre-label').forEach(el => {
+      el.textContent = docente.nombreCompleto;
+    });
+    document.querySelectorAll('.docente-email-label').forEach(el => {
+      el.textContent = docente.email;
+    });
+    document.querySelectorAll('.docente-ci-label').forEach(el => {
+      el.textContent = docente.ci;
+    });
+
+    // Update inputs with teacher information
+    const docenteInputs = ['docente-input', 'caratula-docente', 'pac-docente-input', 'planes-docente-input'];
+    docenteInputs.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = docente.nombreCompleto;
+    });
+
+    // Fetch this teacher's real assigned courses and groups from API
+    try {
+      const [coursesRes, groupsRes] = await Promise.all([
+        fetch(`/api/v1/catalogo-academico/docentes/${ci}/materias`),
+        fetch(`/api/v1/catalogo-academico/groups?teacherCi=${ci}`)
+      ]);
+
+      const courses = coursesRes.ok ? await coursesRes.json() : [];
+      const groups = groupsRes.ok ? await groupsRes.json() : [];
+
+      window.renderDynamicSidebarForDocente(docente, courses, groups);
+
+      if (!silent && typeof window.showToast === 'function') {
+        window.showToast(`👨‍🏫 Sesión Docente API: ${docente.nombreCompleto} (${docente.email})`);
+      }
+    } catch (e) {
+      console.warn('Error syncing courses for docente:', e);
+    }
+  };
+
+  window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
+    const container = document.getElementById('sidebar-materias-container');
+    if (!container) return;
+
+    if (!courses || courses.length === 0) {
+      // If no courses directly returned, synthesize from groups
+      if (groups && groups.length > 0) {
+        courses = groups.map(g => ({
+          id: g.id,
+          code: g.name || 'MAT',
+          name: g.name || 'Materia Asignada',
+          semester: 1
+        }));
+      }
+    }
+
+    let html = `
+      <div class="flex items-center justify-between px-2">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Cátedras Asignadas</span>
+        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${courses.length} Materias API</span>
+      </div>
+    `;
+
+    // Group courses by carrera or code
+    courses.forEach((c, idx) => {
+      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (groups[idx]?.name?.toLowerCase() || 'g1');
+      const grp = groups.find(g => g.materiaId === c.id) || groups[idx] || { name: 'G1', classType: 'TEORICA', classroom: 'Aula 201' };
+
+      // Register or update canonical data entry in materiasData dynamically
+      if (!materiasData[mKey]) {
+        materiasData[mKey] = {
+          asignacionId: idx + 1,
+          codigo: c.code || 'MAT-100',
+          nombre: c.name || 'MATERIA ASIGNADA',
+          semestre: (c.semester || 1) + 'º',
+          creditos: '12',
+          horasTeoricas: '2',
+          horasPracticas: '4',
+          carrera: docente.carreraPrincipal || 'Facultad de Tecnología',
+          carreraTag: `DOCENTE: ${docente.nombreCompleto}`,
+          grupoTag: `Grupo ${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Aula 201'}`,
+          breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${grp.name || 'G1'})`,
+          title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
+          meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">${grp.name || 'G1'}</strong></span><span>•</span><span>Docente: ${docente.nombreCompleto}</span>`,
+          caracterizacion: `Asignatura oficial ${c.name} del plan curricular UNITEPC impartida por ${docente.nombreCompleto}.`,
+          macroCompetencia: `Aplica competencias profesionales y habilidades técnicas en ${c.name}.`,
+          sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
+          unidades: [
+            {
+              numeroUnidad: 1,
+              titulo: 'Fundamentos y Bases Conceptuales',
+              horasAcademicas: 20,
+              temas: [
+                { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de la materia.\n• Marco teórico y metodológico.' }
+              ]
+            }
+          ],
+          bibliografia: [
+            { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' }
+          ],
+          elementosCompetencia: [
+            `Domina los fundamentos de ${c.name}.`
+          ]
+        };
+      }
+
+      html += `
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2">
+          <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
+            <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${c.code}</span>
+            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${c.semester || 1}º Sem.</span>
+          </div>
+          <div class="p-1">
+            <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${idx === 0 ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800'}">
+              <div class="truncate">
+                <div class="truncate font-bold">${c.code} ${c.name}</div>
+                <div class="text-[10px] opacity-90">${grp.name || 'G1'} • ${grp.classType || 'Teoría'} • ${grp.classroom || 'Campus Central'}</div>
+              </div>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+
+    // Auto-select first subject
+    const firstCourse = courses[0];
+    if (firstCourse) {
+      const firstMKey = (firstCourse.code ? firstCourse.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (groups[0]?.name?.toLowerCase() || 'g1');
+      window.selectDocenteMateria(firstMKey);
+    }
+  };
+
   // Initial check on load
   setTimeout(() => {
     window.updateSeaGatewayStatus('online');
+    window.loadDocentesFromApi();
   }, 150);
 })();
 

@@ -54,6 +54,16 @@ export interface CampusDto {
   branchOfficeId?: string;
 }
 
+export interface DocenteItemDto {
+  ci: string;
+  nombreCompleto: string;
+  email: string;
+  sedeCodigo?: string;
+  carreraPrincipal?: string;
+  materiasNombres?: string[];
+  grupos?: GroupItemDto[];
+}
+
 export interface TimeFrameDto {
   id: string;
   name: string;

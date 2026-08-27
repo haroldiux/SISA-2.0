@@ -132,7 +132,7 @@ public class UnitepcGatewayClient {
         String token = getToken();
         try {
             List<BranchOfficeDto> result = this.restClient.get()
-                    .uri("/api/v1/branch-offices")
+                    .uri("/api/v1/university/externals/research/branchOffices")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header("clientId", this.clientId)
                     .header("X-Client-Id", this.clientId)
@@ -153,7 +153,7 @@ public class UnitepcGatewayClient {
         try {
             List<CareerDto> result = this.restClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/careers")
+                            .path("/api/v1/university/externals/research/careers")
                             .queryParam("branchOfficeCode", branchOfficeCode != null ? branchOfficeCode : "")
                             .build())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -176,7 +176,7 @@ public class UnitepcGatewayClient {
         try {
             List<CourseDto> result = this.restClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/courses")
+                            .path("/api/v1/university/externals/research/courses")
                             .queryParam("branchOfficeCode", branchOfficeCode != null ? branchOfficeCode : "")
                             .queryParam("careerCode", careerCode != null ? careerCode : "")
                             .build())
@@ -193,6 +193,32 @@ public class UnitepcGatewayClient {
     }
 
     /**
+     * Fetch groups filtered by term, branchOfficeId, careerId, syllabusCourseId.
+     */
+    public List<GroupItemDto> getGroups(String term, String branchOfficeId, String careerId, String syllabusCourseId) {
+        String token = getToken();
+        try {
+            List<GroupItemDto> result = this.restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/student/externals/research/groups")
+                            .queryParam("term", term != null ? term : "2-2026")
+                            .queryParam("branchOfficeId", branchOfficeId != null ? branchOfficeId : "")
+                            .queryParam("careerId", careerId != null ? careerId : "")
+                            .queryParam("syllabusCourseId", syllabusCourseId != null ? syllabusCourseId : "")
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("clientId", this.clientId)
+                    .header("X-Client-Id", this.clientId)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<GroupItemDto>>() {});
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception ex) {
+            log.warn("Error fetching groups from gateway: {}", ex.getMessage());
+            throw new RuntimeException("Gateway groups request failed", ex);
+        }
+    }
+
+    /**
      * Fetch enrolled students by group ID.
      */
     public List<StudentItemDto> getStudentsByGroup(String groupId) {
@@ -200,7 +226,7 @@ public class UnitepcGatewayClient {
         try {
             List<StudentItemDto> result = this.restClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/students/by-group")
+                            .path("/api/v1/student/externals/research/students/byGroup")
                             .queryParam("groupId", groupId)
                             .build())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -223,7 +249,7 @@ public class UnitepcGatewayClient {
         try {
             List<CampusDto> result = this.restClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/campuses")
+                            .path("/api/v1/student/externals/research/campuses")
                             .queryParam("branchOfficeId", branchOfficeId != null ? branchOfficeId : "")
                             .build())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -239,22 +265,22 @@ public class UnitepcGatewayClient {
     }
 
     /**
-     * Fetch academic timeframes.
+     * Fetch active academic timeframe.
      */
     public List<TimeFrameDto> getTimeFrames() {
         String token = getToken();
         try {
-            List<TimeFrameDto> result = this.restClient.get()
-                    .uri("/api/v1/timeframes")
+            TimeFrameDto active = this.restClient.get()
+                    .uri("/api/v1/university/externals/research/timeFrames/active")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .header("clientId", this.clientId)
                     .header("X-Client-Id", this.clientId)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<List<TimeFrameDto>>() {});
-            return result != null ? result : Collections.emptyList();
+                    .body(TimeFrameDto.class);
+            return active != null ? List.of(active) : Collections.emptyList();
         } catch (Exception ex) {
-            log.warn("Error fetching timeframes: {}", ex.getMessage());
-            throw new RuntimeException("Gateway timeframes request failed", ex);
+            log.warn("Error fetching active timeframe: {}", ex.getMessage());
+            throw new RuntimeException("Gateway active timeframe request failed", ex);
         }
     }
 

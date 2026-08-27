@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface SeaGrupoRepository extends JpaRepository<SeaGrupo, String> {
     List<SeaGrupo> findByMateriaId(String materiaId);
+    List<SeaGrupo> findByDocenteCi(String docenteCi);
 }
+
