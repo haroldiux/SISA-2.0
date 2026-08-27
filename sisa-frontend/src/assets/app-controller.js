@@ -2750,7 +2750,7 @@ document.addEventListener('change', (e) => {
     const resolveCarreraInfo = (code, careerCode) => {
       const cUpper = (careerCode || '').toUpperCase();
       const codeUpper = (code || '').toUpperCase();
-      if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT')) {
+      if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT') || codeUpper.includes('INFORMÁTICA MÉDICA')) {
         return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
       }
       if (cUpper.includes('ADM') || cUpper.includes('CCP') || cUpper.includes('COM') || cUpper.includes('FAC') || codeUpper.includes('ADMIN') || codeUpper.includes('FINANC') || codeUpper.includes('CONTAB')) {
@@ -2777,29 +2777,79 @@ document.addEventListener('change', (e) => {
       return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
     };
 
-    // Synthesize course-group items for this teacher
+    // Synthesize & UNIFY linked groups (by groupLinkId or identical courseName + schedule + classType)
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
 
-    let items = rawList.map((g, idx) => {
-      const courseName = g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada';
-      const cleanCode = (g.code && g.code.includes('-') && !g.code.startsWith('P') && !g.code.startsWith('T')) 
-          ? g.code 
-          : (courseName ? courseName.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (idx + 1) : 'MAT-10' + (idx + 1));
-      return {
-        group: g,
-        course: {
-          id: g.syllabusCourseId || g.id || 'mat-' + idx,
-          code: cleanCode.toUpperCase(),
-          name: courseName.toUpperCase(),
-          semester: 1,
-          careerCode: g.careerCode || docente.carreraPrincipal
+    const unifiedMap = new Map();
+    rawList.forEach((g, idx) => {
+      let sessionKey = g.groupLinkId;
+      if (!sessionKey) {
+        const schedStr = (g.schedules && g.schedules.length > 0) 
+            ? g.schedules.map(s => `${s.day}-${s.startTime}-${s.endTime}`).join(';') 
+            : (g.schedule || 'sched-' + idx);
+        sessionKey = `${(g.courseName || g.name || 'mat').toUpperCase()}_${g.classType || 'T'}_${schedStr}_${g.code || 'G1'}`;
+      }
+
+      if (!unifiedMap.has(sessionKey)) {
+        unifiedMap.set(sessionKey, {
+          primaryGroup: g,
+          allGroups: [g],
+          carrerasSet: new Set([g.careerCode || docente.carreraPrincipal || 'CBA']),
+          courseName: g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada',
+          groupCode: g.name || g.code || 'G1',
+          classType: g.classType || 'TEORICA',
+          schedules: g.schedules || [],
+          classroom: g.classroom || g.schedules?.[0]?.classroom || 'Aula 201',
+          campus: g.campus || g.schedules?.[0]?.campus || 'Campus Central',
+          groupLinkId: g.groupLinkId || null
+        });
+      } else {
+        const existing = unifiedMap.get(sessionKey);
+        existing.allGroups.push(g);
+        if (g.careerCode) existing.carrerasSet.add(g.careerCode);
+        if (!existing.classroom || existing.classroom === 'Aula 201') {
+          if (g.classroom) existing.classroom = g.classroom;
+          if (g.schedules?.[0]?.classroom) existing.classroom = g.schedules[0].classroom;
         }
+      }
+    });
+
+    let items = Array.from(unifiedMap.values()).map((u, idx) => {
+      const carrerasArr = Array.from(u.carrerasSet);
+      const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
+      const mainCarrera = carrerasResolved[0];
+      const allCarrerasNames = carrerasResolved.map(cr => cr.name).join(' + ');
+      const allCarrerasTags = carrerasResolved.map(cr => cr.tag).join(' • ');
+
+      const cleanCode = (u.courseName ? u.courseName.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (idx + 1) : 'MAT-10' + (idx + 1)).toUpperCase();
+
+      return {
+        key: 'mat_uni_' + idx,
+        group: u.primaryGroup,
+        allGroups: u.allGroups,
+        isLinked: u.allGroups.length > 1 || !!u.groupLinkId,
+        carrerasResolved: carrerasResolved,
+        mainCarrera: mainCarrera,
+        allCarrerasNames: allCarrerasNames,
+        allCarrerasTags: allCarrerasTags,
+        course: {
+          id: u.primaryGroup.syllabusCourseId || u.primaryGroup.id || 'mat-' + idx,
+          code: cleanCode,
+          name: u.courseName.toUpperCase(),
+          semester: 1,
+          careerCode: u.primaryGroup.careerCode
+        },
+        groupCode: u.groupCode,
+        classType: u.classType,
+        classroom: u.classroom,
+        campus: u.campus,
+        schedules: u.schedules
       };
     });
 
-    // Calculate totals
-    const uniqueCarreras = [...new Set(items.map(it => resolveCarreraInfo(it.course.code, it.course.careerCode).name))];
+    // Calculate totals (Real physical hours & unique careers)
+    const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
     const totalHours = items.length * 4;
 
     // Update Profile Footer & Top Summary Badges
@@ -2821,7 +2871,7 @@ document.addEventListener('change', (e) => {
     if (profileInfoEl) profileInfoEl.textContent = `${totalHours}h • ${uniqueCarreras.length} Carrera(s)`;
 
     const summaryBadgeEl = document.getElementById('docente-summary-badge');
-    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalHours} Hrs / Semana • ${uniqueCarreras.length} Carrera(s)`;
+    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalHours} Hrs / Semana • ${uniqueCarreras.length} Carrera(s) (${items.length} Cátedras Reales)`;
 
     const sidebarHoursEl = document.getElementById('sidebar-summary-hours');
     if (sidebarHoursEl) sidebarHoursEl.textContent = `${uniqueCarreras.length} Carreras • ${totalHours}h`;
@@ -2831,40 +2881,44 @@ document.addEventListener('change', (e) => {
     let sidebarHtml = `
       <div class="flex items-center justify-between px-2">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Cátedras Asignadas</span>
-        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Cátedras API</span>
+        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Cátedras</span>
       </div>
     `;
 
     items.forEach((item, idx) => {
       const c = item.course;
-      const grp = item.group;
-      const car = resolveCarreraInfo(c.code, c.careerCode);
-      const isTheory = (grp.classType || 'TEORICA').toUpperCase().includes('TEOR') || (grp.classType || '').toUpperCase().startsWith('T');
-      const isPractice = (grp.classType || '').toUpperCase().includes('PRACT') || (grp.classType || '').toUpperCase().startsWith('P');
+      const isTheory = (item.classType || 'TEORICA').toUpperCase().includes('TEOR') || (item.classType || '').toUpperCase().startsWith('T');
+      const isPractice = (item.classType || '').toUpperCase().includes('PRACT') || (item.classType || '').toUpperCase().startsWith('P');
       const tipoLabel = isPractice ? 'Práctica (4h)' : (isTheory ? 'Teoría (4h)' : 'Integral (4h)');
       const tipoBadgeClass = isPractice ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300';
-      const mKey = (c.code ? c.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat' + idx) + (grp.name ? grp.name.toLowerCase().replace(/[^a-z0-9]/g, '') : (grp.code ? grp.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1'));
+      const mKey = item.key;
 
-      const classroomText = grp.classroom || 'Aula / Lab 201';
-      const campusText = grp.campus || 'Campus Central / Juan Pablo II';
-      const groupCodeText = grp.name || grp.code || 'G1';
+      const classroomText = item.classroom || 'Aula / Lab';
+      const campusText = item.campus || 'Campus Central / Juan Pablo II';
+      const groupCodeText = item.groupCode || 'G1';
+
+      // Schedule string formatting
+      let scheduleText = '';
+      if (item.schedules && item.schedules.length > 0) {
+        scheduleText = item.schedules.map(s => `${s.day} ${s.startTime}-${s.endTime}`).join(' • ');
+      }
 
       // Register or update in canonical materiasData
       materiasData[mKey] = {
         asignacionId: idx + 1,
         codigo: c.code || 'MAT-100',
         nombre: c.name || 'MATERIA ASIGNADA',
-        semestre: (c.semester || 1) + 'º',
+        semestre: '1º',
         creditos: '12',
         horasTeoricas: isTheory ? '4' : '2',
         horasPracticas: isPractice ? '4' : '2',
-        carrera: car.name,
-        carreraTag: `CARRERA: ${car.tag}`,
-        grupoTag: `Grupo ${groupCodeText} • Cátedra de ${isPractice ? 'Práctica' : 'Teoría'}`,
+        carrera: item.allCarrerasNames,
+        carreraTag: item.isLinked ? `CARRERAS: ${item.allCarrerasTags} (GRUPO COMÚN)` : `CARRERA: ${item.mainCarrera.tag}`,
+        grupoTag: `Grupo ${groupCodeText} • ${isPractice ? 'Práctica / Lab' : 'Teoría'} • ${scheduleText || 'Horario regular'}`,
         breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${groupCodeText})`,
         title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
-        meta: `<span><strong class="text-white">${c.semester || 1}º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (${isPractice ? 'Práctica' : 'Teoría'})</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: ${campusText} (${classroomText})</span>`,
-        caracterizacion: `Asignatura oficial ${c.name} del plan curricular de ${car.name} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
+        meta: `<span><strong class="text-white">${isPractice ? 'Práctica' : 'Teoría'}</strong></span><span>•</span><span><strong class="text-white">4</strong> Horas / Semana</span><span>•</span><span>Campus: ${campusText} (${classroomText})</span><span>•</span><span>${scheduleText ? `<strong>${scheduleText}</strong>` : ''}</span>`,
+        caracterizacion: `Asignatura oficial ${c.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
         macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${c.name}.`,
         sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
         unidades: [
@@ -2887,7 +2941,7 @@ document.addEventListener('change', (e) => {
           }
         ],
         bibliografia: [
-          { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial de ' + car.name + '. Fondo Editorial UNITEPC.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' },
+          { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial de ' + item.allCarrerasNames + '. Fondo Editorial UNITEPC.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' },
           { tipo: 'COMPLEMENTARIA', citaApa: 'Ministerio de Educación. (2025). Normas Académicas de Educación Superior.', autor: 'Min. Educación', anio: 2025, titulo: 'Normas Académicas' }
         ],
         elementosCompetencia: [
@@ -2897,14 +2951,20 @@ document.addEventListener('change', (e) => {
       };
 
       // HTML for Top Horizontal Card
+      const linkedBadgeHtml = item.isLinked ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 flex items-center gap-1">🔗 Grupo Común</span>` : '';
+
       cardsHtml += `
         <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
-          <div class="flex items-start justify-between">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">${car.tag}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tipoBadgeClass}">${tipoLabel}</span>
+          <div class="flex items-start justify-between gap-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[140px]">${item.allCarrerasTags}</span>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              ${linkedBadgeHtml}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tipoBadgeClass}">${tipoLabel}</span>
+            </div>
           </div>
           <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">${c.code} ${c.name}</h4>
-          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${groupCodeText} • ${c.semester || 1}º Sem • ${classroomText}</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${groupCodeText} • ${classroomText}</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 truncate">${scheduleText || campusText}</div>
           <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
             <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
             <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
@@ -2917,13 +2977,14 @@ document.addEventListener('change', (e) => {
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2">
           <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
             <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${c.code}</span>
-            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${c.semester || 1}º Sem.</span>
+            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${tipoLabel}</span>
           </div>
           <div class="p-1">
             <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
               <div class="truncate">
-                <div class="truncate font-bold">${c.code} ${c.name}</div>
-                <div class="text-[10px] opacity-90">${groupCodeText} • ${grp.classType || 'Teoría'} • ${classroomText}</div>
+                <div class="truncate font-bold">${c.name}</div>
+                <div class="text-[10px] opacity-90">${groupCodeText} • ${classroomText}</div>
+                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate">${item.allCarrerasNames}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
