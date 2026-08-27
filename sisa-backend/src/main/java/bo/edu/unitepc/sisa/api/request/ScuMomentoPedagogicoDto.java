@@ -24,19 +24,19 @@ public class ScuMomentoPedagogicoDto {
 
     private Long id;
 
-    @NotNull(message = "El tipo de momento pedagógico es obligatorio (INICIO, DESARROLLO, CIERRE)")
+    private String nombreMomento;
+
+    @NotNull(message = "El tipo de momento pedagógico es obligatorio")
     private TipoMomentoPedagogico tipoMomento;
 
     @NotNull(message = "La duración en minutos es obligatoria")
-    @Min(value = 1, message = "La duración mínima es 1 minuto")
+    @Min(value = 0, message = "La duración mínima es 0 minutos")
     private Integer duracionMin;
 
     @NotBlank(message = "Las actividades del docente son obligatorias")
     private String actividadesDocente;
 
-    @NotBlank(message = "Las actividades del estudiante son obligatorias")
     private String actividadesEstudiante;
 
-    @NotBlank(message = "El indicador de evaluación es obligatorio")
     private String indicadorEvaluacion;
 }

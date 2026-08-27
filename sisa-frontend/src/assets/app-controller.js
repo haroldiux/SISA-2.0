@@ -585,89 +585,221 @@
       if (window.lucide) window.lucide.createIcons();
     };
 
-    window.selectPlanSheet = function(sheetKey) {
-      document.querySelectorAll('.plan-sheet-tab').forEach(b => {
-        b.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all';
-      });
+    // ── DYNAMIC PLANES DE CLASE ENGINE (TAB 4) ───────────────────────────
+    let activePlanesList = [];
+    let activePlanSheetIndex = 0;
 
-      const btn = document.getElementById('btn-plan-' + sheetKey);
-      if (btn) {
-        btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all';
+    function setVal(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.value = (val !== null && val !== undefined) ? val : '';
+    }
+
+    window.renderPlanesSheetsTabs = function() {
+      const container = document.getElementById('plan-sheets-tabs-container');
+      if (!container) return;
+
+      container.innerHTML = '';
+      if (!activePlanesList || activePlanesList.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 py-1">Sin hojas de clase cargadas. Importa el archivo Plan de Clases (.xlsx) para ver todos los temas.</div>';
+        return;
       }
 
-      const planSheets = {
-        'tema1': {
-          unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
-          tema: 'TEMA 1: CONCEPTOS DE LINGÜÍSTICA GENERAL',
-          elemento: 'Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua, para comprender la identidad sociocultural y la dinámica de interacción de las comunidades andinas...',
-          resultados: 'Reconoce los fundamentos lingüísticos, culturales y cosmovisión del quechua para valorar su rol como activo estratégico en la identidad regional y económica.',
-          logros: '1. Identifica los pilares de la cosmovisión y cultura quechua.\n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.',
-          indicadores: '1. Clasifica correctamente los elementos básicos de la cosmovisión andina.\n2. Transcribe términos cotidianos respetando el alfabeto unificado.',
-          conceptual: '- Lengua quechua\n- Cultura quechua\n- Cosmovisión quechua\n- Signografia del quechua',
-          procedimental: '- Identificación de los pilares de la cultura quechua.\n- Análisis de la influencia de la lengua.\n- Reconocimiento gráfico del alfabeto.',
-          actitudinal: '- Respeto por los saberes ancestrales.\n- Apertura a formas alternativas de organización social.\n- Rigor en el uso de la grafía oficial.',
-          ensenanza: '- Aprendizaje Basado en Indagación: Preguntas guiadas sobre la presencia del quechua en la economía local.\n- Demostración Gráfica con cartillas didácticas.',
-          aprendizaje: '- Observación Dirigida: Registro de palabras en el entorno comercial.\n- Taller de Escritura: Práctica guiada de grafemas simples.',
-          recursos: '- Diccionarios técnicos bilingües\n- Grabaciones de audio\n- Pizarra\n- Diapositivas',
-          intro: 'Activación cognitiva: Dinámica "¿Qué significa para la sociedad el idioma originario?". Presentación del silabo, objetivos de la clase y la importancia del quechua en la administración pública.',
-          cuerpo: '1. Lengua Quechua: Definición como sistema aglutinante.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza.\n4. Signografía: Introducción al alfabeto unificado.',
-          cierre: '- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.'
-        },
-        'tema2': {
-          unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
-          tema: 'TEMA 2: FONOLOGÍA DEL QUECHUA',
-          elemento: 'Analiza los fundamentos fonológicos para aplicar la correcta pronunciación y transcripción de fonemas glotalizados y aspirados.',
-          resultados: 'Emplea los fundamentos fonológicos y las estructuras morfológicas básicas del quechua para garantizar una comunicación técnica clara.',
-          logros: '1. Diferencia sonidos oclusivos simples, aspirados y glotalizados.\n2. Produce fonemas con precisión articulatoria.',
-          indicadores: '1. Discrimina pares mínimos en ejercicios auditivos.\n2. Lee textos técnicos con fluidez fonética.',
-          conceptual: '- Fonología quechua: simple, aspirada y glotizada.\n- Pares mínimos y contraste fonológico.',
-          procedimental: '- Ejercicios de discriminación auditiva.\n- Práctica articulatoria de consonantes oclusivas.',
-          actitudinal: '- Paciencia y constancia en la práctica articulatoria.\n- Valoración de la riqueza sonora de la lengua.',
-          ensenanza: '- Modelado fonético por parte del docente.\n- Uso de grabaciones de hablantes nativos.',
-          aprendizaje: '- Grabación individual y autoevaluación auditiva.\n- Repetición coral y en parejas.',
-          recursos: '- Audios de práctica fonética\n- Espejos de articulación\n- Diapositivas',
-          intro: 'Activación: Comparación sonora entre el castellano y las consonantes glotizadas del quechua.',
-          cuerpo: '1. Sistema vocálico trivocálico (a, i, u).\n2. Consonantes simples, aspiradas (-h) y glotalizadas (-k\', -p\', -t\', -q\', -ch\').\n3. Práctica de pronunciación guiada.',
-          cierre: 'Evaluación rápida de discriminación auditiva y feedback correctivo.'
-        },
-        'tema6': {
-          unidad: 'Unidad 2: LENGUA ORIGINARIA',
-          tema: 'TEMA 6: ANÁLISIS DE LOS ASPECTOS JURÍDICOS Y EDUCATIVOS',
-          elemento: 'Produce mensajes y estructuras oracionales complejas en lengua originaria para establecer una comunicación efectiva bajo el marco normativo vigente.',
-          resultados: 'Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural.',
-          logros: '1. Reconoce la importancia del estatus legal de la lengua quechua.\n2. Adapta registros lingüísticos según contextos socioeconómicos.',
-          indicadores: '1. Analiza el impacto de la Ley de Derechos y Políticas Lingüísticas.\n2. Identifica variaciones dialectales en simulaciones.',
-          conceptual: '- Lengua en contexto (Registros y situaciones)\n- Lengua y cultura (Marco legal y Ley N° 269)',
-          procedimental: '- Adaptación del habla según el lugar (mercado, oficina, hogar).\n- Integración en proyecto final.',
-          actitudinal: '- Flexibilidad comunicativa.\n- Respeto por las variantes situacionales.\n- Compromiso profesional.',
-          ensenanza: '- Análisis normativo de la Constitución y Ley de Lenguas.\n- Tutoría para el proyecto final.',
-          aprendizaje: '- Mapeo de contextos reales.\n- Redacción de propuesta técnica bilingüe.',
-          recursos: '- Constitución Política del Estado\n- Ley N° 269\n- Glosarios especializados',
-          intro: 'Activación: Caso real sobre "La barrera lingüística en el acceso a servicios financieros y de salud".',
-          cuerpo: '1. Lengua en Contexto: Adecuación pragmática del registro formal vs informal.\n2. Marco Jurídico: Ley N° 269 y derechos lingüísticos en entidades públicas y privadas.',
-          cierre: 'Propuesta de Plan de Atención al Cliente Bilingüe y entrega de resumen ejecutivo.'
+      activePlanesList.forEach((plan, idx) => {
+        const btn = document.createElement('button');
+        btn.id = 'btn-plan-sheet-' + idx;
+        const isActive = (idx === activePlanSheetIndex);
+        btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all ' +
+          (isActive ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700');
+        
+        let label = plan.nombreHoja || ('Tema ' + (idx + 1));
+        if (plan.contenidoTema && !label.toLowerCase().includes(plan.contenidoTema.toLowerCase())) {
+          label = label + ': ' + plan.contenidoTema;
         }
-      };
-
-      const p = planSheets[sheetKey] || planSheets['tema1'];
-      document.getElementById('plan-unidad-input').value = p.unidad;
-      document.getElementById('plan-tema-input').value = p.tema;
-      document.getElementById('plan-elemento-input').value = p.elemento;
-      document.getElementById('plan-resultados-input').value = p.resultados;
-      document.getElementById('plan-logros-input').value = p.logros;
-      document.getElementById('plan-indicadores-input').value = p.indicadores;
-      document.getElementById('plan-conceptual-input').value = p.conceptual;
-      document.getElementById('plan-procedimental-input').value = p.procedimental;
-      document.getElementById('plan-actitudinal-input').value = p.actitudinal;
-      document.getElementById('plan-est-ensenanza').value = p.ensenanza;
-      document.getElementById('plan-est-aprendizaje').value = p.aprendizaje;
-      document.getElementById('plan-est-recursos').value = p.recursos;
-      document.getElementById('plan-sec-intro').value = p.intro;
-      document.getElementById('plan-sec-cuerpo').value = p.cuerpo;
-      document.getElementById('plan-sec-cierre').value = p.cierre;
-
-      window.showToast('Cargada pestaña: ' + p.tema);
+        btn.innerText = label;
+        btn.onclick = () => window.selectPlanSheet(idx);
+        container.appendChild(btn);
+      });
     };
+
+    window.renderPlanSheetForm = function(sheetIndex) {
+      if (!activePlanesList || activePlanesList.length === 0) return;
+      const p = activePlanesList[sheetIndex] || activePlanesList[0];
+      if (!p) return;
+
+      // 1. Encabezado
+      setVal('plan-docente-input', p.nombreDocente || '');
+      setVal('plan-fecha-input', p.fecha || '');
+      setVal('plan-asig-input', p.nombreAsignatura || '');
+      setVal('plan-carrera-input', p.carrera || '');
+
+      // 2. Unidad & Tema
+      setVal('plan-unidad-input', p.unidadTitulo || '');
+      setVal('plan-tema-input', p.contenidoTema || '');
+      setVal('plan-elemento-input', p.elementoCompetencia || '');
+
+      // 3. Resultados, Logros & Indicadores
+      setVal('plan-resultados-input', p.objetivoSesion || '');
+      setVal('plan-logros-input', p.logrosEsperados || '');
+      setVal('plan-indicadores-input', p.indicadoresLogro || '');
+
+      // 4. Los 3 Saberes
+      setVal('plan-conceptual-input', p.saberConceptual || '');
+      setVal('plan-procedimental-input', p.saberProcedimental || '');
+      setVal('plan-actitudinal-input', p.saberActitudinal || '');
+
+      // 5. Estrategias Didácticas
+      setVal('plan-est-ensenanza', p.estrategiaEnsenanza || '');
+      setVal('plan-est-aprendizaje', p.estrategiaAprendizaje || '');
+      setVal('plan-est-recursos', p.recursosEnsenanza || '');
+
+      // 6. Evaluación Formativa y Sumativa
+      setVal('plan-eval-form-act', p.evaluacionFormativaActividad || '');
+      setVal('plan-eval-form-inst', p.evaluacionFormativaInstrumento || '');
+      setVal('plan-eval-form-evid', p.evaluacionFormativaEvidencia || '');
+      setVal('plan-eval-sum-act', p.evaluacionSumativaActividad || '');
+      setVal('plan-eval-sum-inst', p.evaluacionSumativaInstrumento || '');
+      setVal('plan-eval-sum-evid', p.evaluacionSumativaEvidencia || '');
+
+      // 7. Secuencia Didáctica (5 Momentos Configurable)
+      if (p.momentos && p.momentos.length > 0) {
+        const mIntro = p.momentos.find(m => m.tipoMomento === 'INICIO' || m.tipoMomento === 'INTRODUCCION');
+        const mRes = p.momentos.find(m => m.tipoMomento === 'RESULTADOS_LOGROS' || m.tipoMomento === 'RESULTADOS');
+        const mCont = p.momentos.find(m => m.tipoMomento === 'CONTENIDOS' || m.tipoMomento === 'CONTENIDOS_CLASE');
+        const mDes = p.momentos.find(m => m.tipoMomento === 'DESARROLLO' || m.tipoMomento === 'CUERPO');
+        const mCie = p.momentos.find(m => m.tipoMomento === 'CIERRE' || m.tipoMomento === 'CONCLUSION');
+
+        setVal('plan-sec-intro', mIntro ? (mIntro.actividadesDocente || '') : '');
+        setVal('plan-sec-intro-dur', mIntro && mIntro.duracionMin !== undefined ? mIntro.duracionMin : 25);
+
+        setVal('plan-sec-resultados', mRes ? (mRes.actividadesDocente || '') : (p.objetivoSesion ? p.objetivoSesion + (p.logrosEsperados ? '\nLogros:\n' + p.logrosEsperados : '') : ''));
+        setVal('plan-sec-resultados-dur', mRes && mRes.duracionMin !== undefined ? mRes.duracionMin : 0);
+
+        setVal('plan-sec-contenidos', mCont ? (mCont.actividadesDocente || '') : (p.saberConceptual || ''));
+        setVal('plan-sec-contenidos-dur', mCont && mCont.duracionMin !== undefined ? mCont.duracionMin : 0);
+
+        setVal('plan-sec-cuerpo', mDes ? (mDes.actividadesDocente || '') : '');
+        setVal('plan-sec-cuerpo-dur', mDes && mDes.duracionMin !== undefined ? mDes.duracionMin : 100);
+
+        setVal('plan-sec-cierre', mCie ? (mCie.actividadesDocente || '') : '');
+        setVal('plan-sec-cierre-dur', mCie && mCie.duracionMin !== undefined ? mCie.duracionMin : 55);
+      } else {
+        setVal('plan-sec-intro', '');
+        setVal('plan-sec-intro-dur', 25);
+        setVal('plan-sec-resultados', '');
+        setVal('plan-sec-resultados-dur', 0);
+        setVal('plan-sec-contenidos', '');
+        setVal('plan-sec-contenidos-dur', 0);
+        setVal('plan-sec-cuerpo', '');
+        setVal('plan-sec-cuerpo-dur', 100);
+        setVal('plan-sec-cierre', '');
+        setVal('plan-sec-cierre-dur', 55);
+      }
+
+      if (typeof window.updateSecuenciaTotals === 'function') {
+        window.updateSecuenciaTotals();
+      }
+
+      // Auto-resize all textareas to show 100% text without scrollbars
+      setTimeout(() => {
+        if (typeof window.autoResizeAllTextareas === 'function') {
+          window.autoResizeAllTextareas();
+        }
+      }, 30);
+    };
+
+    window.selectPlanSheet = function(index) {
+      activePlanSheetIndex = index;
+      window.renderPlanesSheetsTabs();
+      window.renderPlanSheetForm(index);
+    };
+
+    window.updateSecuenciaTotals = function() {
+      const getNum = id => {
+        const el = document.getElementById(id);
+        return el ? (parseInt(el.value, 10) || 0) : 0;
+      };
+      const intro = getNum('plan-sec-intro-dur');
+      const res = getNum('plan-sec-resultados-dur');
+      const cont = getNum('plan-sec-contenidos-dur');
+      const cuerpo = getNum('plan-sec-cuerpo-dur');
+      const cierre = getNum('plan-sec-cierre-dur');
+      const total = intro + res + cont + cuerpo + cierre;
+
+      const badge = document.getElementById('plan-sec-total-badge');
+      if (badge) {
+        badge.innerText = total + ' min';
+      }
+    };
+
+    window.syncCurrentPlanFormToState = function() {
+      if (!activePlanesList || activePlanesList.length === 0 || !activePlanesList[activePlanSheetIndex]) return;
+      const p = activePlanesList[activePlanSheetIndex];
+      const gv = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      const gn = id => { const el = document.getElementById(id); return el ? (parseInt(el.value, 10) || 0) : 0; };
+
+      p.nombreDocente = gv('plan-docente-input');
+      p.fecha = gv('plan-fecha-input');
+      p.nombreAsignatura = gv('plan-asig-input');
+      p.carrera = gv('plan-carrera-input');
+      p.unidadTitulo = gv('plan-unidad-input');
+      p.contenidoTema = gv('plan-tema-input');
+      p.elementoCompetencia = gv('plan-elemento-input');
+      p.objetivoSesion = gv('plan-resultados-input');
+      p.logrosEsperados = gv('plan-logros-input');
+      p.indicadoresLogro = gv('plan-indicadores-input');
+      p.saberConceptual = gv('plan-conceptual-input');
+      p.saberProcedimental = gv('plan-procedimental-input');
+      p.saberActitudinal = gv('plan-actitudinal-input');
+      p.estrategiaEnsenanza = gv('plan-est-ensenanza');
+      p.estrategiaAprendizaje = gv('plan-est-aprendizaje');
+      p.recursosEnsenanza = gv('plan-est-recursos');
+      p.evaluacionFormativaActividad = gv('plan-eval-form-act');
+      p.evaluacionFormativaInstrumento = gv('plan-eval-form-inst');
+      p.evaluacionFormativaEvidencia = gv('plan-eval-form-evid');
+      p.evaluacionSumativaActividad = gv('plan-eval-sum-act');
+      p.evaluacionSumativaInstrumento = gv('plan-eval-sum-inst');
+      p.evaluacionSumativaEvidencia = gv('plan-eval-sum-evid');
+
+      if (!p.momentos) p.momentos = [];
+
+      let mIntro = p.momentos.find(m => m.tipoMomento === 'INICIO' || m.tipoMomento === 'INTRODUCCION');
+      if (!mIntro) { mIntro = { tipoMomento: 'INTRODUCCION' }; p.momentos.push(mIntro); }
+      mIntro.actividadesDocente = gv('plan-sec-intro');
+      mIntro.duracionMin = gn('plan-sec-intro-dur');
+
+      let mRes = p.momentos.find(m => m.tipoMomento === 'RESULTADOS_LOGROS' || m.tipoMomento === 'RESULTADOS');
+      if (!mRes) { mRes = { tipoMomento: 'RESULTADOS_LOGROS' }; p.momentos.push(mRes); }
+      mRes.actividadesDocente = gv('plan-sec-resultados');
+      mRes.duracionMin = gn('plan-sec-resultados-dur');
+
+      let mCont = p.momentos.find(m => m.tipoMomento === 'CONTENIDOS' || m.tipoMomento === 'CONTENIDOS_CLASE');
+      if (!mCont) { mCont = { tipoMomento: 'CONTENIDOS' }; p.momentos.push(mCont); }
+      mCont.actividadesDocente = gv('plan-sec-contenidos');
+      mCont.duracionMin = gn('plan-sec-contenidos-dur');
+
+      let mDes = p.momentos.find(m => m.tipoMomento === 'DESARROLLO' || m.tipoMomento === 'CUERPO');
+      if (!mDes) { mDes = { tipoMomento: 'CUERPO' }; p.momentos.push(mDes); }
+      mDes.actividadesDocente = gv('plan-sec-cuerpo');
+      mDes.duracionMin = gn('plan-sec-cuerpo-dur');
+
+      let mCie = p.momentos.find(m => m.tipoMomento === 'CIERRE' || m.tipoMomento === 'CONCLUSION');
+      if (!mCie) { mCie = { tipoMomento: 'CONCLUSION' }; p.momentos.push(mCie); }
+      mCie.actividadesDocente = gv('plan-sec-cierre');
+      mCie.duracionMin = gn('plan-sec-cierre-dur');
+
+      if (typeof window.updateSecuenciaTotals === 'function') {
+        window.updateSecuenciaTotals();
+      }
+
+      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
+    };
+
+    document.addEventListener('input', function(e) {
+      if (e.target && e.target.id && e.target.id.startsWith('plan-')) {
+        window.syncCurrentPlanFormToState();
+      }
+    });
+
 
     window.openModal = function(title, content) {
       document.getElementById('modal-title').innerText = title;
@@ -1356,7 +1488,116 @@ window.loadSavedDocenteData = function(materiaKey) {
     }
   }
 
+  // Load Planes de Clase (Tab 4)
+  const savedPlanesStr = localStorage.getItem('sisa_saved_planes_' + mKey);
+  if (savedPlanesStr) {
+    try {
+      activePlanesList = JSON.parse(savedPlanesStr);
+    } catch (e) {
+      activePlanesList = [];
+    }
+  } else {
+    activePlanesList = [];
+  }
+
+  if (!activePlanesList || activePlanesList.length === 0) {
+    activePlanesList = window.generateDefaultPlanesList(mKey);
+  }
+  activePlanSheetIndex = 0;
+  if (typeof window.renderPlanesSheetsTabs === 'function') {
+    window.renderPlanesSheetsTabs();
+  }
+  if (typeof window.renderPlanSheetForm === 'function') {
+    window.renderPlanSheetForm(0);
+  }
+
   return true;
+};
+
+window.generateDefaultPlanesList = function(mKey) {
+  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? materiasData['sis213g1'] : null);
+  const asig = def ? def.nombre : 'Taller de Idiomas';
+  const car = def ? def.carrera : 'FACEFA - Complementarias';
+  const units = (def && def.unidades) ? def.unidades : [];
+  const list = [];
+  let topicCount = 0;
+
+  if (units.length > 0) {
+    units.forEach((u, uIdx) => {
+      const uNum = u.numeroUnidad || (uIdx + 1);
+      const uTit = u.titulo || ('Unidad ' + uNum);
+      const temas = (u.temas && u.temas.length > 0) ? u.temas : [{ titulo: 'Tema General', contenido: '' }];
+      temas.forEach((t) => {
+        topicCount++;
+        const tTit = t.titulo || ('Tema ' + topicCount);
+        list.push({
+          nombreHoja: 'UA-' + uNum + ' Tema ' + topicCount,
+          nombreDocente: 'Ing. Harold Iriarte',
+          fecha: '2026-02-09',
+          nombreAsignatura: asig,
+          carrera: car,
+          unidadTitulo: uTit,
+          contenidoTema: tTit,
+          elementoCompetencia: 'Aplica herramientas teórico-prácticas y metodologías de la Unidad ' + uNum + ' para la resolución de problemas técnicos.',
+          objetivoSesion: 'Desarrollo de competencias y saberes específicos sobre ' + tTit + '.',
+          logrosEsperados: '1. Identifica los conceptos clave de ' + tTit + '.\n2. Aplica los procedimientos en actividades prácticas.',
+          indicadoresLogro: '1. Explica con precisión técnica los conceptos.\n2. Resuelve ejercicios prácticos guiados.',
+          saberConceptual: '- ' + tTit + '\n- Fundamentos teóricos',
+          saberProcedimental: '- Análisis y aplicación práctica de ' + tTit,
+          saberActitudinal: '- Responsabilidad, pensamiento crítico y ética profesional',
+          estrategiaEnsenanza: '- Método de Aprendizaje Basado en Problemas (ABP)\n- Exposición dialogada',
+          estrategiaAprendizaje: '- Práctica guiada en laboratorio o aula\n- Resolución de ejercicios',
+          recursosEnsenanza: '- Pizarra\n- Guías de trabajo\n- Diapositivas y referencias bibliográficas',
+          evaluacionFormativaActividad: 'Práctica guiada en clase',
+          evaluacionFormativaInstrumento: 'Lista de cotejo',
+          evaluacionFormativaEvidencia: 'Guía de ejercicios resuelta',
+          evaluacionSumativaActividad: 'Examen escrito parcial',
+          evaluacionSumativaInstrumento: 'Prueba objetiva',
+          evaluacionSumativaEvidencia: 'Examen resuelto',
+          momentos: [
+            { tipoMomento: 'INICIO', duracionMin: 25, actividadesDocente: 'Motivación, recuperación de saberes previos y presentación de objetivos de ' + tTit },
+            { tipoMomento: 'DESARROLLO', duracionMin: 100, actividadesDocente: '1. Exposición dialogada sobre ' + tTit + '.\n2. Resolución guiada de ejercicios prácticos.' },
+            { tipoMomento: 'CIERRE', duracionMin: 55, actividadesDocente: 'Retroalimentación sobre ' + tTit + ', síntesis y evaluación rápida.' }
+          ]
+        });
+      });
+    });
+  }
+
+  if (list.length === 0) {
+    list.push({
+      nombreHoja: 'UA-1 Tema 1',
+      nombreDocente: 'Ing. Harold Iriarte',
+      fecha: '2026-02-09',
+      nombreAsignatura: asig,
+      carrera: car,
+      unidadTitulo: 'Unidad 1: Fundamentos',
+      contenidoTema: 'CONCEPTOS GENERALES',
+      elementoCompetencia: 'Analiza los fundamentos y saberes esenciales de la asignatura.',
+      objetivoSesion: 'Reconoce los fundamentos teórico-prácticos iniciales.',
+      logrosEsperados: '1. Identifica los conceptos clave.',
+      indicadoresLogro: '1. Aplica los conceptos en ejercicios.',
+      saberConceptual: '- Conceptos iniciales',
+      saberProcedimental: '- Identificación y análisis',
+      saberActitudinal: '- Participación activa',
+      estrategiaEnsenanza: '- Aprendizaje basado en indagación',
+      estrategiaAprendizaje: '- Observación y registro',
+      recursosEnsenanza: '- Guías de trabajo',
+      evaluacionFormativaActividad: 'Debate grupal',
+      evaluacionFormativaInstrumento: 'Lista de cotejo',
+      evaluacionFormativaEvidencia: 'Mapa mental',
+      evaluacionSumativaActividad: 'Examen escrito',
+      evaluacionSumativaInstrumento: 'Prueba objetiva',
+      evaluacionSumativaEvidencia: 'Examen resuelto',
+      momentos: [
+        { tipoMomento: 'INICIO', duracionMin: 25, actividadesDocente: 'Activación cognitiva y objetivos' },
+        { tipoMomento: 'DESARROLLO', duracionMin: 100, actividadesDocente: 'Desarrollo de contenidos y resolución guiada' },
+        { tipoMomento: 'CIERRE', duracionMin: 55, actividadesDocente: 'Síntesis y retroalimentación' }
+      ]
+    });
+  }
+
+  return list;
 };
 
 window.generateDefaultMatriz7 = function(mKey) {
@@ -1421,6 +1662,7 @@ window.generateDefaultMatriz7 = function(mKey) {
   }
   return sessions;
 };
+
 
 
 
@@ -1874,50 +2116,23 @@ window.importPlanesExcel = function() {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const json = await resp.json();
       const data = json.data || json;
-      activePlanesData = data;
-      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(data));
+      activePlanesList = Array.isArray(data) ? data : [data];
+      activePlanSheetIndex = 0;
+      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
 
-      
-      if (data && data.length > 0) {
-        const p = data[0];
-        if (p.unidadTitulo) {
-          const el = document.getElementById('plan-unidad-input');
-          if (el) el.value = p.unidadTitulo;
-        }
-        if (p.contenidoTema) {
-          const el = document.getElementById('plan-tema-input');
-          if (el) el.value = p.contenidoTema;
-        }
-        if (p.nombreAsignatura) {
-          const el = document.getElementById('plan-asig-input');
-          if (el) el.value = p.nombreAsignatura;
-        }
-        if (p.objetivoSesion) {
-          const el = document.getElementById('plan-resultados-input');
-          if (el) el.value = p.objetivoSesion;
-        }
-        
-        if (p.momentos && p.momentos.length > 0) {
-          const mIntro = p.momentos.find(m => m.tipoMomento === 'INICIO' || m.tipoMomento === 'INTRODUCCION');
-          const mDes = p.momentos.find(m => m.tipoMomento === 'DESARROLLO');
-          const mCie = p.momentos.find(m => m.tipoMomento === 'CIERRE');
-          
-          if (mIntro) {
-            const el = document.getElementById('plan-sec-intro');
-            if (el) el.value = mIntro.actividadesDocente || '';
-          }
-          if (mDes) {
-            const el = document.getElementById('plan-sec-cuerpo');
-            if (el) el.value = mDes.actividadesDocente || '';
-          }
-          if (mCie) {
-            const el = document.getElementById('plan-sec-cierre');
-            if (el) el.value = mCie.actividadesDocente || '';
-          }
-        }
+      if (typeof window.renderPlanesSheetsTabs === 'function') {
+        window.renderPlanesSheetsTabs();
+      }
+      if (typeof window.renderPlanSheetForm === 'function') {
+        window.renderPlanSheetForm(0);
       }
 
-      window.showToast('✅ ¡Planes de Clase importados con éxito! (' + (data ? data.length : 0) + ' hojas procesadas)');
+      // Auto-save this freshly imported state to database & localStorage
+      if (typeof window.saveCurrentDocenteData === 'function') {
+        await window.saveCurrentDocenteData(true);
+      }
+
+      window.showToast('✅ ¡Planes de Clase importados con éxito! (' + activePlanesList.length + ' temas/hojas cargadas)');
       window.switchDocMainTab('tab-cronograma-planes');
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {
@@ -1925,6 +2140,7 @@ window.importPlanesExcel = function() {
     }
   });
 };
+
 
 
 // 5. Real Export Endpoints

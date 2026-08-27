@@ -1105,20 +1105,107 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
                     </div>
                   </div>
 
-                  <!-- 7. Secuencia Didáctica con Minutos -->
+                  <!-- 7. Secuencia Didáctica con Minutaje Configurable (5 Momentos Base Excel) -->
                   <div class="space-y-3 pt-2">
-                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="clock" class="w-4 h-4"></i><span>Secuencia Didáctica (Momentos & Minutaje)</span></div>
-                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN (25 min):</strong><span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-bold">25 Minutos</span></div>
-                      <textarea id="plan-sec-intro" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">Activación cognitiva: Dinámica "¿Qué significa para la sociedad el idioma originario?". Presentación del sílabo, objetivos de la clase y la importancia del quechua en la administración pública.</textarea>
+                    <div class="flex items-center justify-between">
+                      <div class="form-section-title text-purple-700 dark:text-purple-400 mb-0">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>Secuencia Didáctica (5 Momentos & Minutaje Configurable)</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400">Total Minutos:</span>
+                        <span id="plan-sec-total-badge" class="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold font-mono text-xs shadow-sm">180 min</span>
+                      </div>
                     </div>
-                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-purple-800 dark:text-purple-300">2. CUERPO DE CONTENIDOS (100 min):</strong><span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold">100 Minutos</span></div>
-                      <textarea id="plan-sec-cuerpo" rows="3" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">1. Lengua Quechua: Definición como sistema aglutinante. 2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad. 3. Cosmovisión: Sumaq Kawsay. 4. Signografía: Introducción al alfabeto unificado.</textarea>
+
+                    <!-- 1. INTRODUCCIÓN -->
+                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                          <strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-intro-dur" class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-intro-dur" type="number" min="0" max="480" value="25" class="w-16 px-2 py-0.5 rounded-l border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-blue-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-blue-100 dark:bg-blue-900/80 border border-l-0 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-intro" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">Activación cognitiva: Dinámica "¿Qué significa para la sociedad el idioma originario?". Presentación del sílabo, objetivos de la clase y la importancia del quechua en la administración pública y privada actual.</textarea>
                     </div>
-                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-emerald-800 dark:text-emerald-300">3. CONCLUSIÓN O CIERRE (55 min):</strong><span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold">55 Minutos</span></div>
-                      <textarea id="plan-sec-cierre" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">- Retroalimentación sobre la relevancia de la normalización lingüística. - Aplicación de la prueba de grafía y pequeño cuestionario cultural de cierre.</textarea>
+
+                    <!-- 2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS -->
+                    <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                          <strong class="text-indigo-800 dark:text-indigo-300">2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-resultados-dur" class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-resultados-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-indigo-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-indigo-100 dark:bg-indigo-900/80 border border-l-0 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-resultados" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">Reconoce los fundamentos lingüísticos, culturales y cosmogónicos del quechua para valorar su rol como activo estratégico en la identidad regional y económica. Logros: 1. Identifica los pilares de la cosmovisión y cultura quechua. 2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.</textarea>
+                    </div>
+
+                    <!-- 3. CONTENIDOS DE LA CLASE -->
+                    <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <strong class="text-amber-800 dark:text-amber-300">3. CONTENIDOS DE LA CLASE:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-contenidos-dur" class="text-[11px] text-amber-700 dark:text-amber-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-contenidos-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-amber-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-amber-100 dark:bg-amber-900/80 border border-l-0 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-contenidos" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">1. Lengua quechua&#10;2. Cultura quechua&#10;3. Cosmovisión quechua&#10;4. Signografía oficial.</textarea>
+                    </div>
+
+                    <!-- 4. CUERPO DE CONTENIDOS -->
+                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                          <strong class="text-purple-800 dark:text-purple-300">4. CUERPO DE CONTENIDOS:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-cuerpo-dur" class="text-[11px] text-purple-700 dark:text-purple-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-cuerpo-dur" type="number" min="0" max="1800" value="100" class="w-16 px-2 py-0.5 rounded-l border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-purple-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-purple-100 dark:bg-purple-900/80 border border-l-0 border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-cuerpo" rows="3" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">1. Lengua Quechua: Definición como sistema aglutinante. Importancia de su estudio para la comunicación comercial bilingüe.&#10;2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía. Cómo estas estructuras influyen en el comportamiento del consumidor.&#10;3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza (Sustentabilidad andina).&#10;4. Signografía: Introducción al alfabeto unificado. Ejercicio de reconocimiento de grafemas.</textarea>
+                    </div>
+
+                    <!-- 5. CONCLUSIÓN O CIERRE -->
+                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <strong class="text-emerald-800 dark:text-emerald-300">5. CONCLUSIÓN O CIERRE:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-cierre-dur" class="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-cierre-dur" type="number" min="0" max="480" value="55" class="w-16 px-2 py-0.5 rounded-l border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-emerald-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-emerald-100 dark:bg-emerald-900/80 border border-l-0 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-cierre" rows="2" class="w-full p-2 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-brand-500">- Retroalimentación sobre la relevancia de la normalización lingüística.&#10;- Aplicación de la prueba de grafía y pequeño cuestionario cultural de cierre.</textarea>
                     </div>
                   </div>
 
@@ -2258,6 +2345,24 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
         btn.className = 'plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all';
       }
 
+      window.updateSecuenciaTotals = function() {
+        const getNum = id => {
+          const el = document.getElementById(id);
+          return el ? (parseInt(el.value, 10) || 0) : 0;
+        };
+        const intro = getNum('plan-sec-intro-dur');
+        const res = getNum('plan-sec-resultados-dur');
+        const cont = getNum('plan-sec-contenidos-dur');
+        const cuerpo = getNum('plan-sec-cuerpo-dur');
+        const cierre = getNum('plan-sec-cierre-dur');
+        const total = intro + res + cont + cuerpo + cierre;
+        
+        const badge = document.getElementById('plan-sec-total-badge');
+        if (badge) {
+          badge.innerText = total + ' min';
+        }
+      };
+
       const planSheets = {
         'tema1': {
           unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
@@ -2273,8 +2378,15 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
           aprendizaje: '- Observación Dirigida: Registro de palabras en el entorno comercial.\n- Taller de Escritura: Práctica guiada de grafemas simples.',
           recursos: '- Diccionarios técnicos bilingües\n- Grabaciones de audio\n- Pizarra\n- Diapositivas',
           intro: 'Activación cognitiva: Dinámica "¿Qué significa para la sociedad el idioma originario?". Presentación del silabo, objetivos de la clase y la importancia del quechua en la administración pública.',
-          cuerpo: '1. Lengua Quechua: Definición como sistema aglutinante.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza.\n4. Signografía: Introducción al alfabeto unificado.',
-          cierre: '- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.'
+          introDur: 25,
+          resultadosSec: 'Reconoce los fundamentos lingüísticos, culturales y cosmogónicos del quechua para valorar su rol como activo estratégico en la identidad regional y económica.\nLogros:\n1. Identifica los pilares de la cosmovisión y cultura quechua.\n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.',
+          resultadosDur: 0,
+          contenidosSec: '1. Lengua quechua\n2. Cultura quechua\n3. Cosmovisión quechua\n4. Signografía oficial.',
+          contenidosDur: 0,
+          cuerpo: '1. Lengua Quechua: Definición como sistema aglutinante. Importancia de su estudio para la comunicación comercial bilingüe.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía. Cómo estas estructuras influyen en el comportamiento del consumidor.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza (Sustentabilidad andina).\n4. Signografía: Introducción al alfabeto unificado. Ejercicio de reconocimiento de grafemas.',
+          cuerpoDur: 100,
+          cierre: '- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.',
+          cierreDur: 55
         },
         'tema2': {
           unidad: 'Unidad 1: INTRODUCCION A LINGÜÍSTICA ORIGINARIA',
@@ -2290,8 +2402,15 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
           aprendizaje: '- Grabación individual y autoevaluación auditiva.\n- Repetición coral y en parejas.',
           recursos: '- Audios de práctica fonética\n- Espejos de articulación\n- Diapositivas',
           intro: 'Activación: Comparación sonora entre el castellano y las consonantes glotizadas del quechua.',
+          introDur: 30,
+          resultadosSec: 'Emplea los fundamentos fonológicos y las estructuras morfológicas básicas del quechua para garantizar una comunicación técnica clara.\nLogros: 1. Diferencia sonidos oclusivos simples, aspirados y glotalizados. 2. Produce fonemas con precisión articulatoria.',
+          resultadosDur: 0,
+          contenidosSec: '1. Fonología quechua\n2. Sistema vocálico\n3. Consonantes simples, aspiradas y glotalizadas',
+          contenidosDur: 0,
           cuerpo: '1. Sistema vocálico trivocálico (a, i, u).\n2. Consonantes simples, aspiradas (-h) y glotalizadas (-k\', -p\', -t\', -q\', -ch\').\n3. Práctica de pronunciación guiada.',
-          cierre: 'Evaluación rápida de discriminación auditiva y feedback correctivo.'
+          cuerpoDur: 240,
+          cierre: 'Evaluación rápida de discriminación auditiva y feedback correctivo.',
+          cierreDur: 90
         },
         'tema6': {
           unidad: 'Unidad 2: LENGUA ORIGINARIA',
@@ -2307,8 +2426,15 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
           aprendizaje: '- Mapeo de contextos reales.\n- Redacción de propuesta técnica bilingüe.',
           recursos: '- Constitución Política del Estado\n- Ley N° 269\n- Glosarios especializados',
           intro: 'Activación: Caso real sobre "La barrera lingüística en el acceso a servicios financieros y de salud".',
+          introDur: 30,
+          resultadosSec: 'Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural en el ejercicio de su profesión.\nLogros:\n1. Reconoce la base legal del uso de lenguas originarias.\n2. Adapta su registro lingüístico según el contexto (público vs. privado).\n3. Integra saberes ancestrales en propuestas de desarrollo profesional.',
+          resultadosDur: 0,
+          contenidosSec: 'Lengua en contexto (Registros, situaciones y espacios)\nLengua y cultura (identidad, derechos y marco legal).',
+          contenidosDur: 0,
           cuerpo: '1. Lengua en Contexto: Adecuación pragmática del registro formal vs informal.\n2. Marco Jurídico: Ley N° 269 y derechos lingüísticos en entidades públicas y privadas.',
-          cierre: 'Propuesta de Plan de Atención al Cliente Bilingüe y entrega de resumen ejecutivo.'
+          cuerpoDur: 180,
+          cierre: 'Propuesta de Plan de Atención al Cliente Bilingüe y entrega de resumen ejecutivo.',
+          cierreDur: 60
         }
       };
 
@@ -2325,9 +2451,28 @@ Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia.
       document.getElementById('plan-est-ensenanza').value = p.ensenanza;
       document.getElementById('plan-est-aprendizaje').value = p.aprendizaje;
       document.getElementById('plan-est-recursos').value = p.recursos;
+      
+      // 5 Momentos Secuencia Didáctica con Minutaje Configurable
       document.getElementById('plan-sec-intro').value = p.intro;
+      document.getElementById('plan-sec-intro-dur').value = p.introDur !== undefined ? p.introDur : 25;
+      
+      const elRes = document.getElementById('plan-sec-resultados');
+      if (elRes) elRes.value = p.resultadosSec || p.resultados || '';
+      const elResDur = document.getElementById('plan-sec-resultados-dur');
+      if (elResDur) elResDur.value = p.resultadosDur !== undefined ? p.resultadosDur : 0;
+      
+      const elCont = document.getElementById('plan-sec-contenidos');
+      if (elCont) elCont.value = p.contenidosSec || p.conceptual || '';
+      const elContDur = document.getElementById('plan-sec-contenidos-dur');
+      if (elContDur) elContDur.value = p.contenidosDur !== undefined ? p.contenidosDur : 0;
+      
       document.getElementById('plan-sec-cuerpo').value = p.cuerpo;
+      document.getElementById('plan-sec-cuerpo-dur').value = p.cuerpoDur !== undefined ? p.cuerpoDur : 100;
+      
       document.getElementById('plan-sec-cierre').value = p.cierre;
+      document.getElementById('plan-sec-cierre-dur').value = p.cierreDur !== undefined ? p.cierreDur : 55;
+      
+      window.updateSecuenciaTotals();
 
       window.showToast('Cargada pestaña: ' + p.tema);
     };

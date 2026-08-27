@@ -43,9 +43,40 @@ public class ScuPlanClaseRequest {
     /** Unidad title extracted from row 11, col C of the Excel sheet. */
     private String unidadTitulo;
 
+    /** Sheet tab name (e.g. 'UA-1 Tema 1') */
+    private String nombreHoja;
+
+    private String nombreDocente;
+    private String fecha;
+    private String carrera;
+    private String elementoCompetencia;
+    private String logrosEsperados;
+    private String indicadoresLogro;
+
+    /** Contenidos: Los 3 Saberes */
+    private String saberConceptual;
+    private String saberProcedimental;
+    private String saberActitudinal;
+
+    /** Estrategias Didácticas */
+    private String estrategiaEnsenanza;
+    private String estrategiaAprendizaje;
+    private String recursosEnsenanza;
+
+    /** Evaluación Formativa */
+    private String evaluacionFormativaActividad;
+    private String evaluacionFormativaInstrumento;
+    private String evaluacionFormativaEvidencia;
+
+    /** Evaluación Sumativa */
+    private String evaluacionSumativaActividad;
+    private String evaluacionSumativaInstrumento;
+    private String evaluacionSumativaEvidencia;
+
     private List<String> recursosDidacticos = new ArrayList<>();
 
     @NotEmpty(message = "Debe incluir los 3 momentos pedagógicos (Inicio, Desarrollo, Cierre)")
     @Valid
     private List<ScuMomentoPedagogicoDto> momentos = new ArrayList<>();
 }
+

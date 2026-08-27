@@ -125,19 +125,32 @@
     border-color: #e2e8f0;
     height: 100%;
 
-    &.moment-inicio {
+    &.moment-inicio,
+    &.moment-introduccion {
       border-top: 3px solid #3b82f6;
-      .inicio-badge { background: #dbeafe; color: #1d4ed8; }
+      .moment-badge { background: #dbeafe; color: #1d4ed8; }
     }
 
-    &.moment-desarrollo {
-      border-top: 3px solid #10b981;
-      .desarrollo-badge { background: #d1fae5; color: #047857; }
+    &.moment-resultados {
+      border-top: 3px solid #6366f1;
+      .moment-badge { background: #e0e7ff; color: #4338ca; }
     }
 
-    &.moment-cierre {
+    &.moment-contenidos {
+      border-top: 3px solid #f59e0b;
+      .moment-badge { background: #fef3c7; color: #b45309; }
+    }
+
+    &.moment-desarrollo,
+    &.moment-cuerpo {
       border-top: 3px solid #8b5cf6;
-      .cierre-badge { background: #ede9fe; color: #6d28d9; }
+      .moment-badge { background: #ede9fe; color: #6d28d9; }
+    }
+
+    &.moment-cierre,
+    &.moment-conclusion {
+      border-top: 3px solid #10b981;
+      .moment-badge { background: #d1fae5; color: #047857; }
     }
 
     .moment-min-input {

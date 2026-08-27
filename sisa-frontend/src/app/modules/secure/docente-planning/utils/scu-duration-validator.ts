@@ -1,9 +1,9 @@
-import { ScuDurationValidationResultModel } from '@shared/models/scu-plan-clase.model';
+import { ScuDurationValidationResultModel, ScuMomentoPedagogicoModel } from '@shared/models/scu-plan-clase.model';
 
 /**
- * Pure mathematical validator for Plan de Clase 3-moments 180-minute duration balance.
+ * Mathematical validator for Plan de Clase pedagogical moments configurable duration balance.
  *
- * Enforces the strict invariant: Inicio + Desarrollo + Cierre === 180 min (tolerance +-0 min).
+ * Validates that sum of moment durations equals target session minutes configured by the docente.
  *
  * @author GentleAI SISA Architecture Team
  */
@@ -20,8 +20,19 @@ export class ScuDurationValidator {
     const ini = Math.max(0, Number(inicioMin) || 0);
     const des = Math.max(0, Number(desarrolloMin) || 0);
     const cie = Math.max(0, Number(cierreMin) || 0);
+    return this.validateSum(ini + des + cie, validTarget);
+  }
 
-    const sum = ini + des + cie;
+  public static validateMoments(
+    momentos: ScuMomentoPedagogicoModel[] | undefined,
+    target: number = ScuDurationValidator.TARGET_DURATION_MIN
+  ): ScuDurationValidationResultModel {
+    const validTarget = Math.max(1, Number(target) || ScuDurationValidator.TARGET_DURATION_MIN);
+    const sum = (momentos || []).reduce((acc, m) => acc + (Math.max(0, Number(m.duracionMin) || 0)), 0);
+    return this.validateSum(sum, validTarget);
+  }
+
+  public static validateSum(sum: number, validTarget: number): ScuDurationValidationResultModel {
     const diff = sum - validTarget;
 
     if (diff === 0) {

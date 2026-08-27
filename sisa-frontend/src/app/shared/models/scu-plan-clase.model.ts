@@ -5,15 +5,24 @@ import { ScuPlanningStatusEnum } from '../enums/scu-planning-status.enum';
  *
  * @author GentleAI SISA Architecture Team
  */
-export type ScuTipoMomentoPedagogico = 'INICIO' | 'DESARROLLO' | 'CIERRE';
+export type ScuTipoMomentoPedagogico =
+  | 'INTRODUCCION'
+  | 'RESULTADOS_LOGROS'
+  | 'CONTENIDOS'
+  | 'CUERPO'
+  | 'CONCLUSION'
+  | 'INICIO'
+  | 'DESARROLLO'
+  | 'CIERRE';
 
 export interface ScuMomentoPedagogicoModel {
   id?: number;
   tipoMomento: ScuTipoMomentoPedagogico;
+  nombreMomento?: string;
   duracionMin: number;
   actividadesDocente: string;
-  actividadesEstudiante: string;
-  indicadorEvaluacion: string;
+  actividadesEstudiante?: string;
+  indicadorEvaluacion?: string;
 }
 
 export interface ScuPlanClaseModel {

@@ -799,27 +799,11 @@
                   </button>
                 </div>
 
-                <!-- Selector de Pestañas de Temas -->
-                <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar no-print">
-                  <button onclick="window.selectPlanSheet('tema1')" id="btn-plan-tema1" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm whitespace-nowrap cursor-pointer transition-all">
-                    UA-1 Tema 1: Conceptos Generales
-                  </button>
-                  <button onclick="window.selectPlanSheet('tema2')" id="btn-plan-tema2" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
-                    UA-1 Tema 2: Fonología & Morfología
-                  </button>
-                  <button onclick="window.selectPlanSheet('tema3')" id="btn-plan-tema3" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
-                    UA-2 Tema 3: Morfología Nominal
-                  </button>
-                  <button onclick="window.selectPlanSheet('tema4')" id="btn-plan-tema4" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
-                    UA-2 Tema 4: Sintaxis & Sufijos
-                  </button>
-                  <button onclick="window.selectPlanSheet('tema5')" id="btn-plan-tema5" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
-                    UA-2 Tema 5: Sociolingüística
-                  </button>
-                  <button onclick="window.selectPlanSheet('tema6')" id="btn-plan-tema6" class="plan-sheet-tab px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-700 whitespace-nowrap cursor-pointer transition-all">
-                    UA-2 Tema 6: Aspectos Jurídicos & Educativos
-                  </button>
+                <!-- Selector Dinámico de Pestañas de Temas / Hojas -->
+                <div id="plan-sheets-tabs-container" class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar no-print">
+                  <!-- Generated dynamically from imported sheets or subject topics -->
                 </div>
+
 
                 <!-- FICHA DEL PLAN DE CLASE -->
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
@@ -901,20 +885,107 @@
                     </div>
                   </div>
 
-                  <!-- 7. Secuencia Didáctica con Minutos -->
+                  <!-- 7. Secuencia Didáctica con Minutaje Configurable (5 Momentos Base Excel) -->
                   <div class="space-y-3 pt-2">
-                    <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="clock" class="w-4 h-4"></i><span>Secuencia Didáctica (Momentos & Minutaje)</span></div>
-                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN (25 min):</strong><span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200 font-bold">25 Minutos</span></div>
-                      <textarea id="plan-sec-intro" rows="3" placeholder="Actividades de Inicio / Motivación (25 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    <div class="flex items-center justify-between">
+                      <div class="form-section-title text-purple-700 dark:text-purple-400 mb-0">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>Secuencia Didáctica (5 Momentos & Minutaje Configurable)</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400">Total Minutos:</span>
+                        <span id="plan-sec-total-badge" class="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold font-mono text-xs shadow-sm">180 min</span>
+                      </div>
                     </div>
-                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-purple-800 dark:text-purple-300">2. CUERPO DE CONTENIDOS (100 min):</strong><span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200 font-bold">100 Minutos</span></div>
-                      <textarea id="plan-sec-cuerpo" rows="4" placeholder="Actividades de Desarrollo (100 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+
+                    <!-- 1. INTRODUCCIÓN -->
+                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                          <strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-intro-dur" class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-intro-dur" type="number" min="0" max="480" value="25" class="w-16 px-2 py-0.5 rounded-l border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-blue-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-blue-100 dark:bg-blue-900/80 border border-l-0 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-intro" rows="2" placeholder="Activación cognitiva, presentación del sílabo, objetivos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                     </div>
-                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-1 text-xs">
-                      <div class="flex items-center justify-between"><strong class="text-emerald-800 dark:text-emerald-300">3. CONCLUSIÓN O CIERRE (55 min):</strong><span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold">55 Minutos</span></div>
-                      <textarea id="plan-sec-cierre" rows="3" placeholder="Actividades de Cierre / Evaluación (55 min)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+
+                    <!-- 2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS -->
+                    <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                          <strong class="text-indigo-800 dark:text-indigo-300">2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-resultados-dur" class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-resultados-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-indigo-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-indigo-100 dark:bg-indigo-900/80 border border-l-0 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-resultados" rows="2" placeholder="Resultados de aprendizaje y logros esperados observables..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+
+                    <!-- 3. CONTENIDOS DE LA CLASE -->
+                    <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <strong class="text-amber-800 dark:text-amber-300">3. CONTENIDOS DE LA CLASE:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-contenidos-dur" class="text-[11px] text-amber-700 dark:text-amber-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-contenidos-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-amber-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-amber-100 dark:bg-amber-900/80 border border-l-0 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-contenidos" rows="2" placeholder="Listado de contenidos temáticos de la clase..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+
+                    <!-- 4. CUERPO DE CONTENIDOS -->
+                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                          <strong class="text-purple-800 dark:text-purple-300">4. CUERPO DE CONTENIDOS:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-cuerpo-dur" class="text-[11px] text-purple-700 dark:text-purple-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-cuerpo-dur" type="number" min="0" max="1800" value="100" class="w-16 px-2 py-0.5 rounded-l border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-purple-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-purple-100 dark:bg-purple-900/80 border border-l-0 border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-cuerpo" rows="3" placeholder="Desarrollo conceptual, dinámicas, ejercicios, resolución de problemas..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                    </div>
+
+                    <!-- 5. CONCLUSIÓN O CIERRE -->
+                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-2 text-xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <strong class="text-emerald-800 dark:text-emerald-300">5. CONCLUSIÓN O CIERRE:</strong>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <label for="plan-sec-cierre-dur" class="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Duración:</label>
+                          <div class="flex items-center">
+                            <input id="plan-sec-cierre-dur" type="number" min="0" max="480" value="55" class="w-16 px-2 py-0.5 rounded-l border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-emerald-500" oninput="window.updateSecuenciaTotals()">
+                            <span class="px-2 py-0.5 rounded-r bg-emerald-100 dark:bg-emerald-900/80 border border-l-0 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold">min</span>
+                          </div>
+                        </div>
+                      </div>
+                      <textarea id="plan-sec-cierre" rows="2" placeholder="Retroalimentación, síntesis, tareas de cierre, evaluación..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                     </div>
                   </div>
 

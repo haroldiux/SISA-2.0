@@ -143,11 +143,12 @@
           </i>
           <span class="font-bold text-sm">{{ durVal.message }}</span>
         </div>
-        <div class="text-xs font-mono">
-          <span>Inicio: <strong>{{ getMoment('INICIO')?.duracionMin || 0 }}m</strong></span> +
-          <span>Desarrollo: <strong>{{ getMoment('DESARROLLO')?.duracionMin || 0 }}m</strong></span> +
-          <span>Cierre: <strong>{{ getMoment('CIERRE')?.duracionMin || 0 }}m</strong></span> =
-          <span>Total: <strong>{{ durVal.sum }} / {{ durVal.target }} min</strong></span>
+        <div class="text-xs font-mono flex flex-wrap gap-2 align-items-center">
+          <span *ngFor="let m of plan.momentos; let last = last">
+            {{ m.nombreMomento || m.tipoMomento }}: <strong>{{ m.duracionMin || 0 }}m</strong>
+            <span *ngIf="!last"> + </span>
+          </span>
+          <span> = Total: <strong>{{ durVal.sum }} / {{ durVal.target }} min</strong></span>
         </div>
       </div>
     </div>
@@ -203,25 +204,26 @@
       </div>
     </div>
 
-    <!-- 3 Pedagogical Moments Grid -->
+    <!-- Pedagogical Moments Grid (Configurable Durations & 5 Phases) -->
     <div class="moments-grid grid">
-      <!-- Momento 1: Inicio -->
-      <div class="col-12 md:col-4" *ngIf="getMoment('INICIO') as inicio">
-        <div class="moment-box moment-inicio p-3 border-round border-1">
+      <div class="col-12 md:col-6 lg:col-4" *ngFor="let momento of plan.momentos; let i = index">
+        <div class="moment-box p-3 border-round border-1"
+             [ngClass]="getMomentColorClass(momento.tipoMomento)">
           <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
             <div class="flex align-items-center gap-2">
-              <span class="moment-badge inicio-badge font-bold text-xs px-2 py-1 border-round">1. INICIO</span>
-              <span class="text-xs text-color-secondary font-semibold">Motivación y Diagnóstico</span>
+              <span class="moment-badge font-bold text-xs px-2 py-1 border-round">
+                {{ momento.nombreMomento || (i + 1) + '. ' + momento.tipoMomento }}
+              </span>
             </div>
             <div class="duration-input-wrapper flex align-items-center gap-1">
               <input
                 type="number"
                 pInputText
-                [(ngModel)]="inicio.duracionMin"
+                [(ngModel)]="momento.duracionMin"
                 [disabled]="isReadOnly"
-                (input)="onDurationChange('INICIO', inicio.duracionMin)"
+                (input)="onMomentDurationInput()"
                 min="0"
-                max="180"
+                max="1800"
                 class="moment-min-input text-center font-bold text-sm" />
               <span class="text-xs text-color-secondary">min</span>
             </div>
@@ -229,171 +231,41 @@
 
           <div class="moment-body p-fluid">
             <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Docente</label>
+              <label class="text-xs font-semibold">Actividades / Contenido del Momento</label>
               <textarea
                 pInputTextarea
-                [(ngModel)]="inicio.actividadesDocente"
+                [(ngModel)]="momento.actividadesDocente"
                 [disabled]="isReadOnly"
                 (input)="onFieldChange()"
-                rows="3"
+                rows="4"
                 class="text-xs"
-                placeholder="Motivación, recuperación de saberes previos, formulación de preguntas orientadoras...">
+                placeholder="Descripción detallada de la actividad pedagógica...">
               </textarea>
             </div>
 
-            <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Estudiante</label>
+            <div class="field mb-2" *ngIf="momento.actividadesEstudiante !== undefined">
+              <label class="text-xs font-semibold">Actividades del Estudiante (Opcional)</label>
               <textarea
                 pInputTextarea
-                [(ngModel)]="inicio.actividadesEstudiante"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="3"
-                class="text-xs"
-                placeholder="Participación activa, respuesta a preguntas de diagnóstico, reflexión inicial...">
-              </textarea>
-            </div>
-
-            <div class="field mb-0">
-              <label class="text-xs font-semibold">Indicador de Evaluación Inicial</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="inicio.indicadorEvaluacion"
+                [(ngModel)]="momento.actividadesEstudiante"
                 [disabled]="isReadOnly"
                 (input)="onFieldChange()"
                 rows="2"
                 class="text-xs"
-                placeholder="Evidencia diagnóstica de comprensión o conocimientos previos...">
-              </textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Momento 2: Desarrollo -->
-      <div class="col-12 md:col-4" *ngIf="getMoment('DESARROLLO') as desarrollo">
-        <div class="moment-box moment-desarrollo p-3 border-round border-1">
-          <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
-            <div class="flex align-items-center gap-2">
-              <span class="moment-badge desarrollo-badge font-bold text-xs px-2 py-1 border-round">2. DESARROLLO</span>
-              <span class="text-xs text-color-secondary font-semibold">Construcción y Taller</span>
-            </div>
-            <div class="duration-input-wrapper flex align-items-center gap-1">
-              <input
-                type="number"
-                pInputText
-                [(ngModel)]="desarrollo.duracionMin"
-                [disabled]="isReadOnly"
-                (input)="onDurationChange('DESARROLLO', desarrollo.duracionMin)"
-                min="0"
-                max="180"
-                class="moment-min-input text-center font-bold text-sm" />
-              <span class="text-xs text-color-secondary">min</span>
-            </div>
-          </div>
-
-          <div class="moment-body p-fluid">
-            <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Docente</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="desarrollo.actividadesDocente"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="3"
-                class="text-xs"
-                placeholder="Exposición dialogada, modelado de problemas, guía y asesoramiento en laboratorio...">
+                placeholder="Actividades de los estudiantes...">
               </textarea>
             </div>
 
-            <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Estudiante</label>
+            <div class="field mb-0" *ngIf="momento.indicadorEvaluacion !== undefined">
+              <label class="text-xs font-semibold">Indicador de Evaluación (Opcional)</label>
               <textarea
                 pInputTextarea
-                [(ngModel)]="desarrollo.actividadesEstudiante"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="3"
-                class="text-xs"
-                placeholder="Desarrollo de ejercicios prácticos, trabajo colaborativo en equipos, codificación...">
-              </textarea>
-            </div>
-
-            <div class="field mb-0">
-              <label class="text-xs font-semibold">Indicador de Evaluación Formativa</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="desarrollo.indicadorEvaluacion"
+                [(ngModel)]="momento.indicadorEvaluacion"
                 [disabled]="isReadOnly"
                 (input)="onFieldChange()"
                 rows="2"
                 class="text-xs"
-                placeholder="Resolución correcta del caso aplicando conceptos técnicos...">
-              </textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Momento 3: Cierre -->
-      <div class="col-12 md:col-4" *ngIf="getMoment('CIERRE') as cierre">
-        <div class="moment-box moment-cierre p-3 border-round border-1">
-          <div class="moment-header flex justify-content-between align-items-center mb-3 pb-2 border-bottom-1">
-            <div class="flex align-items-center gap-2">
-              <span class="moment-badge cierre-badge font-bold text-xs px-2 py-1 border-round">3. CIERRE</span>
-              <span class="text-xs text-color-secondary font-semibold">Síntesis y Evaluación</span>
-            </div>
-            <div class="duration-input-wrapper flex align-items-center gap-1">
-              <input
-                type="number"
-                pInputText
-                [(ngModel)]="cierre.duracionMin"
-                [disabled]="isReadOnly"
-                (input)="onDurationChange('CIERRE', cierre.duracionMin)"
-                min="0"
-                max="180"
-                class="moment-min-input text-center font-bold text-sm" />
-              <span class="text-xs text-color-secondary">min</span>
-            </div>
-          </div>
-
-          <div class="moment-body p-fluid">
-            <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Docente</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="cierre.actividadesDocente"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="3"
-                class="text-xs"
-                placeholder="Síntesis conceptual, retroalimentación grupal, asignación de tareas de profundización...">
-              </textarea>
-            </div>
-
-            <div class="field mb-2">
-              <label class="text-xs font-semibold">Actividades del Estudiante</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="cierre.actividadesEstudiante"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="3"
-                class="text-xs"
-                placeholder="Presentación de conclusiones, entrega de producto didáctico / código, coevaluación...">
-              </textarea>
-            </div>
-
-            <div class="field mb-0">
-              <label class="text-xs font-semibold">Indicador de Evaluación Sumativa / Cierre</label>
-              <textarea
-                pInputTextarea
-                [(ngModel)]="cierre.indicadorEvaluacion"
-                [disabled]="isReadOnly"
-                (input)="onFieldChange()"
-                rows="2"
-                class="text-xs"
-                placeholder="Producto didáctico concluido y verificado según rúbrica...">
+                placeholder="Indicador o evidencia observable...">
               </textarea>
             </div>
           </div>

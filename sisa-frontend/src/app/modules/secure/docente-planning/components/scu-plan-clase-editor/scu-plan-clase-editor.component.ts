@@ -148,6 +148,34 @@ export class ScuPlanClaseEditorComponent implements OnInit, OnChanges, OnDestroy
     this._planStateService.updateMomentDuration(tipo, value);
   }
 
+  public onMomentDurationInput(): void {
+    if (this.isReadOnly) return;
+    const current = this.activePlan;
+    if (current) {
+      this._planStateService.updatePlan(current);
+    }
+  }
+
+  public getMomentColorClass(tipo: string): string {
+    switch (tipo) {
+      case 'INTRODUCCION':
+      case 'INICIO':
+        return 'moment-inicio';
+      case 'RESULTADOS_LOGROS':
+        return 'moment-resultados';
+      case 'CONTENIDOS':
+        return 'moment-contenidos';
+      case 'CUERPO':
+      case 'DESARROLLO':
+        return 'moment-desarrollo';
+      case 'CONCLUSION':
+      case 'CIERRE':
+        return 'moment-cierre';
+      default:
+        return 'moment-default';
+    }
+  }
+
   public onFieldChange(): void {
     if (this.isReadOnly) return;
     const current = this.activePlan;

@@ -363,11 +363,7 @@ export class ScuPlanClaseStateService {
   }
 
   private _recalculateValidation(plan: ScuPlanClaseModel): ScuDurationValidationResultModel {
-    const ini = plan.momentos?.find(m => m.tipoMomento === 'INICIO')?.duracionMin || 0;
-    const des = plan.momentos?.find(m => m.tipoMomento === 'DESARROLLO')?.duracionMin || 0;
-    const cie = plan.momentos?.find(m => m.tipoMomento === 'CIERRE')?.duracionMin || 0;
-
-    const result = ScuDurationValidator.validate(ini, des, cie, plan.duracionTotalMin || 180);
+    const result = ScuDurationValidator.validateMoments(plan.momentos, plan.duracionTotalMin || 180);
     this._durationValidation$.next(result);
     return result;
   }
@@ -386,23 +382,42 @@ export class ScuPlanClaseStateService {
       recursosDidacticos: ['Pizarra Interactiva', 'Presentación Multimedia', 'Guía de Práctica'],
       momentos: [
         {
-          tipoMomento: 'INICIO',
+          tipoMomento: 'INTRODUCCION',
+          nombreMomento: '1. INTRODUCCIÓN',
           duracionMin: 25,
-          actividadesDocente: 'Presentación del objetivo, motivación situacional y reactivación de conocimientos previos.',
+          actividadesDocente: 'Activación cognitiva, motivación situacional y reactivación de conocimientos previos.',
           actividadesEstudiante: 'Participación activa, respuesta a preguntas orientadoras y reflexión inicial.',
           indicadorEvaluacion: 'Reconocimiento y formulación de ideas clave previas.'
         },
         {
-          tipoMomento: 'DESARROLLO',
+          tipoMomento: 'RESULTADOS_LOGROS',
+          nombreMomento: '2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS',
+          duracionMin: 0,
+          actividadesDocente: session.criterioDesempeno || 'Socialización de resultados de aprendizaje y logros esperados.',
+          actividadesEstudiante: 'Comprensión y alineación con los objetivos y criterios de evaluación de la sesión.',
+          indicadorEvaluacion: 'Claridad en metas de aprendizaje.'
+        },
+        {
+          tipoMomento: 'CONTENIDOS',
+          nombreMomento: '3. CONTENIDOS DE LA CLASE',
+          duracionMin: 0,
+          actividadesDocente: session.saberConceptual || session.contenidoEspecifico || 'Presentación del esquema temático y conceptos clave.',
+          actividadesEstudiante: 'Identificación de conceptos estructurantes y toma de apuntes.',
+          indicadorEvaluacion: 'Mapeo conceptual de la temática.'
+        },
+        {
+          tipoMomento: 'CUERPO',
+          nombreMomento: '4. CUERPO DE CONTENIDOS',
           duracionMin: 100,
           actividadesDocente: 'Exposición magistral dialógica, resolución de casos modelo y supervisión de taller práctico.',
           actividadesEstudiante: 'Trabajo colaborativo en grupos, desarrollo de ejercicios guiados y formulación de preguntas.',
           indicadorEvaluacion: 'Resolución correcta de problemas aplicando los principios expuestos.'
         },
         {
-          tipoMomento: 'CIERRE',
+          tipoMomento: 'CONCLUSION',
+          nombreMomento: '5. CONCLUSIÓN O CIERRE',
           duracionMin: 55,
-          actividadesDocente: 'Síntesis conceptual de la clase, retroalimentación grupal y asignación de actividades autónomas.',
+          actividadesDocente: 'Síntesis conceptual de la clase, retroalimentación grupal y evaluación formativa.',
           actividadesEstudiante: 'Presentación de conclusiones de grupo y entrega de producto didáctico.',
           indicadorEvaluacion: 'Evaluación formativa y coevaluación del producto obtenido.'
         }
