@@ -64,9 +64,9 @@ public class ScuPlanClaseDurationValidatorTest {
         request.setObjetivoSesion("Desarrollar competencias algorítmicas");
 
         List<ScuMomentoPedagogicoDto> momentos = new ArrayList<>();
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.INICIO, 25, "Docente intro", "Estudiante escucha", "Saber previo"));
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.DESARROLLO, 100, "Docente guía", "Estudiante práctica", "Ejercicio resuelto"));
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.CIERRE, 55, "Docente sintetiza", "Estudiante concluye", "Producto entregado"));
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.INICIO).duracionMin(25).actividadesDocente("Docente intro").actividadesEstudiante("Estudiante escucha").indicadorEvaluacion("Saber previo").build());
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.DESARROLLO).duracionMin(100).actividadesDocente("Docente guía").actividadesEstudiante("Estudiante práctica").indicadorEvaluacion("Ejercicio resuelto").build());
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.CIERRE).duracionMin(55).actividadesDocente("Docente sintetiza").actividadesEstudiante("Estudiante concluye").indicadorEvaluacion("Producto entregado").build());
         request.setMomentos(momentos);
 
         assertDoesNotThrow(() -> this.savePlanClaseCmd.execute(request));
@@ -85,9 +85,9 @@ public class ScuPlanClaseDurationValidatorTest {
         request.setObjetivoSesion("Objetivo");
 
         List<ScuMomentoPedagogicoDto> momentos = new ArrayList<>();
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.INICIO, 30, "A", "B", "C"));
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.DESARROLLO, 100, "A", "B", "C"));
-        momentos.add(new ScuMomentoPedagogicoDto(null, TipoMomentoPedagogico.CIERRE, 40, "A", "B", "C")); // 30+100+40 = 170 != 180
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.INICIO).duracionMin(30).actividadesDocente("A").actividadesEstudiante("B").indicadorEvaluacion("C").build());
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.DESARROLLO).duracionMin(100).actividadesDocente("A").actividadesEstudiante("B").indicadorEvaluacion("C").build());
+        momentos.add(ScuMomentoPedagogicoDto.builder().tipoMomento(TipoMomentoPedagogico.CIERRE).duracionMin(40).actividadesDocente("A").actividadesEstudiante("B").indicadorEvaluacion("C").build()); // 30+100+40 = 170 != 180
         request.setMomentos(momentos);
 
         assertThrows(ScuPlanDurationMismatchException.class, () -> this.savePlanClaseCmd.execute(request));
