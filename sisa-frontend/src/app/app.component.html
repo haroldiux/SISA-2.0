@@ -60,10 +60,13 @@
         <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
         <span id="theme-label" class="text-slate-200">Tema Claro</span>
       </button>
-      <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-medium">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        SISA Live
-      </span>
+      <!-- SEA Gateway Live / Offline Indicator Badge -->
+      <div id="sea-gateway-status-container" class="cursor-pointer" onclick="window.toggleSeaGatewaySimulation()" title="Click para simular estado Gateway Online/Offline">
+        <span id="sea-status-badge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-medium transition-all duration-300">
+          <span id="sea-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="sea-status-text">SEA Live</span>
+        </span>
+      </div>
     </div>
   </header>
 
@@ -80,11 +83,18 @@
         <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
           
           <!-- App Header -->
-          <div class="flex items-center gap-3 px-2 py-1">
-            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-            <div>
-              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Carpetas Docentes</div>
+          <div class="flex items-center justify-between px-2 py-1">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
+              <div>
+                <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
+                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Carpetas Docentes</div>
+              </div>
+            </div>
+            <!-- Sidebar SEA Status Badge -->
+            <div id="sidebar-sea-badge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 transition-all">
+              <span id="sidebar-sea-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="sidebar-sea-text">Live</span>
             </div>
           </div>
 

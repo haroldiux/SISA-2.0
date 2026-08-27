@@ -2523,3 +2523,114 @@ document.addEventListener('change', (e) => {
   }
 }, true);
 
+// ── UNITEPC SEA GATEWAY INTEGRATION & REACTIVE BADGE CONTROLLER ──────────────
+(function() {
+  let currentSeaStatus = 'online';
+
+  window.getSeaGatewayStatus = function() {
+    return currentSeaStatus;
+  };
+
+  window.updateSeaGatewayStatus = function(status) {
+    if (status !== 'online' && status !== 'offline' && status !== 'sync') {
+      status = 'online';
+    }
+    currentSeaStatus = status;
+
+    // 1. Top prototype header badge
+    const headerBadge = document.getElementById('sea-status-badge');
+    const headerDot = document.getElementById('sea-status-dot');
+    const headerText = document.getElementById('sea-status-text');
+
+    if (headerBadge && headerDot && headerText) {
+      headerBadge.className = 'text-xs px-2.5 py-1 rounded-full border flex items-center gap-1.5 font-medium transition-all duration-300 ';
+      headerDot.className = 'w-1.5 h-1.5 rounded-full ';
+
+      if (status === 'online') {
+        headerBadge.className += 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+        headerDot.className += 'bg-emerald-400 animate-pulse';
+        headerText.innerText = 'SEA Live';
+      } else if (status === 'offline') {
+        headerBadge.className += 'bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse ring-2 ring-rose-500/20';
+        headerDot.className += 'bg-rose-400 animate-ping';
+        headerText.innerText = 'SEA Offline';
+      } else if (status === 'sync') {
+        headerBadge.className += 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        headerDot.className += 'bg-amber-400 animate-pulse';
+        headerText.innerText = 'SEA Sync...';
+      }
+    }
+
+    // 2. Sidebar header badge
+    const sidebarBadge = document.getElementById('sidebar-sea-badge');
+    const sidebarDot = document.getElementById('sidebar-sea-dot');
+    const sidebarText = document.getElementById('sidebar-sea-text');
+
+    if (sidebarBadge && sidebarDot && sidebarText) {
+      sidebarBadge.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all ';
+      sidebarDot.className = 'w-1.5 h-1.5 rounded-full ';
+
+      if (status === 'online') {
+        sidebarBadge.className += 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60';
+        sidebarDot.className += 'bg-emerald-500 animate-pulse';
+        sidebarText.innerText = 'Live';
+      } else if (status === 'offline') {
+        sidebarBadge.className += 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border-rose-200 dark:border-rose-800/60 animate-pulse';
+        sidebarDot.className += 'bg-rose-500 animate-ping';
+        sidebarText.innerText = 'Offline';
+      } else if (status === 'sync') {
+        sidebarBadge.className += 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-200 dark:border-amber-800/60';
+        sidebarDot.className += 'bg-amber-500 animate-pulse';
+        sidebarText.innerText = 'Sync';
+      }
+    }
+  };
+
+  window.toggleSeaGatewaySimulation = function() {
+    const next = (currentSeaStatus === 'online') ? 'offline' : 'online';
+    window.updateSeaGatewayStatus(next);
+    if (typeof window.showToast === 'function') {
+      window.showToast(next === 'online'
+        ? '🟢 SEA Gateway: Conectado (UNITEPC Live)'
+        : '🔴 SEA Gateway: Desconectado (Modo Fallback Offline Activo)');
+    }
+  };
+
+  window.checkSeaGatewayHealth = function() {
+    fetch('/api/v1/catalogo-academico/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.status) {
+          window.updateSeaGatewayStatus(data.status);
+        }
+      })
+      .catch(() => {
+        // Fallback check: if navigator is online, keep state or set offline if proxy fails
+        if (!navigator.onLine) {
+          window.updateSeaGatewayStatus('offline');
+        }
+      });
+  };
+
+  // Listen to browser network online/offline events
+  window.addEventListener('online', () => {
+    window.updateSeaGatewayStatus('online');
+    if (typeof window.showToast === 'function') {
+      window.showToast('🟢 Red reestablecida: SEA Gateway Live');
+    }
+  });
+
+  window.addEventListener('offline', () => {
+    window.updateSeaGatewayStatus('offline');
+    if (typeof window.showToast === 'function') {
+      window.showToast('🔴 Sin conexión de red: Activando modo Local Mirroring');
+    }
+  });
+
+  // Initial check on load
+  setTimeout(() => {
+    window.updateSeaGatewayStatus('online');
+  }, 150);
+})();
+
+

@@ -18,6 +18,20 @@
   </div>
 
   <div class="header-right">
+    <!-- SEA Gateway Status Badge -->
+    <div class="sea-status-badge" [ngClass]="{
+      'status-online': seaStatus === 'online',
+      'status-offline': seaStatus === 'offline',
+      'status-sync': seaStatus === 'sync'
+    }" [title]="'Estado UNITEPC Gateway: ' + seaStatus">
+      <span class="status-dot"></span>
+      <span class="status-text">
+        <ng-container *ngIf="seaStatus === 'online'">SEA Live</ng-container>
+        <ng-container *ngIf="seaStatus === 'offline'">SEA Offline</ng-container>
+        <ng-container *ngIf="seaStatus === 'sync'">SEA Sync</ng-container>
+      </span>
+    </div>
+
     <button
       pButton
       type="button"
@@ -28,7 +42,7 @@
 
     <div class="user-profile" *ngIf="currentUser">
       <div class="user-avatar">
-        {{ currentUser.nombres?.charAt(0) }}{{ currentUser.apellidos?.charAt(0) }}
+        {{ currentUser.nombres.charAt(0) }}{{ currentUser.apellidos.charAt(0) }}
       </div>
       <div class="user-details">
         <span class="user-name">{{ currentUser.nombreCompleto }}</span>

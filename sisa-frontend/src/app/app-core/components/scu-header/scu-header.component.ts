@@ -3,10 +3,12 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ScuAuthService } from '@core/services/scu-auth.service';
 import { ScuThemeService } from '@core/services/scu-theme.service';
+import { UnitepcGatewayService } from '@core/services/unitepc-gateway.service';
 import { ScuUserModel } from '@shared/models/scu-user.model';
+import { SeaGatewayStatus } from '@shared/models/scu-gateway.model';
 
 /**
- * Top navigation header component containing institutional identity and user profile.
+ * Top navigation header component containing institutional identity, user profile, and SEA Gateway status badge.
  *
  * @author GentleAI SISA Architecture Team
  */
@@ -24,8 +26,13 @@ export class ScuHeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly _authService: ScuAuthService,
-    private readonly _themeService: ScuThemeService
+    private readonly _themeService: ScuThemeService,
+    public readonly gatewayService: UnitepcGatewayService
   ) {}
+
+  public get seaStatus(): SeaGatewayStatus {
+    return this.gatewayService.seaStatus();
+  }
 
   public ngOnInit(): void {
     this._initialize();

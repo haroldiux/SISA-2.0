@@ -40,5 +40,15 @@ export const SCU_API = {
     IMPORT_PAC: '/api/v1/office/import/pac',
     IMPORT_PLAN: '/api/v1/office/import/plan-clase',
     IMPORT_PROGRAMA: '/api/v1/office/import/programa-analitico'
+  },
+  CATALOGO_ACADEMICO: {
+    BASE: '/api/v1/catalogo-academico',
+    STATUS: '/api/v1/catalogo-academico/status',
+    BRANCH_OFFICES: '/api/v1/catalogo-academico/branchOffices',
+    CAREERS: '/api/v1/catalogo-academico/careers',
+    COURSES: '/api/v1/catalogo-academico/courses',
+    STUDENTS_BY_GROUP: '/api/v1/catalogo-academico/students/byGroup',
+    CAMPUSES: '/api/v1/catalogo-academico/campuses',
+    TIME_FRAMES: '/api/v1/catalogo-academico/timeFrames'
   }
 };
