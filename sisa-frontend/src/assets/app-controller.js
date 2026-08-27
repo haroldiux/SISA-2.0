@@ -1493,6 +1493,11 @@ window.loadSavedDocenteData = function(materiaKey) {
   if (savedPlanesStr) {
     try {
       activePlanesList = JSON.parse(savedPlanesStr);
+      // Auto-migrate if old 3-moment format
+      if (activePlanesList && activePlanesList.length > 0 && (!activePlanesList[0].momentos || activePlanesList[0].momentos.length < 5)) {
+        activePlanesList = window.generateDefaultPlanesList(mKey);
+        localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
+      }
     } catch (e) {
       activePlanesList = [];
     }
@@ -1502,6 +1507,7 @@ window.loadSavedDocenteData = function(materiaKey) {
 
   if (!activePlanesList || activePlanesList.length === 0) {
     activePlanesList = window.generateDefaultPlanesList(mKey);
+    localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
   }
   activePlanSheetIndex = 0;
   if (typeof window.renderPlanesSheetsTabs === 'function') {
@@ -1515,89 +1521,351 @@ window.loadSavedDocenteData = function(materiaKey) {
 };
 
 window.generateDefaultPlanesList = function(mKey) {
-  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? materiasData['sis213g1'] : null);
-  const asig = def ? def.nombre : 'Taller de Idiomas';
-  const car = def ? def.carrera : 'FACEFA - Complementarias';
-  const units = (def && def.unidades) ? def.unidades : [];
-  const list = [];
-  let topicCount = 0;
-
-  if (units.length > 0) {
-    units.forEach((u, uIdx) => {
-      const uNum = u.numeroUnidad || (uIdx + 1);
-      const uTit = u.titulo || ('Unidad ' + uNum);
-      const temas = (u.temas && u.temas.length > 0) ? u.temas : [{ titulo: 'Tema General', contenido: '' }];
-      temas.forEach((t) => {
-        topicCount++;
-        const tTit = t.titulo || ('Tema ' + topicCount);
-        list.push({
-          nombreHoja: 'UA-' + uNum + ' Tema ' + topicCount,
-          nombreDocente: 'Ing. Harold Iriarte',
-          fecha: '2026-02-09',
-          nombreAsignatura: asig,
-          carrera: car,
-          unidadTitulo: uTit,
-          contenidoTema: tTit,
-          elementoCompetencia: 'Aplica herramientas teórico-prácticas y metodologías de la Unidad ' + uNum + ' para la resolución de problemas técnicos.',
-          objetivoSesion: 'Desarrollo de competencias y saberes específicos sobre ' + tTit + '.',
-          logrosEsperados: '1. Identifica los conceptos clave de ' + tTit + '.\n2. Aplica los procedimientos en actividades prácticas.',
-          indicadoresLogro: '1. Explica con precisión técnica los conceptos.\n2. Resuelve ejercicios prácticos guiados.',
-          saberConceptual: '- ' + tTit + '\n- Fundamentos teóricos',
-          saberProcedimental: '- Análisis y aplicación práctica de ' + tTit,
-          saberActitudinal: '- Responsabilidad, pensamiento crítico y ética profesional',
-          estrategiaEnsenanza: '- Método de Aprendizaje Basado en Problemas (ABP)\n- Exposición dialogada',
-          estrategiaAprendizaje: '- Práctica guiada en laboratorio o aula\n- Resolución de ejercicios',
-          recursosEnsenanza: '- Pizarra\n- Guías de trabajo\n- Diapositivas y referencias bibliográficas',
-          evaluacionFormativaActividad: 'Práctica guiada en clase',
-          evaluacionFormativaInstrumento: 'Lista de cotejo',
-          evaluacionFormativaEvidencia: 'Guía de ejercicios resuelta',
-          evaluacionSumativaActividad: 'Examen escrito parcial',
-          evaluacionSumativaInstrumento: 'Prueba objetiva',
-          evaluacionSumativaEvidencia: 'Examen resuelto',
-          momentos: [
-            { tipoMomento: 'INICIO', duracionMin: 25, actividadesDocente: 'Motivación, recuperación de saberes previos y presentación de objetivos de ' + tTit },
-            { tipoMomento: 'DESARROLLO', duracionMin: 100, actividadesDocente: '1. Exposición dialogada sobre ' + tTit + '.\n2. Resolución guiada de ejercicios prácticos.' },
-            { tipoMomento: 'CIERRE', duracionMin: 55, actividadesDocente: 'Retroalimentación sobre ' + tTit + ', síntesis y evaluación rápida.' }
-          ]
-        });
-      });
-    });
+  const CANONICAL_PLANES = [
+  {
+    "nombreHoja": "UA-1 Tema 1",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de Idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 1:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 1:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "Saber procedimental:",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Aprendizaje Basado en Indagación: Preguntas guiadas sobre la presencia del quechua en la economía local. \n- Demostración Gráfica: Uso de cartillas didácticas para la signografía.",
+    "estrategiaAprendizaje": "- Observación Dirigida: Registro de palabras quechuas presentes en el entorno comercial.\n- Taller de Escritura: Práctica guiada de grafemas simples y glotalizados.",
+    "recursosEnsenanza": "- Diccionarios técnicos bilingües\n- Grabaciones de audio técnico sobre procesos productivos\n- Pizarra\n- Diapositivas",
+    "evaluacionFormativaActividad": "Debate grupal",
+    "evaluacionFormativaInstrumento": "Lista de cotejo",
+    "evaluacionFormativaEvidencia": "Mapa mental",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Activación cognitiva: Dinámica \"¿Qué significa para la sociedad el idioma originario?\". Presentación del silabo, objetivos de la clase y la importancia del quechua en la administración pública y privada actual.",
+        "duracionMin": 25
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Reconoce los fundamentos lingüísticos, culturales y cosmogónicos del quechua para valorar su rol como activo estratégico en la identidad regional y económica.\nLogros: \n1. Identifica los pilares de la cosmovisión y cultura quechua. \n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "1. Lengua quechua\n2. Cultura quechua\n3. Cosmovisión quechua\n4. Signografía oficial.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Lengua Quechua: Definición como sistema aglutinante. Importancia de su estudio para la comunicación comercial bilingüe.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía. Cómo estas estructuras influyen en el comportamiento del consumidor.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza (Sustentabilidad andina).\n4. Signografía: Introducción al alfabeto unificado. Ejercicio de reconocimiento de grafemas.",
+        "duracionMin": 100
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.",
+        "duracionMin": 55
+      }
+    ]
+  },
+  {
+    "nombreHoja": "UA-1 Tema 2",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de Idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 1:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 2:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "Saber Procedimental:",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Método Audiolingual: Énfasis en la imitación y repetición de patrones sonoros. \n- Análisis Estructural: Uso de colores para diferenciar raíces de sufijos en la pizarra. \n- Modelado Fonético: Explicación visual de los puntos de articulación.",
+    "estrategiaAprendizaje": "- Laboratorio de Sonidos: Práctica con grabaciones para mejorar la discriminación auditiva. \n- Mapas de Palabras: Creación de esquemas donde una raíz genera múltiples significados al añadir sufijos. \n- Auto grabación: Uso del celular para escuchar y corregir su propia dicción.",
+    "recursosEnsenanza": "- Audios de hablantes nativos\n- Formularios de registro en quechua.\n- Tarjetas léxicas.",
+    "evaluacionFormativaActividad": "Dictado fonético de cifras y nombres de productos.",
+    "evaluacionFormativaInstrumento": "Guía de audición y repetición.",
+    "evaluacionFormativaEvidencia": "Lista de palabras clasificadas por su sonido (simple/aspirado/glotal).",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Activación: Diagnóstico de discriminación auditiva.",
+        "duracionMin": 45
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Emplea los fundamentos fonológicos y estructuras morfológicas básicas del quechua para garantizar una comunicación técnica, precisa y éticamente responsable en contextos profesionales bilingües.\nLogros: \n1. Diferencia la estructura de raíces y sufijos en categorías gramaticales básicas.\n2. Articula correctamente los sonidos (simples, aspirados y glotalizados).\n1. Articula correctamente los fonemas (simples, aspirados, glotalizados) para evitar ambigüedades en la información técnica.\n2. Aplica la flexión morfológica (persona, número, tiempo) para estructurar reportes y diálogos comerciales claros.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "1. Morfología (sustantivos, verbos, pronombres)\n2. Fonética y fonología; Sonidos (simples, aspirados, glotalizados).\n3. Pronunciación\n- Pronombres\n- Fonética y fonología del quechua\n- Sonidos simples\n- Sonidos llanos\n- Sonidos glotalizados",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Morfología de las palabras (Raíces y Sufijos): Se explica el principio de aglutinación. El estudiante aprende a separar la raíz (dato base) de los sufijos (modificadores gramaticales).\nSustantivos: Identificación de nombres de bienes y servicios.\nVerbos: Identificación de raíces verbales para acciones económicas.\nPronombres: Uso de marcadores personales para establecer el sujeto en un reporte.\n2. Fonética y Fonología del Quechua: Se introduce la diferencia entre el fonema (unidad abstracta) y el alófono (realización sonora). Se enfatiza la importancia de la exactitud articulatoria para evitar sesgos en la información.\n3. Sonidos Simples, Aspirados y Glotalizados:\nSonidos Simples: Articulación neutra.\nSonidos Aspirados (Llanos): Marcados con 'h', requieren un flujo de aire constante.\nSonidos Glotalizados: Marcados con apóstrofe ('), requieren una interrupción brusca de la glotis.\n4. Pronunciación y Acentuación: El quechua es un sistema de acentuación grave. Se entrena al estudiante para mantener este ritmo constante, evitando la entonación variable del español que puede confundir el sentido de los términos técnicos.",
+        "duracionMin": 360
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "Actividad: Taller de Dictado Fonológico. El docente dicta palabras y los estudiantes clasifican si el sonido es simple, aspirado o glotalizado.\nInstrumento: Guía de audición y repetición con lista de cotejo.\nEvidencia: Matriz de clasificación de fonemas completada en clase.",
+        "duracionMin": 135
+      }
+    ]
+  },
+  {
+    "nombreHoja": "UA-2 Tema 3",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 2:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 3:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "- Procedimientos",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Aprendizaje Basado en Tareas (TBL): Simulación de mercado y atención al cliente.\n- Instrucción Directa: Modelado de la conjugación del verbo Kay.\n- Aprendizaje Cooperativo: Trabajo en parejas para la construcción de inventarios.",
+    "estrategiaAprendizaje": "Práctica de Campo: Conteo de objetos reales del aula. \nRole-playing: Diálogos de presentación y venta. \nTécnica de Sustitución: Ejercicios de reemplazo pronominal en párrafos técnicos.",
+    "recursosEnsenanza": "- Fichas de trabajo con objetos del entorno\n- Grabaciones de saludos andinos\n- Calculadora para ejercicios de numeración en quechua",
+    "evaluacionFormativaActividad": "\"Mercado de trueque\" simulado.",
+    "evaluacionFormativaInstrumento": "Lista de cotejo de desempeño comunicativo.",
+    "evaluacionFormativaEvidencia": "Registro de precios y cantidades anotados en quechua.",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Contextualización: Diagnóstico de la importancia de la lengua en el entorno socioeconómico regional. Presentación del mapa de competencias y la meta de alcanzar un nivel de usuario básico funcional.",
+        "duracionMin": 60
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Emplea la estructura morfológica nominal y los sistemas de cuantificación, posesión e identidad del quechua para establecer relaciones comunicativas precisas y cordiales en entornos económicos andinos.\nLogros:\n1. Aplica protocolos de cortesía y cuantificación exacta en contextos de intercambio.\n2. Diferencia roles, sujetos y relaciones de propiedad mediante el uso correcto de pronombres y el verbo Kay.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "- Saludos y Despedidas\n- Sistema Numérico\n- Identidad y Pertenencia\n- Pronombres Posesivos\n- El Verbo Kay",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Saludos y Despedidas: Más allá del Allillanchu, se estudian las variantes según el interlocutor (autoridad comunal vs. socio comercial). Se analiza la dimensión temporal de las despedidas (ej. Paqarinkama - hasta mañana).\n2. Sistema Numérico: Unidades, Decenas, Centenas: Se aprende la lógica aditiva. Es crucial para la precisión contable. Uso en contexto: Diferenciación entre cantidad de bienes, precios y plazos de pago.\n3. Identidad y Pertenencia: Pronombres Personales: Dominio del sistema singular y plural, enfatizando la distinción inclusiva (ñuqanchik) y exclusiva (ñuqayku), fundamental para la transparencia en la gestión de presupuestos grupales. \n4. Pronombres Posesivos: Uso de los sufijos -y (mi), -yki (tu), -n (su) para la identificación de activos y recursos en inventarios.\n5. El Verbo Kay: Dominio del verbo copulativo para la construcción de frases de identidad.",
+        "duracionMin": 720
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "Actividad Técnica: \"El Informe del Administrador\". El estudiante debe completar una ficha de descripción personal, realizar una operación aritmética de inventario que incluya unidades, decenas y centenas, y redactar oraciones simples sobre la posesión de activos, todo en quechua.\nInstrumento: Rúbrica de evaluación integral (gramática, léxico, fluidez).\nCriterios: Exactitud en numeración (30%), Uso correcto de sufijos posesivos (30%), Concordancia del verbo Kay (20%), Actitud y cortesía (20%).\nEvidencia: Ficha de registro técnico completa y video-presentación breve de un activo bajo su responsabilidad.",
+        "duracionMin": 20
+      }
+    ]
+  },
+  {
+    "nombreHoja": "UA-2 Tema 4",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 1:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 4:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "Saber Procedimental:",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Método de Aprendizaje Basado en Problemas (ABP): Resolución de casos donde falta un sufijo de caso y cambia el sentido del mensaje.\n- Instrucción Directa y Modelado: Uso de diagramas de bloques para visualizar la posición de los sufijos en la oración.\n- Taller de Escritura Creativa: Producción de reportes de gestión simulados.",
+    "estrategiaAprendizaje": "- Diagramación de Oraciones: Uso de esquemas de árbol sintáctico para organizar elementos SOV.\n- Fichas de Autogestión: Creación de un catálogo de verbos derivados y sus raíces.\n- Diario de Campo: Redacción de rutinas y planes en tiempos presente, pasado y futuro.",
+    "recursosEnsenanza": "- Pizarra\n- Guías de ejercicios con sufijos\n- Audios de procesos productivos en quechua",
+    "evaluacionFormativaActividad": "Dictado de oraciones complejas, ejercicios de \"completar el sufijo\", debate sobre procesos de gestión.",
+    "evaluacionFormativaInstrumento": "Escala de valoraciòn, guías de autoevaluación.",
+    "evaluacionFormativaEvidencia": "Ejercicios resueltos en clase, esquemas de derivación verbal.",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Diagnóstico y encuadre: Análisis del orden SOV frente al SVO del español. Reflexión sobre la importancia de la precisión sintáctica.",
+        "duracionMin": 90
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Construye enunciados complejos y coherentes aplicando la estructura SOV, el sistema de sufijos nominales y la conjugación verbal, para comunicar procesos socioeconómicos con precisión técnica.\nLogros:\n1. Domina la estructura SOV y el uso de sufijos de caso. \n2. Aplica sufijos de lugar, tiempo y beneficio para contextualizar acciones. \n3. Diferencia y utiliza la morfología de verbos primitivos y derivados. \n4. Conjuga verbos en tiempos presente, pasado, futuro y continuo con concordancia. \n5. Redacta oraciones complejas que integran ideas causa-efecto o secuencia lógica.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "- Estructura de la oración en quechua: El sujeto, El complemento, El Verbo.\n- Sufijos nominales: -ta, Objeto directo y Objeto Indirecto; -na; -kama; -pi; -paq; -man; -manta; -lla; -wan instrumental; -wan de compañía.\n- Verbos en quechua; Morfologia del verbo: Verbos primitivos y Verbos derivados.\n- Conjugación verbal: Raiz verbal.\n- Tiempo presente: Sujeto singular, Sujeto plural.\n- Tiempo pasado: Sujeto singular, Sujeto plural.\n- Tiempo futuro: Sujeto singular, Sujeto plural.\n- TIempo continuo: Sujeto singular, Sujeto plural.\n- Oraciones simples en presente, pasado, futuro.\n- Oraciones complejas en presente, pasado, futuro",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Estructura de la Oración y Sufijos Nominales: Sujeto, Complemento, Verbo: El estudiante aprende a identificar los bloques estructurales. En quechua, el verbo siempre es el elemento final de la cadena de información.\n2. Sufijos de Caso: -ta (OD/OI): Marca la afectación directa o el destinatario de una transacción; -na: Sufijo instrumental/obligativo para procesos productivos; -kama: Delimitación de tiempos y alcances financieros; pi (Localizador): Ubicación espacial o física del hecho económico; -paq (Beneficiario): Asignación de recursos; -man / -manta: Dirección y origen (trazabilidad); -lla (Limitativo): Énfasis en la exclusividad o escasez (importante en presupuestos); -wan (Instrumental/Compañía): Uso de maquinaria o alianzas estratégicas.\n3. Verbos: Morfología y Conjugación: Verbos Primitivos y Derivados: Se enseña a diferenciar la raíz base de las formas derivadas que añaden matices de acción (ej: k'utuy - cortar; k'utukuy - cortarse a sí mismo); Raíz Verbal: Identificación del elemento invariable que contiene el significado semántico principal.\n4. Tiempos Verbales y Conjugación: Presente, Pasado, Futuro, Continuo (-chka): Se aplica el paradigma de conjugación a los sujetos singulares y plurales; Sujeto Plural: Énfasis en la distinción inclusiva (-nchik) y exclusiva (-yku); Tiempos: Uso de marcas como -rqa (pasado lejano) y -sa (o -sha - futuro).\n5. Sintaxis de Oraciones Simples y Complejas: Oraciones Simples: Estructuración de enunciados de gestión directa; Oraciones Complejas: Uso de conectores y oraciones subordinadas para expresar causalidad, condición y finalidad. Es aquí donde el estudiante desarrolla pensamiento crítico al justificar decisiones económicas.",
+        "duracionMin": 1485
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "Actividad Técnica: \"Informe de Gestión Técnica Intercultural\". El estudiante debe redactar un informe de 3 a 5 párrafos detallando: 1. Antecedentes (Pasado), 2. Estado actual de activos (Presente/Continuo), 3. Proyecciones presupuestarias (Futuro). Debe incluir al menos 8 sufijos diferentes y oraciones complejas.\nInstrumento: Rúbrica de Redacción Técnica (Criterios: Sintaxis SOV 30%, Uso de Sufijos 30%, Conjugación/Tiempos 20%, Coherencia y Estilo 20%).\nEvidencias: Informe impreso y/o digital y defensa oral del documento ante el docente.",
+        "duracionMin": 180
+      }
+    ]
+  },
+  {
+    "nombreHoja": "UA-2 Tema 5",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 1:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 5:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "Saber Procedimental:",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Aprendizaje Basado en Proyectos (ABP): \"Mi identidad profesional en quechua\". \n- Técnica de Demostración: Modelado de presentaciones personales. \n- Role-playing situacional: Simulaciones de intercambio de datos.",
+    "estrategiaAprendizaje": "- Diario Reflexivo: Registro de sus roles profesionales usando sufijos nominales. \n- Entrevista Cruzada: Práctica de intercambio de información personal. \n- Análisis de caso: Estructuración de su perfil profesional.",
+    "recursosEnsenanza": "- Formularios bilingües\n- Tarjetas de presentación profesional\n- Grabadora para análisis de presentación personal",
+    "evaluacionFormativaActividad": "\"El mercado de roles\" (identificarse por su función usando -q).",
+    "evaluacionFormativaInstrumento": "Guía de observación cualitativa.",
+    "evaluacionFormativaEvidencia": "Esquemas de transformación de verbos a sustantivos.",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Activación: ¿Por qué la identidad profesional es un \"activo\"? Reflexión sobre la importancia de la presentación personal y la autogestión en el mercado laboral andino.",
+        "duracionMin": 45
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Demuestra competencias comunicativas básicas y conciencia sociolingüística para presentarse profesionalmente e interactuar en contextos interculturales.\nLogros: \n1. Deriva sustantivos a partir de raíces verbales para definir roles e instrumentos. \n2. Expresa acciones reflexivas y recíprocas correctamente. \n3. Realiza presentaciones personales y gestión de datos con fluidez cultural.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "Sufijos verbales nominales\nSufijos verbales reflexivos\nInformación personal\nPresentación personal",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Sufijos Verbales Nominales: Se enseña la transformación de una acción en un sustantivo o adjetivo, técnica clave para definir roles y herramientas: -q (Agente): Designa al ejecutor (ej. tusuq - bailarín, qillqaq - escritor/secretario). -na (Instrumento): Designa el medio para realizar la acción (ej. takana - martillo/instrumento para golpear). -sqa (Resultado/Pasado): Designa lo obtenido (ej. ruraskasqa - lo hecho/producto final).\n2. Sufijos Verbales Reflexivos: El sufijo -ku: Se analiza como el marcador de \"acción sobre uno mismo\" y \"autogestión\". Reciprocidad: Se enseña cómo el sufijo verbal reflexivo implica también una acción compartida, reforzando el concepto de Ayni (reciprocidad) en la organización económica.\n3. Información y Presentación Personal: Información Personal: Intercambio técnico de datos: origen (maymanta kani), edad y funciones. Presentación Profesional: Estructura de un pitch profesional. Se integra el uso de los sufijos derivados para explicar: \"Soy estudiante (agente -q), mi herramienta de trabajo es (instrumento -na), y este es el resultado de mi gestión (resultado -sqa)\".",
+        "duracionMin": 360
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "Actividad Técnica: \"Presentación del Perfil Profesional ante un Auditorio\". Cada estudiante realiza una presentación breve (3-5 min) describiéndose a sí mismo, su origen, su rol profesional y sus objetivos.\nInstrumento: Rúbrica de desempeño comunicativo intercultural.\nCriterios: Precisión en sufijos nominales (30%), Uso de reflexivos (20%), Claridad en datos personales (25%), Lenguaje no verbal y respeto a la audiencia (25%).\nEvidencia: Video-presentación profesional y formulario de perfil socioeconómico redactado íntegramente en quechua.",
+        "duracionMin": 135
+      }
+    ]
+  },
+  {
+    "nombreHoja": "UA-2 Tema 6",
+    "nombreDocente": "Harold Iriarte Rojas",
+    "fecha": "09/02/2026",
+    "nombreAsignatura": "Taller de idiomas",
+    "carrera": "FACEFA - Complementarias",
+    "unidadTitulo": "Unidad 1:",
+    "elementoCompetencia": "Elemento de Competencia 1:",
+    "contenidoTema": "TEMA 6:",
+    "objetivoSesion": "Resultados de Aprendizaje:",
+    "logrosEsperados": "Logros Esperados:",
+    "indicadoresLogro": "Indicadores de Logro:",
+    "saberConceptual": "Saber Conceptual:",
+    "saberProcedimental": "Saber procedimeintal:",
+    "saberActitudinal": "Saber Actitudinal:",
+    "estrategiaEnsenanza": "- Aprendizaje Basado en el Análisis Normativo: Estudio de la Constitución y la Ley de Lenguas. \n- Seminario de Reflexión: Debate sobre la brecha entre la ley y la práctica. \n- Taller de integración: Tutoría para el proyecto final.",
+    "estrategiaAprendizaje": "- Mapeo de Contextos: Análisis de cuándo y cómo usar la lengua en escenarios reales. \n- Redacción Técnica: Elaboración de un informe sobre el derecho al acceso a la información bilingüe.",
+    "recursosEnsenanza": "- Constitución Política del Estado\n- Leyes de educación y lingüística vigentes\n- Glosarios técnicos especializados\n- Videos de prácticas interculturales",
+    "evaluacionFormativaActividad": "Debate: \"¿El bilingüismo es un gasto o una inversión?\"",
+    "evaluacionFormativaInstrumento": "Escala de actitud.",
+    "evaluacionFormativaEvidencia": "Ensayo reflexivo sobre el rol del economista frente a los derechos lingüísticos.",
+    "evaluacionSumativaActividad": "Examen escrito",
+    "evaluacionSumativaInstrumento": "Prueba objetiva",
+    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "momentos": [
+      {
+        "tipoMomento": "INTRODUCCION",
+        "nombreMomento": "1. INTRODUCCIÓN",
+        "actividadesDocente": "Activación: Análisis de un caso real: \"La barrera lingüística en el acceso a servicios financieros\". Debate sobre la brecha entre el derecho constitucional y la realidad del cliente quechua hablante.",
+        "duracionMin": 30
+      },
+      {
+        "tipoMomento": "RESULTADOS_LOGROS",
+        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
+        "actividadesDocente": "Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural en el ejercicio de su profesión.\nLogros:\n1. Reconoce la base legal del uso de lenguas originarias. \n2. Adapta su registro lingüístico según el contexto (público vs. privado). \n3. Integra saberes ancestrales en propuestas de desarrollo profesional.",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CONTENIDOS",
+        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
+        "actividadesDocente": "Lengua en contexto (Registros, situaciones y espacios) \nLengua y cultura (identidad, derechos y marco legal).",
+        "duracionMin": 0
+      },
+      {
+        "tipoMomento": "CUERPO",
+        "nombreMomento": "4. CUERPO DE CONTENIDOS",
+        "actividadesDocente": "1. Lengua en Contexto (La adecuación profesional): Se enseña la pragmática lingüística aplicada. El estudiante aprende a identificar que el registro (formal, informal, técnico) es un indicador de respeto y profesionalismo. Enfoque económico: En el mercado, se utiliza un registro basado en el Ayni (reciprocidad); en la oficina, se requiere un registro formal basado en la normativa legal. La capacidad de alternar (diglosia funcional) es una habilidad blanda vital.\n2. Lengua y Cultura (El marco jurídico-educativo): Dimensión Jurídica: Análisis de la Constitución Política del Estado Plurinacional de Bolivia y la Ley N° 269. Se discute la obligatoriedad de los servicios bilingües en entidades financieras y públicas para garantizar la equidad. \nDimensión Educativa: El quechua no como una reliquia, sino como un vehículo pedagógico. Se analiza cómo el uso de la lengua materna en la educación financiera aumenta la tasa de comprensión y reduce el riesgo de estafa o sobreendeudamiento en sectores vulnerables.",
+        "duracionMin": 180
+      },
+      {
+        "tipoMomento": "CONCLUSION",
+        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
+        "actividadesDocente": "Actividad: \"Propuesta de Plan de Atención al Cliente Bilingüe\". Los estudiantes entregan un documento técnico (resumen ejecutivo de 3 páginas) que contenga: Fundamentación legal (¿Por qué es obligatorio?); Análisis de contexto (¿En qué registros lingüísticos se comunicará?); Estrategia de implementación (¿Qué materiales o personal bilingüe se requiere?).\nInstrumento: Rúbrica de evaluación integral.\nCriterios: Dominio del marco normativo (40%), Pertinencia del registro lingüístico propuesto (30%), Viabilidad técnica del plan (30%).\nEvidencia: Documento final entregado digitalmente y breve defensa oral ante el \"directorio\" (docente y pares).",
+        "duracionMin": 60
+      }
+    ]
   }
-
-  if (list.length === 0) {
-    list.push({
-      nombreHoja: 'UA-1 Tema 1',
-      nombreDocente: 'Ing. Harold Iriarte',
-      fecha: '2026-02-09',
-      nombreAsignatura: asig,
-      carrera: car,
-      unidadTitulo: 'Unidad 1: Fundamentos',
-      contenidoTema: 'CONCEPTOS GENERALES',
-      elementoCompetencia: 'Analiza los fundamentos y saberes esenciales de la asignatura.',
-      objetivoSesion: 'Reconoce los fundamentos teórico-prácticos iniciales.',
-      logrosEsperados: '1. Identifica los conceptos clave.',
-      indicadoresLogro: '1. Aplica los conceptos en ejercicios.',
-      saberConceptual: '- Conceptos iniciales',
-      saberProcedimental: '- Identificación y análisis',
-      saberActitudinal: '- Participación activa',
-      estrategiaEnsenanza: '- Aprendizaje basado en indagación',
-      estrategiaAprendizaje: '- Observación y registro',
-      recursosEnsenanza: '- Guías de trabajo',
-      evaluacionFormativaActividad: 'Debate grupal',
-      evaluacionFormativaInstrumento: 'Lista de cotejo',
-      evaluacionFormativaEvidencia: 'Mapa mental',
-      evaluacionSumativaActividad: 'Examen escrito',
-      evaluacionSumativaInstrumento: 'Prueba objetiva',
-      evaluacionSumativaEvidencia: 'Examen resuelto',
-      momentos: [
-        { tipoMomento: 'INICIO', duracionMin: 25, actividadesDocente: 'Activación cognitiva y objetivos' },
-        { tipoMomento: 'DESARROLLO', duracionMin: 100, actividadesDocente: 'Desarrollo de contenidos y resolución guiada' },
-        { tipoMomento: 'CIERRE', duracionMin: 55, actividadesDocente: 'Síntesis y retroalimentación' }
-      ]
-    });
-  }
-
-  return list;
+];
+  return JSON.parse(JSON.stringify(CANONICAL_PLANES));
 };
 
 window.generateDefaultMatriz7 = function(mKey) {
