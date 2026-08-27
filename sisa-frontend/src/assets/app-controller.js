@@ -2777,80 +2777,127 @@ document.addEventListener('change', (e) => {
       return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
     };
 
-    // Synthesize & UNIFY linked groups (by groupLinkId or identical courseName + schedule + classType)
+    // Synthesize & GROUP BY MATERIA / ASIGNATURA (Course-Centric)
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
 
-    const unifiedMap = new Map();
+    // 1. Group by Course Name
+    const courseMap = new Map();
     rawList.forEach((g, idx) => {
-      let sessionKey = g.groupLinkId;
-      if (!sessionKey) {
-        const schedStr = (g.schedules && g.schedules.length > 0) 
-            ? g.schedules.map(s => `${s.day}-${s.startTime}-${s.endTime}`).join(';') 
-            : (g.schedule || 'sched-' + idx);
-        sessionKey = `${(g.courseName || g.name || 'mat').toUpperCase()}_${g.classType || 'T'}_${schedStr}_${g.code || 'G1'}`;
+      const rawCourseName = (g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada').trim().toUpperCase();
+      const courseKey = rawCourseName.replace(/\s+/g, ' ');
+
+      if (!courseMap.has(courseKey)) {
+        courseMap.set(courseKey, {
+          name: courseKey,
+          code: (g.code && g.code.includes('-') && !g.code.startsWith('P') && !g.code.startsWith('T')) 
+              ? g.code 
+              : (courseKey.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (courseMap.size + 1)).toUpperCase(),
+          carrerasSet: new Set(),
+          theoreticalSessions: new Map(), // key: groupLinkId or schedule
+          practicalSessions: new Map(),   // key: groupLinkId or schedule
+          allRawGroups: [],
+          campusesSet: new Set(),
+          classroomsSet: new Set()
+        });
       }
 
-      if (!unifiedMap.has(sessionKey)) {
-        unifiedMap.set(sessionKey, {
-          primaryGroup: g,
-          allGroups: [g],
-          carrerasSet: new Set([g.careerCode || docente.carreraPrincipal || 'CBA']),
-          courseName: g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada',
-          groupCode: g.name || g.code || 'G1',
-          classType: g.classType || 'TEORICA',
-          schedules: g.schedules || [],
-          classroom: g.classroom || g.schedules?.[0]?.classroom || 'Aula 201',
-          campus: g.campus || g.schedules?.[0]?.campus || 'Campus Central',
-          groupLinkId: g.groupLinkId || null
+      const cData = courseMap.get(courseKey);
+      cData.allRawGroups.push(g);
+      if (g.careerCode) cData.carrerasSet.add(g.careerCode);
+      if (g.campus) cData.campusesSet.add(g.campus);
+      if (g.classroom) cData.classroomsSet.add(g.classroom);
+
+      if (g.schedules && Array.isArray(g.schedules)) {
+        g.schedules.forEach(s => {
+          if (s.campus) cData.campusesSet.add(s.campus);
+          if (s.classroom) cData.classroomsSet.add(s.classroom);
         });
+      }
+
+      // Check if Theory or Practice
+      const classType = (g.classType || 'TA').toUpperCase();
+      const isPractice = classType.includes('PRACT') || classType.startsWith('P') || classType.includes('PL') || classType.includes('PS') || classType.includes('PR');
+
+      // Unique session key for physical class deduplication
+      const sessionKey = g.groupLinkId || `${g.code || 'G'}_${(g.schedules?.[0]?.day || 'D')}_${(g.schedules?.[0]?.startTime || 'T')}`;
+
+      const sessionObj = {
+        code: g.code || g.name || 'G1',
+        classType: classType,
+        classroom: g.classroom || g.schedules?.[0]?.classroom || 'Aula 201',
+        campus: g.campus || g.schedules?.[0]?.campus || 'Campus Central',
+        schedules: g.schedules || [],
+        careers: [g.careerCode || '']
+      };
+
+      if (isPractice) {
+        if (!cData.practicalSessions.has(sessionKey)) {
+          cData.practicalSessions.set(sessionKey, sessionObj);
+        } else {
+          cData.practicalSessions.get(sessionKey).careers.push(g.careerCode);
+        }
       } else {
-        const existing = unifiedMap.get(sessionKey);
-        existing.allGroups.push(g);
-        if (g.careerCode) existing.carrerasSet.add(g.careerCode);
-        if (!existing.classroom || existing.classroom === 'Aula 201') {
-          if (g.classroom) existing.classroom = g.classroom;
-          if (g.schedules?.[0]?.classroom) existing.classroom = g.schedules[0].classroom;
+        if (!cData.theoreticalSessions.has(sessionKey)) {
+          cData.theoreticalSessions.set(sessionKey, sessionObj);
+        } else {
+          cData.theoreticalSessions.get(sessionKey).careers.push(g.careerCode);
         }
       }
     });
 
-    let items = Array.from(unifiedMap.values()).map((u, idx) => {
-      const carrerasArr = Array.from(u.carrerasSet);
+    // 2. Build synthesized items for each unique Course
+    let items = Array.from(courseMap.values()).map((cData, idx) => {
+      const carrerasArr = Array.from(cData.carrerasSet);
       const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
-      const mainCarrera = carrerasResolved[0];
-      const allCarrerasNames = carrerasResolved.map(cr => cr.name).join(' + ');
-      const allCarrerasTags = carrerasResolved.map(cr => cr.tag).join(' • ');
+      const mainCarrera = carrerasResolved[0] || { name: 'Ing. de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' };
+      const allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
+      const allCarrerasTags = [...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ');
 
-      const cleanCode = (u.courseName ? u.courseName.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (idx + 1) : 'MAT-10' + (idx + 1)).toUpperCase();
+      const teoList = Array.from(cData.theoreticalSessions.values());
+      const pracList = Array.from(cData.practicalSessions.values());
+
+      const teoCodes = teoList.map(t => t.code).join(', ');
+      const pracCodes = pracList.map(p => p.code).join(', ');
+
+      const totalPhysicalSessions = teoList.length + pracList.length;
+      const totalHours = totalPhysicalSessions * 4;
+
+      const teoSummary = teoList.length > 0 
+        ? `${teoList.length} Grupo(s): ${teoCodes}` 
+        : 'Sin comisiones teóricas';
+
+      const pracSummary = pracList.length > 0 
+        ? `${pracList.length} Grupo(s): ${pracCodes}` 
+        : 'Sin comisiones prácticas';
+
+      const campusesStr = [...cData.campusesSet].join(', ') || 'Campus Central';
+      const classroomsStr = [...cData.classroomsSet].join(', ') || 'Aula / Lab';
 
       return {
-        key: 'mat_uni_' + idx,
-        group: u.primaryGroup,
-        allGroups: u.allGroups,
-        isLinked: u.allGroups.length > 1 || !!u.groupLinkId,
+        key: 'materia_cat_' + idx,
+        code: cData.code,
+        name: cData.name,
         carrerasResolved: carrerasResolved,
         mainCarrera: mainCarrera,
         allCarrerasNames: allCarrerasNames,
         allCarrerasTags: allCarrerasTags,
-        course: {
-          id: u.primaryGroup.syllabusCourseId || u.primaryGroup.id || 'mat-' + idx,
-          code: cleanCode,
-          name: u.courseName.toUpperCase(),
-          semester: 1,
-          careerCode: u.primaryGroup.careerCode
-        },
-        groupCode: u.groupCode,
-        classType: u.classType,
-        classroom: u.classroom,
-        campus: u.campus,
-        schedules: u.schedules
+        teoList: teoList,
+        pracList: pracList,
+        teoCodes: teoCodes,
+        pracCodes: pracCodes,
+        teoSummary: teoSummary,
+        pracSummary: pracSummary,
+        totalPhysicalSessions: totalPhysicalSessions,
+        totalHours: totalHours,
+        campusesStr: campusesStr,
+        classroomsStr: classroomsStr
       };
     });
 
-    // Calculate totals (Real physical hours & unique careers)
+    // Calculate totals across all subjects
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
-    const totalHours = items.length * 4;
+    const totalWeeklyHours = items.reduce((sum, it) => sum + it.totalHours, 0);
 
     // Update Profile Footer & Top Summary Badges
     const initials = docente.nombreCompleto
@@ -2868,66 +2915,51 @@ document.addEventListener('change', (e) => {
     if (profileNameEl) profileNameEl.textContent = docente.nombreCompleto;
 
     const profileInfoEl = document.getElementById('user-profile-info');
-    if (profileInfoEl) profileInfoEl.textContent = `${totalHours}h • ${uniqueCarreras.length} Carrera(s)`;
+    if (profileInfoEl) profileInfoEl.textContent = `${totalWeeklyHours}h • ${items.length} Materia(s)`;
 
     const summaryBadgeEl = document.getElementById('docente-summary-badge');
-    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalHours} Hrs / Semana • ${uniqueCarreras.length} Carrera(s) (${items.length} Cátedras Reales)`;
+    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalWeeklyHours} Hrs / Semana • ${items.length} Materias Asignadas (${uniqueCarreras.length} Carreras)`;
 
     const sidebarHoursEl = document.getElementById('sidebar-summary-hours');
-    if (sidebarHoursEl) sidebarHoursEl.textContent = `${uniqueCarreras.length} Carreras • ${totalHours}h`;
+    if (sidebarHoursEl) sidebarHoursEl.textContent = `${items.length} Materias • ${totalWeeklyHours}h`;
 
-    // 1. Build Top Horizontal Cards Grid
+    // 1. Build Top Horizontal Cards Grid (One per distinct subject)
     let cardsHtml = '';
     let sidebarHtml = `
       <div class="flex items-center justify-between px-2">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Cátedras Asignadas</span>
-        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Cátedras</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Asignaturas Asignadas</span>
+        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Materias</span>
       </div>
     `;
 
     items.forEach((item, idx) => {
-      const c = item.course;
-      const isTheory = (item.classType || 'TEORICA').toUpperCase().includes('TEOR') || (item.classType || '').toUpperCase().startsWith('T');
-      const isPractice = (item.classType || '').toUpperCase().includes('PRACT') || (item.classType || '').toUpperCase().startsWith('P');
-      const tipoLabel = isPractice ? 'Práctica (4h)' : (isTheory ? 'Teoría (4h)' : 'Integral (4h)');
-      const tipoBadgeClass = isPractice ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300';
       const mKey = item.key;
-
-      const classroomText = item.classroom || 'Aula / Lab';
-      const campusText = item.campus || 'Campus Central / Juan Pablo II';
-      const groupCodeText = item.groupCode || 'G1';
-
-      // Schedule string formatting
-      let scheduleText = '';
-      if (item.schedules && item.schedules.length > 0) {
-        scheduleText = item.schedules.map(s => `${s.day} ${s.startTime}-${s.endTime}`).join(' • ');
-      }
 
       // Register or update in canonical materiasData
       materiasData[mKey] = {
         asignacionId: idx + 1,
-        codigo: c.code || 'MAT-100',
-        nombre: c.name || 'MATERIA ASIGNADA',
+        codigo: item.code,
+        nombre: item.name,
         semestre: '1º',
         creditos: '12',
-        horasTeoricas: isTheory ? '4' : '2',
-        horasPracticas: isPractice ? '4' : '2',
+        horasTeoricas: item.teoList.length * 4 + '',
+        horasPracticas: item.pracList.length * 4 + '',
         carrera: item.allCarrerasNames,
-        carreraTag: item.isLinked ? `CARRERAS: ${item.allCarrerasTags} (GRUPO COMÚN)` : `CARRERA: ${item.mainCarrera.tag}`,
-        grupoTag: `Grupo ${groupCodeText} • ${isPractice ? 'Práctica / Lab' : 'Teoría'} • ${scheduleText || 'Horario regular'}`,
-        breadcrumb: `${c.code || 'MAT'} ${c.name || ''} (${groupCodeText})`,
-        title: `${c.code || 'MAT'} • ${c.name || 'MATERIA'}`,
-        meta: `<span><strong class="text-white">${isPractice ? 'Práctica' : 'Teoría'}</strong></span><span>•</span><span><strong class="text-white">4</strong> Horas / Semana</span><span>•</span><span>Campus: ${campusText} (${classroomText})</span><span>•</span><span>${scheduleText ? `<strong>${scheduleText}</strong>` : ''}</span>`,
-        caracterizacion: `Asignatura oficial ${c.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
-        macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${c.name}.`,
+        carreraTag: `CARRERAS: ${item.allCarrerasTags}`,
+        grupoTag: `Teoría: [${item.teoCodes || 'N/A'}] • Práctica: [${item.pracCodes || 'N/A'}]`,
+        breadcrumb: `${item.code} ${item.name}`,
+        title: `${item.code} • ${item.name}`,
+        meta: `<span><strong class="text-white">${item.totalPhysicalSessions}</strong> Grupos Asignados</span><span>•</span><span><strong class="text-white">${item.totalHours}</strong> Horas / Semana</span><span>•</span><span>Campus: ${item.campusesStr} (${item.classroomsStr})</span>`,
+        caracterizacion: `Asignatura oficial ${item.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
+        macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${item.name}.`,
         sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
         unidades: [
           {
             numeroUnidad: 1,
-            titulo: 'Fundamentos y Bases Conceptuales de ' + (c.name || 'la Materia'),
+            titulo: 'Fundamentos y Bases Conceptuales de ' + item.name,
             horasAcademicas: 20,
             temas: [
-              { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de ' + (c.name || 'la materia') + '.\n• Marco teórico y metodológico.' },
+              { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de ' + item.name + '.\n• Marco teórico y metodológico.' },
               { numeroTema: 2, titulo: 'Modelado y Aplicaciones Prácticas', contenido: '• Aplicación de competencias en casos reales.\n• Desarrollo guiado y resolución de problemas.' }
             ]
           },
@@ -2945,46 +2977,52 @@ document.addEventListener('change', (e) => {
           { tipo: 'COMPLEMENTARIA', citaApa: 'Ministerio de Educación. (2025). Normas Académicas de Educación Superior.', autor: 'Min. Educación', anio: 2025, titulo: 'Normas Académicas' }
         ],
         elementosCompetencia: [
-          `Modela problemas y soluciones en el ámbito de ${c.name}.`,
+          `Modela problemas y soluciones en el ámbito de ${item.name}.`,
           `Ejecuta procedimientos técnicos y metodologías estándar con rigor profesional.`
         ]
       };
 
       // HTML for Top Horizontal Card
-      const linkedBadgeHtml = item.isLinked ? `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 flex items-center gap-1">🔗 Grupo Común</span>` : '';
-
       cardsHtml += `
-        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
           <div class="flex items-start justify-between gap-1">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[140px]">${item.allCarrerasTags}</span>
-            <div class="flex items-center gap-1 flex-shrink-0">
-              ${linkedBadgeHtml}
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tipoBadgeClass}">${tipoLabel}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[200px]">${item.allCarrerasTags}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300">${item.totalPhysicalSessions} Grupos • ${item.totalHours}h</span>
+          </div>
+
+          <h4 class="text-sm font-bold text-slate-900 dark:text-white mt-2 truncate">${item.code} ${item.name}</h4>
+
+          <div class="mt-2.5 space-y-1 text-[11px] bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+              <span class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">📘 Teoría:</span>
+              <span class="truncate font-semibold">${item.teoSummary}</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+              <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">🧪 Práctica:</span>
+              <span class="truncate font-semibold">${item.pracSummary}</span>
             </div>
           </div>
-          <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 truncate">${c.code} ${c.name}</h4>
-          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Grupo ${groupCodeText} • ${classroomText}</div>
-          <div class="text-[10px] text-slate-400 mt-0.5 truncate">${scheduleText || campusText}</div>
+
           <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
-            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Validado</span>
-            <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="folder-check" class="w-3.5 h-3.5"></i> Carpeta Docente Única</span>
+            <span class="doc-card-action-badge text-brand-600 dark:text-brand-400 text-[10px] font-bold hover:underline flex items-center gap-1">Planificar Materia ➔</span>
           </div>
         </div>
       `;
 
       // HTML for Sidebar Button
       sidebarHtml += `
-        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2.5">
           <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
-            <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${c.code}</span>
-            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${tipoLabel}</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${item.code}</span>
+            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${item.totalPhysicalSessions} Grupos</span>
           </div>
           <div class="p-1">
-            <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
+            <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
               <div class="truncate">
-                <div class="truncate font-bold">${c.name}</div>
-                <div class="text-[10px] opacity-90">${groupCodeText} • ${classroomText}</div>
-                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate">${item.allCarrerasNames}</div>
+                <div class="truncate font-bold text-slate-900 dark:text-white">${item.name}</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${item.teoList.length} Teo • ${item.pracList.length} Prác (${item.totalHours}h)</div>
+                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.allCarrerasNames}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
