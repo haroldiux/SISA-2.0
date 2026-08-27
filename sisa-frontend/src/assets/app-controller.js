@@ -2777,6 +2777,55 @@ document.addEventListener('change', (e) => {
       return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
     };
 
+    // Official UNITEPC Curriculum Code Resolver
+    const resolveOfficialCourseCode = (courseName, careerCodes) => {
+      const cUpper = (courseName || '').toUpperCase();
+      const codes = [];
+
+      (careerCodes || []).forEach(cc => {
+        const cCode = (cc || '').toUpperCase();
+        if (cCode.includes('SIS')) {
+          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
+          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SIS-123');
+          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
+          else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
+          else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
+          else codes.push('SIS-100');
+        } else if (cCode.includes('ELE')) {
+          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
+          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
+          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
+          else codes.push('ELC-100');
+        } else if (cCode.includes('SON')) {
+          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
+          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SON-123');
+          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SON-213');
+          else codes.push('SON-100');
+        } else if (cCode.includes('IBI') || cCode.includes('BIO')) {
+          if (cUpper.includes('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
+          else if (cUpper.includes('INFORMÁTICA')) codes.push('IBI-124');
+          else if (cUpper.includes('PROGRAMACIÓN')) codes.push('IBI-211');
+          else codes.push('IBI-100');
+        } else if (cCode.includes('MED')) {
+          if (cUpper.includes('ANATOMÍA HUMANA I') && !cUpper.includes('II')) codes.push('MED-111');
+          else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
+          else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
+          else codes.push('MED-100');
+        } else if (cCode.includes('ADM')) {
+          if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
+          else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
+          else codes.push('ADM-100');
+        } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
+          if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
+          else if (cUpper.includes('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
+          else codes.push('CPEC10');
+        }
+      });
+
+      const uniqueCodes = [...new Set(codes)];
+      return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'MAT-100';
+    };
+
     // Synthesize & GROUP BY MATERIA / ASIGNATURA (Course-Centric)
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
@@ -2790,9 +2839,6 @@ document.addEventListener('change', (e) => {
       if (!courseMap.has(courseKey)) {
         courseMap.set(courseKey, {
           name: courseKey,
-          code: (g.code && g.code.includes('-') && !g.code.startsWith('P') && !g.code.startsWith('T')) 
-              ? g.code 
-              : (courseKey.split(' ').filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('') + '-10' + (courseMap.size + 1)).toUpperCase(),
           carrerasSet: new Set(),
           theoreticalSessions: new Map(), // key: groupLinkId or schedule
           practicalSessions: new Map(),   // key: groupLinkId or schedule
@@ -2854,6 +2900,9 @@ document.addEventListener('change', (e) => {
       const allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
       const allCarrerasTags = [...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ');
 
+      // Resolve official curriculum codes across all associated careers
+      const officialCode = resolveOfficialCourseCode(cData.name, carrerasArr);
+
       const teoList = Array.from(cData.theoreticalSessions.values());
       const pracList = Array.from(cData.practicalSessions.values());
 
@@ -2876,12 +2925,13 @@ document.addEventListener('change', (e) => {
 
       return {
         key: 'materia_cat_' + idx,
-        code: cData.code,
+        code: officialCode,
         name: cData.name,
         carrerasResolved: carrerasResolved,
         mainCarrera: mainCarrera,
         allCarrerasNames: allCarrerasNames,
         allCarrerasTags: allCarrerasTags,
+        carrerasCodes: carrerasArr,
         teoList: teoList,
         pracList: pracList,
         teoCodes: teoCodes,
