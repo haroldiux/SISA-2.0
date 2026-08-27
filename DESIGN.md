@@ -92,12 +92,15 @@ graph TB
 ### ADR-05: Apache POI Dynamic Row Shifting & Cloner Pattern for Official Office Documents
 - **Context**: Institutional documents (Word Programa Analítico, Excel PAC Matriz 7, Excel Plan de Clases) have rigid university headers, logos, borders, font typography, and official signature blocks that cannot be altered or distorted by dynamic table rows.
 - **Decision**: Implement `DocxTemplateCloner`, `XlsxTemplateCloner`, and `DynamicRowShifter`. Dynamic row injection in Excel uses `XSSFSheet.shiftRows(startRow, endRow, n, true, false)` with style/formula replication from a hidden prototype template row.
-- **Consequences**: Pixel-perfect institutional document generation compatible with MS Excel, Word, and LibreOffice, running in < 1500 ms with streaming response.
+### ADR-07: 5-Moment Pedagogical Breakdown with Configurable Classroom Durations & Zero Fixed-Cardinality Assumption
+- **Context**: Institutional Didactic Sequences require 5 distinct pedagogical moments (*1. Introducción*, *2. Resultados de Aprendizaje / Logros Esperados*, *3. Contenidos de la Clase*, *4. Cuerpo de Contenidos*, and *5. Conclusión o Cierre*). Different academic faculties and courses have varying credit hours, session totals, and empty optional fields (e.g. blank Tema fields in specific syllabi).
+- **Decision**: Provide dynamic duration calculations per moment, validate that total minutes equal the course session target, and dynamically parse all workbook sheets (`wb.getNumberOfSheets()`) without forcing artificial fallbacks onto blank cells.
+- **Consequences**: Exact fidelity to official university Excel formats and support for arbitrary subject structures.
 
-### ADR-06: Angular 15+ Modular Architecture with SEA `scu-` Conventions
-- **Context**: Modern desktop web application supporting 5 specialized role workflows with smooth navigation and design system compliance.
-- **Decision**: Modular architecture with `app-core`, `modules/public`, `modules/secure` (containing the 5 role views), and `shared`. Strict `scu-` prefix on all Angular artifacts. Design tokens from `DESIGN.md` (Brand Deep Violet `#6D28D9`, Surface `#FFFFFF` / `#1E293B`, Status palettes).
-- **Consequences**: Standardized developer experience, zero prefix collisions, full alignment with SEA conventions.
+### ADR-08: UNITEPC SEA Central Gateway Integration via OAuth2 M2M & Anti-Corruption Layer (ACL)
+- **Context**: SISA must synchronize master academic records (Sedes, Carreras, Pensum Courses, Groups, Teachers, Campuses, Classrooms, Students, and Active TimeFrames) from UNITEPC's centralized API Gateway (`https://gw-dev.unitepc.solutions`).
+- **Decision**: Implement `UnitepcGatewayClient` in Spring Boot 3.3 utilizing `RestClient` with thread-safe OAuth2 `client_credentials` JWT auto-renewal (300s TTL with 30s proactive renewal buffer). Expose internal proxy endpoints under `/api/v1/catalogo-academico/*` and mirror data into local PostgreSQL tables (`sea_sedes`, `sea_carreras`, `sea_materias`, `sea_grupos`) following the ACL and Cache-Aside patterns. Provide real-time `Live / Offline` connectivity indicators in the Angular UI via `UnitepcGatewayService`.
+- **Consequences**: Total operational resilience with offline fallback capabilities, zero direct coupling of domain models to external schemas, and live synchronization of official university academic catalogs.
 
 ---
 

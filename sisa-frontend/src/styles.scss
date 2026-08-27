@@ -1,13 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts and Custom Scrollbars */
+/* SEA Institutional Design System Tokens & Base */
+:root {
+  --sp-bg: #F8FAFC;
+  --sp-surface: #FFFFFF;
+  --sp-ink: #0F172A;
+  --sp-ink-muted: #64748B;
+  --sp-border: #E2E8F0;
+  --sp-brand: #4F46E5;
+}
+
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  background-color: #F8FAFC;
+  color: #0F172A;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+.dark body {
+  background-color: #0B0F19;
+  color: #F8FAFC;
+}
+
+/* SEA Institutional Input / Textarea Style */
+input[type="text"], input[type="date"], input[type="number"], textarea, select {
+  font-family: inherit;
+  transition: all 150ms ease-out;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+.dark input:focus, .dark textarea:focus, .dark select:focus {
+  outline: none;
+  border-color: #818CF8 !important;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25) !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -42,6 +78,7 @@ textarea {
   overflow-y: hidden !important;
   resize: none !important;
 }
+
 
 .hidden {
   display: none !important;

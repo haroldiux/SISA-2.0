@@ -1,92 +1,93 @@
-# Plan de Implementación: Sistema de Planificación, Gestión y Seguimiento Académico
+# Plan de Implementación: Sistema de Planificación, Gestión y Seguimiento Académico (SISA)
 
 ## 1. Pila Tecnológica del Sistema
 
 | Capa / Dominio | Tecnología / Herramienta | Rol en el Proyecto |
 | :--- | :--- | :--- |
-| **Frontend** | Angular (TypeScript), SCSS | Arquitectura modular basada en convenciones (`scu-`), Standalone Components / Módulos, Signals/RxJS para reactividad. |
-| **Backend** | Java con Spring Boot | API RESTful desacoplada, gestión transaccional de negocio y arquitectura limpia por capas. |
-| **Seguridad** | Spring Security, JWT, RBAC | Autenticación centralizada y control de acceso basado en roles jerárquicos multisede. |
+| **Frontend** | Angular (TypeScript), SCSS, PrimeNG, Tailwind | Arquitectura modular basada en convenciones (`scu-`), Standalone Components / Módulos, Signals/RxJS para reactividad y paleta institucional *unitepc-pro*. |
+| **Backend** | Java 21 con Spring Boot 3.3+ | API RESTful desacoplada, gestión transaccional de negocio, arquitectura limpia por capas y cliente Gateway OAuth2 M2M. |
+| **Seguridad** | Spring Security, JWT, RBAC | Autenticación centralizada y control de acceso basado en roles jerárquicos multisede (`DOCENTE`, `DIR_CARRERA`, `DIR_ACADEMICA`, `VICERRECTOR_SEDE`, `VICERRECTOR_NACIONAL`). |
+| **Integración Gateway SEA** | REST Client, OAuth2 M2M, Records DTO | Conexión con `gw-dev.unitepc.solutions` para sincronización de Sedes, Carreras, Pensum, Grupos, Aulas, Docentes y Estudiantes. |
 | **Motor Ingesta / Exportación** | Apache POI (`poi-ooxml`, `poi-scratchpad`) | Extracción, validación tabular y exportación sobre plantillas maestras Word (`.docx`) y Excel (`.xlsx`). |
-| **Base de Datos** | PostgreSQL | Almacenamiento relacional estructurado con soporte de columnas JSONB para esquemas flexibles de contenidos. |
+| **Base de Datos & Caché** | PostgreSQL 16 (Flyway) | Almacenamiento relacional estructurado, tablas espejo para catálogo académico SEA (patrón ACL/Cache-Aside) y columnas JSONB. |
 | **Almacenamiento de Archivos** | MinIO / S3 Compatible | Repositorio de almacenamiento seguro para documentos Office originales subidos y versiones generadas. |
-| **Diseño y Prototipado** | Figma, OpenDesign Tokens | Diseño UI/UX de alta fidelidad, tokens de color, espaciado y librería de componentes atómicos. |
 | **Infraestructura & Despliegue** | Docker, Docker Compose, Nginx, CI/CD | Contenerización de servicios, proxy inverso y automatización de despliegues. |
 
 ---
 
-## 2. Fases de Implementación
+## 2. Fases de Implementación con Integración del Gateway SEA
 
-### Fase 1: Arquitectura Base, Modelo de Datos y Seguridad Multirrol
-* **Definición del Modelo Entidad-Relación:**
-  * Estructuración de tablas maestras: Sedes, Campus, Carreras, Asignaturas, Gestiones Académicas, Aulas y Asignaciones Docentes.
-  * Modelado del núcleo curricular: Planificaciones, Unidades de Aprendizaje, Sesiones PAC/Cronograma y Planes de Clase por momentos didácticos.
-  * Modelado de supervisión y control: Auditorías In Situ, Actas de Verificación, Observaciones y Registro Histórico de Reincidencias.
+### Fase 1: Arquitectura Base, Modelo de Datos, Seguridad y Gateway Central SEA
+* **Cliente Gateway Institucional (OAuth 2.0 M2M):**
+  * Configuración en `application.yml` (`gateway-base-url: https://gw-dev.unitepc.solutions`, `client-id`, `client-secret`, `system-client-id`).
+  * Implementación de `UnitepcGatewayClient.java` con `RestClient` de Spring Boot 3.3 y auto-renovación thread-safe del Token JWT (expiración a 300s con margen de 30s).
+  * Creación de Records DTO en Java 21 (`TokenResponseDto`, `BranchOfficeDto`, `CareerDto`, `CourseDto`, `GroupItemDto`, `StudentItemDto`, `CampusDto`, `TimeFrameDto`).
+  * Creación del controlador proxy `/api/v1/catalogo-academico` (`CatalogoAcademicoController.java`).
+* **Modelo Entidad-Relación y Tablas Espejo (Flyway):**
+  * Migraciones Flyway para catálogo académico sincronizado: `sea_sedes`, `sea_carreras`, `sea_materias`, `sea_grupos` (Patrón Anti-Corruption Layer y Cache-Aside).
+  * Estructuración del núcleo curricular y supervisión: Planificaciones, Unidades, Sesiones PAC, Planes de Clase por 5 momentos didácticos, Auditorías In Situ y Actas.
 * **Seguridad y Control de Acceso (Spring Security):**
-  * Configuración de autenticación por tokens JWT sin estado (*stateless*).
-  * Implementación de RBAC estricto con los 5 niveles de acceso: `DOCENTE`, `DIR_CARRERA`, `DIR_ACADEMICA`, `VICERRECTOR_SEDE` y `VICERRECTOR_NACIONAL`.
-  * Filtros de visibilidad por contexto institucional (filtro transversal por Sede y Carrera según el rol activo).
-* **Setup del Entorno Frontend Angular:**
-  * Estructuración modular siguiendo las convenciones institucionales: directorios separados para `commands/`, `constants/`, `enums/`, `http/`, `services/` y `components/` con selector prefijado (`scu-`).
-  * Integración de Design Tokens de Figma (paleta púrpura/índigo, estados semánticos, espaciado base de 8px y tipografía).
+  * Configuración de autenticación JWT y RBAC con los 5 niveles jerárquicos multisede.
+  * Filtros de visibilidad transversal por Sede y Carrera según el rol activo.
+* **Setup del Frontend Angular & Insignia de Conexión Live:**
+  * Creación de `UnitepcGatewayService` en Angular con Signals para monitoreo de estado de conexión (`seaStatus: 'online' | 'offline'`).
+  * Integración del badge institucional **Live / Offline** en el Sidebar/Header y paleta institucional *unitepc-pro* (Púrpura `#7B47B8`, Teal `#1F9FAD`).
 
 ---
 
 ### Fase 2: Motor de Ingesta, Procesamiento y Exportación Office (Word & Excel)
 * **Módulo de Lectura y Extracción de Datos (Apache POI):**
-  * **Parser de PAC y Cronograma (`.xlsx`):** Extracción de metadatos de cabecera, justificación, competencias globales/específicas y lectura iterativa de la matriz dinámica de 20 semanas y más de 30 sesiones (temas, saberes conceptuales, procedimentales, actitudinales, criterios e instrumentos).
-  * **Parser de Plan de Clases (`.xlsx`):** Extracción multi-hoja (`UA-X Tema Y`) de resultados de aprendizaje, logros, indicadores, estrategias didácticas y desglose de la secuencia didáctica por momentos (*Introducción, Logros, Contenidos, Cuerpo y Cierre* con sus duraciones).
+  * **Parser de PAC y Cronograma (`.xlsx`):** Extracción de metadatos de cabecera, competencias y lectura iterativa con anclas semánticas (`SEC_7`) de la matriz de sesiones (resiliente a cualquier número de semanas o sesiones).
+  * **Parser de Plan de Clases (`.xlsx`):** Extracción dinámica multi-hoja (`UA-X Tema Y`) de resultados de aprendizaje, saberes (conceptual, procedimental, actitudinal), estrategias didácticas y desglose por 5 momentos (*Introducción, Logros, Contenidos, Cuerpo y Cierre* con minutos configurables y respeto a celdas vacías).
   * **Parser de Programa Analítico (`.docx`):** Extracción de tablas de identificación, unidades temáticas jerárquicas y bibliografía básica/complementaria.
 * **Motor de Validación de Integridad:**
-  * Algoritmo de verificación de consistencia: coherencia entre la cantidad de temas del Programa Analítico vs. el PAC y las sesiones del Plan de Clases.
-  * Detección automática de celdas vacías críticas, inconsistencias en carga horaria y formato de columnas.
+  * Algoritmo de coherencia: validación cruzada entre temas del Programa Analítico vs. PAC vs. Planes de Clase.
+  * Vinculación con los códigos oficiales del pensum (`syllabusCourseId`) obtenidos del Gateway SEA.
 * **Motor de Exportación Fiel a Plantilla (*Template Cloner*):**
-  * Generación de archivos descargables en `.docx` y `.xlsx` inyectando la información persistida en base de datos sobre los formatos oficiales universitarios, preservando estilos y tablas intactas.
+  * Inyección de datos persistidos en plantillas maestras `.docx` y `.xlsx` preservando diseño original institucional.
 
 ---
 
 ### Fase 3: Módulos de Operación Académica (Docente y Dirección de Carrera)
 * **Módulo Docente (`scu-docente-planning`):**
-  * Interfaz de selección de materia asignada y gestión académica activa.
-  * Hub de carga de los 3 documentos oficiales mediante áreas *drag-and-drop*.
-  * Visor de previsualización inmediata post-procesamiento con indicadores de error/alerta por fila.
-  * Editor tabular de contingencia para modificar datos extraídos directamente en la plataforma antes del envío oficial.
+  * Consumo directo de `timeFrames/active` para fijar la gestión académica vigente (ej. `2-2026`).
+  * Carga dinámica de materias y grupos asignados mediante `courses` y `groups` del Gateway.
+  * Hub de carga de los 3 documentos oficiales mediante *drag-and-drop* y editor tabular reactivo de contingencia.
 * **Módulo de Dirección de Carrera (`scu-career-oversight`):**
-  * Tablero de control de asignaturas agrupadas por semestres (1° a 10° semestre).
-  * Matriz semafórica de avance documental (*Borrador, En Revisión, Observado, Aprobado*).
-  * Visor de validación comparativa y consolidada de la materia.
-  * Flujo de retroalimentación: marcado de observaciones puntuales al docente o botón de aprobación definitiva de la planificación de la carrera.
+  * Generación de la malla curricular semestral (1° a 10° semestre) a partir de `courses` del Gateway.
+  * Visualización de docentes titulares asignados a cada grupo (`groups`) con semáforo de entrega (*Borrador, En Revisión, Observado, Aprobado*).
+  * Flujo de observaciones y aprobación definitiva de la planificación de la carrera.
 
 ---
 
 ### Fase 4: Módulo de Auditoría In Situ (Dirección Académica)
-* **Configuración del Mapeo Físico y Horario:**
-  * Catálogo de sedes, campus (ej. Campus Juan Pablo II), bloques, aulas y franjas horarias por turno.
-  * Motor de cruce en tiempo real: consulta instantánea de qué materia, qué docente y qué tema del Plan de Clases/PAC corresponde impartir en un aula y hora exacta.
+* **Cruce en Tiempo Real con Infraestructura y Nómina Oficial:**
+  * Consumo de `campuses` y `groups` (aula, horario, campus) para mapeo físico en tiempo real.
+  * Consumo de `students/byGroup` para descargar la nómina oficial de alumnos inscritos al auditar un aula.
 * **Módulo de Auditoría en Campo (`scu-academic-audit`):**
-  * Vista optimizada para tablets/dispositivos móviles para el Director Académico.
-  * Formulario ágil de verificación in situ: presencia docente, correspondencia del tema dictado con el planificado, recursos didácticos utilizados y registro de asistencia aproximada.
-  * Emisión inmediata de Acta Digital de Auditoría con copia automática y notificación de incidentes a Vicerrectorado Sede.
+  * Vista adaptada para tablets del Director Académico: selección de Campus -> Bloque -> Aula.
+  * Cruce automático: muestra qué materia, docente y tema planificado corresponde en ese minuto exacto.
+  * Formulario ágil de verificación in situ, control de asistencia con nómina y emisión inmediata de Acta Digital de Auditoría.
 
 ---
 
 ### Fase 5: Módulos Estratégicos y Toma de Decisiones (Vicerrectorados)
 * **Módulo de Vicerrectorado Sede (`scu-regional-analytics`):**
-  * Tablero regional de métricas: % de cumplimiento de entrega por carreras de la sede, tiempos promedio de validación y volumen de auditorías realizadas.
-  * Matriz de Control de Reincidencias: historial de atrasos, incumplimientos de avance curricular y llamadas de atención por docente.
-  * Gestor de Planes de Acción: módulo para asentar resoluciones institucionales, seguimiento disciplinario e informes para procesos de recontratación o desvinculación.
+  * Agregación de indicadores de cumplimiento por carreras de la sede (`careers`).
+  * Matriz de Control de Reincidencias, historial de atrasos y gestor de Planes de Acción disciplinarios.
 * **Módulo de Vicerrectorado Nacional (`scu-executive-dashboard`):**
-  * Macro-tablero analítico multisede (Cochabamba, La Paz, El Alto, Cobija).
-  * Filtros multidimensionales en tiempo real para análisis comparativo entre facultades y carreras a nivel país.
-  * Generador de reportes ejecutivos consolidados con exportación automatizada a PDF y matrices Excel.
+  * Macro-tablero analítico multisede consolidado con datos de `branchOffices` (Cochabamba, La Paz, El Alto, Cobija, Santa Cruz).
+  * Filtros multidimensionales en tiempo real y exportación de reportes ejecutivos consolidados a PDF y Excel.
 
 ---
 
-### Fase 6: Calidad (QA), Pruebas de Carga y Despliegue
-* **Aseguramiento de Calidad:**
-  * Pruebas unitarias y de integración para los motores de parseo de Apache POI contra múltiples variantes de archivos Office reales.
-  * Pruebas End-to-End (E2E) para verificar el ciclo de vida completo: Carga Docente -> Aprobación de Carrera -> Auditoría In Situ -> Impacto en Reporte Nacional.
-* **Optimización y Despliegue:**
-  * Empaquetado en contenedores Docker independientes (Frontend Nginx, Backend Spring Boot, Base de Datos PostgreSQL y Storage MinIO).
-  * Configuración de CI/CD para despliegue automatizado en entornos de *Staging* y *Producción*.
-  * Pruebas de estrés y procesamiento asíncrono para cargas masivas de archivos en periodos pico de inicio de semestre.
+### Fase 6: Aseguramiento de Calidad (QA), Pruebas de Resiliencia y Despliegue
+* **Pruebas de Integración y Resiliencia del Gateway:**
+  * Pruebas unitarias y de integración de `UnitepcGatewayClient` con WireMock / MockWebServer.
+  * Validación del ciclo de vida del token M2M (renovación automática antes de expiración).
+  * Pruebas de resiliencia Offline: verificación de que el sistema continúa operando con la caché de PostgreSQL ante micro-cortes del Gateway externo.
+* **Pruebas de Ingesta Office:**
+  * Pruebas automatizadas con múltiples variantes de archivos Office reales.
+* **Empaquetado y Despliegue:**
+  * Contenedores Docker (Frontend Nginx, Backend Spring Boot, PostgreSQL 16 y MinIO).
+  * Pipelines de CI/CD para Staging y Producción.

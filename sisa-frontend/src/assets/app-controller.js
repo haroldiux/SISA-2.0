@@ -383,14 +383,25 @@
       activeAsignacionId = data.asignacionId || 1;
       
       // Update Main Subject Cards Highlight
+      const activeCardClasses = ['border-2', 'border-brand-600', 'bg-brand-50/60', 'dark:bg-brand-950/40', 'ring-4', 'ring-brand-500/20', 'shadow-lg', 'scale-[1.02]'];
+      const inactiveCardClasses = ['border', 'border-slate-200', 'dark:border-slate-800', 'bg-white', 'dark:bg-slate-900', 'shadow-sm', 'hover:border-brand-400', 'dark:hover:border-brand-500', 'hover:shadow-md'];
+
       document.querySelectorAll('.doc-materia-card').forEach(card => {
-        card.classList.remove('border-2', 'border-brand-600', 'shadow-md');
-        card.classList.add('border', 'border-slate-200', 'dark:border-slate-800', 'shadow-sm');
+        card.classList.remove(...activeCardClasses);
+        card.classList.add(...inactiveCardClasses);
+        const badge = card.querySelector('.doc-card-action-badge');
+        if (badge) {
+          badge.outerHTML = '<span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>';
+        }
       });
       const selectedCard = document.getElementById('doc-materia-card-' + activeMateriaKey);
       if (selectedCard) {
-        selectedCard.classList.remove('border', 'border-slate-200', 'dark:border-slate-800', 'shadow-sm');
-        selectedCard.classList.add('border-2', 'border-brand-600', 'shadow-md');
+        selectedCard.classList.remove(...inactiveCardClasses);
+        selectedCard.classList.add(...activeCardClasses);
+        const badge = selectedCard.querySelector('.doc-card-action-badge');
+        if (badge) {
+          badge.outerHTML = '<span class="doc-card-action-badge px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-600 text-white shadow-sm flex items-center gap-1.5 ring-2 ring-brand-500/30"><span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Activa</span>';
+        }
       }
 
       // Update Sidebar Subject Buttons Highlight
