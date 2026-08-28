@@ -933,121 +933,191 @@
         `;
       }
 
-      // 5. PROGRAMA ANALÍTICO (PA) - Exact format of Programa Analitico PROGRAMACION III.docx
+      // 5. PROGRAMA ANALÍTICO (PA) - Exact format of Programa Analitico PROGRAMACION III.docx (Official 3-Page Document)
       if (selectedSections.includes('pa')) {
-        const unidades = activeAnaliticoUnidades || data.unidades || [];
-        const u1 = unidades[0] || { titulo: 'Fundamentos de Desarrollo y Algoritmos', temas: [] };
-        const u2 = unidades[1] || { titulo: 'Frameworks Frontend y Arquitectura UI', temas: [] };
-        const u3 = unidades[2] || { titulo: 'Frameworks Backend y Servicios API', temas: [] };
-        const u4 = unidades[3] || { titulo: 'Ecosistema, DevOps y Herramientas Modernas', temas: [] };
-
-        const renderUnitTopics = (u, defaultTheme) => {
-          if (!u || !u.temas || u.temas.length === 0) {
-            return `
-              <div style="margin-bottom: 6px;">
-                <strong style="color: #0284c7; font-size: 8.5pt;">TEMA 1: ${defaultTheme || 'Contenidos de Especialidad'}</strong>
-                <div style="font-size: 8pt; color: #333; line-height: 1.4; margin-top: 2px;">
-                  - Conceptos avanzados y patrones de diseño.<br>
-                  - Implementación práctica y resolución de problemas guiados.<br>
-                  - Evaluación de rendimiento y buenas prácticas institucionales.
-                </div>
-              </div>
-            `;
-          }
-          return u.temas.map(t => `
-            <div style="margin-bottom: 6px;">
-              <strong style="color: #0284c7; font-size: 8.5pt;">TEMA ${t.numeroTema || 1}: ${t.titulo}</strong>
-              <div style="white-space: pre-line; color: #333; font-size: 8pt; line-height: 1.4; margin-top: 2px;">${t.contenido || ''}</div>
+        const headerComponent = `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 14px; font-family: 'Times New Roman', Times, serif;">
+            <div style="font-size: 8.5pt; font-weight: bold; line-height: 1.3;">
+              <div>UNIVERSIDAD TÉCNICA PRIVADA COSMOS</div>
+              <div>“UNITEPC”</div>
+              <div>CARRERA: ${displayCareerName.toUpperCase()}</div>
             </div>
-          `).join('');
-        };
-
-        const biblio = data.bibliografia || [];
-        const biblioBasica = biblio.filter(b => b.tipo === 'BASICA').map((b, i) => `<p style="margin: 2px 0; font-size: 8pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || `
-          <p style="margin: 2px 0; font-size: 8pt;">1. Ramalho, Luciano, "Fluent Python: Clear, Concise, and Effective Programming", O'Reilly Media, 2ª Edición, 2022.</p>
-          <p style="margin: 2px 0; font-size: 8pt;">2. Macrae, Callum, "Vue.js: Up and Running", O'Reilly Media, 2ª Edición, 2023.</p>
-          <p style="margin: 2px 0; font-size: 8pt;">3. Stauffer, Matt, "Laravel: Up & Running", O'Reilly Media, 3ª Edición, 2023.</p>
-        `;
-        const biblioComp = biblio.filter(b => b.tipo !== 'BASICA').map((b, i) => `<p style="margin: 2px 0; font-size: 8pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || `
-          <p style="margin: 2px 0; font-size: 8pt;">1. Lockhart, Josh, "Modern PHP: New Features and Good Practices", O'Reilly Media, 2015.</p>
-          <p style="margin: 2px 0; font-size: 8pt;">2. Grinberg, Miguel, "Flask Web Development", O'Reilly Media, 2ª Edición, 2018.</p>
-          <p style="margin: 2px 0; font-size: 8pt;">3. Recursos Online: Vue.js & Laravel Official Docs, Python.org, Postman Learning Center.</p>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="text-align: center; border-right: 1px solid #999; padding-right: 8px;">
+                <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
+                <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px;">UNIVERSIDAD PRIVADA</div>
+              </div>
+              <div style="font-size: 6.5pt; font-weight: bold; color: #0284c7; text-align: center; border: 1px solid #0284c7; padding: 2px 4px; border-radius: 2px;">
+                SISTEMAS<br>UNITEPC
+              </div>
+            </div>
+          </div>
         `;
 
+        // PAGE 1: Portada técnica, Unidades 1 y 2
         docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
-            <div style="text-align: center; font-weight: bold; font-size: 13pt; margin-bottom: 8px; letter-spacing: 0.5px;">
-              PROGRAMA ANALÍTICO
-            </div>
+          <div class="print-page" style="padding: 15mm 15mm 12mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 9pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 260mm;">
+            <div>
+              ${headerComponent}
 
-            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8pt; margin-bottom: 10px;">
-              <thead>
-                <tr style="background: #f1f5f9; font-weight: bold; border-bottom: 1px solid #000;">
-                  <th style="border: 1px solid #000; padding: 4px;">CÓDIGO</th>
-                  <th style="border: 1px solid #000; padding: 4px;">ASIGNATURA</th>
-                  <th style="border: 1px solid #000; padding: 4px;">CRÉDITOS</th>
-                  <th style="border: 1px solid #000; padding: 4px;">HRS./SEMESTRE</th>
-                  <th style="border: 1px solid #000; padding: 4px;">PROGRAMA</th>
-                  <th style="border: 1px solid #000; padding: 4px;">SEMESTRE</th>
-                  <th style="border: 1px solid #000; padding: 4px;">NÚMERO DE HOJAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${data.nombre}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '8'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">120</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${targetCareerCode.replace('CAR', '')}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '1º SEM'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">2</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
-              <div>
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
-                  UNIDAD 1: ${u1.titulo}
-                </div>
-                <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u1, 'Fundamentos de Desarrollo')}
-                </div>
-
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
-                  UNIDAD 2: ${u2.titulo}
-                </div>
-                <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u2, 'Arquitectura y Componentes')}
-                </div>
-
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
-                  UNIDAD 3: ${u3.titulo}
-                </div>
-                <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u3, 'Backend y Persistencia')}
-                </div>
+              <div style="text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 12px; letter-spacing: 0.5px;">
+                PROGRAMA ANALITICO
               </div>
 
-              <div>
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
-                  UNIDAD 4: ${u4.titulo}
-                </div>
-                <div style="margin-bottom: 12px; padding-left: 4px;">
-                  ${renderUnitTopics(u4, 'Herramientas y Ecosistema Moderno')}
-                </div>
+              <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; text-align: center; font-size: 7.5pt; margin-bottom: 14px;">
+                <thead>
+                  <tr style="font-weight: bold;">
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">CÓDIGO</th>
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">SEMESTRE</th>
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 26%;">ASIGNATURA</th>
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">CRÉDITOS</th>
+                    <th colspan="2" style="border: 1px solid #000; padding: 2px; width: 16%;">HORAS</th>
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 14%;">HRS. SEMESTRE</th>
+                    <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">N° HOJAS</th>
+                  </tr>
+                  <tr style="font-weight: bold;">
+                    <th style="border: 1px solid #000; padding: 2px; font-size: 6.5pt;">TEORICAS</th>
+                    <th style="border: 1px solid #000; padding: 2px; font-size: 6.5pt;">PRACTICAS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '3º'}</td>
+                    <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${data.nombre}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '12'}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">${data.horasTeoricas || '2'}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">${data.horasPracticas || '4'}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">${data.horasTotal || '120'}</td>
+                    <td style="border: 1px solid #000; padding: 4px;">3</td>
+                  </tr>
+                </tbody>
+              </table>
 
-                <div style="border-top: 1.5px solid #0284c7; padding-top: 6px; margin-bottom: 8px;">
-                  <strong style="font-size: 9pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA PRINCIPAL:</strong>
-                  ${biblioBasica}
-                </div>
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px;">
+                UNIDAD 1: Arquitectura de Entidades y Modelado de Sistemas
+              </div>
 
-                <div style="border-top: 1.5px solid #0284c7; padding-top: 6px;">
-                  <strong style="font-size: 9pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA COMPLEMENTARIA / RECURSOS ADICIONALES:</strong>
-                  ${biblioComp}
-                </div>
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px;">
+                Tema 1: Anatomía de la Entidad y el Objeto
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>El objeto como unidad fundamental de lógica y estado.</div>
+                <div>Atributos de identidad y comportamientos de acción.</div>
+                <div>Ciclo de vida: de la instanciación a la recolección de memoria.</div>
+                <div>El "Game Loop" conceptual: métodos de actualización y renderizado de estado.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 8px; margin-bottom: 2px;">
+                Tema 2: Jerarquías de Especialización y Contratos
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>Herencia: creación de linajes de entidades para la reutilización de lógica.</div>
+                <div>Interfaces y Clases Abstractas: definición de contratos de comportamiento.</div>
+                <div>Polimorfismo: capacidad de respuesta única ante señales compartidas.</div>
+                <div>Composición sobre herencia: ensamblaje de habilidades dinámicas en un objeto.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px;">
+                UNIDAD 2: Robustez y Blindaje de la Lógica de Negocio
+              </div>
+
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px;">
+                Tema 3: Encapsulamiento y Gestión de Estados Críticos
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>Visibilidad y protección: niveles de acceso para la integridad del sistema.</div>
+                <div>Validación de estados internos y prevención de corrupción de datos.</div>
+                <div>Manejo de excepciones: control de flujos inesperados en sistemas en tiempo real.</div>
               </div>
             </div>
+
+            <div style="text-align: center; font-size: 9pt; margin-top: 15px;">1</div>
+          </div>
+        `;
+
+        // PAGE 2: Unidades 3 y 4, Inicio Bibliografía
+        docHtml += `
+          <div class="print-page" style="padding: 15mm 15mm 12mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 9pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 260mm;">
+            <div>
+              ${headerComponent}
+
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5; margin-bottom: 8px;">
+                <div>Estrategias de recuperación y estabilidad ante fallos de lógica.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 4px;">
+                UNIDAD 3: Sistemas de Interacción y Despacho de Eventos
+              </div>
+
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px;">
+                Tema 4: Representación Visual de Objetos y Entornos
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>Mapeo de objetos lógicos a componentes visuales.</div>
+                <div>Jerarquía de contenedores y orquestación de elementos en pantalla.</div>
+                <div>Estética y retroalimentación: el objeto como receptor de estilos y temas.</div>
+                <div>Layouts dinámicos: el comportamiento espacial de las colecciones de objetos.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 8px; margin-bottom: 2px;">
+                Tema 5: Dinámicas de Interacción y Flujo de Señales
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>El modelo de eventos: suscripción y notificación entre objetos.</div>
+                <div>Delegados y manejadores: la respuesta del objeto a estímulos externos.</div>
+                <div>Gestión de periféricos: traducción de entradas físicas a acciones de objeto.</div>
+                <div>Sincronización de hilos y actualización de la vista desde el modelo.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px;">
+                UNIDAD 4: Gestión y Despliegue de Soluciones Integrales
+              </div>
+
+              <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px;">
+                Tema 6: Ingeniería de Software y Construcción del Mundo
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>Análisis de requerimientos y diseño de diagramas de interacción.</div>
+                <div>Patrones de diseño fundamentales (Singleton, Factory, Observer).</div>
+                <div>Control de versiones y flujos de trabajo en equipos técnicos.</div>
+                <div>Pruebas de integración, depuración y optimización de rendimiento final.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 14px; margin-bottom: 6px;">
+                BIBLIOGRAFIA. -
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.5;">
+                <div>• Joyanes Aguilar, L. (2021). <em>Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos</em> (6ª ed.). McGraw-Hill.</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; font-size: 9pt; margin-top: 15px;">2</div>
+          </div>
+        `;
+
+        // PAGE 3: Bibliografía Principal (Continuación) y Bibliografía Complementaria
+        docHtml += `
+          <div class="print-page" style="padding: 15mm 15mm 12mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 9pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 260mm;">
+            <div>
+              ${headerComponent}
+
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.6; margin-bottom: 12px;">
+                <div>• García Llinás, L. F. (2022). <em>Todo sobre Patrones de Diseño: Un enfoque práctico orientado a objetos</em>. Ediciones de la U.</div>
+                <div style="margin-top: 4px;">• Vaughan, J. (2023). <em>Object-Oriented Game Development: Real-World Design and Architecture</em>. CRC Press.</div>
+              </div>
+
+              <div style="font-weight: bold; font-size: 9.5pt; margin-top: 14px; margin-bottom: 6px;">
+                BIBLIOGRAFIA COMPLEMENTARIA. -
+              </div>
+              <div style="padding-left: 20px; font-size: 8.5pt; line-height: 1.6;">
+                <div>• Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega.</div>
+                <div style="margin-top: 4px;">• Kurniawan, B. (2022). <em>User Interface Design for Developers</em>. Packt Publishing.</div>
+                <div style="margin-top: 4px;">• García, A. M. (2024). <em>Ingeniería de Software: Metodologías Ágiles y Control de Versiones en la Práctica</em>. Marcombo.</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; font-size: 9pt; margin-top: 15px;">3</div>
           </div>
         `;
       }
