@@ -2762,86 +2762,90 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  // Helper: Carrera name resolution
+  window.resolveCarreraInfo = function(code, careerCode) {
+    const cUpper = (careerCode || '').toUpperCase();
+    const codeUpper = (code || '').toUpperCase();
+    if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT') || codeUpper.includes('INFORMÁTICA MÉDICA')) {
+      return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
+    }
+    if (cUpper.includes('ADM') || cUpper.includes('CCP') || cUpper.includes('COM') || cUpper.includes('FAC') || codeUpper.includes('ADMIN') || codeUpper.includes('FINANC') || codeUpper.includes('CONTAB')) {
+      return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
+    }
+    if (cUpper.includes('ELE') || codeUpper.startsWith('ELE')) {
+      return { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' };
+    }
+    if (cUpper.includes('SON') || codeUpper.startsWith('SON')) {
+      return { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' };
+    }
+    if (cUpper.includes('IBI') || codeUpper.startsWith('IBI') || cUpper.includes('BIO')) {
+      return { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' };
+    }
+    if (cUpper.includes('IND') || codeUpper.startsWith('IND')) {
+      return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', color: 'amber' };
+    }
+    if (cUpper.includes('VET') || codeUpper.startsWith('VET')) {
+      return { name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' };
+    }
+    if (cUpper.includes('ENL') || codeUpper.startsWith('ENF')) {
+      return { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', color: 'pink' };
+    }
+    return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
+  };
+
+  // Official UNITEPC Curriculum Code Resolver
+  window.resolveOfficialCourseCode = function(courseName, careerCodes) {
+    const cUpper = (courseName || '').toUpperCase();
+    const codes = [];
+
+    (careerCodes || []).forEach(cc => {
+      const cCode = (cc || '').toUpperCase();
+      if (cCode.includes('SIS')) {
+        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
+        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SIS-123');
+        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
+        else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
+        else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
+        else codes.push('SIS-100');
+      } else if (cCode.includes('ELE')) {
+        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
+        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
+        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
+        else codes.push('ELC-100');
+      } else if (cCode.includes('SON')) {
+        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
+        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SON-123');
+        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SON-213');
+        else codes.push('SON-100');
+      } else if (cCode.includes('IBI') || cCode.includes('BIO')) {
+        if (cUpper.includes('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
+        else if (cUpper.includes('INFORMÁTICA')) codes.push('IBI-124');
+        else if (cUpper.includes('PROGRAMACIÓN')) codes.push('IBI-211');
+        else codes.push('IBI-100');
+      } else if (cCode.includes('MED')) {
+        if (cUpper.includes('ANATOMÍA HUMANA I') && !cUpper.includes('II')) codes.push('MED-111');
+        else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
+        else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
+        else codes.push('MED-100');
+      } else if (cCode.includes('ADM')) {
+        if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
+        else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
+        else codes.push('ADM-100');
+      } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
+        if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
+        else if (cUpper.includes('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
+        else codes.push('CPEC10');
+      }
+    });
+
+    const uniqueCodes = [...new Set(codes)];
+    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'MAT-100';
+  };
+
   window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
     const sidebarContainer = document.getElementById('sidebar-materias-container');
     const cardsGrid = document.getElementById('doc-materia-cards-grid');
     if (!docente) return;
-
-    // Helper: Carrera name resolution
-    const resolveCarreraInfo = (code, careerCode) => {
-      const cUpper = (careerCode || '').toUpperCase();
-      const codeUpper = (code || '').toUpperCase();
-      if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT') || codeUpper.includes('INFORMÁTICA MÉDICA')) {
-        return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
-      }
-      if (cUpper.includes('ADM') || cUpper.includes('CCP') || cUpper.includes('COM') || cUpper.includes('FAC') || codeUpper.includes('ADMIN') || codeUpper.includes('FINANC') || codeUpper.includes('CONTAB')) {
-        return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
-      }
-      if (cUpper.includes('ELE') || codeUpper.startsWith('ELE')) {
-        return { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' };
-      }
-      if (cUpper.includes('SON') || codeUpper.startsWith('SON')) {
-        return { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' };
-      }
-      if (cUpper.includes('IBI') || codeUpper.startsWith('IBI') || cUpper.includes('BIO')) {
-        return { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' };
-      }
-      if (cUpper.includes('IND') || codeUpper.startsWith('IND')) {
-        return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', color: 'amber' };
-      }
-      if (cUpper.includes('VET') || codeUpper.startsWith('VET')) {
-        return { name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' };
-      }
-      if (cUpper.includes('ENL') || codeUpper.startsWith('ENF')) {
-        return { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', color: 'pink' };
-      }
-      return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
-    };
-
-    // Official UNITEPC Curriculum Code Resolver
-    const resolveOfficialCourseCode = (courseName, careerCodes) => {
-      const cUpper = (courseName || '').toUpperCase();
-      const codes = [];
-
-      (careerCodes || []).forEach(cc => {
-        const cCode = (cc || '').toUpperCase();
-        if (cCode.includes('SIS')) {
-          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
-          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SIS-123');
-          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
-          else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
-          else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
-          else codes.push('SIS-100');
-        } else if (cCode.includes('ELE')) {
-          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
-          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
-          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
-          else codes.push('ELC-100');
-        } else if (cCode.includes('SON')) {
-          if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
-          else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SON-123');
-          else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SON-213');
-          else codes.push('SON-100');
-        } else if (cCode.includes('IBI') || cCode.includes('BIO')) {
-          if (cUpper.includes('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
-          else if (cUpper.includes('INFORMÁTICA')) codes.push('IBI-124');
-          else if (cUpper.includes('PROGRAMACIÓN')) codes.push('IBI-211');
-          else codes.push('IBI-100');
-        } else if (cCode.includes('MED')) {
-          if (cUpper.includes('ANATOMÍA HUMANA I') && !cUpper.includes('II')) codes.push('MED-111');
-          else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
-          else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
-          else codes.push('MED-100');
-        } else if (cCode.includes('ADM')) {
-          if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
-          else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
-          else codes.push('ADM-100');
-        } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
-          if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
-          else if (cUpper.includes('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
-          else codes.push('CPEC10');
-        }
-      });
 
       const uniqueCodes = [...new Set(codes)];
       return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'MAT-100';
@@ -3117,63 +3121,84 @@ document.addEventListener('change', (e) => {
 
   // Render Sub-tabs of Career
   window.renderCarreraSubtabs = function(mKey) {
-    const data = materiasData[mKey];
-    const analiticoContainer = document.getElementById('analitico-carrera-subtabs');
-    const pacContainer = document.getElementById('pac-carrera-subtabs');
-    if (!data) return;
+    try {
+      const data = materiasData[mKey];
+      const analiticoContainer = document.getElementById('analitico-carrera-subtabs');
+      const pacContainer = document.getElementById('pac-carrera-subtabs');
+      if (!data) return;
 
-    const rawCareers = data.carrerasCodes || [];
-    const resolvedCareers = data.carrerasResolved || [];
+      const rawCareers = data.carrerasCodes || [];
+      const resolvedCareers = data.carrerasResolved || [];
 
-    if (resolvedCareers.length <= 1) {
-      if (analiticoContainer) analiticoContainer.innerHTML = '';
-      if (pacContainer) pacContainer.innerHTML = '';
-      return;
-    }
-
-    const buildTabsHtml = (contextId) => {
-      let tabsHtml = `
-        <div class="p-3 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50/40 dark:bg-slate-900 shadow-xs space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Vista Previa / Carátula de Carrera:
-            </span>
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Seleccioná una carrera para ver sus códigos y membrete específico:</span>
-          </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" onclick="window.selectCarreraContext('${mKey}', 'ALL', this)" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer">
-              <i data-lucide="globe" class="w-3.5 h-3.5"></i> Vista Consolidada (${data.codigo})
-            </button>
-      `;
-
-      resolvedCareers.forEach((cr, idx) => {
-        const cCode = rawCareers[idx] || '';
-        const singleCode = resolveOfficialCourseCode(data.nombre, [cCode]);
-        let icon = 'book';
-        if (cCode.includes('SIS')) icon = 'code-2';
-        else if (cCode.includes('ELE')) icon = 'cpu';
-        else if (cCode.includes('SON')) icon = 'music';
-        else if (cCode.includes('IBI') || cCode.includes('BIO')) icon = 'dna';
-        else if (cCode.includes('MED')) icon = 'stethoscope';
-        else if (cCode.includes('ADM') || cCode.includes('CCP')) icon = 'bar-chart-3';
-
-        tabsHtml += `
-          <button type="button" onclick="window.selectCarreraContext('${mKey}', '${cCode}', this, '${singleCode}', '${cr.name}')" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs">
-            <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${cr.tag} <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-brand-700 dark:text-brand-300 font-mono border border-slate-200 dark:border-slate-600">${singleCode}</span>
-          </button>
-        `;
+      // Dedup careers by careerCode
+      const seenCareers = new Set();
+      const uniqueCareers = [];
+      rawCareers.forEach((cCode, idx) => {
+        const cCodeClean = (cCode || '').toUpperCase();
+        if (!seenCareers.has(cCodeClean) && cCodeClean) {
+          seenCareers.add(cCodeClean);
+          uniqueCareers.push({
+            cCode: cCodeClean,
+            info: resolvedCareers[idx] || (typeof window.resolveCarreraInfo === 'function' ? window.resolveCarreraInfo('', cCodeClean) : { name: cCodeClean, tag: cCodeClean })
+          });
+        }
       });
 
-      tabsHtml += `
-          </div>
-        </div>
-      `;
-      return tabsHtml;
-    };
+      if (uniqueCareers.length <= 1) {
+        if (analiticoContainer) analiticoContainer.innerHTML = '';
+        if (pacContainer) pacContainer.innerHTML = '';
+        return;
+      }
 
-    if (analiticoContainer) analiticoContainer.innerHTML = buildTabsHtml('ana');
-    if (pacContainer) pacContainer.innerHTML = buildTabsHtml('pac');
-    if (window.lucide) window.lucide.createIcons();
+      const buildTabsHtml = () => {
+        let tabsHtml = `
+          <div class="p-3 rounded-xl border-2 border-brand-300 dark:border-brand-800 bg-brand-50/80 dark:bg-slate-900 shadow-sm space-y-2">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <span class="text-xs font-extrabold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Vista Previa / Carátula de Carrera:
+              </span>
+              <span class="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Hacé clic en una carrera para ver sus códigos y membrete específico:</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="window.selectCarreraContext('${mKey}', 'ALL', this)" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer">
+                <i data-lucide="globe" class="w-3.5 h-3.5"></i> Vista Consolidada (${data.codigo})
+              </button>
+        `;
+
+        uniqueCareers.forEach((crObj) => {
+          const cCode = crObj.cCode;
+          const cr = crObj.info;
+          const singleCode = typeof window.resolveOfficialCourseCode === 'function' 
+            ? window.resolveOfficialCourseCode(data.nombre, [cCode]) 
+            : cCode;
+          let icon = 'book';
+          if (cCode.includes('SIS')) icon = 'code-2';
+          else if (cCode.includes('ELE')) icon = 'cpu';
+          else if (cCode.includes('SON')) icon = 'music';
+          else if (cCode.includes('IBI') || cCode.includes('BIO')) icon = 'dna';
+          else if (cCode.includes('MED')) icon = 'stethoscope';
+          else if (cCode.includes('ADM') || cCode.includes('CCP')) icon = 'bar-chart-3';
+
+          tabsHtml += `
+            <button type="button" onclick="window.selectCarreraContext('${mKey}', '${cCode}', this, '${singleCode}', '${cr.name}')" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs">
+              <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${cr.tag || cCode} <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-brand-700 dark:text-brand-300 font-mono border border-slate-200 dark:border-slate-600">${singleCode}</span>
+            </button>
+          `;
+        });
+
+        tabsHtml += `
+            </div>
+          </div>
+        `;
+        return tabsHtml;
+      };
+
+      if (analiticoContainer) analiticoContainer.innerHTML = buildTabsHtml();
+      if (pacContainer) pacContainer.innerHTML = buildTabsHtml();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      console.error('Error rendering carrera subtabs:', err);
+    }
   };
 
   window.selectCarreraContext = function(mKey, cCode, btnEl, singleCode, carreraName) {
