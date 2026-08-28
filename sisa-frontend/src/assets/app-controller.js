@@ -1003,54 +1003,105 @@
         `;
       }
 
-      // 6. PAC (Programa de Asignatura por Competencias)
+      // 6. PAC (Programa de Asignatura por Competencias - Puntos 1 al 14)
       if (selectedSections.includes('pac')) {
         docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 9pt;">
-            <div style="text-align: center; margin-bottom: 6mm;">
-              <div style="font-size: 20pt; font-weight: 900; color: #581c87;">UNITEPC</div>
-              <h2 style="font-size: 12pt; font-weight: bold; margin: 2px 0 0 0;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</h2>
+          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt;">
+            <div style="text-align: center; margin-bottom: 5mm;">
+              <div style="font-size: 22pt; font-weight: 900; color: #581c87; letter-spacing: 1px;">UNITEPC</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #0d9488; letter-spacing: 1.5px; margin-top: -3px;">UNIVERSIDAD PRIVADA</div>
+              <h2 style="font-size: 11pt; font-weight: bold; margin: 4px 0 0 0; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</h2>
             </div>
 
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 10px;">
-              <tr style="background: #0d9488; color: white;"><th colspan="4" style="padding: 5px 8px; text-align: left;">1. IDENTIFICACIÓN DE LA ASIGNATURA</th></tr>
+            <!-- 1. IDENTIFICACIÓN -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 6px;">
+              <tr style="background: #0d9488; color: white;"><th colspan="4" style="padding: 4px 8px; text-align: left; font-size: 9pt;">1. IDENTIFICACIÓN DE LA ASIGNATURA</th></tr>
               <tr>
-                <td style="border: 1px solid #ccc; padding: 4px; width: 25%;"><strong>CARRERA:</strong> ${displayCareerName}</td>
-                <td style="border: 1px solid #ccc; padding: 4px; width: 25%;"><strong>CÓDIGO:</strong> ${displayCode}</td>
-                <td style="border: 1px solid #ccc; padding: 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '1º'}</td>
-                <td style="border: 1px solid #ccc; padding: 4px; width: 25%;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CARRERA:</strong> ${displayCareerName}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CÓDIGO:</strong> ${displayCode}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '1º Semestre'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
               </tr>
               <tr>
-                <td colspan="2" style="border: 1px solid #ccc; padding: 4px;"><strong>ASIGNATURA:</strong> ${data.nombre}</td>
-                <td colspan="2" style="border: 1px solid #ccc; padding: 4px;"><strong>HORAS T/P:</strong> ${data.horasTeoricas || '2'}T / ${data.horasPracticas || '4'}P</td>
-              </tr>
-            </table>
-
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 10px;">
-              <tr style="background: #6b21a8; color: white;"><th colspan="2" style="padding: 5px 8px; text-align: left;">2. EQUIPO DOCENTE DE CÁTEDRA</th></tr>
-              <tr>
-                <td style="border: 1px solid #ccc; padding: 4px; width: 35%;"><strong>Docente Titular Responsable:</strong></td>
-                <td style="border: 1px solid #ccc; padding: 4px;">${docenteName}</td>
+                <td colspan="2" style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>ASIGNATURA:</strong> ${data.nombre}</td>
+                <td colspan="2" style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>CARGA HORARIA:</strong> ${data.horasTeoricas || '2'}h Teoría / ${data.horasPracticas || '4'}h Práctica (Total: 120h)</td>
               </tr>
             </table>
 
-            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
-              <div style="background: #0d9488; color: white; padding: 4px 8px; font-weight: bold;">3. CARACTERIZACIÓN Y JUSTIFICACIÓN</div>
-              <div style="padding: 6px 8px; text-align: justify; line-height: 1.5;">${data.caracterizacion || 'Asignatura troncal orientada al desarrollo de competencias analíticas y profesionales.'}</div>
+            <!-- 2. EQUIPO DOCENTE -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 6px;">
+              <tr style="background: #6b21a8; color: white;"><th colspan="2" style="padding: 4px 8px; text-align: left; font-size: 9pt;">2. EQUIPO DOCENTE DE CÁTEDRA</th></tr>
+              <tr>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 35%;"><strong>Docente Titular Responsable:</strong></td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;">${docenteName}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>Jefe de Trabajos Prácticos / Adjunto:</strong></td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;">Equipo de Cátedra UNITEPC</td>
+              </tr>
+            </table>
+
+            <!-- 3. CARACTERIZACIÓN -->
+            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">3. CARACTERIZACIÓN Y JUSTIFICACIÓN DE LA ASIGNATURA</div>
+              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.caracterizacion || 'Asignatura fundamental del currículo orientada a dotar al estudiante de competencias teórico-prácticas para el ejercicio profesional.'}</div>
             </div>
 
-            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
-              <div style="background: #6b21a8; color: white; padding: 4px 8px; font-weight: bold;">4. MACRO-COMPETENCIA PROFESIONAL</div>
-              <div style="padding: 6px 8px; text-align: justify; line-height: 1.5;">${data.macroCompetencia || 'Desarrolla capacidades profesionales de alta exigencia para el campo laboral.'}</div>
+            <!-- 4. PROPÓSITO -->
+            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">4. PROPÓSITO GENERAL DE LA ASIGNATURA</div>
+              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.proposito || 'Consolidar capacidades cognitivas, procedimentales y actitudinales en la resolución de problemas reales.'}</div>
             </div>
 
-            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 8px; overflow: hidden;">
-              <div style="background: #0d9488; color: white; padding: 4px 8px; font-weight: bold;">5. SISTEMA DE EVALUACIÓN Y NORMATIVA</div>
-              <div style="padding: 6px 8px; line-height: 1.5;">
-                <p style="margin: 0;">• Evaluación continua formativa y sumativa por rúbricas de desempeño (1er Parcial: 30%, 2do Parcial: 30%, Examen Final: 40%).</p>
-                <p style="margin: 2px 0 0 0;">• Tolerancia máxima de 10 minutos al ingreso. Asistencia mínima del 80% reglamentaria.</p>
+            <!-- 5. MACRO-COMPETENCIA -->
+            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">5. MACRO-COMPETENCIA PROFESIONAL (COMPETENCIA GLOBAL)</div>
+              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.macroCompetencia || 'Aplica principios científicos, metodológicos y tecnológicos en el diseño y ejecución de soluciones integrales.'}</div>
+            </div>
+
+            <!-- 6. ELEMENTOS DE COMPETENCIA -->
+            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">6. ELEMENTOS DE COMPETENCIA (SABERES FORMATIVOS)</div>
+              <div style="padding: 5px 8px; line-height: 1.45;">
+                <p style="margin: 0;"><strong>• Saber Conocer:</strong> Domina los fundamentos teóricos y conceptuales de la disciplina.</p>
+                <p style="margin: 2px 0 0 0;"><strong>• Saber Hacer:</strong> Desarrolla talleres, proyectos, casos clínicos o laboratorios aplicados con precisión técnica.</p>
+                <p style="margin: 2px 0 0 0;"><strong>• Saber Ser:</strong> Actúa con responsabilidad ética, trabajo en equipo, rigor científico y compromiso social.</p>
               </div>
             </div>
+
+            <!-- 8. METODOLOGÍA -->
+            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">8. METODOLOGÍA SOCIOFORMATIVA DE ENSEÑANZA - APRENDIZAJE</div>
+              <div style="padding: 5px 8px; line-height: 1.45;">
+                Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.
+              </div>
+            </div>
+
+            <!-- 9. SISTEMA DE EVALUACIÓN -->
+            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
+              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">9. SISTEMA DE EVALUACIÓN DEL APRENDIZAJE</div>
+              <div style="padding: 5px 8px; line-height: 1.45;">
+                <p style="margin: 0;">• <strong>Primer Parcial (30%):</strong> Evaluación teórica (15 pts) + Evaluación práctica / talleres / rúbricas continuas (15 pts).</p>
+                <p style="margin: 2px 0 0 0;">• <strong>Segundo Parcial (30%):</strong> Evaluación teórica (15 pts) + Proyectos aplicados y laboratorios (15 pts).</p>
+                <p style="margin: 2px 0 0 0;">• <strong>Examen Final (40%):</strong> Defensa de proyecto integrador / Examen final acumulativo y práctico.</p>
+              </div>
+            </div>
+
+            <!-- 10, 11, 12, 13, 14. RECURSOS, INVESTIGACIÓN, NORMATIVA Y BIBLIOGRAFÍA -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 8pt;">
+              <tr style="background: #0d9488; color: white;"><th colspan="2" style="padding: 3px 6px; text-align: left;">10 AL 14. RECURSOS, INVESTIGACIÓN, NORMATIVA Y BIBLIOGRAFÍA</th></tr>
+              <tr>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 50%; vertical-align: top;">
+                  <strong>10. Recursos:</strong> Plataforma SEA, Guías de Taller, Proyector, Software especializado.<br>
+                  <strong>11. Investigación:</strong> Proyectos formativos articulados a la sociedad.
+                </td>
+                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 50%; vertical-align: top;">
+                  <strong>12. Normativa:</strong> Asistencia mínima obligatoria 80%, tolerancia 10 min.<br>
+                  <strong>13. Mejora Continua:</strong> Retroalimentación semanal post-sesión.<br>
+                  <strong>14. Bibliografía:</strong> Normas APA 7ª Edición según Programa Analítico.
+                </td>
+              </tr>
+            </table>
           </div>
         `;
       }
@@ -1136,42 +1187,42 @@
         }
 
         let planesCardsHtml = '';
-        planesList.slice(0, 3).forEach((p, idx) => {
+        planesList.slice(0, 4).forEach((p, idx) => {
           planesCardsHtml += `
-            <div style="border: 1.5px solid #6b21a8; border-radius: 6px; margin-bottom: 8mm; overflow: hidden; page-break-inside: avoid;">
-              <div style="background: #6b21a8; color: white; padding: 5px 10px; font-weight: bold; font-size: 9.5pt; display: flex; justify-content: space-between;">
+            <div style="border: 1.5px solid #6b21a8; border-radius: 6px; margin-bottom: 6mm; overflow: hidden; page-break-inside: avoid;">
+              <div style="background: #6b21a8; color: white; padding: 4px 8px; font-weight: bold; font-size: 9pt; display: flex; justify-content: space-between;">
                 <span>SESIÓN DIDÁCTICA #${idx + 1}: ${p.tema || 'Tema de Clase'}</span>
-                <span>GRUPO PL-01 • 90 MIN</span>
+                <span>COMISIÓN / GRUPO PL-01 • 90 MIN</span>
               </div>
-              <div style="padding: 8px 10px; font-size: 8.5pt;">
-                <p style="margin: 0 0 6px 0;"><strong>Objetivo de Aprendizaje:</strong> ${p.objetivo || 'Desarrolla habilidades aplicadas de la unidad.'}</p>
-                <table style="width: 100%; border-collapse: collapse; font-size: 8pt;">
+              <div style="padding: 6px 8px; font-size: 8pt;">
+                <p style="margin: 0 0 4px 0;"><strong>Objetivo de Aprendizaje:</strong> ${p.objetivo || 'Desarrolla habilidades aplicadas de la unidad según el modelo socioformativo.'}</p>
+                <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
                   <thead>
                     <tr style="background: #f1f5f9; font-weight: bold; border-bottom: 1px solid #cbd5e1;">
-                      <th style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; width: 20%;">MOMENTO</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; width: 50%;">ESTRATEGIA DIDÁCTICA</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 4px; text-align: left; width: 20%;">RECURSOS</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 4px; text-align: center; width: 10%;">TIEMPO</th>
+                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 18%;">MOMENTO</th>
+                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 52%;">ESTRATEGIA DIDÁCTICA Y ACTIVIDADES</th>
+                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 20%;">RECURSOS</th>
+                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; width: 10%;">TIEMPO</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; font-weight: bold; color: #0284c7;">INICIO (Activación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.inicioEstrategia || 'Preguntas disparadoras y encuadre metodológico.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.inicioRecursos || 'Pizarra y proyector'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold;">${p.inicioTiempo || 15} min</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #0284c7;">INICIO (Activación)</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.inicioEstrategia || 'Preguntas disparadoras, problematización y encuadre metodológico.'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.inicioRecursos || 'Pizarra interactiva y proyector'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.inicioTiempo || 15} min</td>
                     </tr>
                     <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; font-weight: bold; color: #059669;">DESARROLLO (Ejercitación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.desarrolloEstrategia || 'Resolución de problemas en equipos y talleres guiados.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.desarrolloRecursos || 'Laboratorio y computadoras'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold;">${p.desarrolloTiempo || 60} min</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #059669;">DESARROLLO (Ejercitación)</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.desarrolloEstrategia || 'Resolución guiada de casos en equipos y talleres prácticos en laboratorio.'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.desarrolloRecursos || 'Laboratorio, IDE y computadoras'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.desarrolloTiempo || 60} min</td>
                     </tr>
                     <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; font-weight: bold; color: #d97706;">CIERRE (Evaluación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.cierreEstrategia || 'Conclusiones y autoevaluación formativa con rúbrica.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px;">${p.cierreRecursos || 'Rúbrica y plataforma virtual'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 4px; text-align: center; font-weight: bold;">${p.cierreTiempo || 15} min</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #d97706;">CIERRE (Evaluación)</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.cierreEstrategia || 'Conclusiones clave, evaluación formativa mediante rúbrica y retroalimentación.'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.cierreRecursos || 'Rúbrica SEA y plataforma virtual'}</td>
+                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.cierreTiempo || 15} min</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1181,10 +1232,10 @@
         });
 
         docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif;">
-            <div style="text-align: center; margin-bottom: 6mm;">
-              <div style="font-size: 18pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE (PCT-PCP)</div>
-              <div style="font-size: 9.5pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (Docente: ${docenteName})</div>
+          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif;">
+            <div style="text-align: center; margin-bottom: 5mm;">
+              <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE POR SESIÓN (PCT-PCP)</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (Docente: ${docenteName})</div>
             </div>
             ${planesCardsHtml}
           </div>
