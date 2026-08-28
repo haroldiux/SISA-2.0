@@ -552,55 +552,39 @@
 
       const modalBody = `
         <div class="space-y-4 text-xs">
-          <p class="text-slate-700 dark:text-slate-300">Seleccioná los componentes de la <strong>Carpeta Pedagógica Docente Oficial UNITEPC</strong> para generar el documento PDF unificado:</p>
+          <p class="text-slate-700 dark:text-slate-300">Seleccioná los documentos que deseas imprimir o exportar a PDF:</p>
           
           ${careerOptionsHtml}
 
-          <div class="space-y-2.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <label class="flex items-center gap-3 cursor-pointer select-none">
+          <div class="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <label class="flex items-center gap-3 cursor-pointer select-none pb-2.5 border-b border-slate-200 dark:border-slate-700">
               <input type="checkbox" id="chk-print-all" checked onchange="window.toggleAllPrintCheckboxes(this.checked)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500">
-              <span class="font-bold text-slate-900 dark:text-white">Imprimir Toda la Carpeta Completa (8 Secciones Oficiales)</span>
+              <span class="font-bold text-slate-900 dark:text-white text-sm">📁 Imprimir Toda la Carpeta Completa</span>
             </label>
 
-            <div class="pl-6 space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 grid grid-cols-2 gap-2">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="portada" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">1. PORTADA Oficial</span>
+            <div class="space-y-2 pt-1 text-slate-700 dark:text-slate-300">
+              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="pa" checked onchange="window.updateMasterPrintCheckbox()">
+                <div>
+                  <span class="font-bold text-slate-900 dark:text-white block">📋 Programa Analítico</span>
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial normado a 2 columnas con tabla técnica, 4 unidades y bibliografía APA.</span>
+                </div>
               </label>
 
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="indice" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">2. ÍNDICE Institucional</span>
+              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="pac_cronograma" checked onchange="window.updateMasterPrintCheckbox()">
+                <div>
+                  <span class="font-bold text-slate-900 dark:text-white block">📊 PAC con el Cronograma</span>
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Mismo formato que el Excel / PDF base para el PAC (Identificación, Matriz 20 Semanas, Metodología, Evaluación, Normativa y Bibliografía).</span>
+                </div>
               </label>
 
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="mvp" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">3. MVP (Misión, Visión, Perfil)</span>
-              </label>
-
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="horarios" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">4. HORARIOS & Exámenes (HR)</span>
-              </label>
-
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="pa" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">5. Programa Analítico (PA)</span>
-              </label>
-
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="pac" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">6. PAC Pedagógico (PAC)</span>
-              </label>
-
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="cronograma" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">7. Cronograma 20 Sem. (CT-P)</span>
-              </label>
-
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 rounded text-brand-600" data-section="plan_clase" checked onchange="window.updateMasterPrintCheckbox()">
-                <span class="font-bold text-slate-800 dark:text-slate-200">8. Planes de Clase (PCT-PCP)</span>
+              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="plan_clase" checked onchange="window.updateMasterPrintCheckbox()">
+                <div>
+                  <span class="font-bold text-slate-900 dark:text-white block">📝 Plan de Clase</span>
+                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial con las fichas de sesión didáctica (Inicio, Desarrollo y Cierre).</span>
+                </div>
               </label>
             </div>
           </div>
@@ -631,6 +615,10 @@
 
     window.previewOfficialDocument = function() {
       const selectedSections = [];
+      const masterChecked = document.getElementById('chk-print-all')?.checked;
+      if (masterChecked) {
+        selectedSections.push('portada', 'indice', 'mvp', 'horarios');
+      }
       document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
         selectedSections.push(c.getAttribute('data-section'));
       });
@@ -1108,112 +1096,8 @@
         `;
       }
 
-      // 6. PAC (Programa de Asignatura por Competencias - Puntos 1 al 14)
-      if (selectedSections.includes('pac')) {
-        docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
-            <div style="text-align: center; margin-bottom: 5mm;">
-              <div style="font-size: 22pt; font-weight: 900; color: #581c87; letter-spacing: 1px;">UNITEPC</div>
-              <div style="font-size: 9pt; font-weight: bold; color: #0d9488; letter-spacing: 1.5px; margin-top: -3px;">UNIVERSIDAD PRIVADA</div>
-              <h2 style="font-size: 11pt; font-weight: bold; margin: 4px 0 0 0; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</h2>
-            </div>
-
-            <!-- 1. IDENTIFICACIÓN -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 6px;">
-              <tr style="background: #0d9488; color: white;"><th colspan="4" style="padding: 4px 8px; text-align: left; font-size: 9pt;">1. IDENTIFICACIÓN DE LA ASIGNATURA</th></tr>
-              <tr>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CARRERA:</strong> ${displayCareerName}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CÓDIGO:</strong> ${displayCode}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '1º Semestre'}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 25%;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>ASIGNATURA:</strong> ${data.nombre}</td>
-                <td colspan="2" style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>CARGA HORARIA:</strong> ${data.horasTeoricas || '2'}h Teoría / ${data.horasPracticas || '4'}h Práctica (Total: 120h)</td>
-              </tr>
-            </table>
-
-            <!-- 2. EQUIPO DOCENTE -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 6px;">
-              <tr style="background: #6b21a8; color: white;"><th colspan="2" style="padding: 4px 8px; text-align: left; font-size: 9pt;">2. EQUIPO DOCENTE DE CÁTEDRA</th></tr>
-              <tr>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 35%;"><strong>Docente Titular Responsable:</strong></td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;">${docenteName}</td>
-              </tr>
-              <tr>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;"><strong>Jefe de Trabajos Prácticos / Adjunto:</strong></td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px;">Equipo de Cátedra UNITEPC</td>
-              </tr>
-            </table>
-
-            <!-- 3. CARACTERIZACIÓN -->
-            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">3. CARACTERIZACIÓN Y JUSTIFICACIÓN DE LA ASIGNATURA</div>
-              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.caracterizacion || 'Asignatura fundamental del currículo orientada a dotar al estudiante de competencias teórico-prácticas para el ejercicio profesional.'}</div>
-            </div>
-
-            <!-- 4. PROPÓSITO -->
-            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">4. PROPÓSITO GENERAL DE LA ASIGNATURA</div>
-              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.proposito || 'Consolidar capacidades cognitivas, procedimentales y actitudinales en la resolución de problemas reales.'}</div>
-            </div>
-
-            <!-- 5. MACRO-COMPETENCIA -->
-            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">5. MACRO-COMPETENCIA PROFESIONAL (COMPETENCIA GLOBAL)</div>
-              <div style="padding: 5px 8px; text-align: justify; line-height: 1.45;">${data.macroCompetencia || 'Aplica principios científicos, metodológicos y tecnológicos en el diseño y ejecución de soluciones integrales.'}</div>
-            </div>
-
-            <!-- 6. ELEMENTOS DE COMPETENCIA -->
-            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">6. ELEMENTOS DE COMPETENCIA (SABERES FORMATIVOS)</div>
-              <div style="padding: 5px 8px; line-height: 1.45;">
-                <p style="margin: 0;"><strong>• Saber Conocer:</strong> Domina los fundamentos teóricos y conceptuales de la disciplina.</p>
-                <p style="margin: 2px 0 0 0;"><strong>• Saber Hacer:</strong> Desarrolla talleres, proyectos, casos clínicos o laboratorios aplicados con precisión técnica.</p>
-                <p style="margin: 2px 0 0 0;"><strong>• Saber Ser:</strong> Actúa con responsabilidad ética, trabajo en equipo, rigor científico y compromiso social.</p>
-              </div>
-            </div>
-
-            <!-- 8. METODOLOGÍA -->
-            <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">8. METODOLOGÍA SOCIOFORMATIVA DE ENSEÑANZA - APRENDIZAJE</div>
-              <div style="padding: 5px 8px; line-height: 1.45;">
-                De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología que guiará la asignatura es de enfoque constructivista, socioformativo y sociocultural: Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.
-              </div>
-            </div>
-
-            <!-- 9. SISTEMA DE EVALUACIÓN -->
-            <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
-              <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">9. SISTEMA DE EVALUACIÓN DEL APRENDIZAJE</div>
-              <div style="padding: 5px 8px; line-height: 1.45;">
-                <p style="margin: 0;">• <strong>Primer Parcial (30%):</strong> Nota teórica (20 pts) + Nota práctica / talleres (10 pts).</p>
-                <p style="margin: 2px 0 0 0;">• <strong>Segundo Parcial (30%):</strong> Nota teórica (20 pts) + Proyectos aplicados y laboratorios (10 pts).</p>
-                <p style="margin: 2px 0 0 0;">• <strong>Examen Final (40%):</strong> Nota teórica (30 pts) + Nota práctica / defensa integradora (10 pts).</p>
-              </div>
-            </div>
-
-            <!-- 10, 11, 12, 13, 14. RECURSOS, INVESTIGACIÓN, NORMATIVA Y BIBLIOGRAFÍA -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 8pt;">
-              <tr style="background: #0d9488; color: white;"><th colspan="2" style="padding: 3px 6px; text-align: left;">10 AL 14. RECURSOS, INVESTIGACIÓN, NORMATIVA Y BIBLIOGRAFÍA</th></tr>
-              <tr>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 50%; vertical-align: top;">
-                  <strong>10. Recursos:</strong> Plataforma SEA, Guías de Taller, Proyector, Software especializado.<br>
-                  <strong>11. Investigación:</strong> Proyectos formativos articulados a la sociedad.
-                </td>
-                <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 50%; vertical-align: top;">
-                  <strong>12. Normativa:</strong> Asistencia mínima obligatoria 80%, 10 minutos de tolerancia al ingreso.<br>
-                  <strong>13. Mejora Continua:</strong> Retroalimentación semanal post-sesión.<br>
-                  <strong>14. Bibliografía:</strong> Normas APA 7ª Edición según Programa Analítico.
-                </td>
-              </tr>
-            </table>
-          </div>
-        `;
-      }
-
-      // 7. CRONOGRAMA DE 20 SEMANAS (CT-P / Matriz 7)
-      if (selectedSections.includes('cronograma')) {
-        let cronogramaRows = '';
+      // 6. PAC CON CRONOGRAMA - Exact format of pac taller idiomas.pdf and PAC TALLER DE IDIOMAS.xlsx (3 Official Framed Pages)
+      if (selectedSections.includes('pac_cronograma') || selectedSections.includes('pac') || selectedSections.includes('cronograma')) {
         const savedPac = localStorage.getItem('sisa_saved_pac_' + mKey);
         let matriz7 = [];
         if (savedPac) {
@@ -1223,45 +1107,198 @@
           matriz7 = typeof window.generateDefaultMatriz7 === 'function' ? window.generateDefaultMatriz7(mKey) : [];
         }
 
-        (matriz7.slice(0, 36) || []).forEach((row, i) => {
-          cronogramaRows += `
-            <tr style="border-bottom: 1px solid #e2e8f0; font-size: 7.5pt;">
-              <td style="border: 1px solid #cbd5e1; padding: 2px; text-align: center; font-weight: bold;">${row.sem || Math.ceil((i+1)/2)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px; text-align: center; font-weight: bold; color: #6b21a8;">${row.ses || (i+1)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px;">${row.unid || 'Unidad ' + (Math.ceil((i+1)/9))}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px;">${row.tema || 'Tema de Cátedra ' + (i+1)}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px;">${row.saberC || 'Conceptos clave'}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px;">${row.saberP || 'Resolución guiada'}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px;">${row.saberA || 'Rigor y ética'}</td>
-              <td style="border: 1px solid #cbd5e1; padding: 2px; text-align: center; font-weight: bold; color: #0d9488;">${row.inst || 'RÚBRICA'}</td>
-            </tr>
-          `;
-        });
+        const renderMatrixRows = (startIdx, endIdx) => {
+          let rowsHtml = '';
+          for (let i = startIdx; i <= endIdx; i++) {
+            const row = matriz7[i] || {};
+            const sesNum = (i + 1);
+            const semNum = row.sem || Math.ceil(sesNum / 2);
+            const isParcial1 = sesNum === 17 || sesNum === 18;
+            const isParcial2 = sesNum === 31 || sesNum === 32;
+            const isFinal = sesNum === 35 || sesNum === 36;
+            const is2da = sesNum === 39 || sesNum === 40;
 
+            let rowBg = '#fff';
+            let temaText = row.tema || `Tema ${Math.ceil(sesNum/6)}: Contenido de Cátedra`;
+            let saberCText = row.saberC || 'Conceptos clave y fundamentos de la unidad.';
+            let saberPText = row.saberP || 'Resolución guiada, talleres aplicados y laboratorios.';
+            let saberAText = row.saberA || 'Rigor técnico, ética y compromiso.';
+            let critText = row.crit || 'Aplica los estándares normativos de la disciplina.';
+            let instText = row.inst || 'Rúbrica de evaluación';
+
+            if (isParcial1) {
+              rowBg = '#fef3c7';
+              temaText = `<strong>1° PARCIAL ${sesNum === 17 ? 'PRÁCTICO' : 'TEÓRICO'}</strong>`;
+              saberCText = 'Evaluación sumativa de unidades 1 y 2.';
+              saberPText = 'Resolución de caso práctico en laboratorio.';
+              saberAText = 'Probidad académica.';
+              critText = 'Demuestra dominio de competencias iniciales.';
+              instText = 'Prueba escrita y rúbrica';
+            } else if (isParcial2) {
+              rowBg = '#fef3c7';
+              temaText = `<strong>2° PARCIAL ${sesNum === 31 ? 'PRÁCTICO' : 'TEÓRICO'}</strong>`;
+              saberCText = 'Evaluación sumativa de unidades 3 y 4.';
+              saberPText = 'Defensa de proyecto y prototipo.';
+              saberAText = 'Trabajo colaborativo y ética.';
+              critText = 'Demuestra integración de habilidades avanzadas.';
+              instText = 'Prueba escrita y rúbrica';
+            } else if (isFinal) {
+              rowBg = '#fee2e2';
+              temaText = `<strong>EXAMEN ${sesNum === 35 ? 'PRÁCTICO' : 'TEÓRICO'} FINAL</strong>`;
+              saberCText = 'Evaluación integradora de toda la asignatura.';
+              saberPText = 'Defensa integral de solución profesional.';
+              saberAText = 'Responsabilidad profesional.';
+              critText = 'Alcanza la competencia global del curso.';
+              instText = 'Matriz de competencias';
+            } else if (is2da) {
+              rowBg = '#f1f5f9';
+              temaText = '<strong>SEGUNDA INSTANCIA</strong>';
+              saberCText = 'Recuperación de contenidos no superados.';
+              saberPText = 'Resolución de examen extraordinario.';
+              saberAText = 'Superación académica.';
+              critText = 'Demuestra suficiencia mínima (51 pts).';
+              instText = 'Examen extraordinario';
+            }
+
+            rowsHtml += `
+              <tr style="background: ${rowBg};">
+                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">${semNum}°</td>
+                <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">${sesNum}°</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;">${temaText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;">${saberCText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;">${saberPText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;">${saberAText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;">${critText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; text-align: center;">${instText}</td>
+              </tr>
+            `;
+          }
+          return rowsHtml;
+        };
+
+        const matrixTableHeader = `
+          <thead>
+            <tr style="background: #f1f5f9; text-align: center; font-weight: bold; font-size: 6.5pt;">
+              <th style="border: 1px solid #000; padding: 3px 2px; width: 4%;">SEM</th>
+              <th style="border: 1px solid #000; padding: 3px 2px; width: 4%;">SES</th>
+              <th style="border: 1px solid #000; padding: 3px 4px; width: 20%;">TEMA / CONTENIDO ESPECÍFICO</th>
+              <th style="border: 1px solid #000; padding: 3px 4px; width: 18%;">SABER CONCEPTUAL</th>
+              <th style="border: 1px solid #000; padding: 3px 4px; width: 18%;">SABER PROCEDIMENTAL</th>
+              <th style="border: 1px solid #000; padding: 3px 4px; width: 14%;">SABER ACTITUDINAL</th>
+              <th style="border: 1px solid #000; padding: 3px 4px; width: 12%;">CRITERIO DE DESEMPEÑO</th>
+              <th style="border: 1px solid #000; padding: 3px 2px; width: 10%;">INSTRUMENTO EVAL.</th>
+            </tr>
+          </thead>
+        `;
+
+        // PAGE 1: Identificación Oficial + Cronograma Sesiones 1 a 10
         docHtml += `
-          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
-            <div style="text-align: center; margin-bottom: 4mm;">
-              <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • CRONOGRAMA TEÓRICO-PRÁCTICO (20 SEMANAS)</div>
-              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (${displayCareerName})</div>
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="text-align: center; margin-bottom: 4px;">
+              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
+              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 9pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</div>
             </div>
 
-            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse;">
-              <thead>
-                <tr style="background: #0d9488; color: white; font-size: 7.5pt; text-align: center;">
-                  <th style="border: 1px solid #000; padding: 3px; width: 4%;">SEM</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 4%;">SES</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 14%;">UNIDAD</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 22%;">CONTENIDO TEMÁTICO</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 18%;">SABER CONCEPTUAL</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 18%;">SABER PROCEDIMENTAL</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 12%;">SABER ACTITUDINAL</th>
-                  <th style="border: 1px solid #000; padding: 3px; width: 8%;">INSTR.</th>
-                </tr>
-              </thead>
+            <!-- 1. IDENTIFICACIÓN -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 6px;">
+              <tr>
+                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${data.nombre.toUpperCase()} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>ÁREA DE DESEMPEÑO:</strong> FORMACIÓN PROFESIONAL</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>TIPO DE CURSO:</strong> REGULAR</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>MODALIDAD:</strong> PRESENCIAL</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '1º Semestre'}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2px 4px;"><strong>PRE-REQUISITO:</strong> NINGUNO</td>
+                <td style="border: 1px solid #000; padding: 2px 4px;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>CARGA HORARIA TOTAL:</strong> ${data.horasTotal || '120'} HORAS &nbsp;&nbsp;|&nbsp;&nbsp; <strong>HORAS:</strong> TEÓRICAS: ${data.horasTeoricas || '2'}h / PRÁCTICAS: ${data.horasPracticas || '4'}h</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>N° DE SESIONES SEMANALES:</strong> TEÓRICAS: 1 &nbsp;&nbsp; PRÁCTICAS: 1</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>DOCENTE:</strong> ${docenteName} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>EMAIL:</strong> docente@unitepc.edu.bo</td>
+              </tr>
+            </table>
+
+            <!-- CRONOGRAMA SESIONES 1 A 10 -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt;">
+              ${matrixTableHeader}
               <tbody>
-                ${cronogramaRows}
+                ${renderMatrixRows(0, 9)}
               </tbody>
             </table>
+
+            <div style="text-align: center; font-size: 8pt; margin-top: 6px;">1</div>
+          </div>
+        `;
+
+        // PAGE 2: Cronograma Sesiones 11 a 28
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+            </div>
+
+            <!-- CRONOGRAMA SESIONES 11 A 28 -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt;">
+              ${matrixTableHeader}
+              <tbody>
+                ${renderMatrixRows(10, 27)}
+              </tbody>
+            </table>
+
+            <div style="text-align: center; font-size: 8pt; margin-top: 6px;">2</div>
+          </div>
+        `;
+
+        // PAGE 3: Cronograma Sesiones 29 a 36 + Exámenes + Secciones 8, 9, 12, 14
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+            </div>
+
+            <!-- CRONOGRAMA SESIONES 29 A 36 + EVALUACIONES FINALES -->
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 8px;">
+              ${matrixTableHeader}
+              <tbody>
+                ${renderMatrixRows(28, 35)}
+                ${renderMatrixRows(38, 38)}
+              </tbody>
+            </table>
+
+            <!-- 8. METODOLOGÍA -->
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
+              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">8. Metodología General de la Asignatura</div>
+              <div>De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología que guiará la asignatura es de enfoque constructivista, socioformativo y sociocultural. Se implementa Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.</div>
+              <div style="margin-top: 2px;"><strong>En el Aula:</strong> Clases participativas, debates y construcción conceptual guiada. &nbsp;|&nbsp; <strong>Laboratorios:</strong> Desarrollo experimental, resolución de casos y simulaciones prácticas aplicadas.</div>
+            </div>
+
+            <!-- 9. SISTEMA DE EVALUACIÓN -->
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
+              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">9. Sistema de Evaluación</div>
+              <div>El proceso evaluador es continuo e integral: a) <em>Evaluación diagnóstica:</em> recuperación de conocimientos previos. b) <em>Evaluación formativa:</em> retroalimentación en talleres y laboratorios mediante rúbricas. c) <em>Evaluación sumativa:</em> <strong>1° Parcial (30%)</strong>, <strong>2° Parcial (30%)</strong> y <strong>Examen Final Integrador (40%)</strong>.</div>
+            </div>
+
+            <!-- 12. CRITERIOS Y NORMATIVA -->
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
+              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">12.- Criterios y Normativa de la Asignatura</div>
+              <div>Los estudiantes deberán cumplir el reglamento institucional: asistencia mínima obligatoria del 80% para tener derecho a evaluación final, 10 minutos de tolerancia al ingreso, respeto mutuo, probidad académica y convivencia armónica en el aula y laboratorios.</div>
+            </div>
+
+            <!-- 14. BIBLIOGRAFÍA OFICIAL -->
+            <div style="border: 1px solid #000; padding: 4px 6px; text-align: justify; line-height: 1.35;">
+              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">14.- Bibliografía oficial</div>
+              <div><strong>Específica:</strong> Joyanes Aguilar, L. (2021). <em>Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos</em> (6ª ed.). McGraw-Hill. &nbsp;|&nbsp; García Llinás, L. F. (2022). <em>Todo sobre Patrones de Diseño</em>. Ediciones de la U.</div>
+              <div style="margin-top: 2px;"><strong>Complementaria:</strong> Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega. &nbsp;|&nbsp; García, A. M. (2024). <em>Ingeniería de Software</em>. Marcombo.</div>
+            </div>
+
+            <div style="text-align: center; font-size: 8pt; margin-top: 6px;">3</div>
           </div>
         `;
       }
@@ -1387,6 +1424,10 @@
 
     window.executeSelectedPrint = function() {
       const selectedSections = [];
+      const masterChecked = document.getElementById('chk-print-all')?.checked;
+      if (masterChecked) {
+        selectedSections.push('portada', 'indice', 'mvp', 'horarios');
+      }
       document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
         selectedSections.push(c.getAttribute('data-section'));
       });
