@@ -608,10 +608,14 @@
           <div class="flex justify-between items-center pt-2">
             <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial normado según el modelo educativo UNITEPC.</span>
             <div class="flex gap-2">
-              <button onclick="window.closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+              <button onclick="window.closeModal()" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+              <button onclick="window.previewOfficialDocument()" class="px-3 py-2 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors cursor-pointer">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                👁️ Vista Previa en Pantalla
+              </button>
               <button onclick="window.executeSelectedPrint()" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                Generar PDF / Imprimir
+                🖨️ Generar PDF / Imprimir
               </button>
             </div>
           </div>
@@ -625,6 +629,44 @@
       if (window.lucide) window.lucide.createIcons();
     };
 
+    window.previewOfficialDocument = function() {
+      const selectedSections = [];
+      document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
+        selectedSections.push(c.getAttribute('data-section'));
+      });
+      if (selectedSections.length === 0) {
+        window.showToast('⚠️ Por favor selecciona al menos una sección para previsualizar');
+        return;
+      }
+      const careerSelector = document.getElementById('print-career-selector');
+      const selectedCareerCode = careerSelector ? careerSelector.value : 'ALL';
+      const docHtml = window.buildOfficialFolderHtml(selectedSections, selectedCareerCode);
+
+      const previewContainer = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-2.5 bg-slate-800 text-white rounded-xl text-xs">
+            <span class="font-bold flex items-center gap-2"><i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> Vista Previa Digital - Carpeta Oficial UNITEPC (Hojas Tamaño Carta)</span>
+            <div class="flex gap-2">
+              <button onclick="window.openPdfPrintModal()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg text-xs transition-colors">Volver a Opciones</button>
+              <button onclick="window.executeSelectedPrint()" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir / Guardar en PDF
+              </button>
+            </div>
+          </div>
+          <div class="max-h-[75vh] overflow-y-auto bg-slate-900/90 p-4 rounded-xl space-y-6 flex flex-col items-center custom-scrollbar">
+            <div class="w-full max-w-[800px] space-y-6">
+              ${docHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal-title').innerText = 'Vista Previa Oficial de Impresión y PDF';
+      document.getElementById('modal-body').innerHTML = previewContainer;
+      document.getElementById('modal-footer').classList.add('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    };
+
     window.toggleAllPrintCheckboxes = function(isChecked) {
       document.querySelectorAll('.chk-print-sec').forEach(chk => chk.checked = isChecked);
     };
@@ -635,23 +677,7 @@
       if (master) master.checked = all.every(c => c.checked);
     };
 
-    window.executeSelectedPrint = function() {
-      const selectedSections = [];
-      document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
-        selectedSections.push(c.getAttribute('data-section'));
-      });
-
-      if (selectedSections.length === 0) {
-        window.showToast('⚠️ Por favor selecciona al menos una sección para imprimir');
-        return;
-      }
-
-      const careerSelector = document.getElementById('print-career-selector');
-      const selectedCareerCode = careerSelector ? careerSelector.value : 'ALL';
-
-      window.closeModal();
-      window.showToast('📄 Ensamblando Carpeta Oficial UNITEPC...');
-
+    window.buildOfficialFolderHtml = function(selectedSections, selectedCareerCode) {
       const mKey = activeMateriaKey || 'sis213g1';
       const data = materiasData[mKey] || materiasData['sis213g1'];
       const docenteName = (document.getElementById('docente-api-selector')?.selectedOptions?.[0]?.text?.replace(/\[.*?\]\s*/, '')?.replace(/\(.*?\)/, '')) || 'ROSMERY LUIZAGA SALINAS';
@@ -666,13 +692,12 @@
       const displayCode = selectedCareerCode === 'ALL' ? data.codigo : officialSingleCode;
       const displayCareerName = selectedCareerCode === 'ALL' ? data.carrera : careerMeta.carrera;
 
-      // Compile 8-Section Document
       let docHtml = '';
 
       // 1. PORTADA
       if (selectedSections.includes('portada')) {
         docHtml += `
-          <div class="print-page" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 250mm; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 25mm 20mm 15mm 20mm;">
+          <div class="print-page" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 250mm; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 25mm 20mm 15mm 20mm; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div>
               <h2 style="font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; color: #000;">${careerMeta.facultad}</h2>
               <h3 style="font-size: 13pt; font-weight: bold; margin: 8px 0 0 0; text-transform: uppercase; color: #000;">CARRERA DE ${displayCareerName}</h3>
@@ -705,7 +730,7 @@
       // 2. ÍNDICE
       if (selectedSections.includes('indice')) {
         docHtml += `
-          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif;">
+          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 8mm;">
               <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
               <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
@@ -789,7 +814,7 @@
       // 3. MVP (Misión, Visión, Perfil Profesional)
       if (selectedSections.includes('mvp')) {
         docHtml += `
-          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif;">
+          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 8mm;">
               <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
               <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
@@ -846,7 +871,7 @@
         }
 
         docHtml += `
-          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif;">
+          <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 10mm;">
               <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
               <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
@@ -908,26 +933,50 @@
         `;
       }
 
-      // 5. PROGRAMA ANALÍTICO (PA)
+      // 5. PROGRAMA ANALÍTICO (PA) - Exact format of Programa Analitico PROGRAMACION III.docx
       if (selectedSections.includes('pa')) {
         const unidades = activeAnaliticoUnidades || data.unidades || [];
-        const u1 = unidades[0] || { titulo: 'Fundamentos', temas: [] };
-        const u2 = unidades[1] || { titulo: 'Desarrollo Avanzado', temas: [] };
-        const u3 = unidades[2] || { titulo: 'Servicios de Aplicación', temas: [] };
-        const u4 = unidades[3] || { titulo: 'Ecosistema y Herramientas', temas: [] };
+        const u1 = unidades[0] || { titulo: 'Fundamentos de Desarrollo y Algoritmos', temas: [] };
+        const u2 = unidades[1] || { titulo: 'Frameworks Frontend y Arquitectura UI', temas: [] };
+        const u3 = unidades[2] || { titulo: 'Frameworks Backend y Servicios API', temas: [] };
+        const u4 = unidades[3] || { titulo: 'Ecosistema, DevOps y Herramientas Modernas', temas: [] };
 
-        const renderUnitTopics = (u) => {
-          if (!u || !u.temas) return '<p style="color: #666; font-size: 9pt;">- Temas analíticos oficiales definidos en programa.</p>';
-          return u.temas.map(t => `<div style="margin-bottom: 5px;"><strong>Tema ${t.numeroTema || 1}: ${t.titulo}</strong><div style="white-space: pre-line; color: #333; font-size: 8.5pt; margin-top: 2px;">${t.contenido || ''}</div></div>`).join('');
+        const renderUnitTopics = (u, defaultTheme) => {
+          if (!u || !u.temas || u.temas.length === 0) {
+            return `
+              <div style="margin-bottom: 6px;">
+                <strong style="color: #0284c7; font-size: 8.5pt;">TEMA 1: ${defaultTheme || 'Contenidos de Especialidad'}</strong>
+                <div style="font-size: 8pt; color: #333; line-height: 1.4; margin-top: 2px;">
+                  - Conceptos avanzados y patrones de diseño.<br>
+                  - Implementación práctica y resolución de problemas guiados.<br>
+                  - Evaluación de rendimiento y buenas prácticas institucionales.
+                </div>
+              </div>
+            `;
+          }
+          return u.temas.map(t => `
+            <div style="margin-bottom: 6px;">
+              <strong style="color: #0284c7; font-size: 8.5pt;">TEMA ${t.numeroTema || 1}: ${t.titulo}</strong>
+              <div style="white-space: pre-line; color: #333; font-size: 8pt; line-height: 1.4; margin-top: 2px;">${t.contenido || ''}</div>
+            </div>
+          `).join('');
         };
 
         const biblio = data.bibliografia || [];
-        const biblioBasica = biblio.filter(b => b.tipo === 'BASICA').map((b, i) => `<p style="margin: 3px 0; font-size: 8.5pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || '<p style="font-size: 8.5pt;">1. UNITEPC (2026). Guía Curricular Oficial.</p>';
-        const biblioComp = biblio.filter(b => b.tipo !== 'BASICA').map((b, i) => `<p style="margin: 3px 0; font-size: 8.5pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || '<p style="font-size: 8.5pt;">1. Recursos en línea y documentación técnica oficial.</p>';
+        const biblioBasica = biblio.filter(b => b.tipo === 'BASICA').map((b, i) => `<p style="margin: 2px 0; font-size: 8pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || `
+          <p style="margin: 2px 0; font-size: 8pt;">1. Ramalho, Luciano, "Fluent Python: Clear, Concise, and Effective Programming", O'Reilly Media, 2ª Edición, 2022.</p>
+          <p style="margin: 2px 0; font-size: 8pt;">2. Macrae, Callum, "Vue.js: Up and Running", O'Reilly Media, 2ª Edición, 2023.</p>
+          <p style="margin: 2px 0; font-size: 8pt;">3. Stauffer, Matt, "Laravel: Up & Running", O'Reilly Media, 3ª Edición, 2023.</p>
+        `;
+        const biblioComp = biblio.filter(b => b.tipo !== 'BASICA').map((b, i) => `<p style="margin: 2px 0; font-size: 8pt;">${i + 1}. ${b.citaApa || b.titulo}</p>`).join('') || `
+          <p style="margin: 2px 0; font-size: 8pt;">1. Lockhart, Josh, "Modern PHP: New Features and Good Practices", O'Reilly Media, 2015.</p>
+          <p style="margin: 2px 0; font-size: 8pt;">2. Grinberg, Miguel, "Flask Web Development", O'Reilly Media, 2ª Edición, 2018.</p>
+          <p style="margin: 2px 0; font-size: 8pt;">3. Recursos Online: Vue.js & Laravel Official Docs, Python.org, Postman Learning Center.</p>
+        `;
 
         docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 9pt;">
-            <div style="text-align: center; font-weight: bold; font-size: 13pt; margin-bottom: 8px;">
+          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="text-align: center; font-weight: bold; font-size: 13pt; margin-bottom: 8px; letter-spacing: 0.5px;">
               PROGRAMA ANALÍTICO
             </div>
 
@@ -958,43 +1007,43 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
               <div>
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px;">
+                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
                   UNIDAD 1: ${u1.titulo}
                 </div>
                 <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u1)}
+                  ${renderUnitTopics(u1, 'Fundamentos de Desarrollo')}
                 </div>
 
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px;">
+                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
                   UNIDAD 2: ${u2.titulo}
                 </div>
                 <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u2)}
+                  ${renderUnitTopics(u2, 'Arquitectura y Componentes')}
                 </div>
 
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px;">
+                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
                   UNIDAD 3: ${u3.titulo}
                 </div>
                 <div style="margin-bottom: 10px; padding-left: 4px;">
-                  ${renderUnitTopics(u3)}
+                  ${renderUnitTopics(u3, 'Backend y Persistencia')}
                 </div>
               </div>
 
               <div>
-                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px;">
+                <div style="background: #e0f2fe; padding: 4px 8px; font-weight: bold; border-left: 4px solid #0284c7; margin-bottom: 6px; font-size: 8.5pt;">
                   UNIDAD 4: ${u4.titulo}
                 </div>
                 <div style="margin-bottom: 12px; padding-left: 4px;">
-                  ${renderUnitTopics(u4)}
+                  ${renderUnitTopics(u4, 'Herramientas y Ecosistema Moderno')}
                 </div>
 
                 <div style="border-top: 1.5px solid #0284c7; padding-top: 6px; margin-bottom: 8px;">
-                  <strong style="font-size: 9.5pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA PRINCIPAL:</strong>
+                  <strong style="font-size: 9pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA PRINCIPAL:</strong>
                   ${biblioBasica}
                 </div>
 
                 <div style="border-top: 1.5px solid #0284c7; padding-top: 6px;">
-                  <strong style="font-size: 9.5pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA COMPLEMENTARIA / RECURSOS ADICIONALES:</strong>
+                  <strong style="font-size: 9pt; color: #000; display: block; margin-bottom: 4px;">BIBLIOGRAFÍA COMPLEMENTARIA / RECURSOS ADICIONALES:</strong>
                   ${biblioComp}
                 </div>
               </div>
@@ -1006,7 +1055,7 @@
       // 6. PAC (Programa de Asignatura por Competencias - Puntos 1 al 14)
       if (selectedSections.includes('pac')) {
         docHtml += `
-          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt;">
+          <div class="print-page" style="padding: 12mm 12mm; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 5mm;">
               <div style="font-size: 22pt; font-weight: 900; color: #581c87; letter-spacing: 1px;">UNITEPC</div>
               <div style="font-size: 9pt; font-weight: bold; color: #0d9488; letter-spacing: 1.5px; margin-top: -3px;">UNIVERSIDAD PRIVADA</div>
@@ -1073,7 +1122,7 @@
             <div style="border: 1px solid #0d9488; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
               <div style="background: #0d9488; color: white; padding: 3px 8px; font-weight: bold;">8. METODOLOGÍA SOCIOFORMATIVA DE ENSEÑANZA - APRENDIZAJE</div>
               <div style="padding: 5px 8px; line-height: 1.45;">
-                Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.
+                De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología que guiará la asignatura es de enfoque constructivista, socioformativo y sociocultural: Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.
               </div>
             </div>
 
@@ -1081,9 +1130,9 @@
             <div style="border: 1px solid #6b21a8; border-radius: 4px; margin-bottom: 6px; overflow: hidden;">
               <div style="background: #6b21a8; color: white; padding: 3px 8px; font-weight: bold;">9. SISTEMA DE EVALUACIÓN DEL APRENDIZAJE</div>
               <div style="padding: 5px 8px; line-height: 1.45;">
-                <p style="margin: 0;">• <strong>Primer Parcial (30%):</strong> Evaluación teórica (15 pts) + Evaluación práctica / talleres / rúbricas continuas (15 pts).</p>
-                <p style="margin: 2px 0 0 0;">• <strong>Segundo Parcial (30%):</strong> Evaluación teórica (15 pts) + Proyectos aplicados y laboratorios (15 pts).</p>
-                <p style="margin: 2px 0 0 0;">• <strong>Examen Final (40%):</strong> Defensa de proyecto integrador / Examen final acumulativo y práctico.</p>
+                <p style="margin: 0;">• <strong>Primer Parcial (30%):</strong> Nota teórica (20 pts) + Nota práctica / talleres (10 pts).</p>
+                <p style="margin: 2px 0 0 0;">• <strong>Segundo Parcial (30%):</strong> Nota teórica (20 pts) + Proyectos aplicados y laboratorios (10 pts).</p>
+                <p style="margin: 2px 0 0 0;">• <strong>Examen Final (40%):</strong> Nota teórica (30 pts) + Nota práctica / defensa integradora (10 pts).</p>
               </div>
             </div>
 
@@ -1096,7 +1145,7 @@
                   <strong>11. Investigación:</strong> Proyectos formativos articulados a la sociedad.
                 </td>
                 <td style="border: 1px solid #cbd5e1; padding: 3px 6px; width: 50%; vertical-align: top;">
-                  <strong>12. Normativa:</strong> Asistencia mínima obligatoria 80%, tolerancia 10 min.<br>
+                  <strong>12. Normativa:</strong> Asistencia mínima obligatoria 80%, 10 minutos de tolerancia al ingreso.<br>
                   <strong>13. Mejora Continua:</strong> Retroalimentación semanal post-sesión.<br>
                   <strong>14. Bibliografía:</strong> Normas APA 7ª Edición según Programa Analítico.
                 </td>
@@ -1134,7 +1183,7 @@
         });
 
         docHtml += `
-          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; font-size: 8pt;">
+          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; font-size: 8pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 4mm;">
               <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • CRONOGRAMA TEÓRICO-PRÁCTICO (20 SEMANAS)</div>
               <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (${displayCareerName})</div>
@@ -1161,7 +1210,7 @@
         `;
       }
 
-      // 8. PLANES DE CLASE (PCT-PCP)
+      // 8. PLANES DE CLASE (PCT-PCP) - Exact format of PLAN DE CLASES TALLER DE IDIOMAS.xlsx
       if (selectedSections.includes('plan_clase')) {
         const savedPlanes = localStorage.getItem('sisa_saved_planes_' + mKey);
         let planesList = [];
@@ -1172,69 +1221,104 @@
           planesList = [
             {
               tema: 'Arquitectura de Software y Modelado de Datos',
-              objetivo: 'Aplicar patrones arquitectónicos en la solución de problemas.',
-              inicioEstrategia: 'Activación de conocimientos previos y presentación de caso de estudio.',
-              inicioRecursos: 'Pizarra interactiva y diapositivas guía.',
-              inicioTiempo: 15,
-              desarrolloEstrategia: 'Desarrollo guiado en entorno de programación y laboratorio práctico.',
-              desarrolloRecursos: 'IDE, repositorio GitHub institucional, computadoras de laboratorio.',
-              desarrolloTiempo: 60,
-              cierreEstrategia: 'Evaluación formativa rápida, síntesis de aprendizajes y asignación de reto.',
-              cierreRecursos: 'Formulario de rúbrica y plataforma virtual.',
-              cierreTiempo: 15
+              objetivo: 'Produce soluciones oracionales y arquitectónicas complejas aplicando patrones de diseño bajo el marco normativo y metodologías activas.',
+              logrosEsperados: '1. Reconoce la importancia del modelado formal.\n2. Adapta componentes según contextos y requerimientos.\n3. Integra saberes en propuestas de desarrollo profesional.',
+              indicadoresLogro: '1. Analiza el impacto de la arquitectura en sistemas distribuidos.\n2. Identifica variaciones de diseño en simulaciones reales.\n3. Sustenta la pertinencia técnica del proyecto.',
+              saberConceptual: '- Fundamentos y patrones arquitectónicos\n- Estándares de calidad y documentación técnica',
+              saberProcedimental: '- Implementación guiada en laboratorio\n- Configuración de entornos y pruebas unitarias',
+              saberActitudinal: '- Rigor técnico y responsabilidad ética\n- Trabajo colaborativo y compromiso profesional',
+              estrategiaMetodologica: '- Aprendizaje Basado en Proyectos (ABP)\n- Talleres guiados y seminario de análisis',
+              estrategiaAprendizaje: '- Mapeo de requerimientos y casos prácticos\n- Redacción técnica y defensa de proyecto',
+              recursosEnsenanza: '- Plataforma SEA, IDE, Proyector y Guías de laboratorio',
+              evalFormativaActividad: 'Defensa de avance y discusión guiada',
+              evalFormativaInstrumento: 'Rúbrica socioformativa',
+              evalFormativaEvidencia: 'Repositorio de código y reporte técnico',
+              evalSumativaActividad: 'Examen escrito / Proyecto práctico',
+              evalSumativaInstrumento: 'Prueba objetiva y rúbrica',
+              evalSumativaEvidencia: 'Examen resuelto y entregable final',
+              inicioActividad: 'Activación: Análisis de un caso de estudio real. Preguntas disparadoras y encuadre metodológico.',
+              inicioDuracion: '30 min',
+              desarrolloActividad: 'Cuerpo de contenidos: Implementación paso a paso de los patrones arquitectónicos, desarrollo práctico guiado en equipos y validación en taller.',
+              desarrolloDuracion: '180 min',
+              cierreActividad: 'Conclusión: Presentación breve de resultados ante el auditorio, evaluación formativa mediante rúbrica y retroalimentación.',
+              cierreDuracion: '60 min'
             }
           ];
         }
 
         let planesCardsHtml = '';
-        planesList.slice(0, 4).forEach((p, idx) => {
+        planesList.slice(0, 3).forEach((p, idx) => {
           planesCardsHtml += `
-            <div style="border: 1.5px solid #6b21a8; border-radius: 6px; margin-bottom: 6mm; overflow: hidden; page-break-inside: avoid;">
-              <div style="background: #6b21a8; color: white; padding: 4px 8px; font-weight: bold; font-size: 9pt; display: flex; justify-content: space-between;">
-                <span>SESIÓN DIDÁCTICA #${idx + 1}: ${p.tema || 'Tema de Clase'}</span>
-                <span>COMISIÓN / GRUPO PL-01 • 90 MIN</span>
+            <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt;">
+              <div style="background: #f1f5f9; border-bottom: 1.5px solid #000; padding: 4px 8px; text-align: center;">
+                <div style="font-weight: bold; font-size: 10pt; color: #581c87;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC</div>
+                <div style="font-weight: bold; font-size: 9pt;">PLAN DE CLASE (PCT / PCP) - SESIÓN #${idx + 1}</div>
               </div>
-              <div style="padding: 6px 8px; font-size: 8pt;">
-                <p style="margin: 0 0 4px 0;"><strong>Objetivo de Aprendizaje:</strong> ${p.objetivo || 'Desarrolla habilidades aplicadas de la unidad según el modelo socioformativo.'}</p>
-                <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
-                  <thead>
-                    <tr style="background: #f1f5f9; font-weight: bold; border-bottom: 1px solid #cbd5e1;">
-                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 18%;">MOMENTO</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 52%;">ESTRATEGIA DIDÁCTICA Y ACTIVIDADES</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: left; width: 20%;">RECURSOS</th>
-                      <th style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; width: 10%;">TIEMPO</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #0284c7;">INICIO (Activación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.inicioEstrategia || 'Preguntas disparadoras, problematización y encuadre metodológico.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.inicioRecursos || 'Pizarra interactiva y proyector'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.inicioTiempo || 15} min</td>
-                    </tr>
-                    <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #059669;">DESARROLLO (Ejercitación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.desarrolloEstrategia || 'Resolución guiada de casos en equipos y talleres prácticos en laboratorio.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.desarrolloRecursos || 'Laboratorio, IDE y computadoras'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.desarrolloTiempo || 60} min</td>
-                    </tr>
-                    <tr>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; font-weight: bold; color: #d97706;">CIERRE (Evaluación)</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.cierreEstrategia || 'Conclusiones clave, evaluación formativa mediante rúbrica y retroalimentación.'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px;">${p.cierreRecursos || 'Rúbrica SEA y plataforma virtual'}</td>
-                      <td style="border: 1px solid #cbd5e1; padding: 3px; text-align: center; font-weight: bold;">${p.cierreTiempo || 15} min</td>
-                    </tr>
-                  </tbody>
-                </table>
+
+              <!-- Identificación -->
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000;">
+                <tr>
+                  <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
+                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${data.nombre}</td>
+                </tr>
+                <tr style="border-top: 1px solid #ccc;">
+                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> 28/08/2026</td>
+                  <td style="padding: 3px 6px;"><strong>Carrera:</strong> ${displayCareerName}</td>
+                </tr>
+              </table>
+
+              <!-- Unidad y Competencias -->
+              <div style="padding: 4px 6px; border-bottom: 1px solid #ccc; background: #fafafa;">
+                <p style="margin: 2px 0;"><strong>Unidad ${idx + 1}:</strong> LENGUAJE Y ESTRUCTURAS CURRICULARES</p>
+                <p style="margin: 2px 0;"><strong>TEMA ${idx + 1}:</strong> ${p.tema || 'Desarrollo Curricular y Habilidades Aplicadas'}</p>
+                <p style="margin: 2px 0;"><strong>Resultados de Aprendizaje:</strong> ${p.objetivo || 'Aplica el marco normativo y formativo vigente.'}</p>
               </div>
+
+              <!-- Saberes -->
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #ccc; font-size: 7.5pt;">
+                <tr style="background: #e0f2fe; font-weight: bold;">
+                  <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 33%;">SABER CONCEPTUAL</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 34%;">SABER PROCEDIMENTAL</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 33%;">SABER ACTITUDINAL</th>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberConceptual || '- Conceptos fundamentales\n- Estructuras'}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberProcedimental || '- Resolución guiada\n- Aplicación'}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberActitudinal || '- Responsabilidad y ética\n- Rigor'}</td>
+                </tr>
+              </table>
+
+              <!-- Secuencia Didáctica -->
+              <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
+                <tr style="background: #6b21a8; color: white; font-weight: bold;">
+                  <th style="padding: 3px 6px; text-align: left; width: 22%;">SECUENCIA DIDÁCTICA</th>
+                  <th style="padding: 3px 6px; text-align: left; width: 66%;">ACTIVIDAD DETALLADA</th>
+                  <th style="padding: 3px 6px; text-align: center; width: 12%;">DURACIÓN</th>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 3px 6px; font-weight: bold; color: #0284c7; vertical-align: top;">INTRODUCCIÓN</td>
+                  <td style="padding: 3px 6px;">${p.inicioActividad || p.inicioEstrategia || 'Activación: Análisis de casos reales y preguntas disparadoras.'}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.inicioDuracion || '30 min'}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 3px 6px; font-weight: bold; color: #059669; vertical-align: top;">DESARROLLO (Cuerpo)</td>
+                  <td style="padding: 3px 6px;">${p.desarrolloActividad || p.desarrolloEstrategia || 'Desarrollo guiado en aula/laboratorio, resolución de casos y trabajo en equipo.'}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.desarrolloDuracion || '180 min'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 3px 6px; font-weight: bold; color: #d97706; vertical-align: top;">CONCLUSIÓN O CIERRE</td>
+                  <td style="padding: 3px 6px;">${p.cierreActividad || p.cierreEstrategia || 'Presentación de resultados ante el auditorio, evaluación formativa mediante rúbrica y retroalimentación.'}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.cierreDuracion || '60 min'}</td>
+                </tr>
+              </table>
             </div>
           `;
         });
 
         docHtml += `
-          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif;">
-            <div style="text-align: center; margin-bottom: 5mm;">
-              <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE POR SESIÓN (PCT-PCP)</div>
+          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="text-align: center; margin-bottom: 4mm;">
+              <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE POR SESIÓN (PCT / PCP)</div>
               <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (Docente: ${docenteName})</div>
             </div>
             ${planesCardsHtml}
@@ -1242,15 +1326,42 @@
         `;
       }
 
-      // Inject into print container
+      return docHtml;
+    };
+
+    window.executeSelectedPrint = function() {
+      const selectedSections = [];
+      document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
+        selectedSections.push(c.getAttribute('data-section'));
+      });
+
+      if (selectedSections.length === 0) {
+        window.showToast('⚠️ Por favor selecciona al menos una sección para imprimir');
+        return;
+      }
+
+      const careerSelector = document.getElementById('print-career-selector');
+      const selectedCareerCode = careerSelector ? careerSelector.value : 'ALL';
+
+      window.closeModal();
+      window.showToast('📄 Preparando documento oficial para impresión...');
+
+      const docHtml = window.buildOfficialFolderHtml(selectedSections, selectedCareerCode);
       const printContainer = document.getElementById('print-official-folder-container');
       if (printContainer) {
         printContainer.innerHTML = docHtml;
+        printContainer.classList.remove('hidden');
       }
+
+      window.onafterprint = function() {
+        if (printContainer) {
+          printContainer.classList.add('hidden');
+        }
+      };
 
       setTimeout(() => {
         window.print();
-      }, 400);
+      }, 300);
     };
 
     window.addCronogramaRow = function() {

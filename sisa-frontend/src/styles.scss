@@ -89,40 +89,50 @@ textarea {
 @media print {
   @page {
     size: letter portrait;
-    margin: 10mm 10mm 10mm 10mm;
+    margin: 8mm 8mm 8mm 8mm;
   }
 
-  body {
-    background: white !important;
-    color: black !important;
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
     font-family: Arial, Helvetica, sans-serif !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn, .top-prototype-bar, main > div:not(#print-official-folder-container) {
+  /* Hide entire web app UI during print */
+  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn, .top-prototype-bar, #view1, #view2, #view3, #view4, #view5 {
     display: none !important;
   }
 
   main {
+    display: block !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
     background: transparent !important;
+    width: 100% !important;
   }
 
   #print-official-folder-container {
     display: block !important;
+    visibility: visible !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
   .print-page {
+    display: block !important;
     page-break-after: always !important;
     break-after: page !important;
-    min-height: 96vh;
+    min-height: 98vh;
     box-sizing: border-box !important;
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 10mm 10mm !important;
+    position: relative !important;
   }
 
   .print-page:last-child {
@@ -135,11 +145,12 @@ textarea {
     width: 100% !important;
   }
 
-  table, th, td {
+  table, th, td, div {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 }
+
 .print-header {
   display: none;
 }
