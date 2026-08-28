@@ -2847,10 +2847,6 @@ document.addEventListener('change', (e) => {
     const cardsGrid = document.getElementById('doc-materia-cards-grid');
     if (!docente) return;
 
-      const uniqueCodes = [...new Set(codes)];
-      return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'MAT-100';
-    };
-
     // Synthesize & GROUP BY MATERIA / ASIGNATURA (Course-Centric)
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
