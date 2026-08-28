@@ -921,160 +921,196 @@
         `;
       }
 
-      // 5. PROGRAMA ANALÍTICO (PA) - 1 Single Complete Page (1 Columna, Ancho 100%, 0 Espacios Vacíos)
+      // 5. PROGRAMA ANALÍTICO (PA) - Exact content from PROGRAMACIÓN III.docx (2 Páginas Balanceadas a Todo lo Ancho)
       if (selectedSections.includes('pa')) {
         const headerComponent = `
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #000; padding-bottom: 3px; margin-bottom: 8px; font-family: 'Times New Roman', Times, serif; width: 100%;">
-            <div style="font-size: 8pt; font-weight: bold; line-height: 1.25;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 10px; font-family: 'Times New Roman', Times, serif; width: 100%;">
+            <div style="font-size: 8.5pt; font-weight: bold; line-height: 1.3;">
               <div>UNIVERSIDAD TÉCNICA PRIVADA COSMOS</div>
               <div>“UNITEPC”</div>
               <div>CARRERA: ${displayCareerName.toUpperCase()}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <div style="text-align: center; border-right: 1px solid #999; padding-right: 8px;">
-                <div style="font-size: 12pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
-                <div style="font-size: 5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px;">UNIVERSIDAD PRIVADA</div>
+                <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
+                <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px;">UNIVERSIDAD PRIVADA</div>
               </div>
-              <div style="font-size: 6pt; font-weight: bold; color: #0284c7; text-align: center; border: 1px solid #0284c7; padding: 2px 4px; border-radius: 2px;">
+              <div style="font-size: 6.5pt; font-weight: bold; color: #0284c7; text-align: center; border: 1px solid #0284c7; padding: 2px 4px; border-radius: 2px;">
                 SISTEMAS<br>UNITEPC
               </div>
             </div>
           </div>
         `;
 
+        // PÁGINA 1: Header, Tabla Oficial, Unidad I (Temas 1 al 4) y Unidad II (Temas 5 al 7)
         docHtml += `
-          <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 8pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+          <div class="print-page" style="padding: 12mm 15mm 10mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
-            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; margin-bottom: 6px; letter-spacing: 0.5px;">
-              PROGRAMA ANALITICO
+            <div style="text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 8px; letter-spacing: 0.5px;">
+              PROGRAMA ANALÍTICO: ${data.nombre.toUpperCase()}
             </div>
 
-            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 7pt; margin-bottom: 8px;">
+            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 7.5pt; margin-bottom: 12px;">
               <thead>
                 <tr style="font-weight: bold;">
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 12%;">CÓDIGO</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 10%;">SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 26%;">ASIGNATURA</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 10%;">CRÉDITOS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">CÓDIGO</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 26%;">ASIGNATURA</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">CRÉDITOS</th>
                   <th colspan="2" style="border: 1px solid #000; padding: 2px; width: 16%;">HORAS</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 14%;">HRS. SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 12%;">N° HOJAS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 14%;">HRS. SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">N° HOJAS</th>
                 </tr>
                 <tr style="font-weight: bold;">
-                  <th style="border: 1px solid #000; padding: 2px; font-size: 6pt;">TEORICAS</th>
-                  <th style="border: 1px solid #000; padding: 2px; font-size: 6pt;">PRACTICAS</th>
+                  <th style="border: 1px solid #000; padding: 2px; font-size: 6.5pt;">TEÓRICAS</th>
+                  <th style="border: 1px solid #000; padding: 2px; font-size: 6.5pt;">PRÁCTICAS</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style="border: 1px solid #000; padding: 3px; font-weight: bold;">${displayCode}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">${data.semestre || '3º'}</td>
-                  <td style="border: 1px solid #000; padding: 3px; font-weight: bold;">${data.nombre}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">${data.creditos || '12'}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">${data.horasTeoricas || '2'}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">${data.horasPracticas || '4'}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">${data.horasTotal || '120'}</td>
-                  <td style="border: 1px solid #000; padding: 3px;">1</td>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '3º'}</td>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${data.nombre}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '8'}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTeoricas || '2'}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${data.horasPracticas || '4'}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTotal || '120'}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">2</td>
                 </tr>
               </tbody>
             </table>
 
-            <!-- UNIDAD 1 -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
-              UNIDAD 1: Arquitectura de Entidades y Modelado de Sistemas
-            </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 1: Anatomía de la Entidad y el Objeto
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• El objeto como unidad fundamental de lógica y estado.</div>
-              <div>• Atributos de identidad y comportamientos de acción.</div>
-              <div>• Ciclo de vida: de la instanciación a la recolección de memoria.</div>
-              <div>• El "Game Loop" conceptual: métodos de actualización y renderizado de estado.</div>
-            </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 2: Jerarquías de Especialización y Contratos
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Herencia: creación de linajes de entidades para la reutilización de lógica.</div>
-              <div>• Interfaces y Clases Abstractas: definición de contratos de comportamiento.</div>
-              <div>• Polimorfismo: capacidad de respuesta única ante señales compartidas.</div>
-              <div>• Composición sobre herencia: ensamblaje de habilidades dinámicas en un objeto.</div>
+            <!-- UNIDAD DE APRENDIZAJE I -->
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 8px; margin-bottom: 3px; text-align: left;">
+              UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS.
             </div>
 
-            <!-- UNIDAD 2 -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
-              UNIDAD 2: Robustez y Blindaje de la Lógica de Negocio
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 1. CONCEPTOS FUNDAMENTALES DE LA PROGRAMACIÓN ORIENTADA A OBJETOS
             </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 3: Encapsulamiento y Gestión de Estados Críticos
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Visibilidad y protección: niveles de acceso para la integridad del sistema.</div>
-              <div>• Validación de estados internos y prevención de corrupción de datos.</div>
-              <div>• Manejo de excepciones: control de flujos inesperados en sistemas en tiempo real.</div>
-              <div>• Estrategias de recuperación y estabilidad ante fallos de lógica.</div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Introducción a la programación orientada a objetos. Clases y objetos. Estructuras de la POO.
             </div>
 
-            <!-- UNIDAD 3 -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
-              UNIDAD 3: Sistemas de Interacción y Despacho de Eventos
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 2. HERENCIA Y POLIMORFISMO
             </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 4: Representación Visual de Objetos y Entornos
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Mapeo de objetos lógicos a componentes visuales.</div>
-              <div>• Jerarquía de contenedores y orquestación de elementos en pantalla.</div>
-              <div>• Estética y retroalimentación: el objeto como receptor de estilos y temas.</div>
-              <div>• Layouts dinámicos: el comportamiento espacial de las colecciones de objetos.</div>
-            </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 5: Dinámicas de Interacción y Flujo de Señales
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• El modelo de eventos: suscripción y notificación entre objetos.</div>
-              <div>• Delegados y manejadores: la respuesta del objeto a estímulos externos.</div>
-              <div>• Gestión de periféricos: traducción de entradas físicas a acciones de objeto.</div>
-              <div>• Sincronización de hilos y actualización de la vista desde el modelo.</div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única.
             </div>
 
-            <!-- UNIDAD 4 -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
-              UNIDAD 4: Gestión y Despliegue de Soluciones Integrales
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 3. ABSTRACCIÓN Y ENCAPSULAMIENTO
             </div>
-            <div style="font-weight: bold; font-size: 8pt; margin-top: 3px; margin-bottom: 1px; text-align: left;">
-              Tema 6: Ingeniería de Software y Construcción del Mundo
-            </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Análisis de requerimientos y diseño de diagramas de interacción.</div>
-              <div>• Patrones de diseño fundamentales (Singleton, Factory, Observer).</div>
-              <div>• Control de versiones y flujos de trabajo en equipos técnicos.</div>
-              <div>• Pruebas de integración, depuración y optimización de rendimiento final.</div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software.
             </div>
 
-            <!-- BIBLIOGRAFÍA -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
-              BIBLIOGRAFIA. -
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 4. MANEJO DE EXCEPCIONES
             </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Joyanes Aguilar, L. (2021). <em>Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos</em> (6ª ed.). McGraw-Hill.</div>
-              <div style="margin-top: 1.5px;">• García Llinás, L. F. (2022). <em>Todo sobre Patrones de Diseño: Un enfoque práctico orientado a objetos</em>. Ediciones de la U.</div>
-              <div style="margin-top: 1.5px;">• Vaughan, J. (2023). <em>Object-Oriented Game Development: Real-World Design and Architecture</em>. CRC Press.</div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Manejo de errores y excepciones. Try-catch y lanzamiento de excepciones. Buenas prácticas de manejo de errores.
+            </div>
+
+            <!-- UNIDAD DE APRENDIZAJE II -->
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 10px; margin-bottom: 3px; text-align: left;">
+              UNIDAD DE APRENDIZAJE II.- INTERFAZ DE USUARIO CON WINDOWS FORM.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 5. INTRODUCCIÓN A WINDOWS FORMS
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Introducción a la creación de interfaces de usuario con Windows Forms. Diseño de ventanas y formularios. Uso de controles y elementos gráficos básicos.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 6. MANEJO DE EVENTOS
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Eventos en Windows Forms. Asociación de eventos con métodos. Implementación de respuestas a eventos de usuario.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 7. DISEÑO DE INTERFACES GRÁFICAS
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Diseño avanzado de interfaces de usuario. Personalización de controles y formularios, Diseño de menús y barras de herramientas.
+            </div>
+
+            <div style="text-align: center; font-size: 8.5pt; margin-top: 15px;">1</div>
+          </div>
+        `;
+
+        // PÁGINA 2: Header, Unidad III (Temas 8 al 10), Unidad IV (Temas 11 y 12), Bibliografía Oficial y Complementaria
+        docHtml += `
+          <div class="print-page" style="padding: 12mm 15mm 10mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+            ${headerComponent}
+
+            <!-- UNIDAD DE APRENDIZAJE III -->
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 4px; margin-bottom: 3px; text-align: left;">
+              UNIDAD DE APRENDIZAJE III.- DESARROLLO DE APLICACIONES SIMPLES
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 8. DISEÑO DE PROGRAMAS
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Análisis de requerimientos. Diseño de algoritmos. Estructuras de datos e interfaces de usuario. Diagramas de flujo y pseudocódigo.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 9. DESARROLLO DE APLICACIONES
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Creación de aplicaciones simples. Interfaz de usuario básica. Pruebas y depuración.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 10. GESTIÓN DE PROYECTOS Y CONTROL DE VERSIONES
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Colaboración en equipos de desarrollo. Manejo de metodologías de desarrollo.
+            </div>
+
+            <!-- UNIDAD DE APRENDIZAJE IV -->
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 10px; margin-bottom: 3px; text-align: left;">
+              UNIDAD DE APRENDIZAJE IV.- PRÁCTICA Y PROYECTO FINAL
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 11. PRÁCTICA EN PROYECTOS REALES
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Desarrollo de proyecto. Aplicación de los conocimientos adquiridos.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 5px; margin-bottom: 2px; text-align: left;">
+              TEMA Nº 12. PROYECTO FINAL
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Definición y desarrollo de un proyecto completo. Documentación y presentación del proyecto.
+            </div>
+
+            <!-- BIBLIOGRAFÍA OFICIAL -->
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 14px; margin-bottom: 4px; text-align: left;">
+              BIBLIOGRAFÍA OFICIAL
+            </div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Deitel, P. J., & Deitel, H. M. (2019). <em>Visual C# How to Program</em> (6th ed.). Pearson.
             </div>
 
             <!-- BIBLIOGRAFÍA COMPLEMENTARIA -->
-            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
-              BIBLIOGRAFIA COMPLEMENTARIA. -
+            <div style="font-weight: bold; font-size: 9pt; margin-top: 10px; margin-bottom: 4px; text-align: left;">
+              BIBLIOGRAFÍA COMPLEMENTARIA
             </div>
-            <div style="padding-left: 15px; font-size: 7.5pt; line-height: 1.35; text-align: left;">
-              <div>• Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega.</div>
-              <div style="margin-top: 1.5px;">• Kurniawan, B. (2022). <em>User Interface Design for Developers</em>. Packt Publishing.</div>
-              <div style="margin-top: 1.5px;">• García, A. M. (2024). <em>Ingeniería de Software: Metodologías Ágiles y Control de Versiones en la Práctica</em>. Marcombo.</div>
+            <div style="padding-left: 18px; font-size: 8pt; line-height: 1.4; text-align: left;">
+              Schildt, H. (2017). <em>C#. The Complete Reference</em> (5th ed.). McGraw-Hill Education.
             </div>
 
-            <div style="text-align: center; font-size: 8pt; margin-top: 8px;">1</div>
+            <div style="text-align: center; font-size: 8.5pt; margin-top: 15px;">2</div>
           </div>
         `;
       }
