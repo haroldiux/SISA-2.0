@@ -430,6 +430,11 @@
         window.loadSavedDocenteData(activeMateriaKey);
       }
 
+      // Render Career Sub-Tabs Switcher for Multicarrera preview
+      if (typeof window.renderCarreraSubtabs === 'function') {
+        window.renderCarreraSubtabs(activeMateriaKey);
+      }
+
       // Auto-resize textareas to fit content
       setTimeout(() => {
         if (typeof window.autoResizeAllTextareas === 'function') {
@@ -3045,7 +3050,9 @@ document.addEventListener('change', (e) => {
         elementosCompetencia: [
           `Modela problemas y soluciones en el ámbito de ${item.name}.`,
           `Ejecuta procedimientos técnicos y metodologías estándar con rigor profesional.`
-        ]
+        ],
+        carrerasCodes: item.carrerasCodes,
+        carrerasResolved: item.carrerasResolved
       };
 
       // HTML for Top Horizontal Card
@@ -3104,8 +3111,97 @@ document.addEventListener('change', (e) => {
     // Auto-select first subject of this teacher
     const firstItem = items[0];
     if (firstItem) {
-      const firstMKey = (firstItem.course.code ? firstItem.course.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'mat0') + (firstItem.group.name ? firstItem.group.name.toLowerCase().replace(/[^a-z0-9]/g, '') : (firstItem.group.code ? firstItem.group.code.toLowerCase().replace(/[^a-z0-9]/g, '') : 'g1'));
-      window.selectDocenteMateria(firstMKey);
+      window.selectDocenteMateria(firstItem.key);
+    }
+  };
+
+  // Render Sub-tabs of Career
+  window.renderCarreraSubtabs = function(mKey) {
+    const data = materiasData[mKey];
+    const analiticoContainer = document.getElementById('analitico-carrera-subtabs');
+    const pacContainer = document.getElementById('pac-carrera-subtabs');
+    if (!data) return;
+
+    const rawCareers = data.carrerasCodes || [];
+    const resolvedCareers = data.carrerasResolved || [];
+
+    if (resolvedCareers.length <= 1) {
+      if (analiticoContainer) analiticoContainer.innerHTML = '';
+      if (pacContainer) pacContainer.innerHTML = '';
+      return;
+    }
+
+    const buildTabsHtml = (contextId) => {
+      let tabsHtml = `
+        <div class="p-3 rounded-xl border border-brand-200 dark:border-brand-900/60 bg-brand-50/40 dark:bg-slate-900 shadow-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Vista Previa / Carátula de Carrera:
+            </span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Seleccioná una carrera para ver sus códigos y membrete específico:</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="window.selectCarreraContext('${mKey}', 'ALL', this)" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer">
+              <i data-lucide="globe" class="w-3.5 h-3.5"></i> Vista Consolidada (${data.codigo})
+            </button>
+      `;
+
+      resolvedCareers.forEach((cr, idx) => {
+        const cCode = rawCareers[idx] || '';
+        const singleCode = resolveOfficialCourseCode(data.nombre, [cCode]);
+        let icon = 'book';
+        if (cCode.includes('SIS')) icon = 'code-2';
+        else if (cCode.includes('ELE')) icon = 'cpu';
+        else if (cCode.includes('SON')) icon = 'music';
+        else if (cCode.includes('IBI') || cCode.includes('BIO')) icon = 'dna';
+        else if (cCode.includes('MED')) icon = 'stethoscope';
+        else if (cCode.includes('ADM') || cCode.includes('CCP')) icon = 'bar-chart-3';
+
+        tabsHtml += `
+          <button type="button" onclick="window.selectCarreraContext('${mKey}', '${cCode}', this, '${singleCode}', '${cr.name}')" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs">
+            <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${cr.tag} <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-brand-700 dark:text-brand-300 font-mono border border-slate-200 dark:border-slate-600">${singleCode}</span>
+          </button>
+        `;
+      });
+
+      tabsHtml += `
+          </div>
+        </div>
+      `;
+      return tabsHtml;
+    };
+
+    if (analiticoContainer) analiticoContainer.innerHTML = buildTabsHtml('ana');
+    if (pacContainer) pacContainer.innerHTML = buildTabsHtml('pac');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.selectCarreraContext = function(mKey, cCode, btnEl, singleCode, carreraName) {
+    const data = materiasData[mKey];
+    if (!data) return;
+
+    document.querySelectorAll(`.carrera-subtab-btn-${mKey}`).forEach(btn => {
+      btn.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs`;
+    });
+
+    if (btnEl) {
+      btnEl.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer`;
+    }
+
+    if (cCode === 'ALL') {
+      if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = data.codigo;
+      if (document.getElementById('pac-codigo-input')) document.getElementById('pac-codigo-input').value = data.codigo;
+      if (document.getElementById('pac-carrera-input')) document.getElementById('pac-carrera-input').value = data.carrera;
+      if (document.getElementById('caratula-codigo')) document.getElementById('caratula-codigo').value = data.codigo;
+      if (document.getElementById('caratula-carrera')) document.getElementById('caratula-carrera').value = data.carrera;
+      window.showToast('🌐 Vista Consolidada Multicarrera: ' + data.codigo);
+    } else {
+      if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = singleCode;
+      if (document.getElementById('pac-codigo-input')) document.getElementById('pac-codigo-input').value = singleCode;
+      if (document.getElementById('pac-carrera-input')) document.getElementById('pac-carrera-input').value = carreraName;
+      if (document.getElementById('caratula-codigo')) document.getElementById('caratula-codigo').value = singleCode;
+      if (document.getElementById('caratula-carrera')) document.getElementById('caratula-carrera').value = carreraName;
+      window.showToast(`🏫 Vista ajustada para ${carreraName} (Código: ${singleCode})`);
     }
   };
 
