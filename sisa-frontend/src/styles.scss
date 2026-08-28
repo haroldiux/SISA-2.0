@@ -87,39 +87,57 @@ textarea {
 
 /* PRINT / PDF STYLES */
 @media print {
+  @page {
+    size: letter portrait;
+    margin: 10mm 10mm 10mm 10mm;
+  }
+
   body {
     background: white !important;
     color: black !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
-  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn {
+
+  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn, .top-prototype-bar, main > div:not(#print-official-folder-container) {
     display: none !important;
   }
-  main, .frame-view {
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    border: none !important;
-    box-shadow: none !important;
+
+  main {
     padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  #print-official-folder-container {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    min-height: 96vh;
+    box-sizing: border-box !important;
     background: white !important;
-  }
-  .doc-tab-panel {
-    display: none !important;
-  }
-  .doc-tab-panel.print-active {
-    display: block !important;
-    page-break-after: always;
-    margin-bottom: 2rem;
-  }
-  input, textarea {
-    border: 1px solid #CBD5E1 !important;
-    background: #F8FAFC !important;
     color: black !important;
-    padding: 4px 8px !important;
-    resize: none !important;
   }
-  .print-header {
-    display: block !important;
+
+  .print-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  table, th, td {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 .print-header {
