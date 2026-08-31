@@ -942,170 +942,163 @@
           </div>
         `;
 
-        // PÁGINA 1: Header, Tabla Oficial, Unidad I (Temas 1 al 4) y Unidad II (Temas 5 y 6)
+        // PÁGINA ÚNICA: Header, Tabla Oficial (N° HOJAS: 1), Todas las Unidades (1 a 4) y Bibliografía
         docHtml += `
-          <div class="print-page" style="padding: 16mm 20mm 16mm 20mm; font-family: 'Times New Roman', Times, serif; font-size: 10pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+          <div class="print-page" style="padding: 10mm 16mm 8mm 16mm; font-family: 'Times New Roman', Times, serif; font-size: 8.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
-            <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 12px; letter-spacing: 0.5px;">
+            <div style="text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 8px; letter-spacing: 0.5px;">
               PROGRAMA ANALÍTICO: ${data.nombre.toUpperCase()}
             </div>
 
-            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 16px;">
+            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 7.8pt; margin-bottom: 10px;">
               <thead>
                 <tr style="font-weight: bold;">
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 12%;">CÓDIGO</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 10%;">SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 26%;">ASIGNATURA</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 10%;">CRÉDITOS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 12%;">CÓDIGO</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 10%;">SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 26%;">ASIGNATURA</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 10%;">CRÉDITOS</th>
                   <th colspan="2" style="border: 1px solid #000; padding: 2px; width: 16%;">HORAS</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 14%;">HRS. SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 12%;">N° HOJAS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 14%;">HRS. SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 2.5px; width: 12%;">N° HOJAS</th>
                 </tr>
                 <tr style="font-weight: bold;">
-                  <th style="border: 1px solid #000; padding: 2.5px; font-size: 7.5pt;">TEÓRICAS</th>
-                  <th style="border: 1px solid #000; padding: 2.5px; font-size: 7.5pt;">PRÁCTICAS</th>
+                  <th style="border: 1px solid #000; padding: 2px; font-size: 7pt;">TEÓRICAS</th>
+                  <th style="border: 1px solid #000; padding: 2px; font-size: 7pt;">PRÁCTICAS</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '3º'}</td>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${data.nombre}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '8'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTeoricas || '2'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasPracticas || '4'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTotal || '120'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">2</td>
+                  <td style="border: 1px solid #000; padding: 3px; font-weight: bold;">${displayCode}</td>
+                  <td style="border: 1px solid #000; padding: 3px;">${data.semestre || '3º'}</td>
+                  <td style="border: 1px solid #000; padding: 3px; font-weight: bold;">${data.nombre}</td>
+                  <td style="border: 1px solid #000; padding: 3px;">${data.creditos || '8'}</td>
+                  <td style="border: 1px solid #000; padding: 3px;">${data.horasTeoricas || '2'}</td>
+                  <td style="border: 1px solid #000; padding: 3px;">${data.horasPracticas || '4'}</td>
+                  <td style="border: 1px solid #000; padding: 3px;">${data.horasTotal || '120'}</td>
+                  <td style="border: 1px solid #000; padding: 3px; font-weight: bold;">1</td>
                 </tr>
               </tbody>
             </table>
 
             <!-- UNIDAD DE APRENDIZAJE I -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 1. CONCEPTOS FUNDAMENTALES DE LA PROGRAMACIÓN ORIENTADA A OBJETOS
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Introducción a la programación orientada a objetos. Clases y objetos. Estructuras de la POO.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 2. HERENCIA Y POLIMORFISMO
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 3. ABSTRACCIÓN Y ENCAPSULAMIENTO
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 4. MANEJO DE EXCEPCIONES
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 6px;">
               Manejo de errores y excepciones. Try-catch y lanzamiento de excepciones. Buenas prácticas de manejo de errores.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE II -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               UNIDAD DE APRENDIZAJE II.- INTERFAZ DE USUARIO CON WINDOWS FORM.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 5. INTRODUCCIÓN A WINDOWS FORMS
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Introducción a la creación de interfaces de usuario con Windows Forms. Diseño de ventanas y formularios. Uso de controles y elementos gráficos básicos.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 6. MANEJO DE EVENTOS
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Eventos en Windows Forms. Asociación de eventos con métodos. Implementación de respuestas a eventos de usuario.
             </div>
-          </div>
-        `;
 
-        // PÁGINA 2: Header, Tema 7, Unidad III (Temas 8 al 10), Unidad V (Temas 11 y 12), Bibliografía Oficial y Complementaria
-        docHtml += `
-          <div class="print-page" style="padding: 16mm 20mm 16mm 20mm; font-family: 'Times New Roman', Times, serif; font-size: 10pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
-            ${headerComponent}
-
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 7. DISEÑO DE INTERFACES GRÁFICAS
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 6px;">
               Diseño avanzado de interfaces de usuario. Personalización de controles y formularios, Diseño de menús y barras de herramientas.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE III -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               UNIDAD DE APRENDIZAJE III.- DESARROLLO DE APLICACIONES SIMPLES
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 8. DISEÑO DE PROGRAMAS
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Análisis de requerimientos. Diseño de algoritmos. Estructuras de datos e interfaces de usuario. Diagramas de flujo y pseudocódigo.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 9. DESARROLLO DE APLICACIONES
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Creación de aplicaciones simples. Interfaz de usuario básica. Pruebas y depuración.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 10. GESTIÓN DE PROYECTOS Y CONTROL DE VERSIONES
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 6px;">
               Colaboración en equipos de desarrollo. Manejo de metodologías de desarrollo.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE V -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               UNIDAD DE APRENDIZAJE V.- PRÁCTICA Y PROYECTO FINAL
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 11. PRÁCTICA EN PROYECTOS REALES
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 4px;">
               Desarrollo de proyecto. Aplicación de los conocimientos adquiridos.
             </div>
 
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 8.5pt; margin-top: 4px; margin-bottom: 1px; text-align: left;">
               TEMA Nº 12. PROYECTO FINAL
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 14px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 8px;">
               Definición y desarrollo de un proyecto completo. Documentación y presentación del proyecto.
             </div>
 
             <!-- BIBLIOGRAFÍA OFICIAL -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               BIBLIOGRAFÍA OFICIAL
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 8px;">
               <span>✓</span>
               <span>Deitel, P. J., & Deitel, H. M. (2019). <em>Visual C# How to Program</em> (6th ed.). Pearson.</span>
             </div>
 
             <!-- BIBLIOGRAFÍA COMPLEMENTARIA -->
-            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 10px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
               BIBLIOGRAFÍA COMPLEMENTARIA
             </div>
-            <div style="font-size: 9pt; line-height: 1.5; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="font-size: 8pt; line-height: 1.35; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
               <span>✓</span>
               <span>Schildt, H. (2017). <em>C#. The Complete Reference</em> (5th ed.). McGraw-Hill Education.</span>
             </div>
