@@ -944,27 +944,27 @@
 
         // PÁGINA 1: Header, Tabla Oficial, Unidad I (Temas 1 al 4) y Unidad II (Temas 5 y 6)
         docHtml += `
-          <div class="print-page" style="padding: 12mm 18mm 12mm 18mm; font-family: 'Times New Roman', Times, serif; font-size: 9pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+          <div class="print-page" style="padding: 16mm 20mm 16mm 20mm; font-family: 'Times New Roman', Times, serif; font-size: 10pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
-            <div style="text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 10px; letter-spacing: 0.5px;">
+            <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 12px; letter-spacing: 0.5px;">
               PROGRAMA ANALÍTICO: ${data.nombre.toUpperCase()}
             </div>
 
-            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8pt; margin-bottom: 14px;">
+            <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 16px;">
               <thead>
                 <tr style="font-weight: bold;">
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">CÓDIGO</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 26%;">ASIGNATURA</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 10%;">CRÉDITOS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 12%;">CÓDIGO</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 10%;">SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 26%;">ASIGNATURA</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 10%;">CRÉDITOS</th>
                   <th colspan="2" style="border: 1px solid #000; padding: 2px; width: 16%;">HORAS</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 14%;">HRS. SEMESTRE</th>
-                  <th rowspan="2" style="border: 1px solid #000; padding: 3px; width: 12%;">N° HOJAS</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 14%;">HRS. SEMESTRE</th>
+                  <th rowspan="2" style="border: 1px solid #000; padding: 3.5px; width: 12%;">N° HOJAS</th>
                 </tr>
                 <tr style="font-weight: bold;">
-                  <th style="border: 1px solid #000; padding: 2px; font-size: 7pt;">TEÓRICAS</th>
-                  <th style="border: 1px solid #000; padding: 2px; font-size: 7pt;">PRÁCTICAS</th>
+                  <th style="border: 1px solid #000; padding: 2.5px; font-size: 7.5pt;">TEÓRICAS</th>
+                  <th style="border: 1px solid #000; padding: 2.5px; font-size: 7.5pt;">PRÁCTICAS</th>
                 </tr>
               </thead>
               <tbody>
@@ -982,54 +982,54 @@
             </table>
 
             <!-- UNIDAD DE APRENDIZAJE I -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 1. CONCEPTOS FUNDAMENTALES DE LA PROGRAMACIÓN ORIENTADA A OBJETOS
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Introducción a la programación orientada a objetos. Clases y objetos. Estructuras de la POO.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 2. HERENCIA Y POLIMORFISMO
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 3. ABSTRACCIÓN Y ENCAPSULAMIENTO
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 4. MANEJO DE EXCEPCIONES
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
               Manejo de errores y excepciones. Try-catch y lanzamiento de excepciones. Buenas prácticas de manejo de errores.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE II -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 12px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               UNIDAD DE APRENDIZAJE II.- INTERFAZ DE USUARIO CON WINDOWS FORM.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 5. INTRODUCCIÓN A WINDOWS FORMS
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Introducción a la creación de interfaces de usuario con Windows Forms. Diseño de ventanas y formularios. Uso de controles y elementos gráficos básicos.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 6. MANEJO DE EVENTOS
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left;">
               Eventos en Windows Forms. Asociación de eventos con métodos. Implementación de respuestas a eventos de usuario.
             </div>
           </div>
@@ -1037,75 +1037,75 @@
 
         // PÁGINA 2: Header, Tema 7, Unidad III (Temas 8 al 10), Unidad V (Temas 11 y 12), Bibliografía Oficial y Complementaria
         docHtml += `
-          <div class="print-page" style="padding: 12mm 18mm 12mm 18mm; font-family: 'Times New Roman', Times, serif; font-size: 9pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+          <div class="print-page" style="padding: 16mm 20mm 16mm 20mm; font-family: 'Times New Roman', Times, serif; font-size: 10pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 7. DISEÑO DE INTERFACES GRÁFICAS
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
               Diseño avanzado de interfaces de usuario. Personalización de controles y formularios, Diseño de menús y barras de herramientas.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE III -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               UNIDAD DE APRENDIZAJE III.- DESARROLLO DE APLICACIONES SIMPLES
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 8. DISEÑO DE PROGRAMAS
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Análisis de requerimientos. Diseño de algoritmos. Estructuras de datos e interfaces de usuario. Diagramas de flujo y pseudocódigo.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 9. DESARROLLO DE APLICACIONES
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Creación de aplicaciones simples. Interfaz de usuario básica. Pruebas y depuración.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 10. GESTIÓN DE PROYECTOS Y CONTROL DE VERSIONES
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 8px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 12px;">
               Colaboración en equipos de desarrollo. Manejo de metodologías de desarrollo.
             </div>
 
             <!-- UNIDAD DE APRENDIZAJE V -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               UNIDAD DE APRENDIZAJE V.- PRÁCTICA Y PROYECTO FINAL
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 11. PRÁCTICA EN PROYECTOS REALES
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 4px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px;">
               Desarrollo de proyecto. Aplicación de los conocimientos adquiridos.
             </div>
 
-            <div style="font-weight: bold; font-size: 9pt; margin-top: 6px; margin-bottom: 2px; text-align: left;">
+            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 8px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 12. PROYECTO FINAL
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 14px;">
               Definición y desarrollo de un proyecto completo. Documentación y presentación del proyecto.
             </div>
 
             <!-- BIBLIOGRAFÍA OFICIAL -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 14px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               BIBLIOGRAFÍA OFICIAL
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px;">
               <span>✓</span>
               <span>Deitel, P. J., & Deitel, H. M. (2019). <em>Visual C# How to Program</em> (6th ed.). Pearson.</span>
             </div>
 
             <!-- BIBLIOGRAFÍA COMPLEMENTARIA -->
-            <div style="font-weight: bold; font-size: 9.5pt; margin-top: 10px; margin-bottom: 4px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10.5pt; margin-top: 10px; margin-bottom: 6px; text-align: left;">
               BIBLIOGRAFÍA COMPLEMENTARIA
             </div>
-            <div style="font-size: 8.5pt; line-height: 1.4; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="font-size: 9pt; line-height: 1.5; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
               <span>✓</span>
               <span>Schildt, H. (2017). <em>C#. The Complete Reference</em> (5th ed.). McGraw-Hill Education.</span>
             </div>
@@ -1113,7 +1113,7 @@
         `;
       }
 
-      // 6. PAC CON CRONOGRAMA - Exact format of pac taller idiomas.pdf and PAC TALLER DE IDIOMAS.xlsx (3 Official Framed Pages)
+      // 6. PAC CON CRONOGRAMA - Exact format of PAC TALLER DE IDIOMAS.xlsx (Puntos 1 al 6 + Matriz 7 + Puntos 8 a 14)
       if (selectedSections.includes('pac_cronograma') || selectedSections.includes('pac') || selectedSections.includes('cronograma')) {
         const savedPac = localStorage.getItem('sisa_saved_pac_' + mKey);
         let matriz7 = [];
@@ -1208,63 +1208,110 @@
           </thead>
         `;
 
-        // PAGE 1: Identificación Oficial + Cronograma Sesiones 1 a 10
+        // PAGE 1: PUNTOS 1 AL 6 DEL EXCEL BASE (Identificación, Docente, Justificación, Propósito, Competencias, Elementos)
         docHtml += `
-          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
-            <div style="text-align: center; margin-bottom: 4px;">
+          <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+            <div style="text-align: center; margin-bottom: 6px;">
               <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
               <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
-              <div style="font-size: 9pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</div>
+              <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</div>
             </div>
 
             <!-- 1. IDENTIFICACIÓN -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 6px;">
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">1.- Identificación de la Asignatura</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
-                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${data.nombre.toUpperCase()} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${data.nombre.toUpperCase()} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>ÁREA DE DESEMPEÑO:</strong> FORMACIÓN PROFESIONAL</td>
-                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>TIPO DE CURSO:</strong> REGULAR</td>
-                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>MODALIDAD:</strong> PRESENCIAL</td>
-                <td style="border: 1px solid #000; padding: 2px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '1º Semestre'}</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>ÁREA DE DESEMPEÑO:</strong> FORMACIÓN PROFESIONAL</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>TIPO DE CURSO:</strong> REGULAR / OBLIGATORIO</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>MODALIDAD:</strong> PRESENCIAL</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '3º Semestre'}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2px 4px;"><strong>PRE-REQUISITO:</strong> NINGUNO</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>CARGA HORARIA TOTAL:</strong> ${data.horasTotal || '120'} HORAS &nbsp;&nbsp;|&nbsp;&nbsp; <strong>HORAS:</strong> TEÓRICAS: ${data.horasTeoricas || '2'}h / PRÁCTICAS: ${data.horasPracticas || '4'}h</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>PRE-REQUISITO:</strong> NINGUNO</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CARGA HORARIA TOTAL:</strong> ${data.horasTotal || '120'} HORAS &nbsp;&nbsp;|&nbsp;&nbsp; <strong>HORAS:</strong> TEÓRICAS: ${data.horasTeoricas || '2'}h / PRÁCTICAS: ${data.horasPracticas || '4'}h</td>
               </tr>
               <tr>
-                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>N° DE SESIONES SEMANALES:</strong> TEÓRICAS: 1 &nbsp;&nbsp; PRÁCTICAS: 1</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2px 4px;"><strong>DOCENTE:</strong> ${docenteName} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>EMAIL:</strong> docente@unitepc.edu.bo</td>
+                <td colspan="4" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>N° DE SESIONES SEMANALES:</strong> 2 SESIONES &nbsp;&nbsp; (TEÓRICAS: 1 &nbsp;|&nbsp; PRÁCTICAS: 1)</td>
               </tr>
             </table>
 
-            <!-- CRONOGRAMA SESIONES 1 A 10 -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt;">
-              ${matrixTableHeader}
-              <tbody>
-                ${renderMatrixRows(0, 9)}
-              </tbody>
+            <!-- 2. DOCENTE -->
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">2.- Docente Responsable de la Asignatura</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
+              <tr>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Nombre del docente:</strong> ${docenteName}</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>eMail:</strong> docente@unitepc.edu.bo</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>Formación:</strong> Licenciatura en Ingeniería / Maestría en Educación Superior</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>Teléfono:</strong> (+591) 4-4258888</td>
+              </tr>
+            </table>
+
+            <!-- 3. JUSTIFICACIÓN -->
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">3.- Justificación de la Asignatura</div>
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt;">
+              ${data.caracterizacion || 'La asignatura es de primordial relevancia en la malla curricular institucional por cuanto desarrolla competencias profesionales indispensables para la formulación, diseño y construcción de soluciones tecnológicas estructuradas. Proporciona al estudiante fundamentos sólidos, metodologías activas y destrezas prácticas alineadas a los requerimientos socioproductivos y estándares de la industria.'}
+            </div>
+
+            <!-- 4. PROPÓSITO GENERAL -->
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">4.- Propósito General de la Unidad de Formación</div>
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt;">
+              ${data.macroCompetencia || 'Formar profesionales competentes en el análisis, diseño e implementación de sistemas mediante el uso riguroso de principios computacionales, patrones de diseño y trabajo colaborativo, con alto sentido de ética, innovación y responsabilidad social.'}
+            </div>
+
+            <!-- 5. COMPETENCIAS -->
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">5.- Competencias</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
+              <tr>
+                <td style="border: 1px solid #000; padding: 3px 5px; width: 30%; background: #f8fafc; font-weight: bold;">Competencia Global Específica:</td>
+                <td style="border: 1px solid #000; padding: 3px 5px;">${data.macroCompetencia || 'Desarrolla sistemas modulares, escalables y mantenibles aplicando estándares de ingeniería de software.'}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 3px 5px; width: 30%; background: #f8fafc; font-weight: bold;">Unidad de Competencia Específica:</td>
+                <td style="border: 1px solid #000; padding: 3px 5px;">MANEJA ESTRUCTURAS, PATRONES Y LENGUAJES DE PROGRAMACIÓN PARA LA CONSTRUCCIÓN DE SOFTWARE DE ALTA CALIDAD Y DISPONIBILIDAD.</td>
+              </tr>
+            </table>
+
+            <!-- 6. ELEMENTOS DE COMPETENCIA -->
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">6.- Elementos de Competencia</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt;">
+              <tr>
+                <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 1:</td>
+                <td style="border: 1px solid #000; padding: 3px 5px;">Analiza y modela la arquitectura de entidades y objetos, aplicando principios de encapsulamiento, herencia y polimorfismo con rigor técnico y buenas prácticas.</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 2:</td>
+                <td style="border: 1px solid #000; padding: 3px 5px;">Diseña interfaces interactivas y gestiona eventos del sistema, asegurando la comunicación reactiva entre componentes y la experiencia de usuario.</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 3:</td>
+                <td style="border: 1px solid #000; padding: 3px 5px;">Desarrolla e integra proyectos funcionales completos, aplicando control de versiones, pruebas de software y documentación técnica normalizada.</td>
+              </tr>
             </table>
 
             <div style="text-align: center; font-size: 8pt; margin-top: 6px;">1</div>
           </div>
         `;
 
-        // PAGE 2: Cronograma Sesiones 11 a 28
+        // PAGE 2: PUNTO 7 - Cronograma Sesiones 1 a 14
         docHtml += `
-          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
               <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
               <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
             </div>
 
-            <!-- CRONOGRAMA SESIONES 11 A 28 -->
+            <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cronograma de Sesiones 1° a 14°)</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt;">
               ${matrixTableHeader}
               <tbody>
-                ${renderMatrixRows(10, 27)}
+                ${renderMatrixRows(0, 13)}
               </tbody>
             </table>
 
@@ -1272,16 +1319,36 @@
           </div>
         `;
 
-        // PAGE 3: Cronograma Sesiones 29 a 36 + Exámenes + Secciones 8, 9, 12, 14
+        // PAGE 3: PUNTO 7 - Cronograma Sesiones 15 a 28
         docHtml += `
-          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
               <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
               <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
             </div>
 
-            <!-- CRONOGRAMA SESIONES 29 A 36 + EVALUACIONES FINALES -->
-            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 8px;">
+            <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Continuación Sesiones 15° a 28°)</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt;">
+              ${matrixTableHeader}
+              <tbody>
+                ${renderMatrixRows(14, 27)}
+              </tbody>
+            </table>
+
+            <div style="text-align: center; font-size: 8pt; margin-top: 6px;">3</div>
+          </div>
+        `;
+
+        // PAGE 4: PUNTO 7 (Sesiones 29 a 36) + PUNTOS 8, 9, 12, 14
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+            </div>
+
+            <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cierre Sesiones 29° a 36° y Evaluaciones Finales)</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 6px;">
               ${matrixTableHeader}
               <tbody>
                 ${renderMatrixRows(28, 35)}
@@ -1290,32 +1357,32 @@
             </table>
 
             <!-- 8. METODOLOGÍA -->
-            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
-              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">8. Metodología General de la Asignatura</div>
-              <div>De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología que guiará la asignatura es de enfoque constructivista, socioformativo y sociocultural. Se implementa Aprendizaje Basado en Problemas (ABP), Método de Casos, Talleres Prácticos en Laboratorio, Aprendizaje Colaborativo y Aula Invertida mediados por la plataforma virtual SEA.</div>
-              <div style="margin-top: 2px;"><strong>En el Aula:</strong> Clases participativas, debates y construcción conceptual guiada. &nbsp;|&nbsp; <strong>Laboratorios:</strong> Desarrollo experimental, resolución de casos y simulaciones prácticas aplicadas.</div>
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+              <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">8. Metodología General de la Asignatura</div>
+              <div>De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología es de enfoque constructivista y socioformativo (ABP, Método de Casos, Talleres de Laboratorio, Aula Invertida mediados por plataforma SEA).</div>
+              <div style="margin-top: 1px;"><strong>En el Aula:</strong> Clases participativas, debates y construcción conceptual. &nbsp;|&nbsp; <strong>Laboratorios:</strong> Desarrollo experimental, resolución de casos y simulaciones prácticas aplicadas.</div>
             </div>
 
             <!-- 9. SISTEMA DE EVALUACIÓN -->
-            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
-              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">9. Sistema de Evaluación</div>
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+              <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">9. Sistema de Evaluación</div>
               <div>El proceso evaluador es continuo e integral: a) <em>Evaluación diagnóstica:</em> recuperación de conocimientos previos. b) <em>Evaluación formativa:</em> retroalimentación en talleres y laboratorios mediante rúbricas. c) <em>Evaluación sumativa:</em> <strong>1° Parcial (30%)</strong>, <strong>2° Parcial (30%)</strong> y <strong>Examen Final Integrador (40%)</strong>.</div>
             </div>
 
             <!-- 12. CRITERIOS Y NORMATIVA -->
-            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 5px; text-align: justify; line-height: 1.35;">
-              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">12.- Criterios y Normativa de la Asignatura</div>
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+              <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">12.- Criterios y Normativa de la Asignatura</div>
               <div>Los estudiantes deberán cumplir el reglamento institucional: asistencia mínima obligatoria del 80% para tener derecho a evaluación final, 10 minutos de tolerancia al ingreso, respeto mutuo, probidad académica y convivencia armónica en el aula y laboratorios.</div>
             </div>
 
             <!-- 14. BIBLIOGRAFÍA OFICIAL -->
-            <div style="border: 1px solid #000; padding: 4px 6px; text-align: justify; line-height: 1.35;">
-              <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 2px;">14.- Bibliografía oficial</div>
+            <div style="border: 1px solid #000; padding: 3px 5px; text-align: justify; line-height: 1.3;">
+              <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">14.- Bibliografía oficial</div>
               <div><strong>Específica:</strong> Joyanes Aguilar, L. (2021). <em>Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos</em> (6ª ed.). McGraw-Hill. &nbsp;|&nbsp; García Llinás, L. F. (2022). <em>Todo sobre Patrones de Diseño</em>. Ediciones de la U.</div>
-              <div style="margin-top: 2px;"><strong>Complementaria:</strong> Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega. &nbsp;|&nbsp; García, A. M. (2024). <em>Ingeniería de Software</em>. Marcombo.</div>
+              <div style="margin-top: 1px;"><strong>Complementaria:</strong> Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega. &nbsp;|&nbsp; García, A. M. (2024). <em>Ingeniería de Software</em>. Marcombo.</div>
             </div>
 
-            <div style="text-align: center; font-size: 8pt; margin-top: 6px;">3</div>
+            <div style="text-align: center; font-size: 8pt; margin-top: 5px;">4</div>
           </div>
         `;
       }
