@@ -19,4 +19,11 @@ export class AppComponent implements AfterViewInit {
       lucide.createIcons();
     }
   }
+
+  public onDocenteSelectorChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (select && (window as any).onDocenteSelectorChange) {
+      (window as any).onDocenteSelectorChange(select.value);
+    }
+  }
 }

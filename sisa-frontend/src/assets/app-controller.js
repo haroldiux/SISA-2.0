@@ -3691,8 +3691,16 @@ document.addEventListener('change', (e) => {
 
         selector.appendChild(featuredGroup);
 
+        // Attach explicit change listener on the DOM element
+        selector.onchange = function() {
+          window.onDocenteSelectorChange(this.value);
+        };
+        selector.addEventListener('change', function() {
+          window.onDocenteSelectorChange(this.value);
+        });
+
         const savedCi = localStorage.getItem('sisa_active_docente_ci');
-        const defaultCi = (savedCi && targetDocentes.some(t => t.ci === savedCi)) ? savedCi : '3065087';
+        const defaultCi = (savedCi && targetDocentes.some(t => String(t.ci) === String(savedCi))) ? savedCi : '3065087';
         selector.value = defaultCi;
         window.selectDocenteFromApi(defaultCi, true);
       }
@@ -3702,19 +3710,21 @@ document.addEventListener('change', (e) => {
   };
 
   window.onDocenteSelectorChange = function(ci) {
+    console.log('[SISA] Switching active docente to CI:', ci);
     window.selectDocenteFromApi(ci, false);
   };
 
   window.selectDocenteFromApi = async function(ci, silent = false) {
     if (!ci) return;
-    localStorage.setItem('sisa_active_docente_ci', ci);
-    let docente = window.__API_DOCENTES__.find(d => d.ci === ci);
+    const cleanCi = String(ci).trim();
+    localStorage.setItem('sisa_active_docente_ci', cleanCi);
+    let docente = (window.__API_DOCENTES__ || []).find(d => String(d.ci).trim() === cleanCi);
 
     // Fetch this teacher's real assigned courses and groups from API for Cochabamba
     try {
       const [coursesRes, groupsRes] = await Promise.all([
-        fetch(`/api/v1/catalogo-academico/docentes/${ci}/materias`),
-        fetch(`/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=ea4fb26e-11a9-452f-9bae-4962de2dd931&teacherCi=${ci}`)
+        fetch(`/api/v1/catalogo-academico/docentes/${cleanCi}/materias`),
+        fetch(`/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=ea4fb26e-11a9-452f-9bae-4962de2dd931&teacherCi=${cleanCi}`)
       ]);
 
       const courses = coursesRes.ok ? await coursesRes.json() : [];
@@ -3723,14 +3733,17 @@ document.addEventListener('change', (e) => {
 
       if (!docente && activeGroups && activeGroups.length > 0) {
         docente = {
-          ci: ci,
+          ci: cleanCi,
           nombreCompleto: activeGroups[0].teacherName,
-          email: `${ci}@unitepc.edu.bo`,
+          email: `${cleanCi}@unitepc.edu.bo`,
           sedeCodigo: 'CBA',
           carreraPrincipal: activeGroups[0].careerCode,
           materiasNombres: [...new Set(activeGroups.map(g => g.courseName))],
           grupos: activeGroups
         };
+      } else if (docente) {
+        docente.grupos = activeGroups;
+        docente.materiasNombres = [...new Set(activeGroups.map(g => g.courseName || g.name))];
       }
 
       if (!docente) return;
