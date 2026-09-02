@@ -385,9 +385,14 @@
                       <strong>Documento 1: Programa Analítico Oficial (.docx):</strong> Macro-estructura curricular, Unidades 1 a 4 y Bibliografías Básica y Complementaria.
                     </div>
                   </div>
-                  <button onclick="window.exportExactFile('docx')" class="px-3.5 py-1.5 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 flex items-center gap-1.5 shadow-sm transition-colors">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Programa Analítico (.docx)
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button onclick="window.importProgramaDocx()" class="px-3.5 py-1.5 bg-white text-blue-700 border border-blue-300 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300 font-bold rounded-lg text-xs hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                      <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Word (.docx)
+                    </button>
+                    <button onclick="window.exportExactFile('docx')" class="px-3.5 py-1.5 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                      <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Programa Analítico (.docx)
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Sub-Tabs de Carrera / Filtro Contextual Multicarrera -->

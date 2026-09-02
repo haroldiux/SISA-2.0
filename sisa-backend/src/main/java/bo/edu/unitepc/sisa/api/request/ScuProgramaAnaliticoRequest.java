@@ -38,6 +38,7 @@ public class ScuProgramaAnaliticoRequest {
     private Integer creditos;
     private Integer horasTeoricas;
     private Integer horasPracticas;
+    private Integer horasSemestre;
 
     @NotBlank(message = "La caracterización es obligatoria")
     private String caracterizacion;

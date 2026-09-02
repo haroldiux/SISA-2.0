@@ -2472,13 +2472,14 @@ window.loadSavedDocenteData = function(materiaKey) {
     } catch (e) {}
   }
 
-  const officialCode = defData.codigo || pData.codigoAsignatura || pData.codigo || 'SIS-113';
+  const officialCode = pData.codigoAsignatura || pData.codigo || defData.codigo || 'SIS-113';
   if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = officialCode;
   if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '1º Semestre';
-  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = defData.nombre || pData.nombreAsignatura || pData.nombre || '';
+  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = pData.nombreAsignatura || pData.nombre || defData.nombre || '';
   if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '8';
   if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '2 Horas');
   if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '4 Horas');
+  if (document.getElementById('analitico-hs-input')) document.getElementById('analitico-hs-input').value = (pData.horasSemestre ? pData.horasSemestre + ' Horas' : '120 Horas');
   if (document.getElementById('programa-caracterizacion')) document.getElementById('programa-caracterizacion').value = pData.caracterizacion || '';
   if (document.getElementById('programa-macrocompetencia')) document.getElementById('programa-macrocompetencia').value = pData.macroCompetencia || '';
   if (document.getElementById('programa-sistema-evaluacion')) document.getElementById('programa-sistema-evaluacion').value = pData.sistemaEvaluacion || '';
@@ -3194,11 +3195,19 @@ window.importProgramaDocx = function() {
         }
       }
 
+      // Update banner & breadcrumb immediately with imported course identity
+      if (data.codigoAsignatura && data.nombreAsignatura) {
+        const bTitle = document.getElementById('banner-materia-title');
+        if (bTitle) bTitle.textContent = `${data.codigoAsignatura} • ${data.nombreAsignatura}`;
+        const crumb = document.getElementById('docente-breadcrumb');
+        if (crumb) crumb.textContent = `${data.codigoAsignatura} ${data.nombreAsignatura}`;
+      }
+
       // Auto-save freshly imported data to database & localStorage
       await window.saveCurrentDocenteData(true);
 
       const totalTemas = activeAnaliticoUnidades.reduce((acc, u) => acc + (u.temas ? u.temas.length : 0), 0);
-      window.showToast('✅ ¡Programa Analítico importado! (' + activeAnaliticoUnidades.length + ' unidades articuladas con ' + activeAnaliticoUnidades.length + ' Elementos de Competencia en el PAC)');
+      window.showToast('✅ ¡Programa Analítico importado! (' + activeAnaliticoUnidades.length + ' unidades y ' + totalTemas + ' temas articulados con el PAC)');
 
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {

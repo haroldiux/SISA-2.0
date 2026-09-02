@@ -24,6 +24,11 @@ import java.util.List;
 @Component
 public class ProgramaAnaliticoDocxParser {
 
+    private static final java.util.regex.Pattern UNIT_PATTERN =
+            java.util.regex.Pattern.compile("^(?:UNIDAD\\s+(?:DE\\s+APRENDIZAJE\\s+)?)([IVXLCDM\\d]+)[.:\\s-]+(.*)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern TEMA_PATTERN =
+            java.util.regex.Pattern.compile("^TEMA\\s+(?:N[º°.]?\\s*)?(\\d+)[.:\\s-]+(.*)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+
     public ScuProgramaAnaliticoRequest parseDocx(InputStream docxStream, Long asignacionId) throws Exception {
         try (XWPFDocument doc = new XWPFDocument(docxStream)) {
             ScuProgramaAnaliticoRequest req = new ScuProgramaAnaliticoRequest();
@@ -43,6 +48,7 @@ public class ProgramaAnaliticoDocxParser {
                     req.setCreditos(parseInt(get(cells, 3)));
                     req.setHorasTeoricas(parseInt(get(cells, 4)));
                     req.setHorasPracticas(parseInt(get(cells, 5)));
+                    req.setHorasSemestre(parseInt(get(cells, 6)));
                 }
             }
 
@@ -103,42 +109,62 @@ public class ProgramaAnaliticoDocxParser {
                 break;
             }
 
-            // Unit Header: e.g. "UNIDAD 1: Arquitectura de Entidades y Modelado de Sistemas"
-            if (upper.startsWith("UNIDAD") && text.contains(":")) {
+            java.util.regex.Matcher mu = UNIT_PATTERN.matcher(text);
+            java.util.regex.Matcher mt = TEMA_PATTERN.matcher(text);
+
+            // Unit Header: e.g. "UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS." or "UNIDAD 1: ..."
+            if (mu.matches() || (upper.startsWith("UNIDAD") && (text.contains(":") || text.contains(".-")))) {
                 if (currentTema != null) {
                     currentTema.setContenido(String.join("\n", currentPuntos));
                 }
                 currentTema = null;
                 currentPuntos = new ArrayList<>();
 
-                int colonIdx = text.indexOf(":");
-                String unitPrefix = text.substring(0, colonIdx);
-                int num = parseNumSafe(unitPrefix, list.size() + 1);
-                String titulo = text.substring(colonIdx + 1).trim();
+                int num;
+                String titulo;
+                if (mu.matches()) {
+                    num = parseRomanOrArabic(mu.group(1), list.size() + 1);
+                    titulo = mu.group(2).replaceAll("^[.:\\s-]+", "").replaceAll("[.:\\s-]+$", "").trim();
+                } else {
+                    int sepIdx = text.indexOf(":");
+                    if (sepIdx == -1) sepIdx = text.indexOf(".-");
+                    String unitPrefix = sepIdx != -1 ? text.substring(0, sepIdx) : text;
+                    num = parseRomanOrArabic(unitPrefix, list.size() + 1);
+                    titulo = sepIdx != -1 ? text.substring(sepIdx + (text.charAt(sepIdx) == ':' ? 1 : 2)).trim() : text;
+                }
 
                 currentUnit = ScuUnidadAprendizajeDto.builder()
                         .numeroUnidad(num)
-                        .titulo(titulo.isEmpty() ? text : titulo)
+                        .titulo(titulo.isEmpty() ? ("Unidad " + num) : titulo)
                         .horasAcademicas(20)
                         .temas(new ArrayList<>())
                         .build();
                 list.add(currentUnit);
             }
-            // Topic Header: e.g. "Tema 1: Anatomía de la Entidad y el Objeto"
-            else if (upper.startsWith("TEMA") && text.contains(":") && currentUnit != null) {
+            // Topic Header: e.g. "TEMA Nº 1. CONCEPTOS..." or "Tema 1: Anatomía..."
+            else if ((mt.matches() || (upper.startsWith("TEMA") && (text.contains(":") || text.contains(".-") || text.contains(".")))) && currentUnit != null) {
                 if (currentTema != null) {
                     currentTema.setContenido(String.join("\n", currentPuntos));
                 }
                 currentPuntos = new ArrayList<>();
 
-                int colonIdx = text.indexOf(":");
-                String temaPrefix = text.substring(0, colonIdx);
-                int numTema = parseNumSafe(temaPrefix, currentUnit.getTemas().size() + 1);
-                String tituloTema = text.substring(colonIdx + 1).trim();
+                int numTema;
+                String tituloTema;
+                if (mt.matches()) {
+                    numTema = parseNumSafe(mt.group(1), currentUnit.getTemas().size() + 1);
+                    tituloTema = mt.group(2).replaceAll("^[.:\\s-]+", "").replaceAll("[.:\\s-]+$", "").trim();
+                } else {
+                    int sepIdx = text.indexOf(":");
+                    if (sepIdx == -1) sepIdx = text.indexOf(".-");
+                    if (sepIdx == -1) sepIdx = text.indexOf(".");
+                    String temaPrefix = sepIdx != -1 ? text.substring(0, sepIdx) : text;
+                    numTema = parseNumSafe(temaPrefix, currentUnit.getTemas().size() + 1);
+                    tituloTema = sepIdx != -1 ? text.substring(sepIdx + 1).trim() : text;
+                }
 
                 currentTema = ScuTemaAnaliticoDto.builder()
                         .numeroTema(numTema)
-                        .titulo(tituloTema.isEmpty() ? text : tituloTema)
+                        .titulo(tituloTema.isEmpty() ? ("Tema " + numTema) : tituloTema)
                         .build();
                 currentUnit.getTemas().add(currentTema);
             }
@@ -245,6 +271,24 @@ public class ProgramaAnaliticoDocxParser {
         String digits = s.replaceAll("[^0-9]", "");
         if (digits.isEmpty()) return fallback;
         try { return Integer.parseInt(digits); } catch (Exception e) { return fallback; }
+    }
+
+    private int parseRomanOrArabic(String s, int fallback) {
+        if (s == null || s.isBlank()) return fallback;
+        String clean = s.trim().toUpperCase().replaceAll("[^A-Z0-9]", "");
+        switch (clean) {
+            case "I": return 1;
+            case "II": return 2;
+            case "III": return 3;
+            case "IV": return 4;
+            case "V": return 5;
+            case "VI": return 6;
+            case "VII": return 7;
+            case "VIII": return 8;
+            case "IX": return 9;
+            case "X": return 10;
+            default: return parseNumSafe(clean, fallback);
+        }
     }
 }
 
