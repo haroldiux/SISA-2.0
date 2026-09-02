@@ -1,4 +1,11 @@
 
+    // ── GLOBAL SELECTOR HOOKS ───────────────────────────────────────────
+    window.onDocenteSelectorChange = function(ci) {
+      if (typeof window.selectDocenteFromApi === 'function') {
+        window.selectDocenteFromApi(ci, false);
+      }
+    };
+
     // ── AUTO-GROWING TEXTAREAS ENGINE (ZERO SCROLLBARS) ─────────────────────────
     window.autoResizeTextarea = function(el) {
       if (!el || el.tagName !== 'TEXTAREA') return;

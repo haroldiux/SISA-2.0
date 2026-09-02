@@ -22,8 +22,12 @@ export class AppComponent implements AfterViewInit {
 
   public onDocenteSelectorChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
-    if (select && (window as any).onDocenteSelectorChange) {
-      (window as any).onDocenteSelectorChange(select.value);
+    if (!select) return;
+    const ci = select.value;
+    if (typeof (window as any).onDocenteSelectorChange === 'function') {
+      (window as any).onDocenteSelectorChange(ci);
+    } else if (typeof (window as any).selectDocenteFromApi === 'function') {
+      (window as any).selectDocenteFromApi(ci, false);
     }
   }
 }
