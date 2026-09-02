@@ -3642,59 +3642,41 @@ document.addEventListener('change', (e) => {
 
   window.loadDocentesFromApi = async function() {
     try {
-      const res = await fetch('/api/v1/catalogo-academico/docentes');
+      const res = await fetch('/api/v1/catalogo-academico/docentes?branchOfficeId=ea4fb26e-11a9-452f-9bae-4962de2dd931');
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const docentes = await res.json();
       window.__API_DOCENTES__ = Array.isArray(docentes) ? docentes : [];
 
       const selector = document.getElementById('docente-api-selector');
-      if (selector && window.__API_DOCENTES__.length > 0) {
+      if (selector) {
         selector.innerHTML = '';
 
-        // Highlight the 3 representative test docentes
-        const featuredCis = ['3065087', '4421998', '7977612']; // Rosmery Luizaga, Martin Xavier Sanchez, Efrain Loza
+        // Exclusively 4 real Cochabamba teachers from official SEA Gateway
+        const targetDocentes = [
+          { ci: '3065087', tag: '💻 [INGENIERÍA]', label: 'ROSMERY LUIZAGA SALINAS' },
+          { ci: '6600808', tag: '💻 [SISTEMAS]', label: 'WALTER JOSE CAZAS CASTRO' },
+          { ci: '4421998', tag: '🩺 [MEDICINA]', label: 'MARTIN XAVIER SANCHEZ FLORES' },
+          { ci: '7906983', tag: '📊 [FACEFA]', label: 'RUBEN SERGIO VELASQUEZ ADRIAZOLA' }
+        ];
+
         const featuredGroup = document.createElement('optgroup');
-        featuredGroup.label = '🏛️ DOCENTES PRINCIPALES (INGENIERÍA, MEDICINA, FACEFA)';
+        featuredGroup.label = '🏛️ DOCENTES OFICIALES SEA - SEDE COCHABAMBA';
 
-        const otherGroup = document.createElement('optgroup');
-        otherGroup.label = '👥 OTROS DOCENTES REALES (UNITEPC GATEWAY)';
-
-        // Add featured teachers first
-        featuredCis.forEach(ci => {
-          const d = window.__API_DOCENTES__.find(doc => doc.ci === ci);
-          if (d) {
-            const opt = document.createElement('option');
-            opt.value = d.ci;
-            let tag = '[FACULTAD]';
-            if (d.ci === '3065087') tag = '💻 [INGENIERÍA]';
-            if (d.ci === '4421998') tag = '🩺 [MEDICINA]';
-            if (d.ci === '7977612') tag = '📊 [FACEFA]';
-            opt.textContent = `${tag} ${d.nombreCompleto} (${d.ci})`;
-            featuredGroup.appendChild(opt);
-          }
-        });
-
-        // Add the rest
-        window.__API_DOCENTES__.forEach((d) => {
-          if (!featuredCis.includes(d.ci)) {
-            const opt = document.createElement('option');
-            opt.value = d.ci;
-            opt.textContent = `${d.nombreCompleto} (${d.ci}) - ${d.sedeCodigo || 'CBA'}`;
-            otherGroup.appendChild(opt);
-          }
+        targetDocentes.forEach(target => {
+          const d = window.__API_DOCENTES__.find(doc => doc.ci === target.ci);
+          const opt = document.createElement('option');
+          opt.value = target.ci;
+          const name = d ? d.nombreCompleto : target.label;
+          opt.textContent = `${target.tag} ${name} (${target.ci})`;
+          featuredGroup.appendChild(opt);
         });
 
         selector.appendChild(featuredGroup);
-        if (otherGroup.children.length > 0) {
-          selector.appendChild(otherGroup);
-        }
 
         const savedCi = localStorage.getItem('sisa_active_docente_ci');
-        const defaultDocente = window.__API_DOCENTES__.find(d => d.ci === savedCi) || 
-                               window.__API_DOCENTES__.find(d => d.ci === '3065087') || 
-                               window.__API_DOCENTES__[0];
-        selector.value = defaultDocente.ci;
-        window.selectDocenteFromApi(defaultDocente.ci, true);
+        const defaultCi = (savedCi && targetDocentes.some(t => t.ci === savedCi)) ? savedCi : '3065087';
+        selector.value = defaultCi;
+        window.selectDocenteFromApi(defaultCi, true);
       }
     } catch (err) {
       console.warn('Could not load docentes from API:', err);
@@ -3708,43 +3690,56 @@ document.addEventListener('change', (e) => {
   window.selectDocenteFromApi = async function(ci, silent = false) {
     if (!ci) return;
     localStorage.setItem('sisa_active_docente_ci', ci);
-    const docente = window.__API_DOCENTES__.find(d => d.ci === ci);
-    if (!docente) return;
-    window.__ACTIVE_DOCENTE__ = docente;
+    let docente = window.__API_DOCENTES__.find(d => d.ci === ci);
 
-    // Update teacher headers & labels across DOM
-    document.querySelectorAll('.docente-nombre-label').forEach(el => {
-      el.textContent = docente.nombreCompleto;
-    });
-    document.querySelectorAll('.docente-email-label').forEach(el => {
-      el.textContent = docente.email;
-    });
-    document.querySelectorAll('.docente-ci-label').forEach(el => {
-      el.textContent = docente.ci;
-    });
-
-    // Update inputs with teacher information
-    const docenteInputs = ['docente-input', 'caratula-docente', 'pac-docente-input', 'planes-docente-input'];
-    docenteInputs.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = docente.nombreCompleto;
-    });
-
-    // Fetch this teacher's real assigned courses and groups from API
+    // Fetch this teacher's real assigned courses and groups from API for Cochabamba
     try {
       const [coursesRes, groupsRes] = await Promise.all([
         fetch(`/api/v1/catalogo-academico/docentes/${ci}/materias`),
-        fetch(`/api/v1/catalogo-academico/groups?teacherCi=${ci}`)
+        fetch(`/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=ea4fb26e-11a9-452f-9bae-4962de2dd931&teacherCi=${ci}`)
       ]);
 
       const courses = coursesRes.ok ? await coursesRes.json() : [];
       const groups = groupsRes.ok ? await groupsRes.json() : [];
-      const activeGroups = (groups && groups.length > 0) ? groups : (docente.grupos || []);
+      const activeGroups = (groups && groups.length > 0) ? groups : (docente ? docente.grupos : []);
+
+      if (!docente && activeGroups && activeGroups.length > 0) {
+        docente = {
+          ci: ci,
+          nombreCompleto: activeGroups[0].teacherName,
+          email: `${ci}@unitepc.edu.bo`,
+          sedeCodigo: 'CBA',
+          carreraPrincipal: activeGroups[0].careerCode,
+          materiasNombres: [...new Set(activeGroups.map(g => g.courseName))],
+          grupos: activeGroups
+        };
+      }
+
+      if (!docente) return;
+      window.__ACTIVE_DOCENTE__ = docente;
+
+      // Update teacher headers & labels across DOM
+      document.querySelectorAll('.docente-nombre-label').forEach(el => {
+        el.textContent = docente.nombreCompleto;
+      });
+      document.querySelectorAll('.docente-email-label').forEach(el => {
+        el.textContent = docente.email;
+      });
+      document.querySelectorAll('.docente-ci-label').forEach(el => {
+        el.textContent = docente.ci;
+      });
+
+      // Update inputs with teacher information
+      const docenteInputs = ['docente-input', 'caratula-docente', 'pac-docente-input', 'planes-docente-input'];
+      docenteInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = docente.nombreCompleto;
+      });
 
       window.renderDynamicSidebarForDocente(docente, courses, activeGroups);
 
       if (!silent && typeof window.showToast === 'function') {
-        window.showToast(`👨‍🏫 Sesión Docente API: ${docente.nombreCompleto} (${docente.email})`);
+        window.showToast(`👨‍🏫 Sesión Docente SEA: ${docente.nombreCompleto} (${docente.ci})`);
       }
     } catch (e) {
       console.warn('Error syncing courses for docente:', e);
@@ -3903,6 +3898,17 @@ document.addEventListener('change', (e) => {
     });
 
     // 2. Build synthesized items for each unique Course
+    const dayMap = {
+      'LU': 'Lunes',
+      'MA': 'Martes',
+      'MI': 'Miércoles',
+      'JU': 'Jueves',
+      'VI': 'Viernes',
+      'SA': 'Sábado',
+      'DO': 'Domingo'
+    };
+    const dayOrder = { 'LU': 1, 'MA': 2, 'MI': 3, 'JU': 4, 'VI': 5, 'SA': 6, 'DO': 7 };
+
     let items = Array.from(courseMap.values()).map((cData, idx) => {
       const carrerasArr = Array.from(cData.carrerasSet);
       const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
@@ -3933,6 +3939,42 @@ document.addEventListener('change', (e) => {
       const campusesStr = [...cData.campusesSet].join(', ') || 'Campus Central';
       const classroomsStr = [...cData.classroomsSet].join(', ') || 'Aula / Lab';
 
+      // Group common schedules and physical slots
+      const schedMap = new Map();
+      cData.allRawGroups.forEach(g => {
+        const sList = g.schedules || [];
+        const grpName = g.code || g.name || 'G1';
+        const grpType = (g.classType || 'TA').toUpperCase();
+        const cCode = g.careerCode ? resolveCarreraInfo('', g.careerCode).name : '';
+
+        sList.forEach(s => {
+          if (!s.day || !s.startTime) return;
+          const k = `${s.day}_${s.startTime}_${s.endTime}_${s.classroom || ''}_${s.campus || ''}`;
+          if (!schedMap.has(k)) {
+            schedMap.set(k, {
+              day: s.day,
+              dayName: dayMap[s.day] || s.day,
+              start: s.startTime,
+              end: s.endTime,
+              classroom: s.classroom || 'Aula',
+              campus: s.campus || 'Campus Central',
+              groups: []
+            });
+          }
+          const label = `${grpName} (${grpType}${cCode ? ' • ' + cCode : ''})`;
+          if (!schedMap.get(k).groups.includes(label)) {
+            schedMap.get(k).groups.push(label);
+          }
+        });
+      });
+
+      const groupedSchedules = Array.from(schedMap.values()).sort((a, b) => {
+        const da = dayOrder[a.day] || 99;
+        const db = dayOrder[b.day] || 99;
+        if (da !== db) return da - db;
+        return (a.start || '').localeCompare(b.start || '');
+      });
+
       return {
         key: 'materia_cat_' + idx,
         code: officialCode,
@@ -3951,7 +3993,8 @@ document.addEventListener('change', (e) => {
         totalPhysicalSessions: totalPhysicalSessions,
         totalHours: totalHours,
         campusesStr: campusesStr,
-        classroomsStr: classroomsStr
+        classroomsStr: classroomsStr,
+        groupedSchedules: groupedSchedules
       };
     });
 
@@ -4009,7 +4052,7 @@ document.addEventListener('change', (e) => {
         grupoTag: `Teoría: [${item.teoCodes || 'N/A'}] • Práctica: [${item.pracCodes || 'N/A'}]`,
         breadcrumb: `${item.code} ${item.name}`,
         title: `${item.code} • ${item.name}`,
-        meta: `<span><strong class="text-white">${item.totalPhysicalSessions}</strong> Grupos Asignados</span><span>•</span><span><strong class="text-white">${item.totalHours}</strong> Horas / Semana</span><span>•</span><span>Campus: ${item.campusesStr} (${item.classroomsStr})</span>`,
+        meta: `<span><strong class="text-white">${item.totalPhysicalSessions}</strong> Grupos Asignados</span><span>•</span><span><strong class="text-white">${item.totalHours}</strong> Horas / Semana</span><span>•</span><span>${item.groupedSchedules.length > 0 ? item.groupedSchedules.map(s => `${s.dayName.substring(0,3)} ${s.start}-${s.end} (${s.classroom})`).join(' | ') : `Campus: ${item.campusesStr}`}</span>`,
         caracterizacion: `Asignatura oficial ${item.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
         macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${item.name}.`,
         sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
@@ -4044,7 +4087,7 @@ document.addEventListener('change', (e) => {
         carrerasResolved: item.carrerasResolved
       };
 
-      // HTML for Top Horizontal Card
+      // HTML for Top Horizontal Card with full Real Schedule info
       cardsHtml += `
         <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
           <div class="flex items-start justify-between gap-1">
@@ -4054,15 +4097,27 @@ document.addEventListener('change', (e) => {
 
           <h4 class="text-sm font-bold text-slate-900 dark:text-white mt-2 truncate">${item.code} ${item.name}</h4>
 
-          <div class="mt-2.5 space-y-1 text-[11px] bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-              <span class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">📘 Teoría:</span>
-              <span class="truncate font-semibold">${item.teoSummary}</span>
+          <div class="mt-2.5 space-y-1.5 text-[11px] bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+            <div class="font-bold text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span>📅 Horarios y Aulas SEA:</span>
+              <span class="text-brand-600 dark:text-brand-400">${item.groupedSchedules.length} Bloques</span>
             </div>
-            <div class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-              <span class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">🧪 Práctica:</span>
-              <span class="truncate font-semibold">${item.pracSummary}</span>
-            </div>
+            ${item.groupedSchedules.length > 0 ? item.groupedSchedules.map(sc => `
+              <div class="text-[10px] leading-tight text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0 last:pb-0">
+                <div class="font-semibold flex items-center justify-between text-slate-900 dark:text-white">
+                  <span class="text-brand-700 dark:text-brand-300 font-bold">${sc.dayName} ${sc.start} - ${sc.end}</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-bold">${sc.classroom}</span>
+                </div>
+                <div class="text-[9px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  📍 ${sc.campus} • <strong class="text-slate-700 dark:text-slate-300">${sc.groups.join(', ')}</strong>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                <div>📘 ${item.teoSummary}</div>
+                <div>🧪 ${item.pracSummary}</div>
+              </div>
+            `}
           </div>
 
           <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">

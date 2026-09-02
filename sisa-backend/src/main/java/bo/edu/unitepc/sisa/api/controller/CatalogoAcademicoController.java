@@ -208,10 +208,11 @@ public class CatalogoAcademicoController {
      * Prioritizes live UNITEPC Gateway data and updates PostgreSQL local mirror cache.
      */
     @GetMapping("/docentes")
-    public ResponseEntity<List<DocenteItemDto>> getDocentes() {
+    public ResponseEntity<List<DocenteItemDto>> getDocentes(
+            @RequestParam(required = false, defaultValue = "ea4fb26e-11a9-452f-9bae-4962de2dd931") String branchOfficeId) {
         List<GroupItemDto> allGruposDtos = null;
         try {
-            List<GroupItemDto> remote = this.gatewayClient.getGroups("2-2026", null, null, null);
+            List<GroupItemDto> remote = this.gatewayClient.getGroups("2-2026", branchOfficeId, null, null);
             if (remote != null && !remote.isEmpty()) {
                 allGruposDtos = remote;
                 // Sync remote groups to local cache

@@ -45,10 +45,29 @@ public record GroupItemDto(
         String syllabusCourseId,
 
         @JsonAlias({"enrolledStudentsCount"})
-        Integer enrolledStudentsCount
+        Integer enrolledStudentsCount,
+
+        @JsonAlias({"schedules"})
+        java.util.List<ScheduleSlotDto> schedules
 ) {
     public GroupItemDto(String id, String name, String classType, String teacherName, String teacherCi, String classroom, String schedule, String campus, Integer enrolledStudentsCount) {
-        this(id, name, classType, teacherName, teacherCi, classroom, schedule, campus, null, null, null, enrolledStudentsCount);
+        this(id, name, classType, teacherName, teacherCi, classroom, schedule, campus, null, null, null, enrolledStudentsCount, java.util.Collections.emptyList());
+    }
+
+    public GroupItemDto {
+        if ((schedule == null || schedule.isBlank()) && schedules != null && !schedules.isEmpty()) {
+            schedule = schedules.stream()
+                    .map(s -> (s.day() != null ? s.day() : "") + " " + (s.startTime() != null ? s.startTime() : "") + "-" + (s.endTime() != null ? s.endTime() : ""))
+                    .filter(str -> !str.trim().isEmpty())
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse(null);
+        }
+        if ((classroom == null || classroom.isBlank()) && schedules != null && !schedules.isEmpty()) {
+            classroom = schedules.get(0).classroom();
+        }
+        if ((campus == null || campus.isBlank()) && schedules != null && !schedules.isEmpty()) {
+            campus = schedules.get(0).campus();
+        }
     }
 }
 
