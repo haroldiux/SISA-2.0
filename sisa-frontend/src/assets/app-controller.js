@@ -3698,12 +3698,15 @@ document.addEventListener('change', (e) => {
 
         selector.appendChild(featuredGroup);
 
-        // Attach explicit change listener on the DOM element
-        selector.onchange = function() {
-          window.onDocenteSelectorChange(this.value);
-        };
+        // Clean any existing onchange property to avoid Zone.js collision
+        selector.onchange = null;
+
+        // Attach single clean change listener calling selectDocenteFromApi directly
         selector.addEventListener('change', function() {
-          window.onDocenteSelectorChange(this.value);
+          const ci = this.value;
+          if (typeof window.selectDocenteFromApi === 'function') {
+            window.selectDocenteFromApi(ci, false);
+          }
         });
 
         const savedCi = localStorage.getItem('sisa_active_docente_ci');
@@ -3717,8 +3720,9 @@ document.addEventListener('change', (e) => {
   };
 
   window.onDocenteSelectorChange = function(ci) {
-    console.log('[SISA] Switching active docente to CI:', ci);
-    window.selectDocenteFromApi(ci, false);
+    if (typeof window.selectDocenteFromApi === 'function') {
+      window.selectDocenteFromApi(ci, false);
+    }
   };
 
   window.selectDocenteFromApi = async function(ci, silent = false) {
