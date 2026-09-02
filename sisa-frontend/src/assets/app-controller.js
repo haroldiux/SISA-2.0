@@ -4258,11 +4258,11 @@ document.addEventListener('change', (e) => {
         horasTeoricas: item.teoList.length * 4 + '',
         horasPracticas: item.pracList.length * 4 + '',
         carrera: item.allCarrerasNames,
-        carreraTag: `CARRERAS: ${item.allCarrerasTags}`,
-        grupoTag: `Teoría: [${item.teoCodes || 'N/A'}] • Práctica: [${item.pracCodes || 'N/A'}]`,
+        carreraTag: item.isCommon ? `⚡ COMÚN: ${item.allCarrerasTags}` : item.allCarrerasTags,
+        grupoTag: `${item.totalPhysicalSessions} Comisiones (${item.teoList.length} Teoría • ${item.pracList.length} Práctica)`,
         breadcrumb: `${item.code} ${item.name}`,
         title: `${item.code} • ${item.name}`,
-        meta: `<span><strong class="text-white">${item.totalPhysicalSessions}</strong> Grupos Asignados</span><span>•</span><span><strong class="text-white">${item.totalHours}</strong> Horas / Semana</span><span>•</span><span>${item.groupedSchedules.length > 0 ? item.groupedSchedules.map(s => `${s.dayName.substring(0,3)} ${s.start}-${s.end} (${s.classroom})`).join(' | ') : `Campus: ${item.campusesStr}`}</span>`,
+        meta: `<span><strong class="text-white">${item.totalHours}</strong> Horas Semanales</span><span>•</span><span>Campus: <strong class="text-white">${item.campusesStr}</strong></span><span>•</span><span><strong class="text-white">${item.groupedSchedules.length}</strong> Bloques Horarios Oficiales</span>`,
         caracterizacion: `Asignatura oficial ${item.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
         macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${item.name}.`,
         sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
@@ -4403,6 +4403,21 @@ document.addEventListener('change', (e) => {
     const firstItem = items[0];
     if (firstItem) {
       window.selectDocenteMateria(firstItem.key);
+    }
+  };
+
+  // Toggle collapsible schedules breakdown accordion
+  window.toggleSchedulesBreakdown = function() {
+    const grid = document.getElementById('schedules-breakdown-grid');
+    const chevron = document.getElementById('schedules-breakdown-chevron');
+    if (!grid) return;
+    const isHidden = grid.classList.contains('hidden');
+    if (isHidden) {
+      grid.classList.remove('hidden');
+      if (chevron) chevron.classList.add('rotate-180');
+    } else {
+      grid.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
     }
   };
 
