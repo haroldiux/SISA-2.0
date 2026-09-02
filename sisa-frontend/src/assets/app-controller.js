@@ -3840,10 +3840,17 @@ document.addEventListener('change', (e) => {
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
 
-    // 1. Cluster groups into Canonical Subject Cards (1 Card per Unique Academic Offering)
-    // Groups belong to the same Subject Card if:
-    // a) They have the same Course Name (e.g. "PROGRAMACIÓN I" across all careers/turnos)
-    // b) They share physical schedule slots (e.g. "ECONOMETRÍA" vs "MODELOS ECONOMETRICOS" in Facefa)
+    // 1. Helper to extract parallel index (e.g. TA-01 -> "01", TA-02 -> "02")
+    const getParallelIndex = (grpName) => {
+      const m = (grpName || '').match(/\d+/);
+      return m ? m[0] : '01';
+    };
+
+    // 2. Cluster groups strictly into Common Subject Offerings according to the SEA
+    // Two groups belong to the same Subject Card ONLY IF they are a common offering in the SEA:
+    // a) They share physical schedule slots across careers (e.g. Sistemas + Electrónica pasan juntos en la mañana)
+    // b) Or they are the theory & practice of the same career offering
+    // Groups with different schedules (like Sonido in afternoon or Electrónica G2 at night) remain independent cards!
     const nGroups = rawList.length;
     const adj = Array.from({ length: nGroups }, () => new Set());
 
@@ -3852,29 +3859,65 @@ document.addEventListener('change', (e) => {
         const g1 = rawList[i];
         const g2 = rawList[j];
 
-        const c1Norm = (g1.courseName || g1.name || '').trim().toUpperCase();
-        const c2Norm = (g2.courseName || g2.name || '').trim().toUpperCase();
-
-        // Condition A: Same course name
-        if (c1Norm && c1Norm === c2Norm) {
-          adj[i].add(j);
-          adj[j].add(i);
-          continue;
-        }
-
-        // Condition B: Shared physical schedule slot (e.g. common offerings with slightly different names)
+        // Condition 1: Shared physical schedule slot (COMMON CLASS in SEA)
         const s1Slots = (g1.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const s2Slots = (g2.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const hasSharedSlot = s1Slots.some(s => s2Slots.includes(s));
 
+        // Condition 2: Same career, same course, and identical parallel
+        const c1Norm = (g1.courseName || g1.name || '').trim().toUpperCase();
+        const c2Norm = (g2.courseName || g2.name || '').trim().toUpperCase();
+        const sameCareerCourse = (g1.careerCode && g1.careerCode === g2.careerCode && c1Norm === c2Norm);
+        const p1 = getParallelIndex(g1.name || g1.code);
+        const p2 = getParallelIndex(g2.name || g2.code);
+
         if (hasSharedSlot) {
+          adj[i].add(j);
+          adj[j].add(i);
+        } else if (sameCareerCourse && p1 === p2) {
           adj[i].add(j);
           adj[j].add(i);
         }
       }
     }
 
-    // Find Connected Components (The true Unique Academic Subjects)
+    // Link practice groups to corresponding theory
+    for (let i = 0; i < nGroups; i++) {
+      const g = rawList[i];
+      const cType = (g.classType || '').toUpperCase();
+      if (cType.includes('P') || cType.includes('PR') || cType.includes('PL')) {
+        const cNorm = (g.courseName || g.name || '').trim().toUpperCase();
+        const cCar = g.careerCode;
+        const pIdx = getParallelIndex(g.name || g.code);
+
+        let matchingTa = -1;
+        for (let j = 0; j < nGroups; j++) {
+          const gj = rawList[j];
+          const gjType = (gj.classType || '').toUpperCase();
+          if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
+            if (getParallelIndex(gj.name || gj.code) === pIdx) {
+              matchingTa = j;
+              break;
+            }
+          }
+        }
+        if (matchingTa !== -1) {
+          adj[i].add(matchingTa);
+          adj[matchingTa].add(i);
+        } else {
+          for (let j = 0; j < nGroups; j++) {
+            const gj = rawList[j];
+            const gjType = (gj.classType || '').toUpperCase();
+            if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
+              adj[i].add(j);
+              adj[j].add(i);
+            }
+          }
+        }
+      }
+    }
+
+    // Find Connected Components (The true Academic Subjects / Cards)
     const visited = new Set();
     const commonClusters = [];
     for (let i = 0; i < nGroups; i++) {
@@ -4057,6 +4100,19 @@ document.addEventListener('change', (e) => {
       const pracRoomsStr = [...pracRoomsSet].join(', ') || (pracList.length > 0 ? 'Laboratorio' : 'N/A');
       const codesList = [...new Set(officialCodes.filter(Boolean))];
 
+      // Detect shift
+      const startTimes = cluster.flatMap(g => (g.schedules || []).map(s => s.startTime).filter(Boolean));
+      const earliestTime = startTimes.sort()[0] || '08:00';
+      const earliestHour = parseInt(earliestTime.split(':')[0], 10);
+      let shiftLabel = '';
+      if (earliestHour >= 18) {
+        shiftLabel = 'Turno Noche';
+      } else if (earliestHour >= 13) {
+        shiftLabel = 'Turno Tarde';
+      } else {
+        shiftLabel = 'Turno Mañana';
+      }
+
       return {
         key: 'materia_cat_' + idx,
         code: officialCode,
@@ -4081,7 +4137,8 @@ document.addEventListener('change', (e) => {
         hierarchicalSchedules: hierarchicalSchedules,
         teoRoomsStr: teoRoomsStr,
         pracRoomsStr: pracRoomsStr,
-        codesList: codesList
+        codesList: codesList,
+        shiftLabel: shiftLabel
       };
     });
 
@@ -4185,7 +4242,8 @@ document.addEventListener('change', (e) => {
         hierarchicalSchedules: item.hierarchicalSchedules,
         teoRoomsStr: item.teoRoomsStr,
         pracRoomsStr: item.pracRoomsStr,
-        codesList: item.codesList
+        codesList: item.codesList,
+        shiftLabel: item.shiftLabel
       };
 
       // Distinct Days Badges for the Compact Card
@@ -4195,7 +4253,7 @@ document.addEventListener('change', (e) => {
         : '<span class="text-[9px] text-slate-400">Regular</span>';
 
       // HTML for Top Horizontal Card (Ordered exactly per User Specification):
-      // 1. PROGRAMACIÓN I (Nombre de la materia)
+      // 1. PROGRAMACIÓN I (Nombre de la materia + Turno si es individual)
       // 2. SIS-113 • ELEC-113 (Códigos)
       // 3. CAMPUS: JUAN PABLO II
       // 4. AULA: TEORÍA C 103 • PRÁCTICA LABORATORIO INFORMATICA
@@ -4205,17 +4263,17 @@ document.addEventListener('change', (e) => {
             <!-- Header Badges -->
             <div class="flex items-start justify-between gap-1">
               <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[210px] flex items-center gap-1">
-                ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
+                ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags + (item.shiftLabel ? ' • ' + item.shiftLabel.toUpperCase() : '')}
               </span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
                 ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
               </span>
             </div>
 
-            <!-- 1. PROGRAMACIÓN I (Nombre Principal de la Materia) -->
+            <!-- 1. PROGRAMACIÓN I (Nombre Principal de la Materia con Turno si es individual) -->
             <div>
               <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-snug line-clamp-1" title="${item.name}">
-                ${item.name}
+                ${item.name} ${!item.isCommon && item.shiftLabel ? `<span class="text-xs font-semibold text-slate-500 dark:text-slate-400">(${item.shiftLabel})</span>` : ''}
               </h3>
 
               <!-- 2. SIS-113 • ELEC-113 (Códigos de materia por carrera) -->
@@ -4280,9 +4338,9 @@ document.addEventListener('change', (e) => {
           <div class="p-1">
             <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
               <div class="truncate">
-                <div class="truncate font-bold text-slate-900 dark:text-white">${item.name}</div>
+                <div class="truncate font-bold text-slate-900 dark:text-white">${item.name} ${!item.isCommon && item.shiftLabel ? `<span class="text-[10px] font-normal text-slate-400">(${item.shiftLabel})</span>` : ''}</div>
                 <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${item.teoList.length} Teo • ${item.pracList.length} Prác (${item.totalHours}h)</div>
-                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.allCarrerasNames}</div>
+                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasNames : item.allCarrerasNames}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
