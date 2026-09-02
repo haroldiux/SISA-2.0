@@ -3989,8 +3989,21 @@ document.addEventListener('change', (e) => {
       const totalPhysicalSessions = physCommissionsMap.size;
       const totalHours = totalPhysicalSessions * 4;
 
-      const teoCodes = teoList.map(t => t.code).join(', ');
-      const pracCodes = pracList.map(p => p.code).join(', ');
+      const teoGroupsSet = new Set();
+      const pracGroupsSet = new Set();
+      cluster.forEach(g => {
+        const pName = g.code || g.name || 'G1';
+        const cType = (g.classType || 'TA').toUpperCase();
+        if (cType.startsWith('T') || cType.includes('TEO')) {
+          teoGroupsSet.add(pName);
+        } else {
+          pracGroupsSet.add(pName);
+        }
+      });
+      const teoCodes = [...teoGroupsSet].sort().join(', ');
+      const pracCodes = [...pracGroupsSet].sort().join(', ');
+      const allGroupsCodes = [...new Set([...teoGroupsSet, ...pracGroupsSet])].sort().join(', ');
+      const totalGroupsInCluster = cluster.length;
 
       const teoSummary = teoList.length > 0 ? `${teoList.length} Comisió(n): ${teoCodes}` : 'Sin comisiones teóricas';
       const pracSummary = pracList.length > 0 ? `${pracList.length} Comisió(n): ${pracCodes}` : 'Sin comisiones prácticas';
@@ -4138,7 +4151,9 @@ document.addEventListener('change', (e) => {
         teoRoomsStr: teoRoomsStr,
         pracRoomsStr: pracRoomsStr,
         codesList: codesList,
-        shiftLabel: shiftLabel
+        shiftLabel: shiftLabel,
+        allGroupsCodes: allGroupsCodes,
+        totalGroupsInCluster: totalGroupsInCluster
       };
     });
 
@@ -4174,7 +4189,7 @@ document.addEventListener('change', (e) => {
     if (profileInfoEl) profileInfoEl.textContent = `${totalWeeklyHours}h • ${items.length} Materia(s)`;
 
     const summaryBadgeEl = document.getElementById('docente-summary-badge');
-    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalWeeklyHours} Hrs / Semana • ${items.length} Materias Asignadas (${uniqueCarreras.length} Carreras)`;
+    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalWeeklyHours} Hrs / Semana • ${items.length} Materias • ${rawList.length} Grupos a Cargo (${uniqueCarreras.length} Carreras)`;
 
     const sidebarHoursEl = document.getElementById('sidebar-summary-hours');
     if (sidebarHoursEl) sidebarHoursEl.textContent = `${items.length} Materias • ${totalWeeklyHours}h`;
@@ -4256,7 +4271,8 @@ document.addEventListener('change', (e) => {
       // 1. PROGRAMACIÓN I (Nombre de la materia + Turno si es individual)
       // 2. SIS-113 • ELEC-113 (Códigos)
       // 3. CAMPUS: JUAN PABLO II
-      // 4. AULA: TEORÍA C 103 • PRÁCTICA LABORATORIO INFORMATICA
+      // 4. GRUPOS A CARGO: TEORÍA: TA-01 • PRÁCTICA: PL-01
+      // 5. AULA: TEORÍA C 103 • PRÁCTICA LABORATORIO INFORMATICA
       cardsHtml += `
         <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
           <div class="space-y-2.5">
@@ -4282,7 +4298,7 @@ document.addEventListener('change', (e) => {
               </div>
             </div>
 
-            <!-- 3. CAMPUS & 4. AULA (Detalle ordenado) -->
+            <!-- 3. CAMPUS, GRUPOS & 4. AULA (Detalle ordenado) -->
             <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px] space-y-1.5">
               <!-- CAMPUS: JUAN PABLO II -->
               <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-1">
@@ -4290,6 +4306,17 @@ document.addEventListener('change', (e) => {
                   <i data-lucide="map-pin" class="w-3 h-3 text-brand-600"></i> CAMPUS:
                 </span>
                 <span class="font-black text-slate-800 dark:text-slate-200 text-[10.5px]">${item.campusesStr}</span>
+              </div>
+
+              <!-- GRUPOS A CARGO -->
+              <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-1 text-[10.5px]">
+                <span class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9px] tracking-wider flex items-center gap-1">
+                  <i data-lucide="users" class="w-3 h-3 text-purple-600"></i> GRUPOS:
+                </span>
+                <div class="flex items-center gap-1.5 font-mono text-[9.5px] font-bold flex-wrap justify-end">
+                  ${item.teoCodes ? `<span class="px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60">Teo: ${item.teoCodes}</span>` : ''}
+                  ${item.pracCodes ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60">Prác: ${item.pracCodes}</span>` : ''}
+                </div>
               </div>
 
               <!-- AULAS: TEORÍA & PRÁCTICA -->
