@@ -3840,69 +3840,101 @@ document.addEventListener('change', (e) => {
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
 
-    // 1. Group by Course Name
-    const courseMap = new Map();
-    rawList.forEach((g, idx) => {
-      const rawCourseName = (g.courseName || (courses[idx]?.name) || g.name || 'Materia Asignada').trim().toUpperCase();
-      const courseKey = rawCourseName.replace(/\s+/g, ' ');
+    // 1. Helper to extract parallel index (e.g. TA-01 -> "01", TA-02 -> "02")
+    const getParallelIndex = (grpName) => {
+      const m = (grpName || '').match(/\d+/);
+      return m ? m[0] : '01';
+    };
 
-      if (!courseMap.has(courseKey)) {
-        courseMap.set(courseKey, {
-          name: courseKey,
-          carrerasSet: new Set(),
-          theoreticalSessions: new Map(), // key: groupLinkId or schedule
-          practicalSessions: new Map(),   // key: groupLinkId or schedule
-          allRawGroups: [],
-          campusesSet: new Set(),
-          classroomsSet: new Set()
-        });
-      }
+    // 2. Cluster groups into Common Subject Offerings according to the SEA
+    const nGroups = rawList.length;
+    const adj = Array.from({ length: nGroups }, () => new Set());
 
-      const cData = courseMap.get(courseKey);
-      cData.allRawGroups.push(g);
-      if (g.careerCode) cData.carrerasSet.add(g.careerCode);
-      if (g.campus) cData.campusesSet.add(g.campus);
-      if (g.classroom) cData.classroomsSet.add(g.classroom);
+    for (let i = 0; i < nGroups; i++) {
+      for (let j = i + 1; j < nGroups; j++) {
+        const g1 = rawList[i];
+        const g2 = rawList[j];
 
-      if (g.schedules && Array.isArray(g.schedules)) {
-        g.schedules.forEach(s => {
-          if (s.campus) cData.campusesSet.add(s.campus);
-          if (s.classroom) cData.classroomsSet.add(s.classroom);
-        });
-      }
+        // Condition 1: Shared physical schedule slot (COMMON CLASS in SEA)
+        const s1Slots = (g1.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
+        const s2Slots = (g2.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
+        const hasSharedSlot = s1Slots.some(s => s2Slots.includes(s));
 
-      // Check if Theory or Practice
-      const classType = (g.classType || 'TA').toUpperCase();
-      const isPractice = classType.includes('PRACT') || classType.startsWith('P') || classType.includes('PL') || classType.includes('PS') || classType.includes('PR');
+        // Condition 2: Same career, same course, and identical parallel
+        const c1Norm = (g1.courseName || g1.name || '').trim().toUpperCase();
+        const c2Norm = (g2.courseName || g2.name || '').trim().toUpperCase();
+        const sameCareerCourse = (g1.careerCode && g1.careerCode === g2.careerCode && c1Norm === c2Norm);
+        const p1 = getParallelIndex(g1.name || g1.code);
+        const p2 = getParallelIndex(g2.name || g2.code);
 
-      // Unique session key for physical class deduplication
-      const sessionKey = g.groupLinkId || `${g.code || 'G'}_${(g.schedules?.[0]?.day || 'D')}_${(g.schedules?.[0]?.startTime || 'T')}`;
-
-      const sessionObj = {
-        code: g.code || g.name || 'G1',
-        classType: classType,
-        classroom: g.classroom || g.schedules?.[0]?.classroom || 'Aula 201',
-        campus: g.campus || g.schedules?.[0]?.campus || 'Campus Central',
-        schedules: g.schedules || [],
-        careers: [g.careerCode || '']
-      };
-
-      if (isPractice) {
-        if (!cData.practicalSessions.has(sessionKey)) {
-          cData.practicalSessions.set(sessionKey, sessionObj);
-        } else {
-          cData.practicalSessions.get(sessionKey).careers.push(g.careerCode);
-        }
-      } else {
-        if (!cData.theoreticalSessions.has(sessionKey)) {
-          cData.theoreticalSessions.set(sessionKey, sessionObj);
-        } else {
-          cData.theoreticalSessions.get(sessionKey).careers.push(g.careerCode);
+        if (hasSharedSlot) {
+          adj[i].add(j);
+          adj[j].add(i);
+        } else if (sameCareerCourse && p1 === p2) {
+          adj[i].add(j);
+          adj[j].add(i);
         }
       }
-    });
+    }
 
-    // 2. Build synthesized items for each unique Course
+    // Link practice groups to corresponding theory
+    for (let i = 0; i < nGroups; i++) {
+      const g = rawList[i];
+      const cType = (g.classType || '').toUpperCase();
+      if (cType.includes('P') || cType.includes('PR') || cType.includes('PL')) {
+        const cNorm = (g.courseName || g.name || '').trim().toUpperCase();
+        const cCar = g.careerCode;
+        const pIdx = getParallelIndex(g.name || g.code);
+
+        let matchingTa = -1;
+        for (let j = 0; j < nGroups; j++) {
+          const gj = rawList[j];
+          const gjType = (gj.classType || '').toUpperCase();
+          if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
+            if (getParallelIndex(gj.name || gj.code) === pIdx) {
+              matchingTa = j;
+              break;
+            }
+          }
+        }
+        if (matchingTa !== -1) {
+          adj[i].add(matchingTa);
+          adj[matchingTa].add(i);
+        } else {
+          for (let j = 0; j < nGroups; j++) {
+            const gj = rawList[j];
+            const gjType = (gj.classType || '').toUpperCase();
+            if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
+              adj[i].add(j);
+              adj[j].add(i);
+            }
+          }
+        }
+      }
+    }
+
+    // Find Connected Components (The true Academic Subjects / Cards)
+    const visited = new Set();
+    const commonClusters = [];
+    for (let i = 0; i < nGroups; i++) {
+      if (!visited.has(i)) {
+        const comp = [];
+        const queue = [i];
+        visited.add(i);
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          comp.push(curr);
+          adj[curr].forEach(neighbor => {
+            if (!visited.has(neighbor)) {
+              visited.add(neighbor);
+              queue.push(neighbor);
+            }
+          });
+        }
+        commonClusters.push(comp.map(idx => rawList[idx]));
+      }
+    }
+
     const dayMap = {
       'LU': 'Lunes',
       'MA': 'Martes',
@@ -3914,39 +3946,67 @@ document.addEventListener('change', (e) => {
     };
     const dayOrder = { 'LU': 1, 'MA': 2, 'MI': 3, 'JU': 4, 'VI': 5, 'SA': 6, 'DO': 7 };
 
-    let items = Array.from(courseMap.values()).map((cData, idx) => {
-      const carrerasArr = Array.from(cData.carrerasSet);
+    // 3. Build synthesized items for each true academic offering (Common Subject or Individual)
+    let items = commonClusters.map((cluster, idx) => {
+      const carrerasArr = [...new Set(cluster.map(g => g.careerCode).filter(Boolean))];
+      const isCommon = carrerasArr.length > 1;
       const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
       const mainCarrera = carrerasResolved[0] || { name: 'Ing. de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' };
       const allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
-      const allCarrerasTags = [...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ');
+      const allCarrerasTags = isCommon 
+        ? `${[...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ')}`
+        : [...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ');
 
-      // Resolve official curriculum codes across all associated careers
-      const officialCode = resolveOfficialCourseCode(cData.name, carrerasArr);
+      const courseNames = [...new Set(cluster.map(g => g.courseName || g.name).filter(Boolean))];
+      const primaryName = courseNames[0] || 'Materia Asignada';
+      const displayName = courseNames.join(' / ');
 
-      const teoList = Array.from(cData.theoreticalSessions.values());
-      const pracList = Array.from(cData.practicalSessions.values());
+      // Resolve official curriculum codes across associated careers
+      const officialCodes = carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc]));
+      const officialCode = [...new Set(officialCodes)].join(' / ');
+
+      // Calculate unique physical commissions
+      const physCommissionsMap = new Map();
+      cluster.forEach(g => {
+        const pType = (g.classType || 'TA').toUpperCase();
+        const sRepr = (g.schedules || []).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`).sort().join(';');
+        const cKey = `${pType}_${sRepr}`;
+        if (!physCommissionsMap.has(cKey)) {
+          physCommissionsMap.set(cKey, {
+            code: g.code || g.name || 'G1',
+            classType: pType,
+            schedules: g.schedules || []
+          });
+        }
+      });
+
+      const teoList = Array.from(physCommissionsMap.values()).filter(c => c.classType.startsWith('T') || c.classType.includes('TEO'));
+      const pracList = Array.from(physCommissionsMap.values()).filter(c => !c.classType.startsWith('T') && !c.classType.includes('TEO'));
+      const totalPhysicalSessions = physCommissionsMap.size;
+      const totalHours = totalPhysicalSessions * 4;
 
       const teoCodes = teoList.map(t => t.code).join(', ');
       const pracCodes = pracList.map(p => p.code).join(', ');
 
-      const totalPhysicalSessions = teoList.length + pracList.length;
-      const totalHours = totalPhysicalSessions * 4;
+      const teoSummary = teoList.length > 0 ? `${teoList.length} Comisió(n): ${teoCodes}` : 'Sin comisiones teóricas';
+      const pracSummary = pracList.length > 0 ? `${pracList.length} Comisió(n): ${pracCodes}` : 'Sin comisiones prácticas';
 
-      const teoSummary = teoList.length > 0 
-        ? `${teoList.length} Grupo(s): ${teoCodes}` 
-        : 'Sin comisiones teóricas';
+      const campusesSet = new Set();
+      const classroomsSet = new Set();
+      cluster.forEach(g => {
+        if (g.campus) campusesSet.add(g.campus);
+        if (g.classroom) classroomsSet.add(g.classroom);
+        (g.schedules || []).forEach(s => {
+          if (s.campus) campusesSet.add(s.campus);
+          if (s.classroom) classroomsSet.add(s.classroom);
+        });
+      });
+      const campusesStr = [...campusesSet].join(', ') || 'Campus Central';
+      const classroomsStr = [...classroomsSet].join(', ') || 'Aula / Lab';
 
-      const pracSummary = pracList.length > 0 
-        ? `${pracList.length} Grupo(s): ${pracCodes}` 
-        : 'Sin comisiones prácticas';
-
-      const campusesStr = [...cData.campusesSet].join(', ') || 'Campus Central';
-      const classroomsStr = [...cData.classroomsSet].join(', ') || 'Aula / Lab';
-
-      // 1. Group by exact physical time slot (day, start, end, classroom, campus) to combine shared careers/groups
+      // 1. Group by exact physical time slot (day, start, end, classroom, campus)
       const sharedSlotsMap = new Map();
-      cData.allRawGroups.forEach(g => {
+      cluster.forEach(g => {
         const sList = g.schedules || [];
         const grpName = g.code || g.name || 'G1';
         const grpType = (g.classType || 'TA').toUpperCase();
@@ -3975,9 +4035,9 @@ document.addEventListener('change', (e) => {
         });
       });
 
-      // 2. Group by (careersTitle, day, campus) - hierarchical grouping
+      // 2. Hierarchical Grouping by (careersTitle, day, campus)
       const hierarchyMap = new Map();
-      sharedSlotsMap.forEach((val) => {
+      sharedSlotsMap.forEach(val => {
         const careersTitle = Array.from(val.careersSet).sort().join(' / ');
         const hk = `${careersTitle}___${val.day}___${val.campus}`;
         if (!hierarchyMap.has(hk)) {
@@ -4017,7 +4077,8 @@ document.addEventListener('change', (e) => {
       return {
         key: 'materia_cat_' + idx,
         code: officialCode,
-        name: cData.name,
+        name: displayName,
+        isCommon: isCommon,
         carrerasResolved: carrerasResolved,
         mainCarrera: mainCarrera,
         allCarrerasNames: allCarrerasNames,
@@ -4037,6 +4098,15 @@ document.addEventListener('change', (e) => {
         hierarchicalSchedules: hierarchicalSchedules
       };
     });
+
+    // Sort: Common subjects first, then by name
+    items.sort((a, b) => {
+      if (a.isCommon && !b.isCommon) return -1;
+      if (!a.isCommon && b.isCommon) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    // Re-index keys after sort
+    items.forEach((it, i) => { it.key = 'materia_cat_' + i; });
 
     // Calculate totals across all subjects
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
@@ -4140,8 +4210,8 @@ document.addEventListener('change', (e) => {
         <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-1">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[180px]">${item.allCarrerasTags}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">${item.totalPhysicalSessions} Grupos • ${item.totalHours}h</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[210px] flex items-center gap-1">${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h</span>
             </div>
 
             <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 line-clamp-1" title="${item.code} ${item.name}">${item.code} ${item.name}</h4>
