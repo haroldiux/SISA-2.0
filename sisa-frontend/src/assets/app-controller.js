@@ -3944,36 +3944,70 @@ document.addEventListener('change', (e) => {
       const campusesStr = [...cData.campusesSet].join(', ') || 'Campus Central';
       const classroomsStr = [...cData.classroomsSet].join(', ') || 'Aula / Lab';
 
-      // Group common schedules and physical slots
-      const schedMap = new Map();
+      // 1. Group by exact physical time slot (day, start, end, classroom, campus) to combine shared careers/groups
+      const sharedSlotsMap = new Map();
       cData.allRawGroups.forEach(g => {
         const sList = g.schedules || [];
         const grpName = g.code || g.name || 'G1';
         const grpType = (g.classType || 'TA').toUpperCase();
-        const cCode = g.careerCode ? resolveCarreraInfo('', g.careerCode).name : '';
+        const cResolved = g.careerCode ? resolveCarreraInfo('', g.careerCode).name : 'General';
 
         sList.forEach(s => {
           if (!s.day || !s.startTime) return;
           const k = `${s.day}_${s.startTime}_${s.endTime}_${s.classroom || ''}_${s.campus || ''}`;
-          if (!schedMap.has(k)) {
-            schedMap.set(k, {
+          if (!sharedSlotsMap.has(k)) {
+            sharedSlotsMap.set(k, {
               day: s.day,
               dayName: dayMap[s.day] || s.day,
               start: s.startTime,
               end: s.endTime,
               classroom: s.classroom || 'Aula',
               campus: s.campus || 'Campus Central',
+              careersSet: new Set(),
               groups: []
             });
           }
-          const label = `${grpName} (${grpType}${cCode ? ' • ' + cCode : ''})`;
-          if (!schedMap.get(k).groups.includes(label)) {
-            schedMap.get(k).groups.push(label);
+          sharedSlotsMap.get(k).careersSet.add(cResolved);
+          const entry = `${grpName} (${grpType})`;
+          if (!sharedSlotsMap.get(k).groups.includes(entry)) {
+            sharedSlotsMap.get(k).groups.push(entry);
           }
         });
       });
 
-      const groupedSchedules = Array.from(schedMap.values()).sort((a, b) => {
+      // 2. Group by (careersTitle, day, campus) - hierarchical grouping
+      const hierarchyMap = new Map();
+      sharedSlotsMap.forEach((val) => {
+        const careersTitle = Array.from(val.careersSet).sort().join(' / ');
+        const hk = `${careersTitle}___${val.day}___${val.campus}`;
+        if (!hierarchyMap.has(hk)) {
+          hierarchyMap.set(hk, {
+            careersTitle: careersTitle,
+            day: val.day,
+            dayName: val.dayName,
+            campus: val.campus,
+            slots: []
+          });
+        }
+        hierarchyMap.get(hk).slots.push({
+          start: val.start,
+          end: val.end,
+          classroom: val.classroom,
+          groups: val.groups.join(', ')
+        });
+      });
+
+      const hierarchicalSchedules = Array.from(hierarchyMap.values()).map(h => {
+        h.slots.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+        return h;
+      }).sort((a, b) => {
+        const da = dayOrder[a.day] || 99;
+        const db = dayOrder[b.day] || 99;
+        if (da !== db) return da - db;
+        return a.careersTitle.localeCompare(b.careersTitle);
+      });
+
+      const groupedSchedules = Array.from(sharedSlotsMap.values()).sort((a, b) => {
         const da = dayOrder[a.day] || 99;
         const db = dayOrder[b.day] || 99;
         if (da !== db) return da - db;
@@ -3999,7 +4033,8 @@ document.addEventListener('change', (e) => {
         totalHours: totalHours,
         campusesStr: campusesStr,
         classroomsStr: classroomsStr,
-        groupedSchedules: groupedSchedules
+        groupedSchedules: groupedSchedules,
+        hierarchicalSchedules: hierarchicalSchedules
       };
     });
 
@@ -4089,7 +4124,9 @@ document.addEventListener('change', (e) => {
           `Ejecuta procedimientos técnicos y metodologías estándar con rigor profesional.`
         ],
         carrerasCodes: item.carrerasCodes,
-        carrerasResolved: item.carrerasResolved
+        carrerasResolved: item.carrerasResolved,
+        groupedSchedules: item.groupedSchedules,
+        hierarchicalSchedules: item.hierarchicalSchedules
       };
 
       // Distinct Days Badges for the Compact Card
@@ -4163,7 +4200,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  // Render dedicated full schedules panel for the selected subject
+  // Render dedicated full schedules panel for the selected subject (Grouped by Shared Careers and Day)
   window.renderMateriaSchedulesDetail = function(data) {
     const panel = document.getElementById('materia-schedules-breakdown');
     const grid = document.getElementById('schedules-breakdown-grid');
@@ -4171,9 +4208,10 @@ document.addEventListener('change', (e) => {
     const countBadge = document.getElementById('schedules-breakdown-count');
     if (!panel || !grid || !data) return;
 
-    const list = data.groupedSchedules || [];
+    const list = data.hierarchicalSchedules || [];
+    const totalSlots = (data.groupedSchedules || []).length;
     if (countBadge) {
-      countBadge.textContent = `${list.length} Bloque(s) Registrados en el SEA`;
+      countBadge.textContent = `${totalSlots} Bloque(s) en ${list.length} Grupo(s) de Horarios`;
     }
     if (subtitle) {
       subtitle.textContent = `Horarios oficiales y aulas asignadas para ${data.nombre} • ${data.carrera || 'UNITEPC'}`;
@@ -4188,34 +4226,46 @@ document.addEventListener('change', (e) => {
       return;
     }
 
-    grid.innerHTML = list.map(sc => {
-      const isShared = sc.groups && sc.groups.length > 1;
-      return `
-        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 hover:border-brand-300 dark:hover:border-brand-700 transition-all space-y-2 shadow-2xs">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
-              <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-600"></i>
-              ${sc.dayName} ${sc.start} - ${sc.end}
-            </span>
-            <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs">
-              ${sc.classroom}
-            </span>
-          </div>
-
-          <div class="text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between gap-1">
-            <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i> ${sc.campus}</span>
-            ${isShared ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">⚡ Cátedra Compartida</span>' : ''}
-          </div>
-
-          <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-[10px]">
-            <span class="text-slate-500 dark:text-slate-400 font-semibold">Paralelos & Carreras:</span>
-            <div class="font-bold text-slate-800 dark:text-slate-200 mt-1 flex flex-wrap gap-1">
-              ${sc.groups.map(g => `<span class="px-1.5 py-0.5 rounded bg-brand-100/70 dark:bg-brand-950/70 text-brand-800 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70">${g}</span>`).join('')}
+    grid.innerHTML = list.map(item => `
+      <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md transition-all space-y-3">
+        <!-- Header: Carrera(s) y Día -->
+        <div class="border-b border-slate-200 dark:border-slate-700/80 pb-2.5 flex items-start justify-between gap-2">
+          <div>
+            <div class="text-xs font-black text-brand-700 dark:text-brand-300 tracking-tight flex items-center gap-1.5 uppercase">
+              <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-600"></i>
+              <span>${item.careersTitle}</span>
+            </div>
+            <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>${item.dayName}</span>
             </div>
           </div>
+          <span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex-shrink-0">
+            ${item.campus}
+          </span>
         </div>
-      `;
-    }).join('');
+
+        <!-- List of Time Slots and Classrooms -->
+        <div class="space-y-2">
+          ${item.slots.map(sl => `
+            <div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/70 text-xs shadow-2xs">
+              <div class="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-500"></i>
+                <span>${sl.start} - ${sl.end}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-[11px] px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/60">
+                  ${sl.classroom}
+                </span>
+                <span class="text-[10px] text-slate-400 font-medium">
+                  (${sl.groups})
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
 
     if (window.lucide) window.lucide.createIcons();
   };
