@@ -4,6 +4,7 @@ import bo.edu.unitepc.sisa.api.dto.gateway.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -129,6 +130,7 @@ public class UnitepcGatewayClient {
     /**
      * Fetch all branch offices (Sedes) from the UNITEPC Central Gateway.
      */
+    @Cacheable(value = "gateway-branch-offices")
     public List<BranchOfficeDto> getBranchOffices() {
         String token = getToken();
         try {
@@ -149,6 +151,7 @@ public class UnitepcGatewayClient {
     /**
      * Fetch careers filtered by branch office code.
      */
+    @Cacheable(value = "gateway-careers", key = "#branchOfficeCode != null ? #branchOfficeCode : 'CBA'")
     public List<CareerDto> getCareers(String branchOfficeCode) {
         String token = getToken();
         try {
@@ -177,6 +180,7 @@ public class UnitepcGatewayClient {
     /**
      * Fetch courses filtered by branch office code and career code.
      */
+    @Cacheable(value = "gateway-courses", key = "(#branchOfficeCode != null ? #branchOfficeCode : 'CBA') + '_' + (#careerCode != null ? #careerCode : '')")
     public List<CourseDto> getCourses(String branchOfficeCode, String careerCode) {
         String token = getToken();
         try {
@@ -208,6 +212,7 @@ public class UnitepcGatewayClient {
     /**
      * Fetch groups filtered by term, branchOfficeId, careerId, syllabusCourseId.
      */
+    @Cacheable(value = "gateway-groups", key = "(#term != null ? #term : '2-2026') + '_' + (#branchOfficeId != null ? #branchOfficeId : '') + '_' + (#careerId != null ? #careerId : '') + '_' + (#syllabusCourseId != null ? #syllabusCourseId : '')")
     public List<GroupItemDto> getGroups(String term, String branchOfficeId, String careerId, String syllabusCourseId) {
         String token = getToken();
         try {

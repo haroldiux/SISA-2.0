@@ -11,6 +11,7 @@ import bo.edu.unitepc.sisa.domain.repository.SeaSedeRepository;
 import bo.edu.unitepc.sisa.infrastructure.gateway.UnitepcGatewayClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -207,6 +208,7 @@ public class CatalogoAcademicoController {
      * List all distinct teachers (Docentes) available in the system catalog.
      * Prioritizes live UNITEPC Gateway data and updates PostgreSQL local mirror cache.
      */
+    @Cacheable(value = "catalogo-docentes", key = "#branchOfficeId != null ? #branchOfficeId : 'default'")
     @GetMapping("/docentes")
     public ResponseEntity<List<DocenteItemDto>> getDocentes(
             @RequestParam(required = false, defaultValue = "ea4fb26e-11a9-452f-9bae-4962de2dd931") String branchOfficeId) {

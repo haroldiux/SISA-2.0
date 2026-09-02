@@ -3508,20 +3508,7 @@ window.triggerAutoCapture = function() {
   if (window.lucide) window.lucide.createIcons();
 };
 
-// Initial auto-render for active subject data & dynamic units
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    // Only run fallback initial load if API hasn't initialized
-    if (!window.__ACTIVE_DOCENTE__) {
-      const initialKey = localStorage.getItem('sisa_active_materia_key') || 'sis213g1';
-      if (typeof window.selectDocenteMateria === 'function') {
-        window.selectDocenteMateria(initialKey);
-      } else if (typeof window.loadSavedDocenteData === 'function') {
-        window.loadSavedDocenteData(initialKey);
-      }
-    }
-  }, 100);
-});
+// Global interceptor for all "Guardar" buttons
 
 
 // Global interceptor for all "Guardar" buttons
@@ -3731,7 +3718,22 @@ document.addEventListener('change', (e) => {
     localStorage.setItem('sisa_active_docente_ci', cleanCi);
     let docente = (window.__API_DOCENTES__ || []).find(d => String(d.ci).trim() === cleanCi);
 
-    // Fetch this teacher's real assigned courses and groups from API for Cochabamba
+    // 1. Instant Cache Check (0ms render on reload or switch, eliminates mock flash)
+    const cachedDataStr = localStorage.getItem('sisa_cache_doc_' + cleanCi);
+    if (cachedDataStr) {
+      try {
+        const cached = JSON.parse(cachedDataStr);
+        if (cached && cached.docente && cached.groups && cached.groups.length > 0) {
+          window.__ACTIVE_DOCENTE__ = cached.docente;
+          document.querySelectorAll('.docente-nombre-label').forEach(el => { el.textContent = cached.docente.nombreCompleto; });
+          document.querySelectorAll('.docente-email-label').forEach(el => { el.textContent = cached.docente.email; });
+          document.querySelectorAll('.docente-ci-label').forEach(el => { el.textContent = cached.docente.ci; });
+          window.renderDynamicSidebarForDocente(cached.docente, cached.courses || [], cached.groups);
+        }
+      } catch (e) {}
+    }
+
+    // 2. Background fresh fetch from SEA Gateway
     try {
       const [coursesRes, groupsRes] = await Promise.all([
         fetch(`/api/v1/catalogo-academico/docentes/${cleanCi}/materias`),
@@ -3759,6 +3761,9 @@ document.addEventListener('change', (e) => {
 
       if (!docente) return;
       window.__ACTIVE_DOCENTE__ = docente;
+
+      // Save to instant cache
+      localStorage.setItem('sisa_cache_doc_' + cleanCi, JSON.stringify({ docente, courses, groups: activeGroups }));
 
       // Update teacher headers & labels across DOM
       document.querySelectorAll('.docente-nombre-label').forEach(el => {

@@ -2,7 +2,7 @@
 FROM maven:3.9.8-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
-RUN mvn dependency:go-offline -B -Dmaven.wagon.http.retryHandler.count=5 || true
+RUN mvn dependency:resolve -B || true
 COPY src ./src
 RUN mvn clean package -DskipTests -Dmaven.wagon.http.retryHandler.count=5
 
