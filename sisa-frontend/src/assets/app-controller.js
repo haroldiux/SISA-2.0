@@ -378,7 +378,12 @@
         window.saveCurrentDocenteData(true);
       }
 
-      activeMateriaKey = materiaKey || 'sis213g1';
+      activeMateriaKey = materiaKey;
+      if (!materiasData[activeMateriaKey]) {
+        const keys = Object.keys(materiasData);
+        activeMateriaKey = keys.length > 0 ? keys[0] : 'sis213g1';
+      }
+      localStorage.setItem('sisa_active_materia_key', activeMateriaKey);
       const data = materiasData[activeMateriaKey] || materiasData['sis213g1'];
       activeAsignacionId = data.asignacionId || 1;
       
@@ -2554,70 +2559,75 @@ window.loadSavedDocenteData = function(materiaKey) {
 };
 
 window.generateDefaultPlanesList = function(mKey) {
+  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? Object.values(materiasData)[0] : null);
+  const teacherName = (window.__ACTIVE_DOCENTE__ && window.__ACTIVE_DOCENTE__.nombreCompleto) ? window.__ACTIVE_DOCENTE__.nombreCompleto : 'Docente Asignado';
+  const courseName = def ? (def.nombre || 'Asignatura Asignada') : 'Asignatura Asignada';
+  const careerName = def ? (def.carrera || 'UNITEPC') : 'UNITEPC';
+
   const CANONICAL_PLANES = [
   {
     "nombreHoja": "UA-1 Tema 1",
-    "nombreDocente": "Harold Iriarte Rojas",
+    "nombreDocente": teacherName,
     "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de Idiomas",
-    "carrera": "FACEFA - Complementarias",
-    "unidadTitulo": "INTRODUCCION A LINGÜÍSTICA ORIGINARIA",
-    "elementoCompetencia": "Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua, para comprender la identidad sociocultural y la dinámica de interacción de las comunidades andinas, mediante el estudio del origen, expansión y estructura fonética de la lengua, bajo un enfoque de respeto a la diversidad lingüística, rigor académico y pertinencia en el contexto de la realidad económica y social boliviana.",
-    "contenidoTema": "CONCEPTOS DE LINGÜÍSTICA GENERAL",
-    "objetivoSesion": "Reconoce los fundamentos lingüísticos, culturales y cosmovisión del quechua para valorar su rol como activo estratégico en la identidad regional y económica.",
-    "logrosEsperados": "1. Identifica los pilares de la cosmovisión y cultura quechua.\n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.",
-    "indicadoresLogro": "1. Clasifica correctamente los elementos básicos de la cosmovisión andina.\n2. Transcribe términos cotidianos respetando el alfabeto unificado.",
-    "saberConceptual": "- Lengua quechua \n- Cultura quechua\n- Cosmovisión quechua\n- Signografia del quechua",
-    "saberProcedimental": "- Identificación de los pilares de la cultura quechua. \n- Análisis de la influencia de la lengua en la identidad regional. \n- Reconocimiento gráfico del alfabeto quechua unificado.  \n- Escritura de términos básicos respetando la normativa oficial.",
-    "saberActitudinal": "- Respeto por los saberes ancestrales.\n- Apertura a formas alternativas de organización social.\n- Rigor en el uso de la grafía oficial.\n- Valoración de la normalización lingüística.",
-    "estrategiaEnsenanza": "- Aprendizaje Basado en Indagación: Preguntas guiadas sobre la presencia del quechua en la economía local. \n- Demostración Gráfica: Uso de cartillas didácticas para la signografía.",
-    "estrategiaAprendizaje": "- Observación Dirigida: Registro de palabras quechuas presentes en el entorno comercial.\n- Taller de Escritura: Práctica guiada de grafemas simples y glotalizados.",
-    "recursosEnsenanza": "- Diccionarios técnicos bilingües\n- Grabaciones de audio técnico sobre procesos productivos\n- Pizarra\n- Diapositivas",
-    "evaluacionFormativaActividad": "Debate grupal",
+    "nombreAsignatura": courseName,
+    "carrera": careerName,
+    "unidadTitulo": "INTRODUCCION A " + courseName.toUpperCase(),
+    "elementoCompetencia": `Aplica los fundamentos conceptuales y metodológicos de ${courseName} con rigor profesional en el ámbito de ${careerName}.`,
+    "contenidoTema": "CONCEPTOS FUNDAMENTALES Y PRINCIPIOS",
+    "objetivoSesion": `Reconoce los fundamentos teórico-prácticos de ${courseName} para resolver problemas de la disciplina.`,
+    "logrosEsperados": "1. Identifica los conceptos y principios básicos.\n2. Aplica metodologías estándar con rigor académico.",
+    "indicadoresLogro": "1. Clasifica correctamente los elementos clave.\n2. Resuelve ejercicios introductorios pertinentes.",
+    "saberConceptual": `- Fundamentos de ${courseName}\n- Marco teórico y metodológico\n- Normas y estándares aplicables`,
+    "saberProcedimental": `- Identificación de elementos clave de ${courseName}\n- Resolución guiada de problemas\n- Aplicación práctica en laboratorio`,
+    "saberActitudinal": "- Rigor y ética profesional\n- Trabajo colaborativo\n- Pensamiento crítico",
+    "estrategiaEnsenanza": "- Clase interactiva guiada\n- Demostración de casos de estudio",
+    "estrategiaAprendizaje": "- Taller práctico guiado\n- Análisis y resolución de problemas",
+    "recursosEnsenanza": "- Diapositivas y bibliografía técnica\n- Software y laboratorios especializados",
+    "evaluacionFormativaActividad": "Taller práctico en clase",
     "evaluacionFormativaInstrumento": "Lista de cotejo",
-    "evaluacionFormativaEvidencia": "Mapa mental",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
+    "evaluacionFormativaEvidencia": "Práctica desarrollada",
+    "evaluacionSumativaActividad": "Prueba escrita objetiva",
+    "evaluacionSumativaInstrumento": "Cuestionario y rúbrica",
+    "evaluacionSumativaEvidencia": "Evaluación calificada",
     "momentos": [
       {
         "tipoMomento": "INTRODUCCION",
         "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Activación cognitiva: Dinámica \"¿Qué significa para la sociedad el idioma originario?\". Presentación del silabo, objetivos de la clase y la importancia del quechua en la administración pública y privada actual.",
-        "duracionMin": 25
+        "actividadesDocente": `Presentación de los objetivos de la sesión, contextualización de ${courseName} y activación cognitiva.`,
+        "duracionMin": 20
       },
       {
         "tipoMomento": "RESULTADOS_LOGROS",
         "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Reconoce los fundamentos lingüísticos, culturales y cosmogónicos del quechua para valorar su rol como activo estratégico en la identidad regional y económica.\nLogros: \n1. Identifica los pilares de la cosmovisión y cultura quechua. \n2. Aplica la signografía oficial para la escritura de términos básicos con rigor académico.",
-        "duracionMin": 0
+        "actividadesDocente": `Reconoce los principios fundamentales de ${courseName} y aplica la metodología correspondiente.`,
+        "duracionMin": 10
       },
       {
         "tipoMomento": "CONTENIDOS",
         "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "1. Lengua quechua\n2. Cultura quechua\n3. Cosmovisión quechua\n4. Signografía oficial.",
-        "duracionMin": 0
+        "actividadesDocente": `1. Introducción general.\n2. Principios y marco conceptual de ${courseName}.\n3. Ejercicios y modelos aplicados.`,
+        "duracionMin": 10
       },
       {
         "tipoMomento": "CUERPO",
         "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Lengua Quechua: Definición como sistema aglutinante. Importancia de su estudio para la comunicación comercial bilingüe.\n2. Cultura Quechua: Pilares sociales: comunidad, reciprocidad y jerarquía. Cómo estas estructuras influyen en el comportamiento del consumidor.\n3. Cosmovisión: El modelo del Sumaq Kawsay y el equilibrio entre economía y naturaleza (Sustentabilidad andina).\n4. Signografía: Introducción al alfabeto unificado. Ejercicio de reconocimiento de grafemas.",
-        "duracionMin": 100
+        "actividadesDocente": `Desarrollo temático detallado, modelado de problemas y trabajo guiado con los estudiantes en ${courseName}.`,
+        "duracionMin": 90
       },
       {
         "tipoMomento": "CONCLUSION",
         "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "- Retroalimentación sobre la relevancia de la normalización lingüística.\n- Aplicación de la prueba de grafía y pequeño cuestionario cultural.",
-        "duracionMin": 55
+        "actividadesDocente": "Síntesis de los conceptos clave, retroalimentación y orientaciones para la siguiente sesión.",
+        "duracionMin": 20
       }
     ]
   },
   {
     "nombreHoja": "UA-1 Tema 2",
-    "nombreDocente": "Harold Iriarte Rojas",
-    "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de Idiomas",
-    "carrera": "FACEFA - Complementarias",
+    "nombreDocente": teacherName,
+    "fecha": "16/02/2026",
+    "nombreAsignatura": courseName,
+    "carrera": careerName,
     "unidadTitulo": "INTRODUCCION A LINGÜÍSTICA ORIGINARIA",
     "elementoCompetencia": "Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua, para comprender la identidad sociocultural y la dinámica de interacción de las comunidades andinas, mediante el estudio del origen, expansión y estructura fonética de la lengua, bajo un enfoque de respeto a la diversidad lingüística, rigor académico y pertinencia en el contexto de la realidad económica y social boliviana.",
     "contenidoTema": "FONOLOGÍA DEL QUECHUA",
@@ -3494,11 +3504,14 @@ window.triggerAutoCapture = function() {
 // Initial auto-render for active subject data & dynamic units
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
-    const initialKey = localStorage.getItem('sisa_active_materia_key') || 'sis213g1';
-    if (typeof window.selectDocenteMateria === 'function') {
-      window.selectDocenteMateria(initialKey);
-    } else if (typeof window.loadSavedDocenteData === 'function') {
-      window.loadSavedDocenteData(initialKey);
+    // Only run fallback initial load if API hasn't initialized
+    if (!window.__ACTIVE_DOCENTE__) {
+      const initialKey = localStorage.getItem('sisa_active_materia_key') || 'sis213g1';
+      if (typeof window.selectDocenteMateria === 'function') {
+        window.selectDocenteMateria(initialKey);
+      } else if (typeof window.loadSavedDocenteData === 'function') {
+        window.loadSavedDocenteData(initialKey);
+      }
     }
   }, 100);
 });
@@ -4163,8 +4176,8 @@ document.addEventListener('change', (e) => {
       if (!a.isCommon && b.isCommon) return 1;
       return a.name.localeCompare(b.name);
     });
-    // Re-index keys after sort
-    items.forEach((it, i) => { it.key = 'materia_cat_' + i; });
+    // Re-index keys after sort with unique docente CI prefix
+    items.forEach((it, i) => { it.key = `${docente.ci}_cat_${i}`; });
 
     // Calculate totals across all subjects
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
@@ -4267,90 +4280,67 @@ document.addEventListener('change', (e) => {
         ? uniqueDays.map(d => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold border border-brand-200 dark:border-brand-800/60 text-[9px]">${d}</span>`).join(' ')
         : '<span class="text-[9px] text-slate-400">Regular</span>';
 
-      // HTML for Top Horizontal Card (Ordered exactly per User Specification):
-      // 1. PROGRAMACIÓN I (Nombre de la materia + Turno si es individual)
-      // 2. SIS-113 • ELEC-113 (Códigos)
-      // 3. CAMPUS: JUAN PABLO II
-      // 4. GRUPOS A CARGO: TEORÍA: TA-01 • PRÁCTICA: PL-01
-      // 5. AULA: TEORÍA C 103 • PRÁCTICA LABORATORIO INFORMATICA
+      // HTML for Top Horizontal Card (Expanded horizontally, compact vertically):
       cardsHtml += `
-        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
-          <div class="space-y-2.5">
-            <!-- Header Badges -->
-            <div class="flex items-start justify-between gap-1">
-              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[210px] flex items-center gap-1">
-                ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags + (item.shiftLabel ? ' • ' + item.shiftLabel.toUpperCase() : '')}
-              </span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
-                ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
-              </span>
-            </div>
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            
+            <!-- Columna Izquierda (sm:col-span-7): Carrera, Título, Códigos y Grupos -->
+            <div class="sm:col-span-7 space-y-1.5 min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[260px]">
+                  ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
+                </span>
+                <span class="px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
+                  ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
+                </span>
+              </div>
 
-            <!-- 1. PROGRAMACIÓN I (Nombre Principal de la Materia con Turno si es individual) -->
-            <div>
+              <!-- Nombre Principal de la Materia -->
               <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-snug line-clamp-1" title="${item.name}">
-                ${item.name} ${!item.isCommon && item.shiftLabel ? `<span class="text-xs font-semibold text-slate-500 dark:text-slate-400">(${item.shiftLabel})</span>` : ''}
+                ${item.name}
               </h3>
 
-              <!-- 2. SIS-113 • ELEC-113 (Códigos de materia por carrera) -->
-              <div class="flex items-center gap-1.5 flex-wrap mt-1">
-                ${item.codesList.map(c => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-400 font-mono font-bold text-[10px] border border-brand-200/70 dark:border-brand-800/70">${c}</span>`).join('')}
-              </div>
-            </div>
-
-            <!-- 3. CAMPUS, GRUPOS & 4. AULA (Detalle ordenado) -->
-            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px] space-y-1.5">
-              <!-- CAMPUS: JUAN PABLO II -->
-              <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-1">
-                <span class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9.5px] tracking-wider flex items-center gap-1">
-                  <i data-lucide="map-pin" class="w-3 h-3 text-brand-600"></i> CAMPUS:
-                </span>
-                <span class="font-black text-slate-800 dark:text-slate-200 text-[10.5px]">${item.campusesStr}</span>
-              </div>
-
-              <!-- GRUPOS A CARGO -->
-              <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-1 text-[10.5px]">
-                <span class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9px] tracking-wider flex items-center gap-1">
-                  <i data-lucide="users" class="w-3 h-3 text-purple-600"></i> GRUPOS:
-                </span>
-                <div class="flex items-center gap-1.5 font-mono text-[9.5px] font-bold flex-wrap justify-end">
+              <!-- Códigos & Grupos a Cargo -->
+              <div class="flex items-center gap-2 flex-wrap text-[10.5px]">
+                <div class="flex items-center gap-1">
+                  ${item.codesList.map(c => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-400 font-mono font-bold text-[10px] border border-brand-200/70 dark:border-brand-800/70">${c}</span>`).join('')}
+                </div>
+                <div class="flex items-center gap-1 font-mono text-[9.5px] font-bold">
                   ${item.teoCodes ? `<span class="px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60">Teo: ${item.teoCodes}</span>` : ''}
                   ${item.pracCodes ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60">Prác: ${item.pracCodes}</span>` : ''}
                 </div>
               </div>
+            </div>
 
-              <!-- AULAS: TEORÍA & PRÁCTICA -->
-              <div class="space-y-1">
-                <div class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9px] tracking-wider">AULAS ASIGNADAS:</div>
-                <div class="flex items-center justify-between text-[10.5px]">
-                  <span class="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> TEORÍA:
-                  </span>
-                  <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]" title="${item.teoRoomsStr}">${item.teoRoomsStr}</span>
-                </div>
-                <div class="flex items-center justify-between text-[10.5px]">
-                  <span class="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> PRÁCTICA:
-                  </span>
-                  <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]" title="${item.pracRoomsStr}">${item.pracRoomsStr}</span>
-                </div>
+            <!-- Columna Derecha (sm:col-span-5): Campus, Aulas y Días -->
+            <div class="sm:col-span-5 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 text-[10px] space-y-1">
+              <div class="flex items-center justify-between text-[9.5px]">
+                <span class="font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <i data-lucide="map-pin" class="w-3 h-3 text-brand-600"></i> CAMPUS:
+                </span>
+                <span class="font-black text-slate-800 dark:text-slate-200 truncate max-w-[120px]">${item.campusesStr}</span>
               </div>
-
-              <!-- DÍAS BADGES -->
-              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[9.5px]">
-                <div class="flex items-center gap-1">
-                  <span class="text-slate-400 font-medium">Días:</span>
-                  <div class="flex items-center gap-1">${daysBadges}</div>
-                </div>
+              <div class="flex items-center justify-between text-[9.5px]">
+                <span class="text-slate-500 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>TEORÍA:</span>
+                <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]">${item.teoRoomsStr}</span>
+              </div>
+              <div class="flex items-center justify-between text-[9.5px]">
+                <span class="text-slate-500 font-medium flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>PRÁCTICA:</span>
+                <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]">${item.pracRoomsStr}</span>
+              </div>
+              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[9px]">
+                <div class="flex items-center gap-1">${daysBadges}</div>
                 <span class="font-bold text-brand-700 dark:text-brand-400">${item.groupedSchedules.length} Bloques</span>
               </div>
             </div>
+
           </div>
 
           <!-- Footer -->
-          <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
             <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="folder-check" class="w-3.5 h-3.5"></i> Carpeta Docente</span>
-            <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
+            <span class="doc-card-action-badge text-slate-400 font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
           </div>
         </div>
       `;
