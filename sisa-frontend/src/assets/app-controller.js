@@ -4074,6 +4074,28 @@ document.addEventListener('change', (e) => {
         return (a.start || '').localeCompare(b.start || '');
       });
 
+      // Separate theory and practice classrooms
+      const teoRoomsSet = new Set();
+      const pracRoomsSet = new Set();
+      cluster.forEach(g => {
+        const cType = (g.classType || 'TA').toUpperCase();
+        const isTeo = cType.startsWith('T') || cType.includes('TEO');
+        (g.schedules || []).forEach(s => {
+          if (s.classroom) {
+            if (isTeo) teoRoomsSet.add(s.classroom);
+            else pracRoomsSet.add(s.classroom);
+          }
+        });
+        if (g.classroom) {
+          if (isTeo) teoRoomsSet.add(g.classroom);
+          else pracRoomsSet.add(g.classroom);
+        }
+      });
+
+      const teoRoomsStr = [...teoRoomsSet].join(', ') || (teoList.length > 0 ? 'Aula Asignada' : 'N/A');
+      const pracRoomsStr = [...pracRoomsSet].join(', ') || (pracList.length > 0 ? 'Laboratorio' : 'N/A');
+      const codesList = [...new Set(officialCodes.filter(Boolean))];
+
       return {
         key: 'materia_cat_' + idx,
         code: officialCode,
@@ -4095,7 +4117,10 @@ document.addEventListener('change', (e) => {
         campusesStr: campusesStr,
         classroomsStr: classroomsStr,
         groupedSchedules: groupedSchedules,
-        hierarchicalSchedules: hierarchicalSchedules
+        hierarchicalSchedules: hierarchicalSchedules,
+        teoRoomsStr: teoRoomsStr,
+        pracRoomsStr: pracRoomsStr,
+        codesList: codesList
       };
     });
 
@@ -4196,7 +4221,10 @@ document.addEventListener('change', (e) => {
         carrerasCodes: item.carrerasCodes,
         carrerasResolved: item.carrerasResolved,
         groupedSchedules: item.groupedSchedules,
-        hierarchicalSchedules: item.hierarchicalSchedules
+        hierarchicalSchedules: item.hierarchicalSchedules,
+        teoRoomsStr: item.teoRoomsStr,
+        pracRoomsStr: item.pracRoomsStr,
+        codesList: item.codesList
       };
 
       // Distinct Days Badges for the Compact Card
@@ -4205,34 +4233,77 @@ document.addEventListener('change', (e) => {
         ? uniqueDays.map(d => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold border border-brand-200 dark:border-brand-800/60 text-[9px]">${d}</span>`).join(' ')
         : '<span class="text-[9px] text-slate-400">Regular</span>';
 
-      // HTML for Top Horizontal Card (Clean & Compact Executive Summary)
+      // HTML for Top Horizontal Card (Ordered exactly per User Specification):
+      // 1. PROGRAMACIÓN I (Nombre de la materia)
+      // 2. SIS-113 • ELEC-113 (Códigos)
+      // 3. CAMPUS: JUAN PABLO II
+      // 4. AULA: TEORÍA C 103 • PRÁCTICA LABORATORIO INFORMATICA
       cardsHtml += `
-        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
-          <div>
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
+          <div class="space-y-2.5">
+            <!-- Header Badges -->
             <div class="flex items-start justify-between gap-1">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[210px] flex items-center gap-1">${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[210px] flex items-center gap-1">
+                ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
+                ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
+              </span>
             </div>
 
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 line-clamp-1" title="${item.code} ${item.name}">${item.code} ${item.name}</h4>
+            <!-- 1. PROGRAMACIÓN I (Nombre Principal de la Materia) -->
+            <div>
+              <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-snug line-clamp-1" title="${item.name}">
+                ${item.name}
+              </h3>
 
-            <div class="mt-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[10px] space-y-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 overflow-hidden">
-                  <span class="text-slate-500 dark:text-slate-400 font-medium">Días:</span>
-                  <div class="flex items-center gap-1 flex-wrap">${daysBadges}</div>
-                </div>
-                <span class="font-bold text-slate-700 dark:text-slate-300 flex-shrink-0">${item.groupedSchedules.length} Bloques</span>
+              <!-- 2. SIS-113 • ELEC-113 (Códigos de materia por carrera) -->
+              <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                ${item.codesList.map(c => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-400 font-mono font-bold text-[10px] border border-brand-200/70 dark:border-brand-800/70">${c}</span>`).join('')}
               </div>
-              <div class="text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
-                <i data-lucide="map-pin" class="w-3 h-3 text-slate-400 flex-shrink-0"></i>
-                <span class="truncate">${item.campusesStr} • ${item.classroomsStr}</span>
+            </div>
+
+            <!-- 3. CAMPUS & 4. AULA (Detalle ordenado) -->
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[11px] space-y-1.5">
+              <!-- CAMPUS: JUAN PABLO II -->
+              <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-1">
+                <span class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9.5px] tracking-wider flex items-center gap-1">
+                  <i data-lucide="map-pin" class="w-3 h-3 text-brand-600"></i> CAMPUS:
+                </span>
+                <span class="font-black text-slate-800 dark:text-slate-200 text-[10.5px]">${item.campusesStr}</span>
+              </div>
+
+              <!-- AULAS: TEORÍA & PRÁCTICA -->
+              <div class="space-y-1">
+                <div class="font-bold text-slate-500 dark:text-slate-400 uppercase text-[9px] tracking-wider">AULAS ASIGNADAS:</div>
+                <div class="flex items-center justify-between text-[10.5px]">
+                  <span class="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> TEORÍA:
+                  </span>
+                  <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]" title="${item.teoRoomsStr}">${item.teoRoomsStr}</span>
+                </div>
+                <div class="flex items-center justify-between text-[10.5px]">
+                  <span class="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> PRÁCTICA:
+                  </span>
+                  <span class="font-bold font-mono text-slate-900 dark:text-white truncate max-w-[130px]" title="${item.pracRoomsStr}">${item.pracRoomsStr}</span>
+                </div>
+              </div>
+
+              <!-- DÍAS BADGES -->
+              <div class="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-[9.5px]">
+                <div class="flex items-center gap-1">
+                  <span class="text-slate-400 font-medium">Días:</span>
+                  <div class="flex items-center gap-1">${daysBadges}</div>
+                </div>
+                <span class="font-bold text-brand-700 dark:text-brand-400">${item.groupedSchedules.length} Bloques</span>
               </div>
             </div>
           </div>
 
-          <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
-            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="folder-check" class="w-3.5 h-3.5"></i> Carpeta Docente Única</span>
+          <!-- Footer -->
+          <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="folder-check" class="w-3.5 h-3.5"></i> Carpeta Docente</span>
             <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
           </div>
         </div>
