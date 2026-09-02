@@ -435,6 +435,11 @@
         window.renderCarreraSubtabs(activeMateriaKey);
       }
 
+      // Render dedicated full schedules panel for the selected course
+      if (typeof window.renderMateriaSchedulesDetail === 'function') {
+        window.renderMateriaSchedulesDetail(data);
+      }
+
       // Auto-resize textareas to fit content
       setTimeout(() => {
         if (typeof window.autoResizeAllTextareas === 'function') {
@@ -4087,42 +4092,41 @@ document.addEventListener('change', (e) => {
         carrerasResolved: item.carrerasResolved
       };
 
-      // HTML for Top Horizontal Card with full Real Schedule info
+      // Distinct Days Badges for the Compact Card
+      const uniqueDays = [...new Set(item.groupedSchedules.map(s => s.dayName.substring(0, 3)))];
+      const daysBadges = uniqueDays.length > 0 
+        ? uniqueDays.map(d => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold border border-brand-200 dark:border-brand-800/60 text-[9px]">${d}</span>`).join(' ')
+        : '<span class="text-[9px] text-slate-400">Regular</span>';
+
+      // HTML for Top Horizontal Card (Clean & Compact Executive Summary)
       cardsHtml += `
-        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200">
-          <div class="flex items-start justify-between gap-1">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[200px]">${item.allCarrerasTags}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300">${item.totalPhysicalSessions} Grupos • ${item.totalHours}h</span>
-          </div>
-
-          <h4 class="text-sm font-bold text-slate-900 dark:text-white mt-2 truncate">${item.code} ${item.name}</h4>
-
-          <div class="mt-2.5 space-y-1.5 text-[11px] bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-            <div class="font-bold text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span>📅 Horarios y Aulas SEA:</span>
-              <span class="text-brand-600 dark:text-brand-400">${item.groupedSchedules.length} Bloques</span>
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-1">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 truncate max-w-[180px]">${item.allCarrerasTags}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">${item.totalPhysicalSessions} Grupos • ${item.totalHours}h</span>
             </div>
-            ${item.groupedSchedules.length > 0 ? item.groupedSchedules.map(sc => `
-              <div class="text-[10px] leading-tight text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0 last:pb-0">
-                <div class="font-semibold flex items-center justify-between text-slate-900 dark:text-white">
-                  <span class="text-brand-700 dark:text-brand-300 font-bold">${sc.dayName} ${sc.start} - ${sc.end}</span>
-                  <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-bold">${sc.classroom}</span>
+
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-2 line-clamp-1" title="${item.code} ${item.name}">${item.code} ${item.name}</h4>
+
+            <div class="mt-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-[10px] space-y-1">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 overflow-hidden">
+                  <span class="text-slate-500 dark:text-slate-400 font-medium">Días:</span>
+                  <div class="flex items-center gap-1 flex-wrap">${daysBadges}</div>
                 </div>
-                <div class="text-[9px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                  📍 ${sc.campus} • <strong class="text-slate-700 dark:text-slate-300">${sc.groups.join(', ')}</strong>
-                </div>
+                <span class="font-bold text-slate-700 dark:text-slate-300 flex-shrink-0">${item.groupedSchedules.length} Bloques</span>
               </div>
-            `).join('') : `
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                <div>📘 ${item.teoSummary}</div>
-                <div>🧪 ${item.pracSummary}</div>
+              <div class="text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3 h-3 text-slate-400 flex-shrink-0"></i>
+                <span class="truncate">${item.campusesStr} • ${item.classroomsStr}</span>
               </div>
-            `}
+            </div>
           </div>
 
           <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
             <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1"><i data-lucide="folder-check" class="w-3.5 h-3.5"></i> Carpeta Docente Única</span>
-            <span class="doc-card-action-badge text-brand-600 dark:text-brand-400 text-[10px] font-bold hover:underline flex items-center gap-1">Planificar Materia ➔</span>
+            <span class="doc-card-action-badge text-slate-400 text-[10px] font-semibold hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1">Ver Carga ➔</span>
           </div>
         </div>
       `;
@@ -4157,6 +4161,63 @@ document.addEventListener('change', (e) => {
     if (firstItem) {
       window.selectDocenteMateria(firstItem.key);
     }
+  };
+
+  // Render dedicated full schedules panel for the selected subject
+  window.renderMateriaSchedulesDetail = function(data) {
+    const panel = document.getElementById('materia-schedules-breakdown');
+    const grid = document.getElementById('schedules-breakdown-grid');
+    const subtitle = document.getElementById('schedules-breakdown-subtitle');
+    const countBadge = document.getElementById('schedules-breakdown-count');
+    if (!panel || !grid || !data) return;
+
+    const list = data.groupedSchedules || [];
+    if (countBadge) {
+      countBadge.textContent = `${list.length} Bloque(s) Registrados en el SEA`;
+    }
+    if (subtitle) {
+      subtitle.textContent = `Horarios oficiales y aulas asignadas para ${data.nombre} • ${data.carrera || 'UNITEPC'}`;
+    }
+
+    if (list.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full p-4 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+          No hay horarios específicos registrados en el Gateway para esta materia.
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = list.map(sc => {
+      const isShared = sc.groups && sc.groups.length > 1;
+      return `
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 hover:border-brand-300 dark:hover:border-brand-700 transition-all space-y-2 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-600"></i>
+              ${sc.dayName} ${sc.start} - ${sc.end}
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs">
+              ${sc.classroom}
+            </span>
+          </div>
+
+          <div class="text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between gap-1">
+            <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 flex-shrink-0"></i> ${sc.campus}</span>
+            ${isShared ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">⚡ Cátedra Compartida</span>' : ''}
+          </div>
+
+          <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-[10px]">
+            <span class="text-slate-500 dark:text-slate-400 font-semibold">Paralelos & Carreras:</span>
+            <div class="font-bold text-slate-800 dark:text-slate-200 mt-1 flex flex-wrap gap-1">
+              ${sc.groups.map(g => `<span class="px-1.5 py-0.5 rounded bg-brand-100/70 dark:bg-brand-950/70 text-brand-800 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70">${g}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
   };
 
   // Render Sub-tabs of Career
