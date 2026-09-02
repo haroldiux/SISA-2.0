@@ -3840,13 +3840,10 @@ document.addEventListener('change', (e) => {
     let rawList = (groups && groups.length > 0) ? groups : (courses || []);
     if (rawList.length === 0) return;
 
-    // 1. Helper to extract parallel index (e.g. TA-01 -> "01", TA-02 -> "02")
-    const getParallelIndex = (grpName) => {
-      const m = (grpName || '').match(/\d+/);
-      return m ? m[0] : '01';
-    };
-
-    // 2. Cluster groups into Common Subject Offerings according to the SEA
+    // 1. Cluster groups into Canonical Subject Cards (1 Card per Unique Academic Offering)
+    // Groups belong to the same Subject Card if:
+    // a) They have the same Course Name (e.g. "PROGRAMACIÓN I" across all careers/turnos)
+    // b) They share physical schedule slots (e.g. "ECONOMETRÍA" vs "MODELOS ECONOMETRICOS" in Facefa)
     const nGroups = rawList.length;
     const adj = Array.from({ length: nGroups }, () => new Set());
 
@@ -3855,65 +3852,29 @@ document.addEventListener('change', (e) => {
         const g1 = rawList[i];
         const g2 = rawList[j];
 
-        // Condition 1: Shared physical schedule slot (COMMON CLASS in SEA)
+        const c1Norm = (g1.courseName || g1.name || '').trim().toUpperCase();
+        const c2Norm = (g2.courseName || g2.name || '').trim().toUpperCase();
+
+        // Condition A: Same course name
+        if (c1Norm && c1Norm === c2Norm) {
+          adj[i].add(j);
+          adj[j].add(i);
+          continue;
+        }
+
+        // Condition B: Shared physical schedule slot (e.g. common offerings with slightly different names)
         const s1Slots = (g1.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const s2Slots = (g2.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const hasSharedSlot = s1Slots.some(s => s2Slots.includes(s));
 
-        // Condition 2: Same career, same course, and identical parallel
-        const c1Norm = (g1.courseName || g1.name || '').trim().toUpperCase();
-        const c2Norm = (g2.courseName || g2.name || '').trim().toUpperCase();
-        const sameCareerCourse = (g1.careerCode && g1.careerCode === g2.careerCode && c1Norm === c2Norm);
-        const p1 = getParallelIndex(g1.name || g1.code);
-        const p2 = getParallelIndex(g2.name || g2.code);
-
         if (hasSharedSlot) {
           adj[i].add(j);
           adj[j].add(i);
-        } else if (sameCareerCourse && p1 === p2) {
-          adj[i].add(j);
-          adj[j].add(i);
         }
       }
     }
 
-    // Link practice groups to corresponding theory
-    for (let i = 0; i < nGroups; i++) {
-      const g = rawList[i];
-      const cType = (g.classType || '').toUpperCase();
-      if (cType.includes('P') || cType.includes('PR') || cType.includes('PL')) {
-        const cNorm = (g.courseName || g.name || '').trim().toUpperCase();
-        const cCar = g.careerCode;
-        const pIdx = getParallelIndex(g.name || g.code);
-
-        let matchingTa = -1;
-        for (let j = 0; j < nGroups; j++) {
-          const gj = rawList[j];
-          const gjType = (gj.classType || '').toUpperCase();
-          if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
-            if (getParallelIndex(gj.name || gj.code) === pIdx) {
-              matchingTa = j;
-              break;
-            }
-          }
-        }
-        if (matchingTa !== -1) {
-          adj[i].add(matchingTa);
-          adj[matchingTa].add(i);
-        } else {
-          for (let j = 0; j < nGroups; j++) {
-            const gj = rawList[j];
-            const gjType = (gj.classType || '').toUpperCase();
-            if ((gjType.startsWith('T') || gjType.includes('TEO')) && gj.careerCode === cCar && (gj.courseName || gj.name || '').trim().toUpperCase() === cNorm) {
-              adj[i].add(j);
-              adj[j].add(i);
-            }
-          }
-        }
-      }
-    }
-
-    // Find Connected Components (The true Academic Subjects / Cards)
+    // Find Connected Components (The true Unique Academic Subjects)
     const visited = new Set();
     const commonClusters = [];
     for (let i = 0; i < nGroups; i++) {
