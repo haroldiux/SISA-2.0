@@ -379,10 +379,87 @@
 
 
 
+    // ── STRICT FORM STATE ISOLATION & BLEEDING ELIMINATION ──────────────────
+    window.resetAllDocenteFormFields = function() {
+      if (typeof autoSaveTimer !== 'undefined' && autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+      }
+
+      // Tab 1: Programa Analitico inputs
+      const analiticoIds = [
+        'analitico-codigo-input', 'analitico-semestre-input', 'analitico-asig-input',
+        'analitico-creditos-input', 'analitico-ht-input', 'analitico-hp-input',
+        'analitico-hs-input', 'analitico-hojas-input', 'programa-caracterizacion',
+        'programa-macrocompetencia', 'programa-sistema-evaluacion',
+        'analitico-biblio-basica-input', 'analitico-biblio-comp-input'
+      ];
+      analiticoIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      // Tab 2: PAC inputs
+      const pacIds = [
+        'pac-carrera-input', 'pac-codigo-input', 'pac-semestre-input', 'pac-asig-input',
+        'pac-tipo-curso', 'pac-modalidad', 'pac-prerequisito', 'pac-creditos',
+        'pac-sesiones-sem', 'pac-horas-tp', 'pac-docente-nombre', 'pac-docente-email',
+        'pac-docente-formacion', 'pac-docente-telefono', 'pac-justificacion-input',
+        'pac-proposito-input', 'pac-competencia-global', 'pac-unidad-competencia',
+        'pac-metodologia-aula', 'pac-metodologia-escenarios', 'pac-metodologia-evaluacion',
+        'pac-criterios-reglamento', 'pac-normativa-curso', 'pac-biblio-oficial'
+      ];
+      pacIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      // Tab 3: Cronograma table
+      const cronTbody = document.getElementById('cronograma-table-body');
+      if (cronTbody) {
+        cronTbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma</p>
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+            </td>
+          </tr>
+        `;
+      }
+
+      // Tab 4: Planes de Clase inputs
+      const planIds = [
+        'plan-docente-input', 'plan-fecha-input', 'plan-asig-input', 'plan-carrera-input',
+        'plan-unidad-input', 'plan-tema-input', 'plan-elemento-input', 'plan-resultados-input',
+        'plan-logros-input', 'plan-indicadores-input', 'plan-conceptual-input',
+        'plan-procedimental-input', 'plan-actitudinal-input', 'plan-est-ensenanza',
+        'plan-est-aprendizaje', 'plan-est-recursos', 'plan-eval-form-act',
+        'plan-eval-form-inst', 'plan-eval-form-evid', 'plan-eval-sum-act',
+        'plan-eval-sum-inst', 'plan-eval-sum-evid', 'plan-sec-intro',
+        'plan-sec-resultados', 'plan-sec-contenidos', 'plan-sec-cuerpo', 'plan-sec-cierre'
+      ];
+      planIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      activeAnaliticoUnidades = [];
+      activePacElementosCompetencia = [];
+      activePlanesList = [];
+      activePlanSheetIndex = 0;
+    };
+
     window.selectDocenteMateria = function(materiaKey) {
-      // 1. Silently persist previous subject state before switching
-      if (typeof window.saveCurrentDocenteData === 'function') {
-        window.saveCurrentDocenteData(true);
+      // 1. Cancel pending auto-save timers to avoid saving old form over new subject
+      if (typeof autoSaveTimer !== 'undefined' && autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+      }
+
+      // 2. Strict reset of all form inputs before loading new subject (prevents form bleeding)
+      if (typeof window.resetAllDocenteFormFields === 'function') {
+        window.resetAllDocenteFormFields();
       }
 
       activeMateriaKey = materiaKey;
@@ -465,13 +542,28 @@
 
 
     window.exportExactFile = function(type) {
-      const files = {
-        'docx': '1. Programa Analitico (.docx)',
-        'pac_cronograma_xlsx': '2 y 3. PAC + Cronograma (.xlsx)',
-        'planes_xlsx': '4. PLAN DE CLASES (.xlsx)'
-      };
-      const fname = files[type] || 'documento';
-      window.showToast('📥 Exportando en formato oficial: ' + fname);
+      const asigId = activeAsignacionId || 1;
+      const careerCode = window.currentSelectedCareerCode || '';
+      const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
+
+      if (type === 'docx' || type === 'programa_docx') {
+        window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
+        window.location.href = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
+      } else if (type === 'pac_cronograma_xlsx' || type === 'pac_xlsx') {
+        window.showToast('📥 Generando y descargando PAC + Cronograma (.xlsx)...');
+        window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}`;
+      } else if (type === 'planes_xlsx') {
+        window.showToast('📥 Generando y descargando Planes de Clase (.xlsx)...');
+        window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}`;
+      } else {
+        const files = {
+          'docx': '1. Programa Analitico (.docx)',
+          'pac_cronograma_xlsx': '2 y 3. PAC + Cronograma (.xlsx)',
+          'planes_xlsx': '4. PLAN DE CLASES (.xlsx)'
+        };
+        const fname = files[type] || 'documento';
+        window.showToast('📥 Exportando en formato oficial: ' + fname);
+      }
     };
 
     /* ========================================================================= */
@@ -3468,22 +3560,35 @@ window.importPlanesExcel = function() {
   });
 };
 
-
+// Aliases for direct UI tab buttons
+window.triggerDocxUpload = function() { window.importProgramaDocx(); };
+window.triggerPacUpload = function() { window.importPacExcel(false); };
+window.triggerCronogramaUpload = function() { window.importPacExcel(true); };
+window.triggerPlanesUpload = function() { window.importPlanesExcel(); };
 
 // 5. Real Export Endpoints
 window.exportDocxOfficial = async function() {
+  const asigId = activeAsignacionId || 1;
+  const careerCode = window.currentSelectedCareerCode || '';
+  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
   window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
-  window.location.href = '/api/v1/office/export/programa-analitico/1';
+  window.location.href = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
 };
 
 window.exportPacOfficial = async function() {
+  const asigId = activeAsignacionId || 1;
+  const careerCode = window.currentSelectedCareerCode || '';
+  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
   window.showToast('📥 Generando y descargando PAC + Cronograma (.xlsx)...');
-  window.location.href = '/api/v1/office/export/pac/1';
+  window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}`;
 };
 
 window.exportPlanesOfficial = async function() {
+  const asigId = activeAsignacionId || 1;
+  const careerCode = window.currentSelectedCareerCode || '';
+  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
   window.showToast('📥 Generando y descargando Plan de Clases (.xlsx)...');
-  window.location.href = '/api/v1/office/export/plan-clase/1';
+  window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}`;
 };
 
 // Override triggerAutoCapture modal with real actions
@@ -3725,6 +3830,16 @@ document.addEventListener('change', (e) => {
     if (!ci) return;
     const cleanCi = String(ci).trim();
     localStorage.setItem('sisa_active_docente_ci', cleanCi);
+
+    // Cancel pending auto-save and reset form fields when switching teachers
+    if (typeof autoSaveTimer !== 'undefined' && autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = null;
+    }
+    if (typeof window.resetAllDocenteFormFields === 'function') {
+      window.resetAllDocenteFormFields();
+    }
+
     let docente = (window.__API_DOCENTES__ || []).find(d => String(d.ci).trim() === cleanCi);
 
     // 1. Instant Cache Check (0ms render on reload or switch, eliminates mock flash)
@@ -4177,8 +4292,12 @@ document.addEventListener('change', (e) => {
         shiftLabel = 'Turno Mañana';
       }
 
+      const teacherDoc = String(docente.numeroDocumento || docente.ci || 'doc').trim();
+      const cleanCode = (officialCode || primaryName || 'mat').replace(/\s+/g, '_').replace(/[\/\\?%*:|"<>]/g, '-');
+      const uniqueKey = `${teacherDoc}_${cleanCode}`;
+
       return {
-        key: 'materia_cat_' + idx,
+        key: uniqueKey,
         code: officialCode,
         name: displayName,
         isCommon: isCommon,
@@ -4214,8 +4333,12 @@ document.addEventListener('change', (e) => {
       if (!a.isCommon && b.isCommon) return 1;
       return a.name.localeCompare(b.name);
     });
-    // Re-index keys after sort with unique docente CI prefix
-    items.forEach((it, i) => { it.key = `${docente.ci}_cat_${i}`; });
+    // Ensure all items retain their unique teacher-scoped composite key
+    const teacherDoc = String(docente.numeroDocumento || docente.ci || 'doc').trim();
+    items.forEach((it) => {
+      const cleanCode = (it.code || it.name || 'mat').replace(/\s+/g, '_').replace(/[\/\\?%*:|"<>]/g, '-');
+      it.key = `${teacherDoc}_${cleanCode}`;
+    });
 
     // Calculate totals across all subjects
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
@@ -4257,9 +4380,19 @@ document.addEventListener('change', (e) => {
     items.forEach((item, idx) => {
       const mKey = item.key;
 
+      // Deterministic numeric ID based on teacher document number and course code hash
+      const docNum = parseInt(teacherDoc.replace(/\D/g, ''), 10) || 1000;
+      let codeHash = 0;
+      const codeToHash = String(item.code || item.name || 'mat');
+      for (let cIdx = 0; cIdx < codeToHash.length; cIdx++) {
+        codeHash = ((codeHash << 5) - codeHash) + codeToHash.charCodeAt(cIdx);
+        codeHash |= 0;
+      }
+      const deterministicAsignacionId = Math.abs((docNum * 397) ^ codeHash) % 900000 + 10000;
+
       // Register or update in canonical materiasData
       materiasData[mKey] = {
-        asignacionId: idx + 1,
+        asignacionId: deterministicAsignacionId,
         codigo: item.code,
         nombre: item.name,
         semestre: '1º',
@@ -4500,12 +4633,14 @@ document.addEventListener('change', (e) => {
     if (window.lucide) window.lucide.createIcons();
   };
 
-  // Render Sub-tabs of Career
+  // Render Sub-tabs of Career across all 4 document tabs
   window.renderCarreraSubtabs = function(mKey) {
     try {
       const data = materiasData[mKey];
       const analiticoContainer = document.getElementById('analitico-carrera-subtabs');
       const pacContainer = document.getElementById('pac-carrera-subtabs');
+      const cronogramaContainer = document.getElementById('cronograma-carrera-subtabs');
+      const planesContainer = document.getElementById('planes-carrera-subtabs');
       if (!data) return;
 
       const rawCareers = data.carrerasCodes || [];
@@ -4528,8 +4663,12 @@ document.addEventListener('change', (e) => {
       if (uniqueCareers.length <= 1) {
         if (analiticoContainer) analiticoContainer.innerHTML = '';
         if (pacContainer) pacContainer.innerHTML = '';
+        if (cronogramaContainer) cronogramaContainer.innerHTML = '';
+        if (planesContainer) planesContainer.innerHTML = '';
         return;
       }
+
+      const activeCode = window.currentSelectedCareerCode || 'ALL';
 
       const buildTabsHtml = () => {
         let tabsHtml = `
@@ -4538,10 +4677,10 @@ document.addEventListener('change', (e) => {
               <span class="text-xs font-extrabold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
                 <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Vista Previa / Carátula de Carrera:
               </span>
-              <span class="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Hacé clic en una carrera para ver sus códigos y membrete específico:</span>
+              <span class="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Hacé clic en una carrera para ver sus códigos y membrete específico (sin re-subir documentos):</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <button type="button" onclick="window.selectCarreraContext('${mKey}', 'ALL', this)" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer">
+              <button type="button" data-career-code="ALL" onclick="window.selectCarreraContext('${mKey}', 'ALL', this)" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${activeCode === 'ALL' ? 'bg-brand-600 text-white ring-2 ring-brand-500/30' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600'} cursor-pointer">
                 <i data-lucide="globe" class="w-3.5 h-3.5"></i> Vista Consolidada (${data.codigo})
               </button>
         `;
@@ -4560,9 +4699,10 @@ document.addEventListener('change', (e) => {
           else if (cCode.includes('MED')) icon = 'stethoscope';
           else if (cCode.includes('ADM') || cCode.includes('CCP')) icon = 'bar-chart-3';
 
+          const isSelected = (activeCode === cCode);
           tabsHtml += `
-            <button type="button" onclick="window.selectCarreraContext('${mKey}', '${cCode}', this, '${singleCode}', '${cr.name}')" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs">
-              <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${cr.tag || cCode} <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-brand-700 dark:text-brand-300 font-mono border border-slate-200 dark:border-slate-600">${singleCode}</span>
+            <button type="button" data-career-code="${cCode}" onclick="window.selectCarreraContext('${mKey}', '${cCode}', this, '${singleCode}', '${cr.name}')" class="carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${isSelected ? 'bg-brand-600 text-white ring-2 ring-brand-500/30 font-bold' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600'} flex items-center gap-1.5 cursor-pointer shadow-xs">
+              <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${cr.tag || cCode} <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-brand-700 dark:text-brand-300'} font-mono border ${isSelected ? 'border-white/30' : 'border-slate-200 dark:border-slate-600'}">${singleCode}</span>
             </button>
           `;
         });
@@ -4574,8 +4714,11 @@ document.addEventListener('change', (e) => {
         return tabsHtml;
       };
 
-      if (analiticoContainer) analiticoContainer.innerHTML = buildTabsHtml();
-      if (pacContainer) pacContainer.innerHTML = buildTabsHtml();
+      const htmlContent = buildTabsHtml();
+      if (analiticoContainer) analiticoContainer.innerHTML = htmlContent;
+      if (pacContainer) pacContainer.innerHTML = htmlContent;
+      if (cronogramaContainer) cronogramaContainer.innerHTML = htmlContent;
+      if (planesContainer) planesContainer.innerHTML = htmlContent;
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {
       console.error('Error rendering carrera subtabs:', err);
@@ -4586,28 +4729,43 @@ document.addEventListener('change', (e) => {
     const data = materiasData[mKey];
     if (!data) return;
 
-    document.querySelectorAll(`.carrera-subtab-btn-${mKey}`).forEach(btn => {
-      btn.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs`;
-    });
+    window.currentSelectedCareerCode = (cCode === 'ALL') ? null : cCode;
+    window.currentSelectedCareerName = (cCode === 'ALL') ? null : carreraName;
 
-    if (btnEl) {
-      btnEl.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer`;
-    }
+    // Synchronize highlight across all 4 subtab containers simultaneously
+    document.querySelectorAll(`.carrera-subtab-btn-${mKey}`).forEach(btn => {
+      const btnCode = btn.getAttribute('data-career-code') || 'ALL';
+      if (btnCode === cCode) {
+        btn.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 bg-brand-600 text-white ring-2 ring-brand-500/30 cursor-pointer`;
+      } else {
+        btn.className = `carrera-subtab-btn-${mKey} px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-brand-400 hover:text-brand-600 flex items-center gap-1.5 cursor-pointer shadow-xs`;
+      }
+    });
 
     if (cCode === 'ALL') {
       if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = data.codigo;
       if (document.getElementById('pac-codigo-input')) document.getElementById('pac-codigo-input').value = data.codigo;
       if (document.getElementById('pac-carrera-input')) document.getElementById('pac-carrera-input').value = data.carrera;
+      if (document.getElementById('plan-carrera-input')) document.getElementById('plan-carrera-input').value = data.carrera;
       if (document.getElementById('caratula-codigo')) document.getElementById('caratula-codigo').value = data.codigo;
       if (document.getElementById('caratula-carrera')) document.getElementById('caratula-carrera').value = data.carrera;
+      if (document.getElementById('banner-carrera-tag')) document.getElementById('banner-carrera-tag').innerText = data.carreraTag;
       window.showToast('🌐 Vista Consolidada Multicarrera: ' + data.codigo);
     } else {
       if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = singleCode;
       if (document.getElementById('pac-codigo-input')) document.getElementById('pac-codigo-input').value = singleCode;
       if (document.getElementById('pac-carrera-input')) document.getElementById('pac-carrera-input').value = carreraName;
+      if (document.getElementById('plan-carrera-input')) document.getElementById('plan-carrera-input').value = carreraName;
       if (document.getElementById('caratula-codigo')) document.getElementById('caratula-codigo').value = singleCode;
       if (document.getElementById('caratula-carrera')) document.getElementById('caratula-carrera').value = carreraName;
+      if (document.getElementById('banner-carrera-tag')) document.getElementById('banner-carrera-tag').innerText = `⚡ ${carreraName.toUpperCase()} (${singleCode})`;
       window.showToast(`🏫 Vista ajustada para ${carreraName} (Código: ${singleCode})`);
+    }
+
+    // Also synchronize print modal career selector if open
+    const printCareerSel = document.getElementById('print-career-selector');
+    if (printCareerSel) {
+      printCareerSel.value = cCode;
     }
   };
 

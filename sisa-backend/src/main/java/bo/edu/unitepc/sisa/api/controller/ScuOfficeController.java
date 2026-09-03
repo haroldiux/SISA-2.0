@@ -54,8 +54,10 @@ public class ScuOfficeController {
     }
 
     @GetMapping({"/export/pac/{id}", "/pac/{id}/export"})
-    public ResponseEntity<byte[]> exportPac(@PathVariable Long id) {
-        byte[] content = this.exportPacCmd.execute(id);
+    public ResponseEntity<byte[]> exportPac(
+            @PathVariable Long id,
+            @RequestParam(value = "carreraId", required = false) Long carreraId) {
+        byte[] content = this.exportPacCmd.execute(id, carreraId);
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         return ResponseEntity.ok()
@@ -77,8 +79,10 @@ public class ScuOfficeController {
     }
 
     @GetMapping({"/export/programa-analitico/{asignacionId}", "/programa-analitico/{asignacionId}/export"})
-    public ResponseEntity<byte[]> exportProgramaDocx(@PathVariable Long asignacionId) {
-        byte[] content = this.exportProgramaCmd.execute(asignacionId);
+    public ResponseEntity<byte[]> exportProgramaDocx(
+            @PathVariable Long asignacionId,
+            @RequestParam(value = "carreraId", required = false) Long carreraId) {
+        byte[] content = this.exportProgramaCmd.execute(asignacionId, carreraId);
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         return ResponseEntity.ok()
@@ -86,6 +90,28 @@ public class ScuOfficeController {
                         "attachment; filename=\"Programa_Analitico_" + asignacionId + ".docx\"")
                 .contentType(mediaType)
                 .body(content);
+    }
+
+    @PostMapping(value = {"/import/cronograma", "/cronograma/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> importCronograma(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "asignacionId", required = false) Long asignacionId) {
+        try {
+            Long effectiveAsignacionId = (asignacionId != null) ? asignacionId : 1L;
+            ScuPacRequest parsed = this.pacExcelParser.parsePac(file.getInputStream(), effectiveAsignacionId);
+            return ResponseEntity.ok(
+                    ResourcesBuilder.of(parsed.getMatriz7() != null ? parsed.getMatriz7() : List.of())
+                            .message("Cronograma Matriz 7 importado exitosamente")
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new ScuException(
+                    "OFFICE_IMPORT_ERROR",
+                    "Error al procesar archivo Cronograma: " + e.getMessage(),
+                    HttpStatus.BAD_REQUEST,
+                    e
+            );
+        }
     }
 
     @PostMapping(value = {"/import/pac", "/pac/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

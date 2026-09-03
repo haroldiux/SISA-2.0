@@ -28,11 +28,16 @@ public class ScuExportProgramaDocxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long asignacionId) {
+        return execute(asignacionId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long asignacionId, Long carreraId) {
         ProgramaAnalitico programa = this.programaRepository.findByAsignacionId(asignacionId)
                 .orElseThrow(() -> new ScuException("PROGRAMA_NOT_FOUND", "Programa analítico no encontrado para asignación: " + asignacionId, HttpStatus.NOT_FOUND));
 
         try {
-            return this.officeTemplateService.exportProgramaDocx(programa);
+            return this.officeTemplateService.exportProgramaDocx(programa, carreraId);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Word del Programa Analítico: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }

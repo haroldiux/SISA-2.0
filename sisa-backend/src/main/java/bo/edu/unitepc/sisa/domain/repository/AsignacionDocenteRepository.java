@@ -21,6 +21,8 @@ public interface AsignacionDocenteRepository
 
     List<AsignacionDocente> findByGestionIdAndDocenteId(Long gestionId, Long docenteId);
 
+    List<AsignacionDocente> findByDocenteId(Long docenteId);
+
     List<AsignacionDocente> findByGestionIdAndCarreraId(Long gestionId, Long carreraId);
 
     @Query("SELECT a FROM AsignacionDocente a WHERE a.gestion.id = :gestionId AND a.docente.id = :docenteId " +

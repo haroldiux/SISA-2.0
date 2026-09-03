@@ -27,10 +27,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OfficeTemplateService {
 
     private final ResourceLoader resourceLoader;
+    private final bo.edu.unitepc.sisa.domain.repository.CarreraRepository carreraRepository;
     private final Map<String, byte[]> templateCache = new ConcurrentHashMap<>();
 
-    public OfficeTemplateService(ResourceLoader resourceLoader) {
+    public OfficeTemplateService(
+            ResourceLoader resourceLoader,
+            bo.edu.unitepc.sisa.domain.repository.CarreraRepository carreraRepository) {
         this.resourceLoader = resourceLoader;
+        this.carreraRepository = carreraRepository;
     }
 
     public InputStream loadTemplate(String templateName) {
@@ -49,6 +53,10 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportPacXlsx(Pac pac) throws Exception {
+        return exportPacXlsx(pac, null);
+    }
+
+    public byte[] exportPacXlsx(Pac pac, Long carreraId) throws Exception {
         try (InputStream is = this.loadTemplate("template_pac.xlsx");
              XlsxTemplateCloner cloner = new XlsxTemplateCloner(is)) {
 
@@ -59,8 +67,17 @@ public class OfficeTemplateService {
 
             // Fill header information
             AsignacionDocente asig = pac.getAsignacion();
+            String carreraNombre = "";
+            if (carreraId != null) {
+                carreraNombre = this.carreraRepository.findById(carreraId)
+                        .map(Carrera::getNombre)
+                        .orElse(asig != null && asig.getCarrera() != null ? asig.getCarrera().getNombre() : "");
+            } else if (asig != null && asig.getCarrera() != null) {
+                carreraNombre = asig.getCarrera().getNombre();
+            }
+
             if (asig != null) {
-                this._setCellText(sheet, 5, 2, asig.getCarrera() != null ? asig.getCarrera().getNombre() : "");
+                this._setCellText(sheet, 5, 2, carreraNombre);
                 this._setCellText(sheet, 6, 2, asig.getAsignatura() != null ? asig.getAsignatura().getNombre() : "");
                 this._setCellText(sheet, 7, 2, asig.getDocente() != null ? asig.getDocente().getNombreCompleto() : "");
                 this._setCellText(sheet, 8, 2, asig.getGestion() != null ? asig.getGestion().getCodigo() : "");
@@ -132,13 +149,26 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportProgramaDocx(ProgramaAnalitico programa) throws Exception {
+        return exportProgramaDocx(programa, null);
+    }
+
+    public byte[] exportProgramaDocx(ProgramaAnalitico programa, Long carreraId) throws Exception {
         try (InputStream is = this.loadTemplate("template_programa_analitico.docx");
              DocxTemplateCloner cloner = new DocxTemplateCloner(is)) {
 
             Map<String, String> placeholders = new HashMap<>();
             AsignacionDocente asig = programa.getAsignacion();
+            String carreraNombre = "";
+            if (carreraId != null) {
+                carreraNombre = this.carreraRepository.findById(carreraId)
+                        .map(Carrera::getNombre)
+                        .orElse(asig != null && asig.getCarrera() != null ? asig.getCarrera().getNombre() : "");
+            } else if (asig != null && asig.getCarrera() != null) {
+                carreraNombre = asig.getCarrera().getNombre();
+            }
+
             if (asig != null) {
-                placeholders.put("CARRERA", asig.getCarrera() != null ? asig.getCarrera().getNombre() : "");
+                placeholders.put("CARRERA", carreraNombre);
                 placeholders.put("ASIGNATURA", asig.getAsignatura() != null ? asig.getAsignatura().getNombre() : "");
                 placeholders.put("CODIGO", asig.getAsignatura() != null ? asig.getAsignatura().getCodigo() : "");
                 placeholders.put("DOCENTE", asig.getDocente() != null ? asig.getDocente().getNombreCompleto() : "");

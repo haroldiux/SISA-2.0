@@ -35,6 +35,7 @@ public class ScuPlanningController {
     private final ScuGetProgramaAnaliticoCmd getProgramaCmd;
     private final ScuSavePlanClaseCmd savePlanClaseCmd;
     private final ScuGetPlanClaseCmd getPlanClaseCmd;
+    private final ScuListDocenteAsignacionesCmd listDocenteAsignacionesCmd;
 
     public ScuPlanningController(
             ScuSavePacCmd savePacCmd,
@@ -44,7 +45,8 @@ public class ScuPlanningController {
             ScuSaveProgramaAnaliticoCmd saveProgramaCmd,
             ScuGetProgramaAnaliticoCmd getProgramaCmd,
             ScuSavePlanClaseCmd savePlanClaseCmd,
-            ScuGetPlanClaseCmd getPlanClaseCmd) {
+            ScuGetPlanClaseCmd getPlanClaseCmd,
+            ScuListDocenteAsignacionesCmd listDocenteAsignacionesCmd) {
         this.savePacCmd = savePacCmd;
         this.getPacCmd = getPacCmd;
         this.reviewPacCmd = reviewPacCmd;
@@ -53,6 +55,18 @@ public class ScuPlanningController {
         this.getProgramaCmd = getProgramaCmd;
         this.savePlanClaseCmd = savePlanClaseCmd;
         this.getPlanClaseCmd = getPlanClaseCmd;
+        this.listDocenteAsignacionesCmd = listDocenteAsignacionesCmd;
+    }
+
+    @GetMapping("/docente/asignaciones")
+    public ResponseEntity<Map<String, Object>> listDocenteAsignaciones(
+            @RequestParam(required = false) Long docenteId) {
+        var clusters = this.listDocenteAsignacionesCmd.execute(docenteId);
+        return ResponseEntity.ok(
+                bo.edu.unitepc.sisa.builder.ResourcesBuilder.of(clusters)
+                        .message("Listado de clusters de asignaturas del docente")
+                        .build()
+        );
     }
 
     @PostMapping("/pac")
