@@ -136,6 +136,16 @@
         activeSidebarTab.className = 'sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700/60 font-bold text-xs text-left cursor-pointer transition-all';
       }
 
+      // Update contextual clear button label
+      const clearLabel = document.getElementById('btn-vaciar-pestana-label');
+      if (clearLabel) {
+        if (tabId === 'tab-analitico') clearLabel.innerText = 'Vaciar Programa Analítico';
+        else if (tabId === 'tab-pac-matrix') clearLabel.innerText = 'Vaciar PAC';
+        else if (tabId === 'tab-cronograma-semanas') clearLabel.innerText = 'Vaciar Cronograma';
+        else if (tabId === 'tab-cronograma-planes') clearLabel.innerText = 'Vaciar Planes de Clase';
+        else clearLabel.innerText = 'Vaciar Pestaña';
+      }
+
       if (tabId === 'tab-analitico') {
         const card = document.getElementById('analitico-unidades-card');
         if (!card || !card.innerHTML.trim()) {
@@ -246,6 +256,99 @@
       activePacElementosCompetencia = [];
       activePlanesList = [];
       activePlanSheetIndex = 0;
+    };
+
+    // ── VACIAR DOCUMENTACIÓN POR PESTAÑA ────────────────────────────────────
+    window.vaciarProgramaAnalitico = function() {
+      if (!confirm('¿Deseas vaciar todos los campos y unidades del Programa Analítico para esta materia?')) return;
+      const analiticoIds = [
+        'analitico-codigo-input', 'analitico-semestre-input', 'analitico-asig-input',
+        'analitico-creditos-input', 'analitico-ht-input', 'analitico-hp-input',
+        'analitico-hs-input', 'analitico-hojas-input', 'programa-caracterizacion',
+        'programa-macrocompetencia', 'programa-sistema-evaluacion',
+        'analitico-biblio-basica-input', 'analitico-biblio-comp-input'
+      ];
+      analiticoIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      activeAnaliticoUnidades = [];
+      if (typeof window.renderAnaliticoUnidades === 'function') {
+        window.renderAnaliticoUnidades();
+      }
+      if (typeof window.renderAnaliticoBibliografia === 'function') {
+        window.renderAnaliticoBibliografia([]);
+      }
+      if (activeMateriaKey) {
+        localStorage.removeItem('sisa_saved_programa_analitico_' + activeMateriaKey);
+      }
+      window.showToast('🗑️ Programa Analítico vaciado.');
+    };
+
+    window.vaciarPacYCronograma = function() {
+      if (!confirm('¿Deseas vaciar todos los campos pedagógicos del PAC y las sesiones del Cronograma para esta materia?')) return;
+      const pacIds = [
+        'pac-carrera-input', 'pac-codigo-input', 'pac-semestre-input', 'pac-asig-input',
+        'pac-tipo-curso', 'pac-modalidad', 'pac-prerequisito', 'pac-creditos',
+        'pac-sesiones-sem', 'pac-horas-tp', 'pac-docente-nombre', 'pac-docente-email',
+        'pac-docente-formacion', 'pac-docente-telefono', 'pac-justificacion-input',
+        'pac-proposito-input', 'pac-competencia-global', 'pac-unidad-competencia',
+        'pac-metodologia-aula', 'pac-metodologia-escenarios', 'pac-metodologia-evaluacion',
+        'pac-criterios-reglamento', 'pac-normativa-curso', 'pac-biblio-oficial'
+      ];
+      pacIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      activePacElementosCompetencia = [];
+      if (typeof window.renderPacElementosCompetencia === 'function') {
+        window.renderPacElementosCompetencia();
+      }
+      const cronTbody = document.getElementById('cronograma-table-body');
+      if (cronTbody) {
+        cronTbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma</p>
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+            </td>
+          </tr>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+      }
+      if (activeMateriaKey) {
+        localStorage.removeItem('sisa_saved_pac_' + activeMateriaKey);
+      }
+      window.showToast('🗑️ PAC y Cronograma vaciados.');
+    };
+
+    window.vaciarPlanesClase = function() {
+      if (!confirm('¿Deseas vaciar todas las hojas y datos de los Planes de Clase para esta materia?')) return;
+      activePlanesList = [];
+      activePlanSheetIndex = 0;
+      if (typeof window.renderPlanesSheetsTabs === 'function') {
+        window.renderPlanesSheetsTabs();
+      }
+      if (typeof window.renderPlanSheetForm === 'function') {
+        window.renderPlanSheetForm(0);
+      }
+      if (activeMateriaKey) {
+        localStorage.removeItem('sisa_saved_planes_' + activeMateriaKey);
+      }
+      window.showToast('🗑️ Planes de clase vaciados.');
+    };
+
+    window.vaciarDocumentacionPestanaActiva = function() {
+      if (activeTabId === 'tab-analitico') {
+        window.vaciarProgramaAnalitico();
+      } else if (activeTabId === 'tab-pac-matrix' || activeTabId === 'tab-cronograma-semanas') {
+        window.vaciarPacYCronograma();
+      } else if (activeTabId === 'tab-cronograma-planes') {
+        window.vaciarPlanesClase();
+      } else {
+        window.showToast('ℹ️ Selecciona una pestaña para vaciar.');
+      }
     };
 
     window.selectDocenteMateria = function(materiaKey) {

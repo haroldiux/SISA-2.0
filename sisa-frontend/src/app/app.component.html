@@ -365,6 +365,10 @@
                     <i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
                     <span>Guardado automático</span>
                   </div>
+                  <button type="button" onclick="window.vaciarDocumentacionPestanaActiva()" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 dark:border-red-800/80 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-900/60 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer" title="Vaciar documentación de la pestaña activa">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
+                    <span id="btn-vaciar-pestana-label">Vaciar Programa Analítico</span>
+                  </button>
                   <button onclick="window.saveCurrentDocenteData()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer">
                     <i data-lucide="save" class="w-4 h-4"></i>
                     <span>Guardar Todo</span>
@@ -386,6 +390,9 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.vaciarProgramaAnalitico()" class="px-3 py-1.5 bg-white text-red-600 border border-red-200 dark:border-red-800/80 dark:bg-slate-800 dark:text-red-400 font-bold rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Vaciar campos y unidades del Programa Analítico">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> Vaciar
+                    </button>
                     <button onclick="window.importProgramaDocx()" class="px-3.5 py-1.5 bg-white text-blue-700 border border-blue-300 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300 font-bold rounded-lg text-xs hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Word (.docx)
                     </button>
@@ -531,6 +538,9 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.vaciarPacYCronograma()" class="px-3 py-1.5 bg-white text-red-600 border border-red-200 dark:border-red-800/80 dark:bg-slate-800 dark:text-red-400 font-bold rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Vaciar campos del PAC y Cronograma">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> Vaciar PAC
+                    </button>
                     <button type="button" onclick="window.importPacExcel(false)" class="px-3.5 py-1.5 bg-white text-emerald-700 border border-emerald-300 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 font-bold rounded-lg text-xs hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar PAC (.xlsx)
                     </button>
@@ -709,6 +719,9 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.vaciarPacYCronograma()" class="px-3 py-1.5 bg-white text-red-600 border border-red-200 dark:border-red-800/80 dark:bg-slate-800 dark:text-red-400 font-bold rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Vaciar sesiones del Cronograma y PAC">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> Vaciar Cronograma
+                    </button>
                     <button type="button" onclick="window.importPacExcel(true)" class="px-3.5 py-1.5 bg-white text-amber-800 border border-amber-300 dark:border-amber-700 dark:bg-slate-800 dark:text-amber-300 font-bold rounded-lg text-xs hover:bg-amber-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Cronograma (.xlsx)
                     </button>
@@ -769,6 +782,9 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.vaciarPlanesClase()" class="px-3 py-1.5 bg-white text-red-600 border border-red-200 dark:border-red-800/80 dark:bg-slate-800 dark:text-red-400 font-bold rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Vaciar todas las hojas y datos de Planes de Clase">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> Vaciar Planes
+                    </button>
                     <button type="button" onclick="window.importPlanesExcel()" class="px-3.5 py-1.5 bg-white text-purple-700 border border-purple-300 dark:border-purple-700 dark:bg-slate-800 dark:text-purple-300 font-bold rounded-lg text-xs hover:bg-purple-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Planes de Clase (.xlsx)
                     </button>
