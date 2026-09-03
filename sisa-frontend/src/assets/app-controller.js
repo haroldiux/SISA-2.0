@@ -22,234 +22,32 @@
       });
     };
 
-    let activeTabId = 'tab-analitico';
-    let activeMateriaKey = 'sis213g1';
-    let activeAsignacionId = 1;
+    const materiasData = {};
 
-
-    const materiasData = {
-      'sis213g1': {
-        asignacionId: 1,
-        codigo: 'SIS-213',
-        nombre: 'PROGRAMACIÓN III',
-        semestre: '3º',
-        creditos: '12',
-        horasTeoricas: '2',
-        horasPracticas: '4',
-        carrera: 'Ing. de Sistemas',
-        carreraTag: 'CARRERA: ING. DE SISTEMAS',
-        grupoTag: 'Grupo 1 (G1) • Cátedra de Teoría',
-        breadcrumb: 'SIS-213 Programación III (G1)',
-        title: 'SIS-213 • PROGRAMACIÓN III',
-        meta: '<span><strong class="text-white">3º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Teoría)</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: Juan Pablo II (Aula 302)</span>',
-        caracterizacion: 'La asignatura de Programación III profundiza en el paradigma orientado a objetos, arquitecturas multicapa, diseño desacoplado y construcción de software escalable.',
-        macroCompetencia: 'Desarrolla sistemas de software modulares y mantenibles aplicando patrones de diseño, principios SOLID y estructuras de datos eficientes.',
-        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias con proyectos de desarrollo de software.',
-        unidades: [
-          {
-            numeroUnidad: 1,
-            titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 1, titulo: 'Anatomía de la Entidad y el Objeto', contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.\n• Ciclo de vida: de la instanciación a la recolección de memoria.' },
-              { numeroTema: 2, titulo: 'Jerarquías de Especialización y Contratos', contenido: '• Herencia: creación de linajes de entidades para reutilización.\n• Interfaces y Clases Abstractas: definición de contratos.\n• Polimorfismo y composición sobre herencia.' }
-            ]
-          },
-          {
-            numeroUnidad: 2,
-            titulo: 'Robustez y Blindaje de la Lógica de Negocio',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 3, titulo: 'Encapsulamiento y Gestión de Estados Críticos', contenido: '• Visibilidad y protección: niveles de acceso.\n• Validación de estados internos y prevención de corrupción de datos.\n• Manejo de excepciones en tiempo de ejecución.' }
-            ]
-          },
-          {
-            numeroUnidad: 3,
-            titulo: 'Sistemas de Interacción y Despacho de Eventos',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 4, titulo: 'Representación Visual de Objetos y Entornos', contenido: '• Mapeo de objetos lógicos a componentes visuales.\n• Jerarquía de contenedores y orquestación en pantalla.' },
-              { numeroTema: 5, titulo: 'Dinámicas de Interacción y Flujo de Señales', contenido: '• Despacho de eventos y oyentes (listeners).\n• Vinculación bidireccional y reactividad.' }
-            ]
-          },
-          {
-            numeroUnidad: 4,
-            titulo: 'Gestión y Despliegue de Soluciones Integrales',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 6, titulo: 'Ingeniería de Software y Construcción del Mundo', contenido: '• Integración modular y empaquetado de ejecutables.\n• Pruebas unitarias automatizadas y verificación de integración.' }
-            ]
+    // Automatic storage purge to eliminate prior mock caches
+    (function purgeLegacyMockStorage() {
+      try {
+        const PURGE_FLAG = 'sisa_purged_mock_v262';
+        if (!localStorage.getItem(PURGE_FLAG)) {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('sisa_saved_') || k.startsWith('sisa_active_materia_key'))) {
+              keysToRemove.push(k);
+            }
           }
-        ],
-        bibliografia: [
-          { tipo: 'BASICA', citaApa: 'Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (2020). Patrones de Diseño: Elementos de Software Orientado a Objetos Reutilizable. Pearson.', autor: 'Gamma et al.', anio: 2020, titulo: 'Patrones de Diseño' },
-          { tipo: 'BASICA', citaApa: 'Martin, R. C. (2018). Clean Architecture: A Craftsman\'s Guide to Software Structure and Design. Prentice Hall.', autor: 'Martin, R. C.', anio: 2018, titulo: 'Clean Architecture' },
-          { tipo: 'COMPLEMENTARIA', citaApa: 'Bloch, J. (2018). Effective Java (3rd ed.). Addison-Wesley Professional.', autor: 'Bloch, J.', anio: 2018, titulo: 'Effective Java' }
-        ],
-        elementosCompetencia: [
-          'Modela entidades con estados y ciclos de vida definidos.',
-          'Implementa mecanismos de protección y manejo de errores en la lógica de negocio.',
-          'Diseña interfaces interactivas basadas en el modelo de suscripción y notificación de eventos.',
-          'Aplica patrones de diseño para resolver problemas recurrentes de arquitectura.'
-        ]
-      },
-      'sis213g2': {
-        asignacionId: 2,
-        codigo: 'SIS-213',
-        nombre: 'PROGRAMACIÓN III',
-        semestre: '3º',
-        creditos: '12',
-        horasTeoricas: '2',
-        horasPracticas: '4',
-        carrera: 'Ing. de Sistemas',
-        carreraTag: 'CARRERA: ING. DE SISTEMAS',
-        grupoTag: 'Grupo 2 (G2) • Cátedra Integral (Teoría + Práctica)',
-        breadcrumb: 'SIS-213 Programación III (G2)',
-        title: 'SIS-213 • PROGRAMACIÓN III',
-        meta: '<span><strong class="text-white">3º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Integral)</span><span>•</span><span><strong class="text-white">120</strong> Horas Totales</span><span>•</span><span>Campus: Juan Pablo II (Lab 104)</span>',
-        caracterizacion: 'La asignatura de Programación III en su modalidad integral combina fundamentos teóricos con sesiones intensivas de codificación y laboratorio práctico.',
-        macroCompetencia: 'Desarrolla sistemas de software modulares y mantenibles aplicando patrones de diseño, principios SOLID y estructuras de datos eficientes.',
-        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias con proyectos de desarrollo en laboratorio.',
-        unidades: [
-          {
-            numeroUnidad: 1,
-            titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 1, titulo: 'Anatomía de la Entidad y el Objeto', contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.' },
-              { numeroTema: 2, titulo: 'Jerarquías de Especialización y Contratos', contenido: '• Herencia e interfaces en proyectos de software.' }
-            ]
-          },
-          {
-            numeroUnidad: 2,
-            titulo: 'Laboratorio de Construcción de Software',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 3, titulo: 'Taller Práctico de Patrones y Buenas Prácticas', contenido: '• Implementación guiada en Java 21 y frameworks modernos.' }
-            ]
-          }
-        ],
-        bibliografia: [
-          { tipo: 'BASICA', citaApa: 'Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (2020). Patrones de Diseño: Elementos de Software Orientado a Objetos Reutilizable. Pearson.', autor: 'Gamma et al.', anio: 2020, titulo: 'Patrones de Diseño' }
-        ],
-        elementosCompetencia: [
-          'Modela entidades con estados y ciclos de vida definidos.',
-          'Implementa mecanismos de protección y manejo de errores en la lógica de negocio.',
-          'Diseña interfaces interactivas basadas en el modelo de suscripción y notificación de eventos.',
-          'Aplica patrones de diseño para resolver problemas recurrentes de arquitectura.'
-        ]
-      },
-      'ind211': {
-        asignacionId: 3,
-        codigo: 'IND-211',
-        nombre: 'COMPUTACIÓN APLICADA',
-        semestre: '2º',
-        creditos: '10',
-        horasTeoricas: '2',
-        horasPracticas: '4',
-        carrera: 'Ing. Industrial',
-        carreraTag: 'CARRERA: ING. INDUSTRIAL',
-        grupoTag: 'Grupo 1 (G1) • Cátedra de Teoría',
-        breadcrumb: 'IND-211 Computación Aplicada (G1)',
-        title: 'IND-211 • COMPUTACIÓN APLICADA',
-        meta: '<span><strong class="text-white">2º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Teoría)</span><span>•</span><span><strong class="text-white">100</strong> Horas Totales</span><span>•</span><span>Campus: Central (Aula 204)</span>',
-        caracterizacion: 'Asignatura orientada a la modelación cuantitativa, automatización de procesos industriales, análisis de datos en hojas de cálculo avanzadas y optimización operativa.',
-        macroCompetencia: 'Aplica herramientas computacionales para la modelación, simulación y optimización de procesos de manufactura y servicios en ingeniería industrial.',
-        sistemaEvaluacion: 'Evaluación formativa mediante talleres computacionales, resolución de casos industriales y desarrollo de modelos de optimización.',
-        unidades: [
-          {
-            numeroUnidad: 1,
-            titulo: 'Modelación Cuantitativa y Funciones Avanzadas en Hojas de Cálculo',
-            horasAcademicas: 25,
-            temas: [
-              { numeroTema: 1, titulo: 'Fórmulas Matriciales y Tablas Dinámicas Complejas', contenido: '• Estructuración y limpieza de grandes volúmenes de datos industriales.\n• Fórmulas de búsqueda matricial y funciones lógicas anidadas.' },
-              { numeroTema: 2, titulo: 'Optimización Lineal con Solver', contenido: '• Formulación matemática de funciones objetivo y restricciones de planta.\n• Análisis de sensibilidad y parámetros de holgura operativa.' }
-            ]
-          },
-          {
-            numeroUnidad: 2,
-            titulo: 'Automatización de Tareas con Macros y Scripts',
-            horasAcademicas: 25,
-            temas: [
-              { numeroTema: 3, titulo: 'Automatización de Reportes de Producción', contenido: '• Grabación y depuración de macros de control.\n• Estructuras de control y bucles en Visual Basic / Python scripts.' }
-            ]
-          },
-          {
-            numeroUnidad: 3,
-            titulo: 'Simulación de Procesos Industriales y Análisis Estadístico',
-            horasAcademicas: 25,
-            temas: [
-              { numeroTema: 4, titulo: 'Simulación Monte Carlo y Modelos Estocásticos', contenido: '• Generación de variables aleatorias y simulación de tiempos de ciclo.\n• Evaluación de riesgos operacionales y cuellos de botella.' }
-            ]
-          }
-        ],
-        bibliografia: [
-          { tipo: 'BASICA', citaApa: 'Walkenbach, J. (2019). Excel 2019 Power Programming with VBA. Wiley.', autor: 'Walkenbach, J.', anio: 2019, titulo: 'Excel Power Programming' },
-          { tipo: 'BASICA', citaApa: 'Hillier, F. S., & Lieberman, G. J. (2021). Introducción a la Investigación de Operaciones (11ª ed.). McGraw-Hill.', autor: 'Hillier & Lieberman', anio: 2021, titulo: 'Investigación de Operaciones' },
-          { tipo: 'COMPLEMENTARIA', citaApa: 'Chase, R. B., & Jacobs, F. R. (2018). Administración de Operaciones: Producción y Cadena de Suministros. McGraw-Hill.', autor: 'Chase & Jacobs', anio: 2018, titulo: 'Administración de Operaciones' }
-        ],
-        elementosCompetencia: [
-          'Formula modelos de programación lineal para la asignación óptima de recursos en planta.',
-          'Automatiza reportes de producción e indicadores de productividad mediante macros y scripts.',
-          'Evalúa riesgos operacionales y cuellos de botella empleando simulaciones Monte Carlo.'
-        ]
-      },
-      'idi101': {
-        asignacionId: 4,
-        codigo: 'IDI-101',
-        nombre: 'TALLER DE IDIOMAS',
-        semestre: '1º',
-        creditos: '8',
-        horasTeoricas: '2',
-        horasPracticas: '4',
-        carrera: 'FACEFA',
-        carreraTag: 'CARRERA: FACEFA (ADMINISTRACIÓN / AUDITORÍA)',
-        grupoTag: 'Grupo 1 (G1) • Cátedra Práctica',
-        breadcrumb: 'IDI-101 Taller de Idiomas (G1)',
-        title: 'IDI-101 • TALLER DE IDIOMAS (QUECHUA / AYMARA)',
-        meta: '<span><strong class="text-white">1º</strong> Semestre</span><span>•</span><span><strong class="text-white">4</strong> Horas Semanales (Práctica)</span><span>•</span><span><strong class="text-white">80</strong> Horas Totales</span><span>•</span><span>Campus: Central (Aula 101)</span>',
-        caracterizacion: 'Formación lingüística y comunicativa orientada a la interacción intercultural, el plurilingüismo y la inclusión en el ejercicio profesional administrativo y financiero.',
-        macroCompetencia: 'Comunica ideas, términos técnicos y acuerdos en idioma nativo (Quechua / Aymara) de forma oral y escrita en contextos laborales, comunitarios e interculturales.',
-        sistemaEvaluacion: 'Evaluación formativa y sumativa con diálogos orales, redacción de documentos bilingües y pruebas de comprensión auditiva.',
-        unidades: [
-          {
-            numeroUnidad: 1,
-            titulo: 'Fonética, Fonología y Estructuras Gramaticales Básicas',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 1, titulo: 'Sistema Fonológico y Alfabeto Oficial', contenido: '• Grafías consonánticas y vocálicas del idioma nativo.\n• Reglas de acentuación y pronunciación.' },
-              { numeroTema: 2, titulo: 'Saludos, Presentaciones y Cortesía Intercultural', contenido: '• Fórmulas de saludo en contextos formales y comunitarios.\n• Pronombres personales y sufijos posesivos.' }
-            ]
-          },
-          {
-            numeroUnidad: 2,
-            titulo: 'Morfosintaxis y Comunicación Funcional en el Ámbito Laboral',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 3, titulo: 'Conjugación Verbal y Sufijación Aglutinante', contenido: '• Tiempos verbales: presente, pasado testimonial y futuro.\n• Diálogos situacionales en atención al usuario.' }
-            ]
-          },
-          {
-            numeroUnidad: 3,
-            titulo: 'Terminología Comercial, Administrativa y Normativa Plurilingüe',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 4, titulo: 'Léxico Financiero, Administrativo y Acuerdos de Negociación', contenido: '• Números, transacciones comerciales y redacción de actas breves.\n• Aplicación de la Ley Nº 269 de Políticas Lingüísticas.' }
-            ]
-          }
-        ],
-        bibliografia: [
-          { tipo: 'BASICA', citaApa: 'Cerrón-Palomino, R. (2017). Lingüística Quechua (3ª ed.). Editorial Biblioteca de Tradición Oral Andina.', autor: 'Cerrón-Palomino, R.', anio: 2017, titulo: 'Lingüística Quechua' },
-          { tipo: 'BASICA', citaApa: 'Cochabamba, Q. P. (2020). Runasimi: Gramática quechua para todos. Editorial Itinerarios / UMSS.', autor: 'Cochabamba, Q. P.', anio: 2020, titulo: 'Runasimi' },
-          { tipo: 'COMPLEMENTARIA', citaApa: 'Plaza Martínez, P. (2018). Diccionario quechua-castellano: Dialecto de Bolivia. Editorial Kipus.', autor: 'Plaza Martínez, P.', anio: 2018, titulo: 'Diccionario Quechua' }
-        ],
-        elementosCompetencia: [
-          'Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua.',
-          'Produce mensajes y estructuras oracionales complejas en lengua quechua.',
-          'Aplica léxico comercial, administrativo y acuerdos de negociación en lengua nativa.'
-        ]
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+          localStorage.setItem(PURGE_FLAG, 'true');
+          console.log('🧹 SISA Storage Purge: Cleared legacy mock cache (' + keysToRemove.length + ' keys).');
+        }
+      } catch (err) {
+        console.warn('Could not run storage purge:', err);
       }
-    };
+    })();
+
+    let activeTabId = 'tab-analitico';
+    let activeMateriaKey = '';
+    let activeAsignacionId = 1;
 
 
 
@@ -465,10 +263,10 @@
       activeMateriaKey = materiaKey;
       if (!materiasData[activeMateriaKey]) {
         const keys = Object.keys(materiasData);
-        activeMateriaKey = keys.length > 0 ? keys[0] : 'sis213g1';
+        activeMateriaKey = keys.length > 0 ? keys[0] : '';
       }
       localStorage.setItem('sisa_active_materia_key', activeMateriaKey);
-      const data = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+      const data = materiasData[activeMateriaKey] || (Object.values(materiasData)[0] || {});
       activeAsignacionId = data.asignacionId || 1;
       
       // Update Main Subject Cards Highlight
@@ -624,8 +422,8 @@
     };
 
     window.openPdfPrintModal = function() {
-      const mKey = activeMateriaKey || 'sis213g1';
-      const data = materiasData[mKey] || materiasData['sis213g1'];
+      const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+      const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
       const rawCareers = data.carrerasCodes || ['CARSIS'];
       const resolvedCareers = data.carrerasResolved || [{ name: 'Ingeniería de Sistemas', tag: 'ING. SISTEMAS' }];
 
@@ -775,8 +573,8 @@
     };
 
     window.buildOfficialFolderHtml = function(selectedSections, selectedCareerCode) {
-      const mKey = activeMateriaKey || 'sis213g1';
-      const data = materiasData[mKey] || materiasData['sis213g1'];
+      const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+      const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
       const docenteName = (document.getElementById('docente-api-selector')?.selectedOptions?.[0]?.text?.replace(/\[.*?\]\s*/, '')?.replace(/\(.*?\)/, '')) || 'ROSMERY LUIZAGA SALINAS';
 
       let targetCareerCode = selectedCareerCode;
@@ -1745,7 +1543,26 @@
     };
 
     window.renderPlanSheetForm = function(sheetIndex) {
-      if (!activePlanesList || activePlanesList.length === 0) return;
+      if (!activePlanesList || activePlanesList.length === 0) {
+        const planFields = [
+          'plan-docente-input', 'plan-fecha-input', 'plan-asig-input', 'plan-carrera-input',
+          'plan-unidad-input', 'plan-tema-input', 'plan-elemento-input', 'plan-resultados-input',
+          'plan-logros-input', 'plan-indicadores-input', 'plan-conceptual-input',
+          'plan-procedimental-input', 'plan-actitudinal-input', 'plan-est-ensenanza',
+          'plan-est-aprendizaje', 'plan-est-recursos', 'plan-eval-form-act',
+          'plan-eval-form-inst', 'plan-eval-form-evid', 'plan-eval-sum-act',
+          'plan-eval-sum-inst', 'plan-eval-sum-evid', 'plan-sec-intro',
+          'plan-sec-intro-dur', 'plan-sec-resultados', 'plan-sec-resultados-dur',
+          'plan-sec-contenidos', 'plan-sec-contenidos-dur', 'plan-sec-desarrollo',
+          'plan-sec-desarrollo-dur', 'plan-sec-cierre', 'plan-sec-cierre-dur',
+          'plan-obs-input'
+        ];
+        planFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        return;
+      }
       const p = activePlanesList[sheetIndex] || activePlanesList[0];
       if (!p) return;
 
@@ -1996,66 +1813,7 @@ window.triggerFileUpload = function(accept, callback) {
 };
 
 // ── DYNAMIC PROGRAMA ANALÍTICO UNIDADES & BIBLIOGRAFÍA ENGINE ──────────────────
-let activeAnaliticoUnidades = [
-  {
-    numeroUnidad: 1,
-    titulo: 'Arquitectura de Entidades y Modelado de Sistemas',
-    horasAcademicas: 20,
-    temas: [
-      {
-        numeroTema: 1,
-        titulo: 'Anatomía de la Entidad y el Objeto',
-        contenido: '• El objeto como unidad fundamental de lógica y estado.\n• Atributos de identidad y comportamientos de acción.\n• Ciclo de vida: de la instanciación a la recolección de memoria.\n• El "Game Loop" conceptual: métodos de actualización y renderizado de estado.'
-      },
-      {
-        numeroTema: 2,
-        titulo: 'Jerarquías de Especialización y Contratos',
-        contenido: '• Herencia: creación de linajes de entidades para la reutilización de lógica.\n• Interfaces y Clases Abstractas: definición de contratos de comportamiento.\n• Polimorfismo: capacidad de respuesta única ante señales compartidas.\n• Composición sobre herencia: ensamblaje de habilidades dinámicas en un objeto.'
-      }
-    ]
-  },
-  {
-    numeroUnidad: 2,
-    titulo: 'Robustez y Blindaje de la Lógica de Negocio',
-    horasAcademicas: 20,
-    temas: [
-      {
-        numeroTema: 3,
-        titulo: 'Encapsulamiento y Gestión de Estados Críticos',
-        contenido: '• Visibilidad y protección: niveles de acceso para la integridad del sistema.\n• Validación de estados internos y prevención de corrupción de datos.\n• Manejo de excepciones: control de flujos inesperados en sistemas en tiempo real.\n• Estrategias de recuperación y estabilidad ante fallos de lógica.'
-      }
-    ]
-  },
-  {
-    numeroUnidad: 3,
-    titulo: 'Sistemas de Interacción y Despacho de Eventos',
-    horasAcademicas: 20,
-    temas: [
-      {
-        numeroTema: 4,
-        titulo: 'Representación Visual de Objetos y Entornos',
-        contenido: '• Mapeo de objetos lógicos a componentes visuales.\n• Jerarquía de contenedores y orquestación de elementos en pantalla.\n• Estética y retroalimentación: el objeto como receptor de estilos y temas.\n• Layouts dinámicos: el comportamiento espacial de las colecciones de objetos.'
-      },
-      {
-        numeroTema: 5,
-        titulo: 'Dinámicas de Interacción y Flujo de Señales',
-        contenido: '• El modelo de eventos: suscripción y notificación entre objetos.\n• Delegados y manejadores: la respuesta del objeto a estímulos externos.\n• Gestión de periféricos: traducción de entradas físicas a acciones de objeto.\n• Sincronización de hilos y actualización de la vista desde el modelo.'
-      }
-    ]
-  },
-  {
-    numeroUnidad: 4,
-    titulo: 'Gestión y Despliegue de Soluciones Integrales',
-    horasAcademicas: 20,
-    temas: [
-      {
-        numeroTema: 6,
-        titulo: 'Ingeniería de Software y Construcción del Mundo',
-        contenido: '• Análisis de requerimientos y diseño de diagramas de interacción.\n• Patrones de diseño fundamentales (Singleton, Factory, Observer).\n• Control de versiones y flujos de trabajo en equipos técnicos.\n• Pruebas de integración, depuración y optimización de rendimiento final.'
-      }
-    ]
-  }
-];
+let activeAnaliticoUnidades = [];
 
 window.getAnaliticoContainer = function() {
   let c = document.getElementById('unidades-analiticas-container');
@@ -2436,7 +2194,7 @@ window.saveCurrentDocenteData = async function(silent = false) {
     window.showToast('⏳ Guardando cambios en la base de datos...');
   }
 
-  const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+  const defData = (activeMateriaKey && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : (Object.values(materiasData)[0] || {});
   const codigo = document.getElementById('analitico-codigo-input')?.value || defData.codigo;
   const semestre = document.getElementById('analitico-semestre-input')?.value || defData.semestre;
   const nombre = document.getElementById('analitico-asig-input')?.value || defData.nombre;
@@ -2542,41 +2300,56 @@ window.saveCurrentDocenteData = async function(silent = false) {
 
 
 window.loadSavedDocenteData = function(materiaKey) {
-  const mKey = materiaKey || localStorage.getItem('sisa_active_materia_key') || activeMateriaKey || 'sis213g1';
+  const mKey = materiaKey || localStorage.getItem('sisa_active_materia_key') || activeMateriaKey;
+  if (!mKey) return;
   activeMateriaKey = mKey;
-  const defData = materiasData[mKey] || materiasData['sis213g1'];
+  const defData = (materiasData && materiasData[mKey]) ? materiasData[mKey] : {};
   activeAsignacionId = defData.asignacionId || 1;
 
   // 1. Programa Analítico
   const saved = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
-  let pData = defData;
+  let pData = {
+    codigo: defData.codigo || '',
+    nombre: defData.nombre || '',
+    carrera: defData.carrera || '',
+    semestre: defData.semestre || '',
+    creditos: defData.creditos || '',
+    horasTeoricas: defData.horasTeoricas || '',
+    horasPracticas: defData.horasPracticas || '',
+    horasSemestre: '',
+    caracterizacion: '',
+    macroCompetencia: '',
+    sistemaEvaluacion: '',
+    unidades: [],
+    bibliografia: []
+  };
+
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // Clean obsolete P- codes from previous temporary seeds
       if (parsed.codigoAsignatura && (parsed.codigoAsignatura.startsWith('P-') || parsed.codigoAsignatura.startsWith('MAT-'))) {
         delete parsed.codigoAsignatura;
       }
       if (parsed.codigo && (parsed.codigo.startsWith('P-') || parsed.codigo.startsWith('MAT-'))) {
         delete parsed.codigo;
       }
-      pData = Object.assign({}, defData, parsed);
+      pData = Object.assign(pData, parsed);
     } catch (e) {}
   }
 
-  const officialCode = pData.codigoAsignatura || pData.codigo || defData.codigo || 'SIS-113';
+  const officialCode = pData.codigoAsignatura || pData.codigo || defData.codigo || '';
   if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = officialCode;
-  if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '1º Semestre';
+  if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '';
   if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = pData.nombreAsignatura || pData.nombre || defData.nombre || '';
-  if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '8';
-  if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '2 Horas');
-  if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '4 Horas');
-  if (document.getElementById('analitico-hs-input')) document.getElementById('analitico-hs-input').value = (pData.horasSemestre ? pData.horasSemestre + ' Horas' : '120 Horas');
+  if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '';
+  if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '');
+  if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '');
+  if (document.getElementById('analitico-hs-input')) document.getElementById('analitico-hs-input').value = (pData.horasSemestre ? pData.horasSemestre + ' Horas' : '');
   if (document.getElementById('programa-caracterizacion')) document.getElementById('programa-caracterizacion').value = pData.caracterizacion || '';
   if (document.getElementById('programa-macrocompetencia')) document.getElementById('programa-macrocompetencia').value = pData.macroCompetencia || '';
   if (document.getElementById('programa-sistema-evaluacion')) document.getElementById('programa-sistema-evaluacion').value = pData.sistemaEvaluacion || '';
 
-  activeAnaliticoUnidades = pData.unidades ? JSON.parse(JSON.stringify(pData.unidades)) : [];
+  activeAnaliticoUnidades = (pData.unidades && pData.unidades.length > 0) ? JSON.parse(JSON.stringify(pData.unidades)) : [];
   window.renderAnaliticoUnidades();
   window.renderAnaliticoBibliografia(pData.bibliografia || []);
 
@@ -2588,8 +2361,8 @@ window.loadSavedDocenteData = function(materiaKey) {
       if (pacData.codigoAsignatura && (pacData.codigoAsignatura.startsWith('P-') || pacData.codigoAsignatura.startsWith('MAT-'))) {
         pacData.codigoAsignatura = officialCode;
       }
-      if (!pacData.matriz7 || !Array.isArray(pacData.matriz7) || pacData.matriz7.length === 0) {
-        pacData.matriz7 = window.generateDefaultMatriz7(mKey);
+      if (!pacData.matriz7 || !Array.isArray(pacData.matriz7)) {
+        pacData.matriz7 = [];
       }
       if (typeof window.populatePacDom === 'function') {
         window.populatePacDom(pacData);
@@ -2597,27 +2370,27 @@ window.loadSavedDocenteData = function(materiaKey) {
     } catch (pe) {}
   } else {
     const defPac = {
-      carrera: defData.carrera,
-      nombreAsignatura: defData.nombre,
+      carrera: defData.carrera || '',
+      nombreAsignatura: defData.nombre || '',
       codigoAsignatura: officialCode,
-      semestre: defData.semestre,
-      creditos: defData.creditos,
-      horasTeoricasPracticas: (defData.horasTeoricas || '2') + 'T / ' + (defData.horasPracticas || '4') + 'P',
-      justificacion: defData.caracterizacion,
-      propositoGeneral: defData.macroCompetencia,
-      competenciaGlobal: defData.macroCompetencia,
-      unidadCompetencia: 'Maneja conceptos y aplicaciones para el desempeño profesional.',
-      elementoCompetencia1: 'Aplica herramientas teórico-prácticas para la resolución de problemas de la asignatura.',
-      elementoCompetencia2: 'Desarrolla proyectos y actividades integradoras.',
-      metodologiaAula: 'Metodología constructivista socioformativa con talleres prácticos y resolución de problemas.',
-      sistemaEvaluacion: defData.sistemaEvaluacion,
-      normativaCurso: '10 minutos de tolerancia al ingreso a clases.\nLlegar puntual a clase.\nMantener limpio el ambiente de trabajo.\nEntregar trabajos en el tiempo establecido.',
-      p1NotaTeorica: 20, p1NotaPractica: 10,
-      p2NotaTeorica: 20, p2NotaPractica: 10,
-      efNotaTeorica: 30, efNotaPractica: 10,
-      bibliografia: defData.bibliografia,
-      elementosCompetencia: defData.elementosCompetencia || [],
-      matriz7: window.generateDefaultMatriz7(mKey)
+      semestre: defData.semestre || '',
+      creditos: defData.creditos || '',
+      horasTeoricasPracticas: (defData.horasTeoricas ? defData.horasTeoricas + 'T / ' : '') + (defData.horasPracticas ? defData.horasPracticas + 'P' : ''),
+      justificacion: '',
+      propositoGeneral: '',
+      competenciaGlobal: '',
+      unidadCompetencia: '',
+      elementoCompetencia1: '',
+      elementoCompetencia2: '',
+      metodologiaAula: '',
+      sistemaEvaluacion: '',
+      normativaCurso: '',
+      p1NotaTeorica: '', p1NotaPractica: '',
+      p2NotaTeorica: '', p2NotaPractica: '',
+      efNotaTeorica: '', efNotaPractica: '',
+      bibliografia: [],
+      elementosCompetencia: [],
+      matriz7: []
     };
     if (typeof window.populatePacDom === 'function') {
       window.populatePacDom(defPac);
@@ -2629,13 +2402,6 @@ window.loadSavedDocenteData = function(materiaKey) {
   if (savedPlanesStr) {
     try {
       activePlanesList = JSON.parse(savedPlanesStr);
-      // Auto-migrate if old 3-moment format
-      const t3 = (activePlanesList && activePlanesList.length > 2) ? activePlanesList[2] : null;
-      const needsSeedRefresh = !activePlanesList || activePlanesList.length < 6 || (!activePlanesList[0].momentos || activePlanesList[0].momentos.length < 5) || (t3 && t3.contenidoTema === 'UA-2 Tema 3');
-      if (needsSeedRefresh) {
-        activePlanesList = window.generateDefaultPlanesList(mKey);
-        localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
-      }
     } catch (e) {
       activePlanesList = [];
     }
@@ -2643,10 +2409,6 @@ window.loadSavedDocenteData = function(materiaKey) {
     activePlanesList = [];
   }
 
-  if (!activePlanesList || activePlanesList.length === 0) {
-    activePlanesList = window.generateDefaultPlanesList(mKey);
-    localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
-  }
   activePlanSheetIndex = 0;
   if (typeof window.renderPlanesSheetsTabs === 'function') {
     window.renderPlanesSheetsTabs();
@@ -2659,419 +2421,11 @@ window.loadSavedDocenteData = function(materiaKey) {
 };
 
 window.generateDefaultPlanesList = function(mKey) {
-  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? Object.values(materiasData)[0] : null);
-  const teacherName = (window.__ACTIVE_DOCENTE__ && window.__ACTIVE_DOCENTE__.nombreCompleto) ? window.__ACTIVE_DOCENTE__.nombreCompleto : 'Docente Asignado';
-  const courseName = def ? (def.nombre || 'Asignatura Asignada') : 'Asignatura Asignada';
-  const careerName = def ? (def.carrera || 'UNITEPC') : 'UNITEPC';
-
-  const CANONICAL_PLANES = [
-  {
-    "nombreHoja": "UA-1 Tema 1",
-    "nombreDocente": teacherName,
-    "fecha": "09/02/2026",
-    "nombreAsignatura": courseName,
-    "carrera": careerName,
-    "unidadTitulo": "INTRODUCCION A " + courseName.toUpperCase(),
-    "elementoCompetencia": `Aplica los fundamentos conceptuales y metodológicos de ${courseName} con rigor profesional en el ámbito de ${careerName}.`,
-    "contenidoTema": "CONCEPTOS FUNDAMENTALES Y PRINCIPIOS",
-    "objetivoSesion": `Reconoce los fundamentos teórico-prácticos de ${courseName} para resolver problemas de la disciplina.`,
-    "logrosEsperados": "1. Identifica los conceptos y principios básicos.\n2. Aplica metodologías estándar con rigor académico.",
-    "indicadoresLogro": "1. Clasifica correctamente los elementos clave.\n2. Resuelve ejercicios introductorios pertinentes.",
-    "saberConceptual": `- Fundamentos de ${courseName}\n- Marco teórico y metodológico\n- Normas y estándares aplicables`,
-    "saberProcedimental": `- Identificación de elementos clave de ${courseName}\n- Resolución guiada de problemas\n- Aplicación práctica en laboratorio`,
-    "saberActitudinal": "- Rigor y ética profesional\n- Trabajo colaborativo\n- Pensamiento crítico",
-    "estrategiaEnsenanza": "- Clase interactiva guiada\n- Demostración de casos de estudio",
-    "estrategiaAprendizaje": "- Taller práctico guiado\n- Análisis y resolución de problemas",
-    "recursosEnsenanza": "- Diapositivas y bibliografía técnica\n- Software y laboratorios especializados",
-    "evaluacionFormativaActividad": "Taller práctico en clase",
-    "evaluacionFormativaInstrumento": "Lista de cotejo",
-    "evaluacionFormativaEvidencia": "Práctica desarrollada",
-    "evaluacionSumativaActividad": "Prueba escrita objetiva",
-    "evaluacionSumativaInstrumento": "Cuestionario y rúbrica",
-    "evaluacionSumativaEvidencia": "Evaluación calificada",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": `Presentación de los objetivos de la sesión, contextualización de ${courseName} y activación cognitiva.`,
-        "duracionMin": 20
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": `Reconoce los principios fundamentales de ${courseName} y aplica la metodología correspondiente.`,
-        "duracionMin": 10
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": `1. Introducción general.\n2. Principios y marco conceptual de ${courseName}.\n3. Ejercicios y modelos aplicados.`,
-        "duracionMin": 10
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": `Desarrollo temático detallado, modelado de problemas y trabajo guiado con los estudiantes en ${courseName}.`,
-        "duracionMin": 90
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Síntesis de los conceptos clave, retroalimentación y orientaciones para la siguiente sesión.",
-        "duracionMin": 20
-      }
-    ]
-  },
-  {
-    "nombreHoja": "UA-1 Tema 2",
-    "nombreDocente": teacherName,
-    "fecha": "16/02/2026",
-    "nombreAsignatura": courseName,
-    "carrera": careerName,
-    "unidadTitulo": "INTRODUCCION A LINGÜÍSTICA ORIGINARIA",
-    "elementoCompetencia": "Analiza los fundamentos lingüísticos, históricos y fonológicos de la lengua quechua, para comprender la identidad sociocultural y la dinámica de interacción de las comunidades andinas, mediante el estudio del origen, expansión y estructura fonética de la lengua, bajo un enfoque de respeto a la diversidad lingüística, rigor académico y pertinencia en el contexto de la realidad económica y social boliviana.",
-    "contenidoTema": "FONOLOGÍA DEL QUECHUA",
-    "objetivoSesion": "Emplea los fundamentos fonológicos y las estructuras morfológicas básicas del quechua para garantizar una comunicación técnica clara y precisa en contextos profesionales iniciales.",
-    "logrosEsperados": "1. Diferencia la estructura de raíces y sufijos en categorías gramaticales básicas.\n2. Articula correctamente los sonidos (simples, aspirados y glotalizados).",
-    "indicadoresLogro": "1. Descompone correctamente palabras aglutinantes en raíz y sufijo.\n2. Descompone correctamente palabras aglutinantes en raíz y sufijo.",
-    "saberConceptual": "- Morfología de las palabras \n- Sustantivos \n- Verbos \n- Pronombres \n- Fonética y fonología del quechua \n- Sonidos simples \n- Sonidos llanos \n- Sonidos glotalizados",
-    "saberProcedimental": "- Diferenciación entre raíces y sufijos\n- Clasificación de palabras según su categoría (sustantivo, verbo, pronombre)\n- Ejecución de sonidos vocálicos y consonánticos\n- Aplicación del acento grave en la lectura de palabras\n- Discriminación auditiva de las oclusivas\n- Articulación de fonemas con y sin salida de aire (aspiradas/glotales)",
-    "saberActitudinal": "- Interés por la estructura lógica del idioma\n- Atención al detalle en la formación de palabras\n- Esmero en la dicción clara\n- Paciencia en el proceso de imitación de sonidos nuevos \n- Perseverancia en la práctica de sonidos complejos \n- Autocrítica frente a la propia pronunciación",
-    "estrategiaEnsenanza": "- Método Audiolingual: Énfasis en la imitación y repetición de patrones sonoros. \n- Análisis Estructural: Uso de colores para diferenciar raíces de sufijos en la pizarra. \n- Modelado Fonético: Explicación visual de los puntos de articulación.",
-    "estrategiaAprendizaje": "- Laboratorio de Sonidos: Práctica con grabaciones para mejorar la discriminación auditiva. \n- Mapas de Palabras: Creación de esquemas donde una raíz genera múltiples significados al añadir sufijos. \n- Auto grabación: Uso del celular para escuchar y corregir su propia dicción.",
-    "recursosEnsenanza": "- Audios de hablantes nativos\n- Formularios de registro en quechua.\n- Tarjetas léxicas.",
-    "evaluacionFormativaActividad": "Dictado fonético de cifras y nombres de productos.",
-    "evaluacionFormativaInstrumento": "Guía de audición y repetición.",
-    "evaluacionFormativaEvidencia": "Lista de palabras clasificadas por su sonido (simple/aspirado/glotal).",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Activación: Diagnóstico de discriminación auditiva.",
-        "duracionMin": 45
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Emplea los fundamentos fonológicos y estructuras morfológicas básicas del quechua para garantizar una comunicación técnica, precisa y éticamente responsable en contextos profesionales bilingües.\nLogros: \n1. Diferencia la estructura de raíces y sufijos en categorías gramaticales básicas.\n2. Articula correctamente los sonidos (simples, aspirados y glotalizados).\n1. Articula correctamente los fonemas (simples, aspirados, glotalizados) para evitar ambigüedades en la información técnica.\n2. Aplica la flexión morfológica (persona, número, tiempo) para estructurar reportes y diálogos comerciales claros.",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "1. Morfología (sustantivos, verbos, pronombres)\n2. Fonética y fonología; Sonidos (simples, aspirados, glotalizados).\n3. Pronunciación\n- Pronombres\n- Fonética y fonología del quechua\n- Sonidos simples\n- Sonidos llanos\n- Sonidos glotalizados",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Morfología de las palabras (Raíces y Sufijos): Se explica el principio de aglutinación. El estudiante aprende a separar la raíz (dato base) de los sufijos (modificadores gramaticales).\nSustantivos: Identificación de nombres de bienes y servicios.\nVerbos: Identificación de raíces verbales para acciones económicas.\nPronombres: Uso de marcadores personales para establecer el sujeto en un reporte.\n2. Fonética y Fonología del Quechua: Se introduce la diferencia entre el fonema (unidad abstracta) y el alófono (realización sonora). Se enfatiza la importancia de la exactitud articulatoria para evitar sesgos en la información.\n3. Sonidos Simples, Aspirados y Glotalizados:\nSonidos Simples: Articulación neutra.\nSonidos Aspirados (Llanos): Marcados con 'h', requieren un flujo de aire constante.\nSonidos Glotalizados: Marcados con apóstrofe ('), requieren una interrupción brusca de la glotis.\n4. Pronunciación y Acentuación: El quechua es un sistema de acentuación grave. Se entrena al estudiante para mantener este ritmo constante, evitando la entonación variable del español que puede confundir el sentido de los términos técnicos.",
-        "duracionMin": 360
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Actividad: Taller de Dictado Fonológico. El docente dicta palabras y los estudiantes clasifican si el sonido es simple, aspirado o glotalizado.\nInstrumento: Guía de audición y repetición con lista de cotejo.\nEvidencia: Matriz de clasificación de fonemas completada en clase.",
-        "duracionMin": 135
-      }
-    ]
-  },
-  {
-    "nombreHoja": "UA-2 Tema 3",
-    "nombreDocente": "Harold Iriarte Rojas",
-    "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de idiomas",
-    "carrera": "FACEFA - Complementarias",
-    "unidadTitulo": "LENGUA ORIGINARIA",
-    "elementoCompetencia": "Produce mensajes y estructuras oracionales complejas en lengua quechua mediante el uso correcto de la morfología nominal, verbal y la sintaxis, para establecer una comunicación efectiva en contexto, aplicando metodologías de trabajo de campo y análisis sociolingüístico bajo normas gramaticales del quechua boliviano y principios de responsabilidad social en el sistema económico actual.",
-    "contenidoTema": "",
-    "objetivoSesion": "Emplea la morfología nominal básica del quechua (pronombres, números, verbos existenciales) para gestionar información personal, transaccional y de propiedad en contextos de interacción socioeconómica.",
-    "logrosEsperados": "1. Aplica protocolos de cortesía y numeración en contextos de intercambio real.\n2. Estructura enunciados de identidad y pertenencia utilizando pronombres y el verbo Kay.",
-    "indicadoresLogro": "1. Construye cantidades (unidades, decenas, centenas) sin errores en la rotulación de inventarios o precios.\n2. Diferencia correctamente entre nosotros inclusivo (-nchik) y exclusivo (-yku) en reportes financieros.",
-    "saberConceptual": "- Saludos\n- Despedidas\n- Los números: Composición de Unidades, Composición de decenas, Composición de centenas\n- Uso de los números en diferentes contextos\n- Pronombres personales: Pronombres Singulares, Pronombres Plurales\n- Pronombres posesivos: Pronombres Singulares, Pronombres Plurales\n- Verbo Kay",
-    "saberProcedimental": "- Uso de fórmulas de cortesía en situaciones cotidianas.\n- Simulación de encuentros sociales básicos.\n- Construcción de cifras de unidades a centenas.\n- Conteo de objetos reales del entorno inmediato.\n- Sustitución de nombres propios por pronombres.\n- Uso correcto del plural inclusivo (-nchik) y exclusivo (-yku).\n- Indicación de pertenencia de objetos personales.\n- Construcción de frases de posesión singulares y plurales.\n- Conjugación del verbo ser/estar en presente.\n- Descripción de estados y características de personas u objetos.",
-    "saberActitudinal": "- Cordialidad en la interacción.\n- Respeto por los protocolos de saludo andinos.\n- Precisión en el manejo de cantidades.\n- Confianza al expresar valores numéricos.\n- Sensibilidad ante la inclusión/exclusión social.\n- Coherencia en la designación de sujetos.\n- Responsabilidad al identificar la propiedad.\n- Claridad en la expresión de pertenencia.\n- Seguridad al expresar la identidad.\n- Veracidad en las descripciones realizadas.",
-    "estrategiaEnsenanza": "- Aprendizaje Basado en Tareas (TBL): Simulación de mercado y atención al cliente.\n- Instrucción Directa: Modelado de la conjugación del verbo Kay.\n- Aprendizaje Cooperativo: Trabajo en parejas para la construcción de inventarios.",
-    "estrategiaAprendizaje": "Práctica de Campo: Conteo de objetos reales del aula. \nRole-playing: Diálogos de presentación y venta. \nTécnica de Sustitución: Ejercicios de reemplazo pronominal en párrafos técnicos.",
-    "recursosEnsenanza": "- Fichas de trabajo con objetos del entorno\n- Grabaciones de saludos andinos\n- Calculadora para ejercicios de numeración en quechua",
-    "evaluacionFormativaActividad": "\"Mercado de trueque\" simulado.",
-    "evaluacionFormativaInstrumento": "Lista de cotejo de desempeño comunicativo.",
-    "evaluacionFormativaEvidencia": "Registro de precios y cantidades anotados en quechua.",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Contextualización: Diagnóstico de la importancia de la lengua en el entorno socioeconómico regional. Presentación del mapa de competencias y la meta de alcanzar un nivel de usuario básico funcional.",
-        "duracionMin": 60
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Emplea la estructura morfológica nominal y los sistemas de cuantificación, posesión e identidad del quechua para establecer relaciones comunicativas precisas y cordiales en entornos económicos andinos.\nLogros:\n1. Aplica protocolos de cortesía y cuantificación exacta en contextos de intercambio.\n2. Diferencia roles, sujetos y relaciones de propiedad mediante el uso correcto de pronombres y el verbo Kay.",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "- Saludos y Despedidas\n- Sistema Numérico\n- Identidad y Pertenencia\n- Pronombres Posesivos\n- El Verbo Kay",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Saludos y Despedidas: Más allá del Allillanchu, se estudian las variantes según el interlocutor (autoridad comunal vs. socio comercial). Se analiza la dimensión temporal de las despedidas (ej. Paqarinkama - hasta mañana).\n2. Sistema Numérico: Unidades, Decenas, Centenas: Se aprende la lógica aditiva. Es crucial para la precisión contable. Uso en contexto: Diferenciación entre cantidad de bienes, precios y plazos de pago.\n3. Identidad y Pertenencia: Pronombres Personales: Dominio del sistema singular y plural, enfatizando la distinción inclusiva (ñuqanchik) y exclusiva (ñuqayku), fundamental para la transparencia en la gestión de presupuestos grupales. \n4. Pronombres Posesivos: Uso de los sufijos -y (mi), -yki (tu), -n (su) para la identificación de activos y recursos en inventarios.\n5. El Verbo Kay: Dominio del verbo copulativo para la construcción de frases de identidad.",
-        "duracionMin": 720
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Actividad Técnica: \"El Informe del Administrador\". El estudiante debe completar una ficha de descripción personal, realizar una operación aritmética de inventario que incluya unidades, decenas y centenas, y redactar oraciones simples sobre la posesión de activos, todo en quechua.\nInstrumento: Rúbrica de evaluación integral (gramática, léxico, fluidez).\nCriterios: Exactitud en numeración (30%), Uso correcto de sufijos posesivos (30%), Concordancia del verbo Kay (20%), Actitud y cortesía (20%).\nEvidencia: Ficha de registro técnico completa y video-presentación breve de un activo bajo su responsabilidad.",
-        "duracionMin": 20
-      }
-    ]
-  },
-  {
-    "nombreHoja": "UA-2 Tema 4",
-    "nombreDocente": "Harold Iriarte Rojas",
-    "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de idiomas",
-    "carrera": "FACEFA - Complementarias",
-    "unidadTitulo": "LENGUA ORIGINARIA",
-    "elementoCompetencia": "Produce mensajes y estructuras oracionales complejas en lengua quechua mediante el uso correcto de la morfología nominal, verbal y la sintaxis, para establecer una comunicación efectiva en contexto, aplicando metodologías de trabajo de campo y análisis sociolingüístico bajo normas gramaticales del quechua boliviano y principios de responsabilidad social en el sistema económico actual.",
-    "contenidoTema": "SINTAXIS",
-    "objetivoSesion": "Construye enunciados complejos y coherentes respetando la estructura sintáctica SOV y la morfología verbal para comunicar procesos administrativos y económicos con precisión y pertinencia cultural.",
-    "logrosEsperados": "1. Estructura oraciones básicas bajo el modelo SOV.\n2. Aplica sufijos nominales para precisar roles, instrumentos y límites.",
-    "indicadoresLogro": "1. Ordena sintácticamente oraciones aplicando el modelo SOV sin errores.\n2. Identifica y usa los sufijos -ta, -pi, -paq, -wan, -manta según el contexto de gestión.",
-    "saberConceptual": "- Estructura de la oración en quechua: El sujeto, El complemento, El Verbo\n- Sufijos nominales: -ta, Objeto directo y Objeto Indirecto; -na; -kama; -pi; -paq; -man; -manta; -lla; -wan instrumental; -wan de compañía\n- Verbos en quechua\n- Morfologia del verbo: Verbos primitivos y Verbos derivados\n- Conjugación verbal: Raiz verbal\n- Tiempo presente: Sujeto singular, Sujeto plural\n- Tiempo pasado: Sujeto singular, Sujeto plural\n- Tiempo futuro: Sujeto singular, Sujeto plural\n- TIempo continuo: Sujeto singular, Sujeto plural\n- Oraciones simples en presente, pasado, futuro\n- Oraciones complejas en presente, pasado, futuro",
-    "saberProcedimental": "- Ordenamiento de elementos según el modelo Sujeto-Objeto-Verbo (SOV).\n- Creación de oraciones con sentido completo.\n- Marcación del objeto directo en la oración.\n- Expresión de la utilidad de herramientas o acciones futuras.\n- Determinación de límites de tiempo/lugar.\n- Localización espacial y asignación de beneficios.\n- Indicación de dirección y origen.\n- Uso del limitativo para enfatizar exclusividad.\n- Descripción de instrumentos de trabajo.\n- Identificación de acompañantes en una acción.\n- Categorización de acciones según su raíz.\n- Formación de nuevos significados mediante derivación verbal.\n- Identificación de la raíz invariable del verbo.\n- Anexión de desinencias de persona y número.\n- Relato de acciones que ocurren en el momento.\n- Descripción de rutinas diarias.\n- Narración de hechos históricos o personales concluidos.\n- Uso del sufijo -rqa para el pasado.\n- Proyección de metas y planes próximos.\n- Descripción de acciones en proceso de ejecución (-chka).\n- Desarrollo de párrafos coherentes.",
-    "saberActitudinal": "- Disciplina sintáctica.\n- Atención a la función de los complementos.\n- Valoración de la utilidad instrumental.\n- Exactitud en la fijación de límites.\n- Empatía al asignar beneficios a terceros.\n- Precisión en la descripción de trayectos.\n- Solidaridad al reconocer el trabajo con otros.\n- Curiosidad léxica.\n- Respeto por la norma gramatical.\n- Claridad al describir la actualidad.\n- Puntualidad en la expresión del tiempo.\n- Honestidad en el relato de hechos.\n- Compromiso con los planes trazados.",
-    "estrategiaEnsenanza": "- Método de Aprendizaje Basado en Problemas (ABP): Resolución de casos donde falta un sufijo de caso y cambia el sentido del mensaje.\n- Instrucción Directa y Modelado: Uso de diagramas de bloques para visualizar la posición de los sufijos en la oración.\n- Taller de Escritura Creativa: Producción de reportes de gestión simulados.",
-    "estrategiaAprendizaje": "- Diagramación de Oraciones: Uso de esquemas de árbol sintáctico para organizar elementos SOV.\n- Fichas de Autogestión: Creación de un catálogo de verbos derivados y sus raíces.\n- Diario de Campo: Redacción de rutinas y planes en tiempos presente, pasado y futuro.",
-    "recursosEnsenanza": "- Pizarra\n- Guías de ejercicios con sufijos\n- Audios de procesos productivos en quechua",
-    "evaluacionFormativaActividad": "Dictado de oraciones complejas, ejercicios de \"completar el sufijo\", debate sobre procesos de gestión.",
-    "evaluacionFormativaInstrumento": "Escala de valoraciòn, guías de autoevaluación.",
-    "evaluacionFormativaEvidencia": "Ejercicios resueltos en clase, esquemas de derivación verbal.",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Diagnóstico y encuadre: Análisis del orden SOV frente al SVO del español. Reflexión sobre la importancia de la precisión sintáctica.",
-        "duracionMin": 90
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Construye enunciados complejos y coherentes aplicando la estructura SOV, el sistema de sufijos nominales y la conjugación verbal, para comunicar procesos socioeconómicos con precisión técnica.\nLogros:\n1. Domina la estructura SOV y el uso de sufijos de caso. \n2. Aplica sufijos de lugar, tiempo y beneficio para contextualizar acciones. \n3. Diferencia y utiliza la morfología de verbos primitivos y derivados. \n4. Conjuga verbos en tiempos presente, pasado, futuro y continuo con concordancia. \n5. Redacta oraciones complejas que integran ideas causa-efecto o secuencia lógica.",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "- Estructura de la oración en quechua: El sujeto, El complemento, El Verbo.\n- Sufijos nominales: -ta, Objeto directo y Objeto Indirecto; -na; -kama; -pi; -paq; -man; -manta; -lla; -wan instrumental; -wan de compañía.\n- Verbos en quechua; Morfologia del verbo: Verbos primitivos y Verbos derivados.\n- Conjugación verbal: Raiz verbal.\n- Tiempo presente: Sujeto singular, Sujeto plural.\n- Tiempo pasado: Sujeto singular, Sujeto plural.\n- Tiempo futuro: Sujeto singular, Sujeto plural.\n- TIempo continuo: Sujeto singular, Sujeto plural.\n- Oraciones simples en presente, pasado, futuro.\n- Oraciones complejas en presente, pasado, futuro",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Estructura de la Oración y Sufijos Nominales: Sujeto, Complemento, Verbo: El estudiante aprende a identificar los bloques estructurales. En quechua, el verbo siempre es el elemento final de la cadena de información.\n2. Sufijos de Caso: -ta (OD/OI): Marca la afectación directa o el destinatario de una transacción; -na: Sufijo instrumental/obligativo para procesos productivos; -kama: Delimitación de tiempos y alcances financieros; pi (Localizador): Ubicación espacial o física del hecho económico; -paq (Beneficiario): Asignación de recursos; -man / -manta: Dirección y origen (trazabilidad); -lla (Limitativo): Énfasis en la exclusividad o escasez (importante en presupuestos); -wan (Instrumental/Compañía): Uso de maquinaria o alianzas estratégicas.\n3. Verbos: Morfología y Conjugación: Verbos Primitivos y Derivados: Se enseña a diferenciar la raíz base de las formas derivadas que añaden matices de acción (ej: k'utuy - cortar; k'utukuy - cortarse a sí mismo); Raíz Verbal: Identificación del elemento invariable que contiene el significado semántico principal.\n4. Tiempos Verbales y Conjugación: Presente, Pasado, Futuro, Continuo (-chka): Se aplica el paradigma de conjugación a los sujetos singulares y plurales; Sujeto Plural: Énfasis en la distinción inclusiva (-nchik) y exclusiva (-yku); Tiempos: Uso de marcas como -rqa (pasado lejano) y -sa (o -sha - futuro).\n5. Sintaxis de Oraciones Simples y Complejas: Oraciones Simples: Estructuración de enunciados de gestión directa; Oraciones Complejas: Uso de conectores y oraciones subordinadas para expresar causalidad, condición y finalidad. Es aquí donde el estudiante desarrolla pensamiento crítico al justificar decisiones económicas.",
-        "duracionMin": 1485
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Actividad Técnica: \"Informe de Gestión Técnica Intercultural\". El estudiante debe redactar un informe de 3 a 5 párrafos detallando: 1. Antecedentes (Pasado), 2. Estado actual de activos (Presente/Continuo), 3. Proyecciones presupuestarias (Futuro). Debe incluir al menos 8 sufijos diferentes y oraciones complejas.\nInstrumento: Rúbrica de Redacción Técnica (Criterios: Sintaxis SOV 30%, Uso de Sufijos 30%, Conjugación/Tiempos 20%, Coherencia y Estilo 20%).\nEvidencias: Informe impreso y/o digital y defensa oral del documento ante el docente.",
-        "duracionMin": 180
-      }
-    ]
-  },
-  {
-    "nombreHoja": "UA-2 Tema 5",
-    "nombreDocente": "Harold Iriarte Rojas",
-    "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de idiomas",
-    "carrera": "FACEFA - Complementarias",
-    "unidadTitulo": "LENGUA ORIGINARIA",
-    "elementoCompetencia": "Produce mensajes y estructuras oracionales complejas en lengua quechua mediante el uso correcto de la morfología nominal, verbal y la sintaxis, para establecer una comunicación efectiva en contexto, aplicando metodologías de trabajo de campo y análisis sociolingüístico bajo normas gramaticales del quechua boliviano y principios de responsabilidad social en el sistema económico actual.",
-    "contenidoTema": "SOCIOLINGÜÍSTICA",
-    "objetivoSesion": "Demuestra competencias comunicativas básicas y conciencia sociolingüística para presentarse profesionalmente e interactuar en contextos interculturales, utilizando derivaciones verbales y sufijos reflexivos.",
-    "logrosEsperados": "1. Deriva sustantivos a partir de raíces verbales para definir roles e instrumentos.\n2. Expresa acciones reflexivas y recíprocas correctamente.\n3. Realiza presentaciones personales y gestión de datos con fluidez cultural.",
-    "indicadoresLogro": "1. Transforma verbos en sustantivos usando -q, -na, -sqa con precisión.\n2. Aplica el sufijo reflexivo -ku para describir procesos de autogestión.\n3. Intercambia información personal siguiendo los protocolos andinos de cortesía.",
-    "saberConceptual": "- Sufijos verbales nominales\n- Sufijos verbales reflexivos\n- Información personal\n- Presentación personal",
-    "saberProcedimental": "- Transformación de verbos en sustantivos (agente, instrumento, resultado).\n- Uso de -q, -na, -sqa.\n- Indicación de acciones realizadas sobre uno mismo (-ku).\n- Expresión de reciprocidad.\n- Intercambio de datos básicos (nombre, edad, origen).\n- Llenado de formularios simples.\n- Exposición coherente de quién es y qué hace el estudiante.\n- Uso de entonación y gestualidad adecuada.",
-    "saberActitudinal": "- Creatividad lingüística.\n- Abstracción de acciones en conceptos.\n- Introspección en el lenguaje.\n- Valoración de la acción recíproca.\n- Cordialidad al conocer a otros.\n- Confidencialidad en el manejo de datos.",
-    "estrategiaEnsenanza": "- Aprendizaje Basado en Proyectos (ABP): \"Mi identidad profesional en quechua\". \n- Técnica de Demostración: Modelado de presentaciones personales. \n- Role-playing situacional: Simulaciones de intercambio de datos.",
-    "estrategiaAprendizaje": "- Diario Reflexivo: Registro de sus roles profesionales usando sufijos nominales. \n- Entrevista Cruzada: Práctica de intercambio de información personal. \n- Análisis de caso: Estructuración de su perfil profesional.",
-    "recursosEnsenanza": "- Formularios bilingües\n- Tarjetas de presentación profesional\n- Grabadora para análisis de presentación personal",
-    "evaluacionFormativaActividad": "\"El mercado de roles\" (identificarse por su función usando -q).",
-    "evaluacionFormativaInstrumento": "Guía de observación cualitativa.",
-    "evaluacionFormativaEvidencia": "Esquemas de transformación de verbos a sustantivos.",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Activación: ¿Por qué la identidad profesional es un \"activo\"? Reflexión sobre la importancia de la presentación personal y la autogestión en el mercado laboral andino.",
-        "duracionMin": 45
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Demuestra competencias comunicativas básicas y conciencia sociolingüística para presentarse profesionalmente e interactuar en contextos interculturales.\nLogros: \n1. Deriva sustantivos a partir de raíces verbales para definir roles e instrumentos. \n2. Expresa acciones reflexivas y recíprocas correctamente. \n3. Realiza presentaciones personales y gestión de datos con fluidez cultural.",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "Sufijos verbales nominales\nSufijos verbales reflexivos\nInformación personal\nPresentación personal",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Sufijos Verbales Nominales: Se enseña la transformación de una acción en un sustantivo o adjetivo, técnica clave para definir roles y herramientas: -q (Agente): Designa al ejecutor (ej. tusuq - bailarín, qillqaq - escritor/secretario). -na (Instrumento): Designa el medio para realizar la acción (ej. takana - martillo/instrumento para golpear). -sqa (Resultado/Pasado): Designa lo obtenido (ej. ruraskasqa - lo hecho/producto final).\n2. Sufijos Verbales Reflexivos: El sufijo -ku: Se analiza como el marcador de \"acción sobre uno mismo\" y \"autogestión\". Reciprocidad: Se enseña cómo el sufijo verbal reflexivo implica también una acción compartida, reforzando el concepto de Ayni (reciprocidad) en la organización económica.\n3. Información y Presentación Personal: Información Personal: Intercambio técnico de datos: origen (maymanta kani), edad y funciones. Presentación Profesional: Estructura de un pitch profesional. Se integra el uso de los sufijos derivados para explicar: \"Soy estudiante (agente -q), mi herramienta de trabajo es (instrumento -na), y este es el resultado de mi gestión (resultado -sqa)\".",
-        "duracionMin": 360
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Actividad Técnica: \"Presentación del Perfil Profesional ante un Auditorio\". Cada estudiante realiza una presentación breve (3-5 min) describiéndose a sí mismo, su origen, su rol profesional y sus objetivos.\nInstrumento: Rúbrica de desempeño comunicativo intercultural.\nCriterios: Precisión en sufijos nominales (30%), Uso de reflexivos (20%), Claridad en datos personales (25%), Lenguaje no verbal y respeto a la audiencia (25%).\nEvidencia: Video-presentación profesional y formulario de perfil socioeconómico redactado íntegramente en quechua.",
-        "duracionMin": 135
-      }
-    ]
-  },
-  {
-    "nombreHoja": "UA-2 Tema 6",
-    "nombreDocente": "Harold Iriarte Rojas",
-    "fecha": "09/02/2026",
-    "nombreAsignatura": "Taller de idiomas",
-    "carrera": "FACEFA - Complementarias",
-    "unidadTitulo": "LENGUA ORIGINARIA",
-    "elementoCompetencia": "Produce mensajes y estructuras oracionales complejas en lengua quechua mediante el uso correcto de la morfología nominal, verbal y la sintaxis, para establecer una comunicación efectiva en contexto, aplicando metodologías de trabajo de campo y análisis sociolingüístico bajo normas gramaticales del quechua boliviano y principios de responsabilidad social en el sistema económico actual.",
-    "contenidoTema": "ANÁLISIS DE LOS ASPECTOS JURÍDICOS Y EDUCATIVOS",
-    "objetivoSesion": "Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural en el ejercicio de su profesión.",
-    "logrosEsperados": "1. Reconoce la importancia del estatus legal de la lengua quechua.\n2. Adapta registros lingüísticos según contextos socioeconómicos.\n3. Integra saberes ancestrales en propuestas de desarrollo profesional ético.",
-    "indicadoresLogro": "1. Analiza el impacto de la Ley de Derechos y Políticas Lingüísticas en el sistema financiero y educativo.\n2. Identifica variaciones dialectales y de registro (formal/informal) en simulaciones de mercado y oficina.\n3, Sustenta la pertinencia de la interculturalidad en un proyecto de emprendimiento regional.",
-    "saberConceptual": "- Lengua en contexto\n- Lengua y cultura",
-    "saberProcedimental": "- Adaptación del habla según el lugar (mercado, oficina, hogar).\n- Identificación de registros lingüísticos.\n- Integración de todos los conocimientos en un proyecto final.\n- Reflexión sobre el papel de la lengua en la profesión.",
-    "saberActitudinal": "- Flexibilidad comunicativa.\n- Respeto por las variantes situacionales.\n- Identidad cultural fortalecida.\n- Compromiso profesional bilingüe.",
-    "estrategiaEnsenanza": "- Aprendizaje Basado en el Análisis Normativo: Estudio de la Constitución y la Ley de Lenguas. \n- Seminario de Reflexión: Debate sobre la brecha entre la ley y la práctica. \n- Taller de integración: Tutoría para el proyecto final.",
-    "estrategiaAprendizaje": "- Mapeo de Contextos: Análisis de cuándo y cómo usar la lengua en escenarios reales. \n- Redacción Técnica: Elaboración de un informe sobre el derecho al acceso a la información bilingüe.",
-    "recursosEnsenanza": "- Constitución Política del Estado\n- Leyes de educación y lingüística vigentes\n- Glosarios técnicos especializados\n- Videos de prácticas interculturales",
-    "evaluacionFormativaActividad": "Debate: \"¿El bilingüismo es un gasto o una inversión?\"",
-    "evaluacionFormativaInstrumento": "Escala de actitud.",
-    "evaluacionFormativaEvidencia": "Ensayo reflexivo sobre el rol del economista frente a los derechos lingüísticos.",
-    "evaluacionSumativaActividad": "Examen escrito",
-    "evaluacionSumativaInstrumento": "Prueba objetiva",
-    "evaluacionSumativaEvidencia": "Examen resuelto",
-    "momentos": [
-      {
-        "tipoMomento": "INTRODUCCION",
-        "nombreMomento": "1. INTRODUCCIÓN",
-        "actividadesDocente": "Activación: Análisis de un caso real: \"La barrera lingüística en el acceso a servicios financieros\". Debate sobre la brecha entre el derecho constitucional y la realidad del cliente quechua hablante.",
-        "duracionMin": 30
-      },
-      {
-        "tipoMomento": "RESULTADOS_LOGROS",
-        "nombreMomento": "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS",
-        "actividadesDocente": "Aplica el marco normativo y educativo vigente para integrar el quechua como herramienta de inclusión y derecho cultural en el ejercicio de su profesión.\nLogros:\n1. Reconoce la base legal del uso de lenguas originarias. \n2. Adapta su registro lingüístico según el contexto (público vs. privado). \n3. Integra saberes ancestrales en propuestas de desarrollo profesional.",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CONTENIDOS",
-        "nombreMomento": "3. CONTENIDOS DE LA CLASE",
-        "actividadesDocente": "Lengua en contexto (Registros, situaciones y espacios) \nLengua y cultura (identidad, derechos y marco legal).",
-        "duracionMin": 0
-      },
-      {
-        "tipoMomento": "CUERPO",
-        "nombreMomento": "4. CUERPO DE CONTENIDOS",
-        "actividadesDocente": "1. Lengua en Contexto (La adecuación profesional): Se enseña la pragmática lingüística aplicada. El estudiante aprende a identificar que el registro (formal, informal, técnico) es un indicador de respeto y profesionalismo. Enfoque económico: En el mercado, se utiliza un registro basado en el Ayni (reciprocidad); en la oficina, se requiere un registro formal basado en la normativa legal. La capacidad de alternar (diglosia funcional) es una habilidad blanda vital.\n2. Lengua y Cultura (El marco jurídico-educativo): Dimensión Jurídica: Análisis de la Constitución Política del Estado Plurinacional de Bolivia y la Ley N° 269. Se discute la obligatoriedad de los servicios bilingües en entidades financieras y públicas para garantizar la equidad. \nDimensión Educativa: El quechua no como una reliquia, sino como un vehículo pedagógico. Se analiza cómo el uso de la lengua materna en la educación financiera aumenta la tasa de comprensión y reduce el riesgo de estafa o sobreendeudamiento en sectores vulnerables.",
-        "duracionMin": 180
-      },
-      {
-        "tipoMomento": "CONCLUSION",
-        "nombreMomento": "5. CONCLUSIÓN O CIERRE",
-        "actividadesDocente": "Actividad: \"Propuesta de Plan de Atención al Cliente Bilingüe\". Los estudiantes entregan un documento técnico (resumen ejecutivo de 3 páginas) que contenga: Fundamentación legal (¿Por qué es obligatorio?); Análisis de contexto (¿En qué registros lingüísticos se comunicará?); Estrategia de implementación (¿Qué materiales o personal bilingüe se requiere?).\nInstrumento: Rúbrica de evaluación integral.\nCriterios: Dominio del marco normativo (40%), Pertinencia del registro lingüístico propuesto (30%), Viabilidad técnica del plan (30%).\nEvidencia: Documento final entregado digitalmente y breve defensa oral ante el \"directorio\" (docente y pares).",
-        "duracionMin": 60
-      }
-    ]
-  }
-];
-  return JSON.parse(JSON.stringify(CANONICAL_PLANES));
+  return [];
 };
 
 window.generateDefaultMatriz7 = function(mKey) {
-  const def = (materiasData && materiasData[mKey]) ? materiasData[mKey] : (materiasData ? materiasData['sis213g1'] : null);
-  const units = (def && def.unidades) ? def.unidades : [];
-  const sessions = [];
-  let sNum = 1;
-  for (let w = 1; w <= 20; w++) {
-    for (let ses = 1; ses <= 2; ses++) {
-      if (w === 7 && ses === 2) {
-        sessions.push({
-          semana: w,
-          nroSesion: sNum++,
-          unidadTematica: 'EVALUACIÓN PARCIAL',
-          contenidoEspecifico: 'Primer Examen Parcial Teórico y Práctico',
-          saberConceptual: 'Evaluación de saberes conceptuales',
-          saberProcedimental: 'Resolución de problemas técnicos y desarrollo de soluciones',
-          saberActitudinal: 'Rigor ético y probidad académica',
-          criterioDesempeno: 'Demuestra dominio de los contenidos y competencias evaluadas.',
-          instrumentoEvaluacion: 'PRUEBA_ESCRITA'
-        });
-      } else if (w === 14 && ses === 2) {
-        sessions.push({
-          semana: w,
-          nroSesion: sNum++,
-          unidadTematica: 'EVALUACIÓN PARCIAL',
-          contenidoEspecifico: 'Segundo Examen Parcial Teórico y Práctico',
-          saberConceptual: 'Evaluación de saberes avanzados',
-          saberProcedimental: 'Resolución de problemas de alta complejidad',
-          saberActitudinal: 'Rigor ético y probidad académica',
-          criterioDesempeno: 'Demuestra solvencia en el desarrollo y aplicación de saberes.',
-          instrumentoEvaluacion: 'PRUEBA_ESCRITA'
-        });
-      } else if (w === 20 && ses === 2) {
-        sessions.push({
-          semana: w,
-          nroSesion: sNum++,
-          unidadTematica: 'EVALUACIÓN FINAL',
-          contenidoEspecifico: 'Examen Final y Sustentación de Proyecto Integrador',
-          saberConceptual: 'Integración global de saberes del semestre',
-          saberProcedimental: 'Defensa técnica y validación práctica de resultados',
-          saberActitudinal: 'Solvencia profesional y responsabilidad',
-          criterioDesempeno: 'Alcanza la competencia global establecida en el Programa Analítico.',
-          instrumentoEvaluacion: 'RUBRICA'
-        });
-      } else {
-        const uIdx = units.length > 0 ? Math.min(Math.floor((w - 1) / Math.max(1, Math.ceil(20 / units.length))), units.length - 1) : 0;
-        const u = units[uIdx] || { titulo: 'Unidad ' + (uIdx + 1) };
-        sessions.push({
-          semana: w,
-          nroSesion: sNum++,
-          unidadTematica: 'Unidad ' + (uIdx + 1) + ': ' + (u.titulo || 'Contenidos de la Asignatura'),
-          contenidoEspecifico: 'Desarrollo de saberes teórico-prácticos de la Unidad ' + (uIdx + 1),
-          saberConceptual: 'Fundamentos teóricos de ' + (u.titulo || 'la temática'),
-          saberProcedimental: 'Aplicación guiada en entornos prácticos y resolución de problemas',
-          saberActitudinal: 'Participación activa, pensamiento crítico y trabajo en equipo',
-          criterioDesempeno: 'Aplica los procedimientos técnicos en el entorno de aprendizaje.',
-          instrumentoEvaluacion: 'RUBRICA'
-        });
-      }
-    }
-  }
-  return sessions;
+  return [];
 };
 
 
@@ -3085,7 +2439,7 @@ window.renderPacElementosCompetencia = function() {
   if (!container) return;
 
   if (!activePacElementosCompetencia || activePacElementosCompetencia.length === 0) {
-    const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+    const defData = (activeMateriaKey && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : (Object.values(materiasData)[0] || {});
     if (defData && defData.elementosCompetencia && defData.elementosCompetencia.length > 0) {
       activePacElementosCompetencia = [...defData.elementosCompetencia];
     } else {
@@ -3360,7 +2714,7 @@ window.populatePacDom = function(data) {
     if (list.length > 0) {
       activePacElementosCompetencia = list;
     } else {
-      const defData = materiasData[activeMateriaKey] || materiasData['sis213g1'];
+      const defData = (activeMateriaKey && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : (Object.values(materiasData)[0] || {});
       if (defData && defData.elementosCompetencia && defData.elementosCompetencia.length > 0) {
         activePacElementosCompetencia = [...defData.elementosCompetencia];
       } else {
@@ -4464,36 +3818,12 @@ document.addEventListener('change', (e) => {
         breadcrumb: `${item.code} ${item.name}`,
         title: `${item.code} • ${item.name}`,
         meta: `<span><strong class="text-white">${item.totalHours}</strong> Horas Semanales</span><span>•</span><span>Campus: <strong class="text-white">${item.campusesStr}</strong></span><span>•</span><span><strong class="text-white">${item.groupedSchedules.length}</strong> Bloques Horarios Oficiales</span>`,
-        caracterizacion: `Asignatura oficial ${item.name} del plan curricular de ${item.allCarrerasNames} (UNITEPC) impartida por el docente ${docente.nombreCompleto}.`,
-        macroCompetencia: `Desarrolla capacidades profesionales y resolución de problemas prácticos en ${item.name}.`,
-        sistemaEvaluacion: 'Evaluación continua diagnóstica, formativa y sumativa por competencias.',
-        unidades: [
-          {
-            numeroUnidad: 1,
-            titulo: 'Fundamentos y Bases Conceptuales de ' + item.name,
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 1, titulo: 'Introducción y Principios Básicos', contenido: '• Fundamentos de ' + item.name + '.\n• Marco teórico y metodológico.' },
-              { numeroTema: 2, titulo: 'Modelado y Aplicaciones Prácticas', contenido: '• Aplicación de competencias en casos reales.\n• Desarrollo guiado y resolución de problemas.' }
-            ]
-          },
-          {
-            numeroUnidad: 2,
-            titulo: 'Desarrollo Avanzado y Ejercitación Práctica',
-            horasAcademicas: 20,
-            temas: [
-              { numeroTema: 3, titulo: 'Técnicas y Métodos Especializados', contenido: '• Técnicas avanzadas de la disciplina.\n• Prácticas de laboratorio y talleres aplicados.' }
-            ]
-          }
-        ],
-        bibliografia: [
-          { tipo: 'BASICA', citaApa: 'UNITEPC. (2026). Guía Curricular Oficial de ' + item.allCarrerasNames + '. Fondo Editorial UNITEPC.', autor: 'UNITEPC', anio: 2026, titulo: 'Guía Curricular' },
-          { tipo: 'COMPLEMENTARIA', citaApa: 'Ministerio de Educación. (2025). Normas Académicas de Educación Superior.', autor: 'Min. Educación', anio: 2025, titulo: 'Normas Académicas' }
-        ],
-        elementosCompetencia: [
-          `Modela problemas y soluciones en el ámbito de ${item.name}.`,
-          `Ejecuta procedimientos técnicos y metodologías estándar con rigor profesional.`
-        ],
+        caracterizacion: '',
+        macroCompetencia: '',
+        sistemaEvaluacion: '',
+        unidades: [],
+        bibliografia: [],
+        elementosCompetencia: [],
         carrerasCodes: item.carrerasCodes,
         carrerasResolved: item.carrerasResolved,
         groupedSchedules: item.groupedSchedules,
