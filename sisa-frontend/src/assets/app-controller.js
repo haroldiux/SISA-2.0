@@ -3917,35 +3917,80 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  // Official UNITEPC Gateway Careers Catalog
+  const OFFICIAL_CAREERS_CATALOG = {
+    'CARICO': { name: 'Ingeniería Comercial', tag: 'ING. COMERCIAL', faculty: 'FACEFA', color: 'emerald' },
+    'CARCIC': { name: 'Complementaria Ing. Comercial', tag: 'COMP. ING. COMERCIAL', faculty: 'FACEFA', color: 'emerald' },
+    'CARCCP': { name: 'Complementaria Contaduría Pública', tag: 'COMP. CONTADURÍA', faculty: 'FACEFA', color: 'emerald' },
+    'CARCAD': { name: 'Complementaria Administración de Empresas', tag: 'COMP. ADMINISTRACIÓN', faculty: 'FACEFA', color: 'emerald' },
+    'CARCPU': { name: 'Contaduría Pública', tag: 'CONTADURÍA PÚBLICA', faculty: 'FACEFA', color: 'emerald' },
+    'CARECO': { name: 'Economía', tag: 'ECONOMÍA', faculty: 'FACEFA', color: 'emerald' },
+    'CARADM': { name: 'Administración de Empresas', tag: 'ADMINISTRACIÓN', faculty: 'FACEFA', color: 'emerald' },
+    'CARSIS': { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'purple' },
+    'CARELE': { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'blue' },
+    'CARSON': { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'indigo' },
+    'CARIBI': { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'cyan' },
+    'CARMED': { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'rose' },
+    'CARODO': { name: 'Odontología', tag: 'ODONTOLOGÍA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'sky' },
+    'CARBYF': { name: 'Bioquímica y Farmacia', tag: 'BIOQUÍMICA Y FARMACIA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'violet' },
+    'CARENL': { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'pink' },
+    'CARFIS': { name: 'Fisioterapia y Kinesiología', tag: 'FISIOTERAPIA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'lime' },
+    'CARFON': { name: 'Fonoaudiología', tag: 'FONOAUDIOLOGÍA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'orange' },
+    'CARPRO': { name: 'Prótesis Dental', tag: 'PRÓTESIS DENTAL', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'yellow' },
+    'CARVET': { name: 'Medicina Veterinaria y Zootecnia', tag: 'VETERINARIA', faculty: 'FACULTAD DE CIENCIAS AGRÍCOLAS Y VETERINARIAS', color: 'teal' },
+    'CARNYD': { name: 'Nutrición y Dietética', tag: 'NUTRICIÓN', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'green' },
+    'CARDER': { name: 'Derecho', tag: 'DERECHO', faculty: 'FACULTAD DE CIENCIAS JURÍDICAS Y SOCIALES', color: 'red' },
+    'CARCSO': { name: 'Comunicación Social', tag: 'COMUNICACIÓN SOCIAL', faculty: 'FACULTAD DE CIENCIAS JURÍDICAS Y SOCIALES', color: 'fuchsia' },
+    'CARAYE': { name: 'Arte y Escultura', tag: 'ARTE Y ESCULTURA', faculty: 'FACULTAD DE CIENCIAS SOCIALES', color: 'stone' },
+    'CARCNE': { name: 'Cinematografía', tag: 'CINEMATOGRAFÍA', faculty: 'FACULTAD DE CIENCIAS SOCIALES', color: 'zinc' }
+  };
+
   // Helper: Carrera name resolution
   window.resolveCarreraInfo = function(code, careerCode) {
-    const cUpper = (careerCode || '').toUpperCase();
-    const codeUpper = (code || '').toUpperCase();
-    if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT') || codeUpper.includes('INFORMÁTICA MÉDICA')) {
-      return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', color: 'rose' };
+    const cUpper = (careerCode || '').toUpperCase().trim();
+    const codeUpper = (code || '').toUpperCase().trim();
+
+    if (OFFICIAL_CAREERS_CATALOG[cUpper]) {
+      return OFFICIAL_CAREERS_CATALOG[cUpper];
     }
-    if (cUpper.includes('ADM') || cUpper.includes('CCP') || cUpper.includes('COM') || cUpper.includes('FAC') || codeUpper.includes('ADMIN') || codeUpper.includes('FINANC') || codeUpper.includes('CONTAB')) {
-      return { name: 'FACEFA', tag: 'FACEFA', color: 'emerald' };
+
+    if (cUpper.includes('ICO') || cUpper.includes('CIC') || codeUpper.includes('COMERCIAL')) {
+      return { name: 'Ingeniería Comercial', tag: 'ING. COMERCIAL', faculty: 'FACEFA', color: 'emerald' };
+    }
+    if (cUpper.includes('ADM') || cUpper.includes('CAD') || codeUpper.includes('ADMINISTR')) {
+      return { name: 'Administración de Empresas', tag: 'ADMINISTRACIÓN', faculty: 'FACEFA', color: 'emerald' };
+    }
+    if (cUpper.includes('CCP') || cUpper.includes('CPU') || codeUpper.includes('CONTAB')) {
+      return { name: 'Contaduría Pública', tag: 'CONTADURÍA', faculty: 'FACEFA', color: 'emerald' };
+    }
+    if (cUpper.includes('ECO') || codeUpper.includes('ECONOM')) {
+      return { name: 'Economía', tag: 'ECONOMÍA', faculty: 'FACEFA', color: 'emerald' };
+    }
+    if (cUpper.includes('MED') || codeUpper.startsWith('MED') || codeUpper.includes('ANATOM') || codeUpper.includes('GENET') || codeUpper.includes('PEDIAT') || codeUpper.includes('INFORMÁTICA MÉDICA')) {
+      return { name: 'Medicina Humana', tag: 'MEDICINA HUMANA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'rose' };
     }
     if (cUpper.includes('ELE') || codeUpper.startsWith('ELE')) {
-      return { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' };
+      return { name: 'Ing. Electrónica', tag: 'ING. ELECTRÓNICA', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'blue' };
     }
     if (cUpper.includes('SON') || codeUpper.startsWith('SON')) {
-      return { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' };
+      return { name: 'Ing. de Sonido', tag: 'ING. DE SONIDO', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'indigo' };
     }
     if (cUpper.includes('IBI') || codeUpper.startsWith('IBI') || cUpper.includes('BIO')) {
-      return { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' };
+      return { name: 'Ing. Biomédica', tag: 'ING. BIOMÉDICA', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'cyan' };
     }
     if (cUpper.includes('IND') || codeUpper.startsWith('IND')) {
-      return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', color: 'amber' };
+      return { name: 'Ing. Industrial', tag: 'ING. INDUSTRIAL', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'amber' };
     }
     if (cUpper.includes('VET') || codeUpper.startsWith('VET')) {
-      return { name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' };
+      return { name: 'Medicina Veterinaria', tag: 'VETERINARIA', faculty: 'FACULTAD DE CIENCIAS AGRÍCOLAS Y VETERINARIAS', color: 'teal' };
     }
     if (cUpper.includes('ENL') || codeUpper.startsWith('ENF')) {
-      return { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', color: 'pink' };
+      return { name: 'Lic. en Enfermería', tag: 'ENFERMERÍA', faculty: 'FACULTAD DE CIENCIAS DE LA SALUD', color: 'pink' };
     }
-    return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', color: 'purple' };
+    if (cUpper.includes('SIS') || codeUpper.startsWith('SIS')) {
+      return { name: 'Ing. de Sistemas', tag: 'ING. DE SISTEMAS', faculty: 'FACULTAD DE TECNOLOGÍA', color: 'purple' };
+    }
+    return { name: 'Carrera General', tag: 'CARRERA', faculty: 'UNITEPC', color: 'slate' };
   };
 
   // Official UNITEPC Curriculum Code Resolver
@@ -3961,11 +4006,13 @@ document.addEventListener('change', (e) => {
         else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
         else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
         else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
+        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('SIS-314');
         else codes.push('SIS-100');
       } else if (cCode.includes('ELE')) {
         if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
         else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
         else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
+        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ELC-314');
         else codes.push('ELC-100');
       } else if (cCode.includes('SON')) {
         if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
@@ -3982,9 +4029,21 @@ document.addEventListener('change', (e) => {
         else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
         else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
         else codes.push('MED-100');
-      } else if (cCode.includes('ADM')) {
+      } else if (cCode.includes('ICO') || cCode.includes('CIC')) {
+        if (cUpper.includes('MODELOS ECONOMETRICOS') || cUpper.includes('ECONOMETRÍA')) codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
+        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ICO-314');
+        else if (cUpper.includes('FINANZAS')) codes.push('ICO-320');
+        else if (cUpper.includes('MARKETING') || cUpper.includes('MERCADOTECNIA')) codes.push('ICO-210');
+        else codes.push(cCode.includes('CIC') ? 'CIC-100' : 'ICO-100');
+      } else if (cCode.includes('ECO')) {
+        if (cUpper.includes('ECONOMETRÍA') || cUpper.includes('MODELOS')) codes.push('ECO-412');
+        else if (cUpper.includes('MICROECONOMÍA')) codes.push('ECO-210');
+        else if (cUpper.includes('MACROECONOMÍA')) codes.push('ECO-310');
+        else codes.push('ECO-100');
+      } else if (cCode.includes('ADM') || cCode.includes('CAD')) {
         if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
         else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
+        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ADM-314');
         else codes.push('ADM-100');
       } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
         if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
@@ -3994,7 +4053,7 @@ document.addEventListener('change', (e) => {
     });
 
     const uniqueCodes = [...new Set(codes)];
-    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'MAT-100';
+    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'ASIG-100';
   };
 
   window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
@@ -4121,7 +4180,7 @@ document.addEventListener('change', (e) => {
       const carrerasArr = [...new Set(cluster.map(g => g.careerCode).filter(Boolean))];
       const isCommon = carrerasArr.length > 1;
       const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
-      const mainCarrera = carrerasResolved[0] || { name: 'Ing. de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' };
+      const mainCarrera = carrerasResolved[0] || { name: 'Carrera General', tag: 'CARRERA', color: 'slate' };
       const allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
       const allCarrerasTags = isCommon 
         ? `${[...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ')}`

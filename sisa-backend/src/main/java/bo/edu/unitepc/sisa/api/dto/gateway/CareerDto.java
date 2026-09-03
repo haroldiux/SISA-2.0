@@ -15,8 +15,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record CareerDto(
         @JsonAlias({"careerId", "id"})
         String id,
+        @JsonAlias({"careerCode", "codigo", "code"})
         String code,
+        @JsonAlias({"careerName", "nombre", "name"})
         String name,
+        @JsonAlias({"branchOfficeCode", "branchOfficeId", "sedeCodigo"})
         String branchOfficeCode
 ) {}
 
