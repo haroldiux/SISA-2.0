@@ -17,11 +17,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record CourseDto(
         @JsonAlias({"courseId", "syllabusCourseId", "id"})
         String id,
+        @JsonAlias({"courseCode", "code", "codigo", "sigla"})
         String code,
-        @JsonAlias({"courseName", "name"})
+        @JsonAlias({"courseName", "name", "nombre"})
         String name,
         Integer semester,
+        @JsonAlias({"syllabusCourseId", "courseId", "id"})
         String syllabusCourseId,
+        @JsonAlias({"careerCode", "careerId"})
         String careerCode
 ) {}
 

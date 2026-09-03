@@ -16,10 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Proxy REST Controller serving UNITEPC Gateway Academic Catalog data to frontend clients.
@@ -339,7 +337,59 @@ public class CatalogoAcademicoController {
                 ))
                 .toList();
 
-        return ResponseEntity.ok(courses);
+        if (!courses.isEmpty()) {
+            return ResponseEntity.ok(courses);
+        }
+
+        // Live Gateway resolution fallback
+        try {
+            List<GroupItemDto> remoteGroups = this.gatewayClient.getGroups("2-2026", null, null, null);
+            List<GroupItemDto> teacherGroups = remoteGroups.stream()
+                    .filter(g -> ci.equalsIgnoreCase(g.teacherCi()))
+                    .toList();
+
+            Set<String> careerCodes = teacherGroups.stream()
+                    .map(GroupItemDto::careerCode)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            Map<String, CourseDto> syllabusMap = new HashMap<>();
+            for (String careerCode : careerCodes) {
+                try {
+                    List<CourseDto> careerCourses = this.gatewayClient.getCourses("CBA", careerCode);
+                    for (CourseDto c : careerCourses) {
+                        if (c.syllabusCourseId() != null) {
+                            syllabusMap.put(c.syllabusCourseId(), c);
+                        }
+                        if (c.name() != null) {
+                            syllabusMap.put(careerCode + "_" + c.name().trim().toUpperCase(), c);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            List<CourseDto> resolvedCourses = new ArrayList<>();
+            Set<String> seenCourseIds = new HashSet<>();
+            for (GroupItemDto g : teacherGroups) {
+                CourseDto matched = null;
+                if (g.syllabusCourseId() != null && syllabusMap.containsKey(g.syllabusCourseId())) {
+                    matched = syllabusMap.get(g.syllabusCourseId());
+                } else if (g.courseName() != null && syllabusMap.containsKey(g.careerCode() + "_" + g.courseName().trim().toUpperCase())) {
+                    matched = syllabusMap.get(g.careerCode() + "_" + g.courseName().trim().toUpperCase());
+                }
+                if (matched != null) {
+                    String uniqueKey = matched.code() != null ? matched.code() : (matched.name() + "_" + g.careerCode());
+                    if (seenCourseIds.add(uniqueKey)) {
+                        resolvedCourses.add(matched);
+                    }
+                }
+            }
+            return ResponseEntity.ok(resolvedCourses);
+        } catch (Exception ex) {
+            log.warn("Failed to dynamically resolve teacher courses from Gateway for CI {}: {}", ci, ex.getMessage());
+        }
+
+        return ResponseEntity.ok(Collections.emptyList());
     }
 
     /**

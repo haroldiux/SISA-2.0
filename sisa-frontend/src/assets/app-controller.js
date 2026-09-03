@@ -3465,56 +3465,119 @@ document.addEventListener('change', (e) => {
 
   // Official UNITEPC Curriculum Code Resolver
   window.resolveOfficialCourseCode = function(courseName, careerCodes) {
-    const cUpper = (courseName || '').toUpperCase();
+    const cUpper = (courseName || '').toUpperCase().trim();
     const codes = [];
 
     (careerCodes || []).forEach(cc => {
       const cCode = (cc || '').toUpperCase();
       if (cCode.includes('SIS')) {
-        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
+        if (cUpper.includes('INTRODUCCIÓN A LAS CIENCIAS') || cUpper.includes('CIENCIAS DE LA COMPUTACIÓN')) codes.push('SIS-116');
+        else if (cUpper.includes('CALCULO I') && !cUpper.includes('II')) codes.push('SIS-111');
+        else if (cUpper.includes('FÍSICA I') && !cUpper.includes('II')) codes.push('SIS-112');
+        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
+        else if (cUpper.includes('ÁLGEBRA') && !cUpper.includes('LINEAL')) codes.push('SIS-114');
+        else if (cUpper.includes('INGLÉS TÉCNICO I') && !cUpper.includes('II') && !cUpper.includes('III') && !cUpper.includes('IV')) codes.push('SIS-115');
+        else if (cUpper.includes('CALCULO II')) codes.push('SIS-121');
+        else if (cUpper.includes('FÍSICA II')) codes.push('SIS-122');
         else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SIS-123');
+        else if (cUpper.includes('ÁLGEBRA LINEAL')) codes.push('SIS-124');
+        else if (cUpper.includes('INGLÉS TÉCNICO II') && !cUpper.includes('III')) codes.push('SIS-125');
+        else if (cUpper.includes('TALLER DE PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-126');
+        else if (cUpper.includes('DISPOSITIVOS ELECTRÓNICOS')) codes.push('SIS-127');
+        else if (cUpper.includes('ECUACIONES DIFERENCIALES')) codes.push('SIS-211');
+        else if (cUpper.includes('SISTEMAS DIGITALES')) codes.push('SIS-212');
         else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
+        else if (cUpper.includes('PROBABILIDAD') || cUpper.includes('PROBALIDAD')) codes.push('SIS-214');
+        else if (cUpper.includes('INGLÉS TÉCNICO III')) codes.push('SIS-215');
+        else if (cUpper.includes('TALLER DE PROGRAMACIÓN II')) codes.push('SIS-216');
+        else if (cUpper.includes('ÉTICA') || cUpper.includes('DERECHO INFORMÁTICO')) codes.push('SIS-217');
+        else if (cUpper.includes('MÉTODOS NUMÉRICOS')) codes.push('SIS-221');
+        else if (cUpper.includes('REDACCIÓN') || cUpper.includes('INTERCULTURALIDAD')) codes.push('SIS-222');
+        else if (cUpper.includes('SISTEMAS OPERATIVOS')) codes.push('SIS-223');
+        else if (cUpper.includes('DISEÑO DE BASE DE DATOS') || (cUpper.includes('BASE DE DATOS') && !cUpper.includes('AVANZADOS'))) codes.push('SIS-224');
+        else if (cUpper.includes('INGLÉS TÉCNICO IV')) codes.push('SIS-225');
+        else if (cUpper.includes('TALLER DE PROGRAMACIÓN III')) codes.push('SIS-226');
+        else if (cUpper.includes('DISEÑO GRÁFICO') || cUpper.includes('INFORMACIÓN GEOGRÁFICA')) codes.push('SIS-227');
+        else if (cUpper.includes('INVESTIGACIÓN OPERATIVA')) codes.push('SIS-311');
+        else if (cUpper.includes('MICROCONTROLADORES')) codes.push('SIS-312');
+        else if (cUpper.includes('ARQUITECTURA DE NUEVAS')) codes.push('SIS-313');
+        else if (cUpper.includes('ANÁLISIS DE SISTEMAS I') && !cUpper.includes('II')) codes.push('SIS-314');
         else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
+        else if (cUpper.includes('REDES Y COMUNICACIÓNES') || cUpper.includes('REDES Y COMUNICACIONES')) codes.push('SIS-316');
+        else if (cUpper.includes('CONCEPTOS AVANZADOS DE BASE DE DATOS')) codes.push('SIS-317');
+        else if (cUpper.includes('ROBÓTICA')) codes.push('SIS-321');
+        else if (cUpper.includes('INFRAESTRUCTURA TECNOLÓGICA')) codes.push('SIS-322');
+        else if (cUpper.includes('ANÁLISIS DE SISTEMAS II')) codes.push('SIS-323');
+        else if (cUpper.includes('INGENIERÍA DE MÉTODOS') || cUpper.includes('REINGENIERÍA')) codes.push('SIS-324');
+        else if (cUpper.includes('TALLER DE REDES')) codes.push('SIS-325');
         else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
+        else if (cUpper.includes('MÉTODOS Y TÉCNICAS DE INVESTIGACIÓN')) codes.push('SIS-411');
+        else if (cUpper.includes('REDES NEURONALES') || cUpper.includes('INTELIGENCIA ARTIFICIAL')) codes.push('SIS-412');
+        else if (cUpper.includes('TELECOMUNICACIONES')) codes.push('SIS-413');
+        else if (cUpper.includes('INGENIERÍA DE SOFTWARE') && !cUpper.includes('TALLER')) codes.push('SIS-414');
+        else if (cUpper.includes('TALLER DE SIMULACIÓN DE SISTEMAS')) codes.push('SIS-415');
+        else if (cUpper.includes('MÉTODO DE DESARROLLO DE SOFTWARE')) codes.push('SIS-416');
+        else if (cUpper.includes('TALLER DE TITULACIÓN')) codes.push('SIS-421');
+        else if (cUpper.includes('GESTIÓN ESTRATÉGICA DE EMPRESAS')) codes.push('SIS-422');
+        else if (cUpper.includes('TALLER DE INGENIERÍA DE SOFTWARE')) codes.push('SIS-423');
+        else if (cUpper.includes('PRÁCTICA PRE-PROFESIONAL')) codes.push('SIS-424');
+        else if (cUpper.includes('GESTIÓN DE CALIDAD ESTRATÉGICA')) codes.push('SIS-425');
         else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('SIS-314');
-        else codes.push('SIS-100');
+        else codes.push('SIS-213');
       } else if (cCode.includes('ELE')) {
-        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
+        if (cUpper.includes('CALCULO I') && !cUpper.includes('II')) codes.push('ELC-111');
+        else if (cUpper.includes('ALGEBRA I') || cUpper.includes('ÁLGEBRA I')) codes.push('ELC-114');
+        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
         else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
         else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
+        else if (cUpper.includes('CIRCUITOS ELECTRONICOS I')) codes.push('ELC-214');
+        else if (cUpper.includes('CIRCUITOS ELECTRONICOS II')) codes.push('ELC-222');
+        else if (cUpper.includes('CAMPOS ELECTROMAGNETICOS')) codes.push('ELC-312');
+        else if (cUpper.includes('ELECTRONICA II')) codes.push('ELC-313');
+        else if (cUpper.includes('ANALISIS NUMERICO I')) codes.push('ELC-311');
+        else if (cUpper.includes('SIMULACION Y MODELAJE')) codes.push('ELC-414');
+        else if (cUpper.includes('ROBOTICA') || cUpper.includes('ROBÓTICA')) codes.push('ELC-423');
+        else if (cUpper.includes('TRANSMISION DE DATOS')) codes.push('ELC-426');
+        else if (cUpper.includes('ELECTRONICA INDUSTRIAL')) codes.push('ELC-424');
         else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ELC-314');
-        else codes.push('ELC-100');
+        else codes.push('ELC-213');
       } else if (cCode.includes('SON')) {
-        if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
+        if (cUpper.includes('SIMULACIÓN MATEMÁTICA')) codes.push('SON-126');
+        else if (cUpper.includes('SIMULACIÓN DE SISTEMAS SONOROS')) codes.push('SON-324');
+        else if (cUpper.includes('DISEÑO REFUERZO SONORO')) codes.push('SON-315');
+        else if (cUpper.includes('DISEÑO E INSTALACIÓN DE SISTEMAS LINE ARRAY')) codes.push('SON-415');
+        else if (cUpper.includes('SONIDO EN VIVO ANALÓGICO')) codes.push('SON-215');
+        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
         else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SON-123');
         else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SON-213');
-        else codes.push('SON-100');
+        else codes.push('SON-126');
       } else if (cCode.includes('IBI') || cCode.includes('BIO')) {
         if (cUpper.includes('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
-        else if (cUpper.includes('INFORMÁTICA')) codes.push('IBI-124');
+        else if (cUpper.includes('INFORMÁTICA') && !cUpper.includes('INTRODUCCIÓN')) codes.push('IBI-124');
+        else if (cUpper.includes('CONTROL, MODELOS Y SIMULACIÓN')) codes.push('IBI-223');
         else if (cUpper.includes('PROGRAMACIÓN')) codes.push('IBI-211');
-        else codes.push('IBI-100');
+        else codes.push('IBI-114');
       } else if (cCode.includes('MED')) {
         if (cUpper.includes('ANATOMÍA HUMANA I') && !cUpper.includes('II')) codes.push('MED-111');
         else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
         else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
-        else codes.push('MED-100');
+        else codes.push('MED-111');
       } else if (cCode.includes('ICO') || cCode.includes('CIC')) {
         if (cUpper.includes('MODELOS ECONOMETRICOS') || cUpper.includes('ECONOMETRÍA')) codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
         else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ICO-314');
         else if (cUpper.includes('FINANZAS')) codes.push('ICO-320');
         else if (cUpper.includes('MARKETING') || cUpper.includes('MERCADOTECNIA')) codes.push('ICO-210');
-        else codes.push(cCode.includes('CIC') ? 'CIC-100' : 'ICO-100');
+        else codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
       } else if (cCode.includes('ECO')) {
         if (cUpper.includes('ECONOMETRÍA') || cUpper.includes('MODELOS')) codes.push('ECO-412');
         else if (cUpper.includes('MICROECONOMÍA')) codes.push('ECO-210');
         else if (cUpper.includes('MACROECONOMÍA')) codes.push('ECO-310');
-        else codes.push('ECO-100');
+        else codes.push('ECO-412');
       } else if (cCode.includes('ADM') || cCode.includes('CAD')) {
         if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
         else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
         else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ADM-314');
-        else codes.push('ADM-100');
+        else codes.push('ADM-113');
       } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
         if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
         else if (cUpper.includes('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
@@ -3523,7 +3586,7 @@ document.addEventListener('change', (e) => {
     });
 
     const uniqueCodes = [...new Set(codes)];
-    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : 'ASIG-100';
+    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : '';
   };
 
   window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
@@ -3661,8 +3724,23 @@ document.addEventListener('change', (e) => {
       const displayName = courseNames.join(' / ');
 
       // Resolve official curriculum codes across associated careers
-      const officialCodes = carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc]));
-      const officialCode = [...new Set(officialCodes)].join(' / ');
+      let directCode = null;
+      for (const g of cluster) {
+        if (g.code && g.code.includes('-') && !g.code.startsWith('TA') && !g.code.startsWith('PL') && !g.code.startsWith('PA') && !g.code.startsWith('PR') && !g.code.startsWith('PS')) {
+          directCode = g.code;
+          break;
+        }
+        if (g.syllabusCourseId && Array.isArray(courses) && courses.length > 0) {
+          const matchCourse = courses.find(c => (c.syllabusCourseId === g.syllabusCourseId || c.id === g.syllabusCourseId) && c.code);
+          if (matchCourse && matchCourse.code) {
+            directCode = matchCourse.code;
+            break;
+          }
+        }
+      }
+
+      const officialCodes = directCode ? [directCode] : carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc]));
+      const officialCode = [...new Set(officialCodes.flat())].filter(Boolean).join(' / ') || resolveOfficialCourseCode(primaryName, carrerasArr) || 'UNITEPC';
 
       // Calculate unique physical commissions
       const physCommissionsMap = new Map();
