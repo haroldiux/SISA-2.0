@@ -5,6 +5,8 @@ import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
 import bo.edu.unitepc.sisa.api.request.ScuTemaAnaliticoDto;
 import bo.edu.unitepc.sisa.api.request.ScuUnidadAprendizajeDto;
 import org.apache.poi.xwpf.usermodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -24,10 +26,14 @@ import java.util.List;
 @Component
 public class ProgramaAnaliticoDocxParser {
 
+    private static final Logger log = LoggerFactory.getLogger(ProgramaAnaliticoDocxParser.class);
+
     private static final java.util.regex.Pattern UNIT_PATTERN =
             java.util.regex.Pattern.compile("^(?:UNIDAD\\s+(?:DE\\s+APRENDIZAJE\\s+)?)([IVXLCDM\\d]+)[.:\\s-]+(.*)$", java.util.regex.Pattern.CASE_INSENSITIVE);
     private static final java.util.regex.Pattern TEMA_PATTERN =
             java.util.regex.Pattern.compile("^TEMA\\s+(?:N[º°.]?\\s*)?(\\d+)[.:\\s-]+(.*)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern BULLET_TEMA_PATTERN =
+            java.util.regex.Pattern.compile("^(?:[\\.\\u2022\\-]\\s+|[•\\-]\\s*)(.+)$");
 
     public ScuProgramaAnaliticoRequest parseDocx(InputStream docxStream, Long asignacionId) throws Exception {
         try (XWPFDocument doc = new XWPFDocument(docxStream)) {
@@ -111,6 +117,7 @@ public class ProgramaAnaliticoDocxParser {
 
             java.util.regex.Matcher mu = UNIT_PATTERN.matcher(text);
             java.util.regex.Matcher mt = TEMA_PATTERN.matcher(text);
+            java.util.regex.Matcher mb = BULLET_TEMA_PATTERN.matcher(text);
 
             // Unit Header: e.g. "UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS." or "UNIDAD 1: ..."
             if (mu.matches() || (upper.startsWith("UNIDAD") && (text.contains(":") || text.contains(".-")))) {
@@ -168,6 +175,22 @@ public class ProgramaAnaliticoDocxParser {
                         .build();
                 currentUnit.getTemas().add(currentTema);
             }
+            // Bullet Topic Header: e.g. ". CONCEPTOS...", "• Aspectos...", "- Fonología..."
+            else if (mb.matches() && currentUnit != null) {
+                if (currentTema != null) {
+                    currentTema.setContenido(String.join("\n", currentPuntos));
+                }
+                currentPuntos = new ArrayList<>();
+
+                int numTema = currentUnit.getTemas().size() + 1;
+                String tituloTema = mb.group(1).replaceAll("^[.:\\s-]+", "").replaceAll("[.:\\s-]+$", "").trim();
+
+                currentTema = ScuTemaAnaliticoDto.builder()
+                        .numeroTema(numTema)
+                        .titulo(tituloTema.isEmpty() ? ("Tema " + numTema) : tituloTema)
+                        .build();
+                currentUnit.getTemas().add(currentTema);
+            }
             // Topic Content / Bullet Points
             else if (currentTema != null) {
                 currentPuntos.add(text);
@@ -188,6 +211,8 @@ public class ProgramaAnaliticoDocxParser {
                     }
                 }
                 u.setSaberesConceptuales(sb.toString().trim());
+            } else {
+                log.warn("Unidad {} ('{}') has empty temas array after parsing.", u.getNumeroUnidad(), u.getTitulo());
             }
             if (u.getSaberesProcedimentales() == null) u.setSaberesProcedimentales("Aplicación práctica y desarrollo de proyectos");
             if (u.getSaberesActitudinales() == null) u.setSaberesActitudinales("Responsabilidad profesional, ética y trabajo en equipo");

@@ -104,17 +104,17 @@ public class PlanesClaseExcelParser {
             }
 
             // 4. Los 3 Saberes
-            if (colB.contains("Saber Conceptual:") || colC.contains("Saber Conceptual:")) {
-                String val = !colD.isEmpty() ? colD : (!colC.isEmpty() && !colC.contains("Saber") ? colC : colE);
-                if (!val.isEmpty()) plan.setSaberConceptual(val);
-            }
-            if (colB.toLowerCase().contains("saber procedimental") || colC.toLowerCase().contains("saber procedimental")) {
-                String val = !colD.isEmpty() ? colD : (!colC.isEmpty() && !colC.toLowerCase().contains("saber") ? colC : colE);
-                if (!val.isEmpty()) plan.setSaberProcedimental(val);
-            }
-            if (colB.toLowerCase().contains("saber actitudinal") || colC.toLowerCase().contains("saber actitudinal")) {
-                String val = !colD.isEmpty() ? colD : (!colC.isEmpty() && !colC.toLowerCase().contains("saber") ? colC : colE);
-                if (!val.isEmpty()) plan.setSaberActitudinal(val);
+            String labelSaberes = (colB + " " + colC).toLowerCase();
+            String valSaberes = !colD.isEmpty() ? colD : (!colC.isEmpty() && !colC.toLowerCase().contains("saber") ? colC : colE);
+
+            if (labelSaberes.contains("conceptual")) {
+                if (!valSaberes.isEmpty()) plan.setSaberConceptual(valSaberes);
+            } else if (labelSaberes.contains("procedim")) {
+                if (!valSaberes.isEmpty()) plan.setSaberProcedimental(valSaberes);
+            } else if (labelSaberes.contains("actitudinal")) {
+                if (!valSaberes.isEmpty()) plan.setSaberActitudinal(valSaberes);
+            } else if (r >= 16 && r <= 20 && plan.getSaberConceptual() != null && plan.getSaberProcedimental() == null && !valSaberes.isEmpty() && valSaberes.startsWith("-")) {
+                plan.setSaberProcedimental(valSaberes);
             }
 
             // 5. Estrategias Didácticas (Row 22: Col B=Docente, Col D=Estudiante, Col G=Recursos)
@@ -155,6 +155,14 @@ public class PlanesClaseExcelParser {
         return (idx >= 0 && idx < s.length() - 1) ? s.substring(idx + 1).trim() : s.trim();
     }
 
+    private static final java.util.Set<String> GENERIC_MOMENT_HEADERS = java.util.Set.of(
+            "ACTIVIDAD", "ACTIVIDADES", "ACTIVIDADES DEL DOCENTE", "ACTIVIDADES DEL ESTUDIANTE",
+            "ACTIVIDADES Y TECNICAS", "ACTIVIDAD Y TECNICA", "EVIDENCIAS DE EVALUACION",
+            "EVIDENCIAS DE EVALUACIÓN", "INSTRUMENTOS", "DURACIÓN", "DURACION", "MOMENTOS",
+            "SECUENCIA DIDACTICA", "SECUENCIA DIDÁCTICA", "EVALUACION DE LOS APRENDIZAJES",
+            "EVALUACIÓN DE LOS APRENDIZAJES", "TIPO DE EVALUACION", "TIPO DE EVALUACIÓN"
+    );
+
     private List<ScuMomentoPedagogicoDto> extractMomentos(XSSFSheet sh) {
         List<ScuMomentoPedagogicoDto> list = new ArrayList<>();
         int maxRow = sh.getLastRowNum();
@@ -166,25 +174,23 @@ public class PlanesClaseExcelParser {
             String label = cellStr(row, 1);
             if (label.isEmpty()) label = cellStr(row, 0);
 
-            String upper = label.toUpperCase();
+            String upper = label.toUpperCase().trim();
+            if (GENERIC_MOMENT_HEADERS.contains(upper)) {
+                continue;
+            }
+
             TipoMomentoPedagogico tipo = null;
             String nombre = null;
 
             if (upper.contains("INTRODUC") || upper.contains("INICIO") || upper.contains("APERTURA")) {
-                tipo = TipoMomentoPedagogico.INTRODUCCION;
-                nombre = "1. INTRODUCCIÓN";
-            } else if (upper.contains("RESULTADOS DE APRENDIZAJE") || upper.contains("LOGROS ESPERADOS")) {
-                tipo = TipoMomentoPedagogico.RESULTADOS_LOGROS;
-                nombre = "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS";
-            } else if (upper.contains("CONTENIDOS DE LA CLASE") || (upper.startsWith("CONTENIDOS") && !upper.contains("CUERPO"))) {
-                tipo = TipoMomentoPedagogico.CONTENIDOS;
-                nombre = "3. CONTENIDOS DE LA CLASE";
+                tipo = TipoMomentoPedagogico.INICIO;
+                nombre = "1. INICIO";
             } else if (upper.contains("CUERPO") || upper.contains("DESARROLLO") || upper.contains("PROCESO")) {
-                tipo = TipoMomentoPedagogico.CUERPO;
-                nombre = "4. CUERPO DE CONTENIDOS";
-            } else if (upper.contains("CONCLUSION") || upper.contains("CIERRE") || upper.contains("SINTESIS") || upper.contains("EVALUACION")) {
-                tipo = TipoMomentoPedagogico.CONCLUSION;
-                nombre = "5. CONCLUSIÓN O CIERRE";
+                tipo = TipoMomentoPedagogico.DESARROLLO;
+                nombre = "2. DESARROLLO";
+            } else if (upper.contains("CONCLUSION") || upper.contains("CIERRE") || upper.contains("SINTESIS")) {
+                tipo = TipoMomentoPedagogico.CIERRE;
+                nombre = "3. CIERRE";
             }
             if (tipo == null) continue;
 
@@ -195,12 +201,23 @@ public class PlanesClaseExcelParser {
             if (durStr.isEmpty()) durStr = cellStr(row, 6);
             if (durStr.isEmpty()) durStr = cellStr(row, 8);
 
+            // Skip rows where both actividad and durStr are empty
+            if (actividad.isBlank() && durStr.isBlank()) {
+                continue;
+            }
+
+            // Skip generic header titles in actividad
+            String actUpper = actividad.toUpperCase().trim();
+            if (GENERIC_MOMENT_HEADERS.contains(actUpper) || actUpper.equals(upper)) {
+                continue;
+            }
+
             int duracion = parseDuracion(durStr);
-            if (duracion == 0 && (tipo == TipoMomentoPedagogico.INTRODUCCION || tipo == TipoMomentoPedagogico.INICIO)) {
+            if (duracion == 0 && tipo == TipoMomentoPedagogico.INICIO) {
                 duracion = 25;
-            } else if (duracion == 0 && (tipo == TipoMomentoPedagogico.CUERPO || tipo == TipoMomentoPedagogico.DESARROLLO)) {
+            } else if (duracion == 0 && tipo == TipoMomentoPedagogico.DESARROLLO) {
                 duracion = 100;
-            } else if (duracion == 0 && (tipo == TipoMomentoPedagogico.CONCLUSION || tipo == TipoMomentoPedagogico.CIERRE)) {
+            } else if (duracion == 0 && tipo == TipoMomentoPedagogico.CIERRE) {
                 duracion = 55;
             }
 
@@ -219,36 +236,22 @@ public class PlanesClaseExcelParser {
     private List<ScuMomentoPedagogicoDto> defaultMomentos() {
         List<ScuMomentoPedagogicoDto> list = new ArrayList<>();
         list.add(ScuMomentoPedagogicoDto.builder()
-                .tipoMomento(TipoMomentoPedagogico.INTRODUCCION)
-                .nombreMomento("1. INTRODUCCIÓN")
+                .tipoMomento(TipoMomentoPedagogico.INICIO)
+                .nombreMomento("1. INICIO")
                 .duracionMin(25)
                 .actividadesDocente("Activación cognitiva, motivación situacional y reactivación de conocimientos previos")
                 .actividadesEstudiante("Participación activa en preguntas orientadoras y reflexión inicial")
                 .indicadorEvaluacion("Identificación de saberes previos").build());
         list.add(ScuMomentoPedagogicoDto.builder()
-                .tipoMomento(TipoMomentoPedagogico.RESULTADOS_LOGROS)
-                .nombreMomento("2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS")
-                .duracionMin(0)
-                .actividadesDocente("Socialización de competencias y criterios evaluativos")
-                .actividadesEstudiante("Comprensión de metas de logro de la sesión")
-                .indicadorEvaluacion("Claridad en metas de aprendizaje").build());
-        list.add(ScuMomentoPedagogicoDto.builder()
-                .tipoMomento(TipoMomentoPedagogico.CONTENIDOS)
-                .nombreMomento("3. CONTENIDOS DE LA CLASE")
-                .duracionMin(0)
-                .actividadesDocente("Presentación del esquema temático y conceptual")
-                .actividadesEstudiante("Toma de apuntes e identificación de términos clave")
-                .indicadorEvaluacion("Esquematización conceptual").build());
-        list.add(ScuMomentoPedagogicoDto.builder()
-                .tipoMomento(TipoMomentoPedagogico.CUERPO)
-                .nombreMomento("4. CUERPO DE CONTENIDOS")
+                .tipoMomento(TipoMomentoPedagogico.DESARROLLO)
+                .nombreMomento("2. DESARROLLO")
                 .duracionMin(100)
                 .actividadesDocente("Exposición dialogada, modelado de problemas y guía en laboratorio")
                 .actividadesEstudiante("Resolución de ejercicios prácticos y trabajo colaborativo")
                 .indicadorEvaluacion("Aplicación correcta de conceptos en ejercicios").build());
         list.add(ScuMomentoPedagogicoDto.builder()
-                .tipoMomento(TipoMomentoPedagogico.CONCLUSION)
-                .nombreMomento("5. CONCLUSIÓN O CIERRE")
+                .tipoMomento(TipoMomentoPedagogico.CIERRE)
+                .nombreMomento("3. CIERRE")
                 .duracionMin(55)
                 .actividadesDocente("Retroalimentación, síntesis y evaluación sumativa")
                 .actividadesEstudiante("Conclusiones individuales y entrega de producto")

@@ -12,6 +12,8 @@ import bo.edu.unitepc.sisa.infrastructure.office.ProgramaAnaliticoDocxParser;
 import bo.edu.unitepc.sisa.service.command.ScuExportPacXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPlanClasesXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportProgramaDocxCmd;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,6 +32,8 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/api/v1/office", "/api/v1/system/office"})
 public class ScuOfficeController {
+
+    private static final Logger log = LoggerFactory.getLogger(ScuOfficeController.class);
 
     private final ScuExportPacXlsxCmd exportPacCmd;
     private final ScuExportPlanClasesXlsxCmd exportPlanClasesCmd;
@@ -167,6 +171,14 @@ public class ScuOfficeController {
         try {
             Long effectiveAsignacionId = (asignacionId != null) ? asignacionId : 1L;
             ScuProgramaAnaliticoRequest parsed = this.programaParser.parseDocx(file.getInputStream(), effectiveAsignacionId);
+            if (parsed.getUnidades() != null) {
+                for (var u : parsed.getUnidades()) {
+                    if (u.getTemas() == null || u.getTemas().isEmpty()) {
+                        log.warn("Advertencia de importación: La unidad {} ('{}') no contiene temas extraídos.",
+                                u.getNumeroUnidad(), u.getTitulo());
+                    }
+                }
+            }
             return ResponseEntity.ok(
                     ResourceBuilder.of(parsed)
                             .message("Documento Programa Analítico importado exitosamente")
