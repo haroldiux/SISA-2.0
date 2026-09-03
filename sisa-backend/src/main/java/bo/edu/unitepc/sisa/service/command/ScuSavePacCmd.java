@@ -4,6 +4,9 @@ import bo.edu.unitepc.sisa.api.request.ScuPacRequest;
 import bo.edu.unitepc.sisa.api.request.ScuSesionMatriz7Dto;
 import bo.edu.unitepc.sisa.api.response.ScuPacResponse;
 import bo.edu.unitepc.sisa.domain.enums.EstadoPlanificacion;
+import bo.edu.unitepc.sisa.domain.enums.HitoEvaluativo;
+import bo.edu.unitepc.sisa.domain.enums.InstrumentoEvaluacion;
+import bo.edu.unitepc.sisa.domain.enums.TipoSesion;
 import bo.edu.unitepc.sisa.domain.model.AsignacionDocente;
 import bo.edu.unitepc.sisa.domain.model.Pac;
 import bo.edu.unitepc.sisa.domain.model.SesionMatriz7;
@@ -14,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,19 +64,19 @@ public class ScuSavePacCmd {
         if (request.getMatriz7() != null) {
             for (ScuSesionMatriz7Dto sDto : request.getMatriz7()) {
                 SesionMatriz7 s = new SesionMatriz7();
-                s.setSemana(sDto.getSemana());
-                s.setNroSesion(sDto.getNroSesion());
-                s.setFechaProgramada(sDto.getFechaProgramada());
-                s.setTipoSesion(sDto.getTipoSesion());
-                s.setUnidadTematica(sDto.getUnidadTematica());
-                s.setContenidoEspecifico(sDto.getContenidoEspecifico());
-                s.setSaberConceptual(sDto.getSaberConceptual());
-                s.setSaberProcedimental(sDto.getSaberProcedimental());
-                s.setSaberActitudinal(sDto.getSaberActitudinal());
-                s.setCriterioDesempeno(sDto.getCriterioDesempeno());
-                s.setEvidenciaAprendizaje(sDto.getEvidenciaAprendizaje());
-                s.setInstrumentoEvaluacion(sDto.getInstrumentoEvaluacion());
-                s.setHitoEvaluativo(sDto.getHitoEvaluativo());
+                s.setSemana(sDto.getSemana() != null ? sDto.getSemana() : 1);
+                s.setNroSesion(sDto.getNroSesion() != null ? sDto.getNroSesion() : 1);
+                s.setFechaProgramada(sDto.getFechaProgramada() != null ? sDto.getFechaProgramada() : LocalDate.now());
+                s.setTipoSesion(sDto.getTipoSesion() != null ? sDto.getTipoSesion() : TipoSesion.TEORICA);
+                s.setUnidadTematica(sDto.getUnidadTematica() != null ? sDto.getUnidadTematica() : "");
+                s.setContenidoEspecifico(sDto.getContenidoEspecifico() != null ? sDto.getContenidoEspecifico() : "");
+                s.setSaberConceptual(sDto.getSaberConceptual() != null ? sDto.getSaberConceptual() : "");
+                s.setSaberProcedimental(sDto.getSaberProcedimental() != null ? sDto.getSaberProcedimental() : "");
+                s.setSaberActitudinal(sDto.getSaberActitudinal() != null ? sDto.getSaberActitudinal() : "");
+                s.setCriterioDesempeno(sDto.getCriterioDesempeno() != null ? sDto.getCriterioDesempeno() : "");
+                s.setEvidenciaAprendizaje(sDto.getEvidenciaAprendizaje() != null ? sDto.getEvidenciaAprendizaje() : "");
+                s.setInstrumentoEvaluacion(sDto.getInstrumentoEvaluacion() != null ? sDto.getInstrumentoEvaluacion() : InstrumentoEvaluacion.RUBRICA);
+                s.setHitoEvaluativo(sDto.getHitoEvaluativo() != null ? sDto.getHitoEvaluativo() : HitoEvaluativo.REGULAR);
                 pac.addSesion(s);
             }
         }

@@ -178,7 +178,20 @@ public class PacExcelParser {
                         ut = !nroTema.isEmpty() ? nroTema : ("Unidad " + (Math.min((currentWeek - 1) / 5 + 1, 4)));
                     }
 
-                    String temaEsp = !titTema.isEmpty() ? titTema : (!nroTema.isEmpty() ? nroTema : ("Sesión " + nroSes));
+                    String temaEsp;
+                    if (!nroTema.isEmpty() && !titTema.isEmpty()) {
+                        String cleanNro = nroTema.trim();
+                        if (!cleanNro.endsWith(":") && !cleanNro.endsWith("-")) {
+                            cleanNro += ":";
+                        }
+                        temaEsp = cleanNro + " " + titTema.trim();
+                    } else if (!titTema.isEmpty()) {
+                        temaEsp = titTema.trim();
+                    } else if (!nroTema.isEmpty()) {
+                        temaEsp = nroTema.trim();
+                    } else {
+                        temaEsp = "";
+                    }
 
                     TipoSesion t = (nroTema + " " + titTema).toUpperCase().contains("PRACT") ? TipoSesion.PRACTICA : TipoSesion.TEORICA;
 
@@ -332,8 +345,8 @@ public class PacExcelParser {
         if (v == null || v.isBlank()) return InstrumentoEvaluacion.RUBRICA;
         String n = v.toUpperCase();
         if (n.contains("COTEJO")) return InstrumentoEvaluacion.LISTA_COTEJO;
-        if (n.contains("ESCRIT") || n.contains("EXAMEN")) return InstrumentoEvaluacion.PRUEBA_ESCRITA;
-        if (n.contains("ESTIMAT")) return InstrumentoEvaluacion.ESCALA_ESTIMATIVA;
+        if (n.contains("ESCRIT") || n.contains("EXAMEN") || n.contains("PRUEBA") || n.contains("CUESTIONARIO") || n.contains("SOLUCIONARIO") || n.contains("CLAVE")) return InstrumentoEvaluacion.PRUEBA_ESCRITA;
+        if (n.contains("ESTIMAT") || n.contains("ESCALA") || n.contains("RANGO") || n.contains("APRECIACI") || n.contains("GUÍA") || n.contains("GUIA") || n.contains("REGISTRO") || n.contains("360")) return InstrumentoEvaluacion.ESCALA_ESTIMATIVA;
         return InstrumentoEvaluacion.RUBRICA;
     }
 

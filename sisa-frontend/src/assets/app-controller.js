@@ -1566,7 +1566,7 @@
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-relaxed overflow-hidden resize-none">RUBRICA</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
       `;
       tbody.appendChild(tr);
       setTimeout(() => {
@@ -2879,6 +2879,9 @@ window.populatePacDom = function(data) {
     data.matriz7.forEach(s => {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+      const displayInstrumento = (s.evidenciaAprendizaje !== undefined && s.evidenciaAprendizaje !== null)
+        ? s.evidenciaAprendizaje
+        : (s.instrumentoEvaluacion || '');
       tr.innerHTML = `
         <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.semana || ''))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs"></td>
         <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.nroSesion || ''))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-600 dark:text-brand-400 text-xs"></td>
@@ -2888,7 +2891,7 @@ window.populatePacDom = function(data) {
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberProcedimental || '')}</textarea></td>
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberActitudinal || '')}</textarea></td>
         <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.criterioDesempeno || '')}</textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.instrumentoEvaluacion || 'RUBRICA')}</textarea></td>
+        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(displayInstrumento)}</textarea></td>
       `;
       tbody.appendChild(tr);
     });
@@ -2901,6 +2904,14 @@ window.populatePacDom = function(data) {
   }
 };
 
+window.classifyInstrumentoEnum = function(text) {
+  if (!text) return 'RUBRICA';
+  const upper = text.toUpperCase();
+  if (upper.includes('COTEJO')) return 'LISTA_COTEJO';
+  if (upper.includes('EXAM') || upper.includes('ESCRIT') || upper.includes('PRUEBA') || upper.includes('CUESTIONARIO') || upper.includes('SOLUCIONARIO') || upper.includes('CLAVE')) return 'PRUEBA_ESCRITA';
+  if (upper.includes('ESTIMAT') || upper.includes('ESCALA') || upper.includes('RANGO') || upper.includes('APRECIACI') || upper.includes('GUÍA') || upper.includes('GUIA') || upper.includes('REGISTRO') || upper.includes('360')) return 'ESCALA_ESTIMATIVA';
+  return 'RUBRICA';
+};
 
 window.extractCurrentCronogramaFromDom = function() {
   const tbody = document.getElementById('cronograma-table-body');
@@ -2910,6 +2921,7 @@ window.extractCurrentCronogramaFromDom = function() {
   rows.forEach(r => {
     const inputs = r.querySelectorAll('input, textarea');
     if (inputs.length >= 9) {
+      const instVal = (inputs[8].value || '').trim();
       sessions.push({
         semana: parseInt(inputs[0].value) || 1,
         nroSesion: parseInt(inputs[1].value) || 1,
@@ -2919,7 +2931,8 @@ window.extractCurrentCronogramaFromDom = function() {
         saberProcedimental: inputs[5].value || '',
         saberActitudinal: inputs[6].value || '',
         criterioDesempeno: inputs[7].value || '',
-        instrumentoEvaluacion: inputs[8].value || 'RUBRICA'
+        evidenciaAprendizaje: instVal,
+        instrumentoEvaluacion: window.classifyInstrumentoEnum(instVal)
       });
     }
   });

@@ -45,30 +45,13 @@ public class ScuSesionMatriz7Dto {
     @NotNull(message = "El tipo de sesión es obligatorio")
     private TipoSesion tipoSesion;
 
-    @NotBlank(message = "La unidad temática es obligatoria")
     private String unidadTematica;
-
-    @NotBlank(message = "El contenido específico es obligatorio")
     private String contenidoEspecifico;
-
-    @NotBlank(message = "El saber conceptual es obligatorio")
     private String saberConceptual;
-
-    @NotBlank(message = "El saber procedimental es obligatorio")
     private String saberProcedimental;
-
-    @NotBlank(message = "El saber actitudinal es obligatorio")
     private String saberActitudinal;
-
-    @NotBlank(message = "El criterio de desempeño es obligatorio")
     private String criterioDesempeno;
-
-    @NotBlank(message = "La evidencia de aprendizaje es obligatoria")
     private String evidenciaAprendizaje;
-
-    @NotNull(message = "El instrumento de evaluación es obligatorio")
     private InstrumentoEvaluacion instrumentoEvaluacion;
-
-    @NotNull(message = "El hito evaluativo es obligatorio")
     private HitoEvaluativo hitoEvaluativo;
 }
