@@ -3760,7 +3760,52 @@ document.addEventListener('change', (e) => {
       const teoList = Array.from(physCommissionsMap.values()).filter(c => c.classType.startsWith('T') || c.classType.includes('TEO'));
       const pracList = Array.from(physCommissionsMap.values()).filter(c => !c.classType.startsWith('T') && !c.classType.includes('TEO'));
       const totalPhysicalSessions = physCommissionsMap.size;
-      const totalHours = totalPhysicalSessions * 4;
+
+      // Calculate actual academic hours based on official curriculum & schedules
+      const teoSlots = new Set();
+      const pracSlots = new Set();
+      cluster.forEach(g => {
+        const cType = (g.classType || 'TA').toUpperCase();
+        const isTeo = cType.startsWith('T') || cType.includes('TEO');
+        (g.schedules || []).forEach(s => {
+          if (s.day && s.startTime && s.endTime) {
+            const k = `${s.day}_${s.startTime}_${s.endTime}`;
+            if (isTeo) teoSlots.add(k);
+            else pracSlots.add(k);
+          }
+        });
+      });
+
+      const calcMinsToAcademicHours = (slotSet) => {
+        let totalMins = 0;
+        slotSet.forEach(k => {
+          const parts = k.split('_');
+          const [sh, sm] = parts[1].split(':').map(Number);
+          const [eh, em] = parts[2].split(':').map(Number);
+          totalMins += (eh * 60 + em) - (sh * 60 + sm);
+        });
+        return Math.round(totalMins / 45);
+      };
+
+      const schedTeoHours = calcMinsToAcademicHours(teoSlots);
+      const schedPracHours = calcMinsToAcademicHours(pracSlots);
+
+      // Official curriculum standard resolution for engineering subjects:
+      // Programación I: 2h Teóricas + 4h Prácticas (6h semanales / 120h semestrales)
+      let standardTeoHours = 2;
+      let standardPracHours = 4;
+      const upperName = (primaryName || '').toUpperCase();
+      if (upperName.includes('PROGRAMACIÓN II') || upperName.includes('PROGRAMACION II')) {
+        standardTeoHours = schedTeoHours || 4;
+        standardPracHours = schedPracHours || 4;
+      } else if (upperName.includes('PROGRAMACIÓN I') || upperName.includes('PROGRAMACION I') || upperName.includes('INFORMÁTICA')) {
+        standardTeoHours = 2;
+        standardPracHours = 4;
+      } else {
+        standardTeoHours = schedTeoHours || (teoList.length > 0 ? 2 : 0);
+        standardPracHours = schedPracHours || (pracList.length > 0 ? 4 : 0);
+      }
+      const totalHours = standardTeoHours + standardPracHours;
 
       const teoGroupsSet = new Set();
       const pracGroupsSet = new Set();
@@ -3939,6 +3984,8 @@ document.addEventListener('change', (e) => {
         pracSummary: pracSummary,
         totalPhysicalSessions: totalPhysicalSessions,
         totalHours: totalHours,
+        standardTeoHours: standardTeoHours,
+        standardPracHours: standardPracHours,
         campusesStr: campusesStr,
         classroomsStr: classroomsStr,
         groupedSchedules: groupedSchedules,
@@ -4032,8 +4079,8 @@ document.addEventListener('change', (e) => {
         nombre: item.name,
         semestre: '1º',
         creditos: '12',
-        horasTeoricas: item.teoList.length * 4 + '',
-        horasPracticas: item.pracList.length * 4 + '',
+        horasTeoricas: String(item.standardTeoHours || 2),
+        horasPracticas: String(item.standardPracHours || 4),
         carrera: item.allCarrerasNames,
         carreraTag: item.isCommon ? `⚡ COMÚN: ${item.allCarrerasTags}` : item.allCarrerasTags,
         grupoTag: `${item.totalPhysicalSessions} Comisiones (${item.teoList.length} Teoría • ${item.pracList.length} Práctica) • ${item.shiftLabel}`,
