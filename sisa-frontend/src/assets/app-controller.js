@@ -1992,6 +1992,16 @@ window.renderAnaliticoUnidades = function() {
       </div>
     `;
   } else {
+    // Enforce global correlative numbering across all learning units (Unidad 1: Tema 1..N, Unidad 2: Tema N+1..M, etc.)
+    let globalTemaSeq = 1;
+    activeAnaliticoUnidades.forEach(u => {
+      if (u.temas && Array.isArray(u.temas)) {
+        u.temas.forEach(t => {
+          t.numeroTema = globalTemaSeq++;
+        });
+      }
+    });
+
     bodyHtml = '<div id="unidades-analiticas-container" class="space-y-4 pt-3">';
     activeAnaliticoUnidades.forEach((u, uIdx) => {
       let temasHtml = '';
@@ -2000,7 +2010,7 @@ window.renderAnaliticoUnidades = function() {
           <div class="p-3.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2 shadow-xs">
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 flex-1">
-                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[11px] whitespace-nowrap">Tema ${t.numeroTema || (tIdx + 1)}:</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[11px] whitespace-nowrap">Tema ${t.numeroTema}:</span>
                 <input type="text" value="${escapeHtml(t.titulo || '')}" oninput="window.updateTemaTitle(${uIdx}, ${tIdx}, this.value)" placeholder="Título o nombre del tema analítico..." class="flex-1 p-1.5 rounded border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:bg-white focus:border-blue-500">
               </div>
               <button onclick="window.removeAnaliticoTema(${uIdx}, ${tIdx})" type="button" class="px-2 py-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors" title="Eliminar este tema">
@@ -2109,20 +2119,38 @@ window.renderAnaliticoBibliografia = function(biblioList) {
 };
 
 
+window.renumberAllTemasCorrelative = function() {
+  let seq = 1;
+  activeAnaliticoUnidades.forEach(u => {
+    if (u.temas && Array.isArray(u.temas)) {
+      u.temas.forEach(t => {
+        t.numeroTema = seq++;
+      });
+    }
+  });
+};
+
 window.addAnaliticoUnidad = function() {
   const newNum = activeAnaliticoUnidades.length + 1;
+  let totalTemas = 0;
+  activeAnaliticoUnidades.forEach(u => {
+    totalTemas += (u.temas || []).length;
+  });
+  const nextTemaNum = totalTemas + 1;
+
   activeAnaliticoUnidades.push({
     numeroUnidad: newNum,
     titulo: 'Nueva Unidad ' + newNum,
     horasAcademicas: 20,
     temas: [
       {
-        numeroTema: 1,
-        titulo: 'Tema 1: Introducción y Fundamentos',
+        numeroTema: nextTemaNum,
+        titulo: 'Introducción y Fundamentos',
         contenido: '• Conceptos básicos y contextualización de la temática.\n• Aplicaciones iniciales.'
       }
     ]
   });
+  window.renumberAllTemasCorrelative();
   window.renderAnaliticoUnidades();
   
   // Synchronize with PAC Elementos de Competencia
@@ -2140,6 +2168,7 @@ window.removeAnaliticoUnidad = function(uIdx) {
   if (confirm('¿Estás seguro de eliminar la Unidad ' + (uIdx + 1) + '?')) {
     activeAnaliticoUnidades.splice(uIdx, 1);
     activeAnaliticoUnidades.forEach((u, i) => u.numeroUnidad = i + 1);
+    window.renumberAllTemasCorrelative();
     window.renderAnaliticoUnidades();
 
     // Synchronize with PAC Elementos de Competencia
@@ -2159,12 +2188,19 @@ window.addAnaliticoTema = function(uIdx) {
   const unit = activeAnaliticoUnidades[uIdx];
   if (!unit) return;
   if (!unit.temas) unit.temas = [];
-  const nextTemaNum = unit.temas.length + 1;
+
+  let priorTemas = 0;
+  for (let i = 0; i < uIdx; i++) {
+    priorTemas += (activeAnaliticoUnidades[i].temas || []).length;
+  }
+  const currentTemaNum = priorTemas + unit.temas.length + 1;
+
   unit.temas.push({
-    numeroTema: nextTemaNum,
-    titulo: 'Tema ' + nextTemaNum + ': Nuevo Tema Analítico',
+    numeroTema: currentTemaNum,
+    titulo: 'Nuevo Tema Analítico',
     contenido: '• Desglose de contenidos y puntos a desarrollar.'
   });
+  window.renumberAllTemasCorrelative();
   window.renderAnaliticoUnidades();
   window.scheduleAutoSave(500);
 };
@@ -2173,7 +2209,7 @@ window.removeAnaliticoTema = function(uIdx, tIdx) {
   const unit = activeAnaliticoUnidades[uIdx];
   if (!unit || !unit.temas) return;
   unit.temas.splice(tIdx, 1);
-  unit.temas.forEach((t, i) => t.numeroTema = i + 1);
+  window.renumberAllTemasCorrelative();
   window.renderAnaliticoUnidades();
   window.scheduleAutoSave(500);
 };
@@ -2335,6 +2371,8 @@ window.saveCurrentDocenteData = async function(silent = false) {
     });
   });
 
+  window.renumberAllTemasCorrelative();
+
   const programaPayload = {
     asignacionId: activeAsignacionId || defData.asignacionId || 1,
     codigoAsignatura: codigo,
@@ -2453,6 +2491,7 @@ window.loadSavedDocenteData = function(materiaKey) {
   if (document.getElementById('programa-sistema-evaluacion')) document.getElementById('programa-sistema-evaluacion').value = pData.sistemaEvaluacion || '';
 
   activeAnaliticoUnidades = (pData.unidades && pData.unidades.length > 0) ? JSON.parse(JSON.stringify(pData.unidades)) : [];
+  window.renumberAllTemasCorrelative();
   window.renderAnaliticoUnidades();
   window.renderAnaliticoBibliografia(pData.bibliografia || []);
 
@@ -2726,6 +2765,7 @@ window.importProgramaDocx = function() {
       } else {
         activeAnaliticoUnidades = [];
       }
+      window.renumberAllTemasCorrelative();
       window.renderAnaliticoUnidades();
 
       // Cleanly replace bibliografía with imported data

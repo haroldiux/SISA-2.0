@@ -201,6 +201,16 @@ public class ProgramaAnaliticoDocxParser {
             currentTema.setContenido(String.join("\n", currentPuntos));
         }
 
+        // Global correlative numbering for all topics across all learning units (Unidad 1: Tema 1..N, Unidad 2: Tema N+1..M)
+        int globalTemaSeq = 1;
+        for (ScuUnidadAprendizajeDto u : list) {
+            if (u.getTemas() != null) {
+                for (ScuTemaAnaliticoDto t : u.getTemas()) {
+                    t.setNumeroTema(globalTemaSeq++);
+                }
+            }
+        }
+
         for (ScuUnidadAprendizajeDto u : list) {
             if (u.getTemas() != null && !u.getTemas().isEmpty()) {
                 StringBuilder sb = new StringBuilder();
