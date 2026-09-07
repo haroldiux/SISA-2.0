@@ -3247,12 +3247,12 @@ document.addEventListener('change', (e) => {
       if (selector) {
         selector.innerHTML = '';
 
-        // Exclusively 4 real Cochabamba teachers from official SEA Gateway
+        // Exclusively 4 real Cochabamba teachers from official SEA Gateway requested by user
         const targetDocentes = [
           { ci: '3065087', tag: '💻 [INGENIERÍA]', label: 'ROSMERY LUIZAGA SALINAS' },
-          { ci: '6600808', tag: '💻 [SISTEMAS]', label: 'WALTER JOSE CAZAS CASTRO' },
-          { ci: '4421998', tag: '🩺 [MEDICINA]', label: 'MARTIN XAVIER SANCHEZ FLORES' },
-          { ci: '7906983', tag: '📊 [FACEFA]', label: 'RUBEN SERGIO VELASQUEZ ADRIAZOLA' }
+          { ci: '9465510', tag: '💻 [SISTEMAS]', label: 'HAROLD MARCO ANTONIO ROJAS TORRES' },
+          { ci: '6420833', tag: '🗣️ [IDIOMAS / FACEFA]', label: 'MANUEL CAMACHO ARCE' },
+          { ci: '6535314', tag: '📐 [CIENCIAS EXACTAS]', label: 'EDSON LUIS BASCOPE GALARZA' }
         ];
 
         const featuredGroup = document.createElement('optgroup');
