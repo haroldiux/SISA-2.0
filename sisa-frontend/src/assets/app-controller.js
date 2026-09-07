@@ -3764,17 +3764,26 @@ document.addEventListener('change', (e) => {
 
       const teoGroupsSet = new Set();
       const pracGroupsSet = new Set();
+      const teoDisplayList = [];
+      const pracDisplayList = [];
+
       cluster.forEach(g => {
         const pName = g.code || g.name || 'G1';
         const cType = (g.classType || 'TA').toUpperCase();
+        const isNightGrp = (g.schedules || []).some(s => s.startTime && parseInt(s.startTime.split(':')[0], 10) >= 18);
+        const tag = isNightGrp ? `${pName} 🌙` : pName;
         if (cType.startsWith('T') || cType.includes('TEO')) {
           teoGroupsSet.add(pName);
+          if (!teoDisplayList.includes(tag)) teoDisplayList.push(tag);
         } else {
           pracGroupsSet.add(pName);
+          if (!pracDisplayList.includes(tag)) pracDisplayList.push(tag);
         }
       });
       const teoCodes = [...teoGroupsSet].sort().join(', ');
       const pracCodes = [...pracGroupsSet].sort().join(', ');
+      const teoDisplayCodes = teoDisplayList.join(', ');
+      const pracDisplayCodes = pracDisplayList.join(', ');
       const allGroupsCodes = [...new Set([...teoGroupsSet, ...pracGroupsSet])].sort().join(', ');
       const totalGroupsInCluster = cluster.length;
 
@@ -3886,22 +3895,27 @@ document.addEventListener('change', (e) => {
       const pracRoomsStr = [...pracRoomsSet].join(', ') || (pracList.length > 0 ? 'Laboratorio' : 'N/A');
       const codesList = [...new Set(officialCodes.filter(Boolean))];
 
-      // Detect shift
+      // Detect shift & night schedule
       const startTimes = cluster.flatMap(g => (g.schedules || []).map(s => s.startTime).filter(Boolean));
+      const hasNightSchedule = startTimes.some(st => parseInt(st.split(':')[0], 10) >= 18);
       const earliestTime = startTimes.sort()[0] || '08:00';
       const earliestHour = parseInt(earliestTime.split(':')[0], 10);
       let shiftLabel = '';
-      if (earliestHour >= 18) {
+      if (hasNightSchedule || earliestHour >= 18) {
         shiftLabel = 'Turno Noche';
       } else if (earliestHour >= 13) {
         shiftLabel = 'Turno Tarde';
       } else {
         shiftLabel = 'Turno Mañana';
       }
+      const isNight = (shiftLabel === 'Turno Noche');
 
       const teacherDoc = String(docente.numeroDocumento || docente.ci || 'doc').trim();
       const cleanCode = (officialCode || primaryName || 'mat').replace(/\s+/g, '_').replace(/[\/\\?%*:|"<>]/g, '-');
-      const uniqueKey = `${teacherDoc}_${cleanCode}`;
+      const carTag = isCommon ? 'COMUN_' + carrerasArr.slice().sort().join('_') : carrerasArr.slice().sort().join('_');
+      const shiftTag = shiftLabel.replace(/\s+/g, '_');
+      const grpTag = allGroupsCodes.replace(/[\s,]+/g, '_');
+      const uniqueKey = `${teacherDoc}_${cleanCode}_${carTag}_${shiftTag}_${grpTag}`;
 
       return {
         key: uniqueKey,
@@ -3917,6 +3931,10 @@ document.addEventListener('change', (e) => {
         pracList: pracList,
         teoCodes: teoCodes,
         pracCodes: pracCodes,
+        teoDisplayCodes: teoDisplayCodes,
+        pracDisplayCodes: pracDisplayCodes,
+        isNight: isNight,
+        hasNightSchedule: hasNightSchedule,
         teoSummary: teoSummary,
         pracSummary: pracSummary,
         totalPhysicalSessions: totalPhysicalSessions,
@@ -3940,11 +3958,21 @@ document.addEventListener('change', (e) => {
       if (!a.isCommon && b.isCommon) return 1;
       return a.name.localeCompare(b.name);
     });
-    // Ensure all items retain their unique teacher-scoped composite key
+
+    // Ensure all items retain their unique teacher-scoped composite key (guaranteed no collisions!)
     const teacherDoc = String(docente.numeroDocumento || docente.ci || 'doc').trim();
-    items.forEach((it) => {
+    const seenItemKeys = new Set();
+    items.forEach((it, idx) => {
       const cleanCode = (it.code || it.name || 'mat').replace(/\s+/g, '_').replace(/[\/\\?%*:|"<>]/g, '-');
-      it.key = `${teacherDoc}_${cleanCode}`;
+      const carTag = it.isCommon ? 'COMUN_' + (it.carrerasCodes || []).slice().sort().join('_') : (it.carrerasCodes || []).slice().sort().join('_');
+      const shiftTag = (it.shiftLabel || 'REG').replace(/\s+/g, '_');
+      const grpTag = (it.allGroupsCodes || '').replace(/[\s,]+/g, '_');
+      let baseKey = `${teacherDoc}_${cleanCode}_${carTag}_${shiftTag}_${grpTag}`;
+      if (seenItemKeys.has(baseKey)) {
+        baseKey = `${baseKey}_${idx}`;
+      }
+      seenItemKeys.add(baseKey);
+      it.key = baseKey;
     });
 
     // Calculate totals across all subjects
@@ -4008,10 +4036,10 @@ document.addEventListener('change', (e) => {
         horasPracticas: item.pracList.length * 4 + '',
         carrera: item.allCarrerasNames,
         carreraTag: item.isCommon ? `⚡ COMÚN: ${item.allCarrerasTags}` : item.allCarrerasTags,
-        grupoTag: `${item.totalPhysicalSessions} Comisiones (${item.teoList.length} Teoría • ${item.pracList.length} Práctica)`,
-        breadcrumb: `${item.code} ${item.name}`,
-        title: `${item.code} • ${item.name}`,
-        meta: `<span><strong class="text-white">${item.totalHours}</strong> Horas Semanales</span><span>•</span><span>Campus: <strong class="text-white">${item.campusesStr}</strong></span><span>•</span><span><strong class="text-white">${item.groupedSchedules.length}</strong> Bloques Horarios Oficiales</span>`,
+        grupoTag: `${item.totalPhysicalSessions} Comisiones (${item.teoList.length} Teoría • ${item.pracList.length} Práctica) • ${item.shiftLabel}`,
+        breadcrumb: `${item.code} ${item.name} (${item.shiftLabel})`,
+        title: `${item.code} • ${item.name} (${item.shiftLabel})`,
+        meta: `<span><strong class="text-white">${item.totalHours}</strong> Horas Semanales</span><span>•</span><span>Campus: <strong class="text-white">${item.campusesStr}</strong></span><span>•</span><span><strong class="text-white">${item.groupedSchedules.length}</strong> Bloques Horarios Oficiales</span><span>•</span><span class="${item.isNight ? 'text-amber-300 font-extrabold' : 'text-slate-300'}">${item.isNight ? '🌙 ' : ''}${item.shiftLabel}</span>`,
         caracterizacion: '',
         macroCompetencia: '',
         sistemaEvaluacion: '',
@@ -4025,7 +4053,8 @@ document.addEventListener('change', (e) => {
         teoRoomsStr: item.teoRoomsStr,
         pracRoomsStr: item.pracRoomsStr,
         codesList: item.codesList,
-        shiftLabel: item.shiftLabel
+        shiftLabel: item.shiftLabel,
+        isNight: item.isNight
       };
 
       // Distinct Days Badges for the Compact Card
@@ -4033,6 +4062,12 @@ document.addEventListener('change', (e) => {
       const daysBadges = uniqueDays.length > 0 
         ? uniqueDays.map(d => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold border border-brand-200 dark:border-brand-800/60 text-[9px]">${d}</span>`).join(' ')
         : '<span class="text-[9px] text-slate-400">Regular</span>';
+
+      const shiftBadgeHtml = item.isNight
+        ? `<span class="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold bg-indigo-950 text-indigo-200 border border-indigo-700/80 shadow-xs flex items-center gap-1"><span class="text-amber-300">🌙</span> NOCTURNO</span>`
+        : (item.shiftLabel === 'Turno Tarde'
+          ? `<span class="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1">⛅ Tarde</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-700 flex items-center gap-1">☀️ Mañana</span>`);
 
       // HTML for Top Horizontal Card (Expanded horizontally, compact vertically):
       cardsHtml += `
@@ -4042,17 +4077,21 @@ document.addEventListener('change', (e) => {
             <!-- Columna Izquierda (sm:col-span-7): Carrera, Título, Códigos y Grupos -->
             <div class="sm:col-span-7 space-y-1.5 min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[260px]">
+                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[240px]">
                   ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
                 </span>
+                ${shiftBadgeHtml}
                 <span class="px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
                   ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
                 </span>
               </div>
 
               <!-- Nombre Principal de la Materia -->
-              <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-snug line-clamp-1" title="${item.name}">
-                ${item.name}
+              <h3 class="text-sm font-black text-slate-900 dark:text-white tracking-tight leading-snug line-clamp-1 flex items-center gap-1.5" title="${item.name} (${item.shiftLabel})">
+                <span class="truncate">${item.name}</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${item.isNight ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}">
+                  ${item.shiftLabel}
+                </span>
               </h3>
 
               <!-- Códigos & Grupos a Cargo -->
@@ -4060,9 +4099,9 @@ document.addEventListener('change', (e) => {
                 <div class="flex items-center gap-1">
                   ${item.codesList.map(c => `<span class="px-1.5 py-0.5 rounded bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-400 font-mono font-bold text-[10px] border border-brand-200/70 dark:border-brand-800/70">${c}</span>`).join('')}
                 </div>
-                <div class="flex items-center gap-1 font-mono text-[9.5px] font-bold">
-                  ${item.teoCodes ? `<span class="px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60">Teo: ${item.teoCodes}</span>` : ''}
-                  ${item.pracCodes ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60">Prác: ${item.pracCodes}</span>` : ''}
+                <div class="flex items-center gap-1 font-mono text-[9.5px] font-bold flex-wrap">
+                  ${item.teoDisplayCodes ? `<span class="px-1.5 py-0.5 rounded ${item.isNight ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60'}">Teo: ${item.teoDisplayCodes}</span>` : ''}
+                  ${item.pracDisplayCodes ? `<span class="px-1.5 py-0.5 rounded ${item.isNight ? 'bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/60'}">Prác: ${item.pracDisplayCodes}</span>` : ''}
                 </div>
               </div>
             </div>
@@ -4108,9 +4147,14 @@ document.addEventListener('change', (e) => {
           </div>
           <div class="p-1">
             <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
-              <div class="truncate">
-                <div class="truncate font-bold text-slate-900 dark:text-white">${item.name} ${!item.isCommon && item.shiftLabel ? `<span class="text-[10px] font-normal text-slate-400">(${item.shiftLabel})</span>` : ''}</div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${item.teoList.length} Teo • ${item.pracList.length} Prác (${item.totalHours}h)</div>
+              <div class="truncate w-full pr-1">
+                <div class="truncate font-bold text-slate-900 dark:text-white flex items-center justify-between gap-1">
+                  <span class="truncate">${item.name}</span>
+                  <span class="text-[9px] font-extrabold px-1 rounded flex-shrink-0 ${item.isNight ? 'bg-indigo-900 text-indigo-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}">
+                    ${item.shiftLabel === 'Turno Noche' ? '🌙 Noche' : (item.shiftLabel === 'Turno Tarde' ? '⛅ Tarde' : '☀️ Mañana')}
+                  </span>
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${item.teoList.length} Teo • ${item.pracList.length} Prác (${item.totalHours}h) ${item.isNight ? '• <strong class="text-indigo-600 dark:text-indigo-400 font-bold">Nocturno</strong>' : ''}</div>
                 <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasNames : item.allCarrerasNames}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
@@ -4193,14 +4237,17 @@ document.addEventListener('change', (e) => {
 
         <!-- List of Time Slots and Classrooms -->
         <div class="space-y-2">
-          ${item.slots.map(sl => `
-            <div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-700/70 text-xs shadow-2xs">
-              <div class="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200">
-                <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-500"></i>
+          ${item.slots.map(sl => {
+            const isNightSlot = parseInt((sl.start || '00').split(':')[0], 10) >= 18;
+            return `
+            <div class="flex items-center justify-between py-1.5 px-2.5 rounded-lg ${isNightSlot ? 'bg-indigo-950/20 dark:bg-indigo-950/40 border-indigo-300 dark:border-indigo-800/80' : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-700/70'} border text-xs shadow-2xs">
+              <div class="flex items-center gap-1.5 font-bold ${isNightSlot ? 'text-indigo-800 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'}">
+                <i data-lucide="${isNightSlot ? 'moon' : 'clock'}" class="w-3.5 h-3.5 ${isNightSlot ? 'text-amber-500' : 'text-brand-500'}"></i>
                 <span>${sl.start} - ${sl.end}</span>
+                ${isNightSlot ? '<span class="px-1.5 py-0.2 rounded bg-indigo-900 text-indigo-100 font-extrabold text-[9px] border border-indigo-700 flex items-center gap-0.5"><span class="text-amber-300">🌙</span> Noche</span>' : ''}
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-mono font-bold text-[11px] px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/60">
+                <span class="font-mono font-bold text-[11px] px-2 py-0.5 rounded ${isNightSlot ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : 'bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/60'}">
                   ${sl.classroom}
                 </span>
                 <span class="text-[10px] text-slate-400 font-medium">
@@ -4208,7 +4255,8 @@ document.addEventListener('change', (e) => {
                 </span>
               </div>
             </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
     `).join('');
