@@ -442,7 +442,7 @@ public class CatalogoAcademicoController {
     }
 
     /**
-     * List academic timeframes.
+     * List all academic timeframes.
      */
     @GetMapping("/timeFrames")
     public ResponseEntity<List<TimeFrameDto>> getTimeFrames() {
@@ -455,6 +455,79 @@ public class CatalogoAcademicoController {
                     new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true)
             ));
         }
+    }
+
+    /**
+     * Get active academic timeframe.
+     */
+    @GetMapping("/timeFrames/active")
+    public ResponseEntity<TimeFrameDto> getActiveTimeFrame() {
+        try {
+            TimeFrameDto remote = this.gatewayClient.getActiveTimeFrame();
+            if (remote != null) {
+                return ResponseEntity.ok(remote);
+            }
+        } catch (Exception ex) {
+            log.warn("Gateway timeFrames/active unreachable ({}), returning fallback active timeframe", ex.getMessage());
+        }
+        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true));
+    }
+
+    /**
+     * List academic timeframes by career and branch office.
+     */
+    @GetMapping("/timeFrameCareers")
+    public ResponseEntity<List<TimeFrameDto>> getTimeFrameCareers(
+            @RequestParam(required = false, defaultValue = "CBA") String branchOfficeCode,
+            @RequestParam(required = false, defaultValue = "CARCCP") String careerCode) {
+        try {
+            List<TimeFrameDto> remote = this.gatewayClient.getTimeFrameCareers(branchOfficeCode, careerCode);
+            return ResponseEntity.ok(remote != null ? remote : Collections.emptyList());
+        } catch (Exception ex) {
+            log.warn("Gateway timeFrameCareers unreachable ({}), returning default timeframe for career", ex.getMessage());
+            return ResponseEntity.ok(List.of(
+                    new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true, branchOfficeCode, careerCode)
+            ));
+        }
+    }
+
+    /**
+     * Get active academic timeframe by career and branch office.
+     */
+    @GetMapping("/timeFrameCareers/active")
+    public ResponseEntity<TimeFrameDto> getActiveTimeFrameCareer(
+            @RequestParam(required = false, defaultValue = "CBA") String branchOfficeCode,
+            @RequestParam(required = false, defaultValue = "CARCCP") String careerCode) {
+        try {
+            TimeFrameDto remote = this.gatewayClient.getActiveTimeFrameCareer(branchOfficeCode, careerCode);
+            if (remote != null) {
+                return ResponseEntity.ok(remote);
+            }
+        } catch (Exception ex) {
+            log.warn("Gateway timeFrameCareers/active unreachable ({}), returning fallback", ex.getMessage());
+        }
+        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true, branchOfficeCode, careerCode));
+    }
+
+    /**
+     * Get analytical program for a course (currently on hold / en pausa in SEA).
+     */
+    @GetMapping("/analyticalProgram")
+    public ResponseEntity<Map<String, Object>> getAnalyticalProgram(
+            @RequestParam String courseCode,
+            @RequestParam(required = false, defaultValue = "CBA") String branchOfficeCode,
+            @RequestParam(required = false, defaultValue = "CARCCP") String careerCode) {
+        var resultOpt = this.gatewayClient.getAnalyticalProgram(courseCode, branchOfficeCode, careerCode);
+        if (resultOpt.isPresent()) {
+            return ResponseEntity.ok(resultOpt.get());
+        }
+        return ResponseEntity.ok(Map.of(
+                "status", "on-hold",
+                "message", "El programa analítico central está temporalmente en pausa en la pasarela SEA.",
+                "courseCode", courseCode,
+                "branchOfficeCode", branchOfficeCode,
+                "careerCode", careerCode
+        ));
     }
 
     // --- Private Cache-Aside synchronizers ---

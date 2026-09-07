@@ -162,7 +162,7 @@ public class UnitepcGatewayClientTest {
     }
 
     @Test
-    @DisplayName("Should fetch branch offices with Authorization Bearer header")
+    @DisplayName("Should fetch branch offices with Authorization Bearer and clientId headers")
     void shouldFetchBranchOffices() {
         this.gatewayClient.setCachedTokenForTesting("valid-auth-token", Instant.now().plusSeconds(200));
 
@@ -173,8 +173,9 @@ public class UnitepcGatewayClientTest {
                 ]
                 """;
 
-        this.mockServer.expect(requestTo(BASE_URL + "/api/v1/branch-offices"))
+        this.mockServer.expect(requestTo(BASE_URL + "/api/v1/university/externals/research/branchOffices"))
                 .andExpect(header("Authorization", "Bearer valid-auth-token"))
+                .andExpect(header("clientId", "sea-evaluaciones"))
                 .andRespond(withSuccess(branchesJson, MediaType.APPLICATION_JSON));
 
         List<BranchOfficeDto> list = this.gatewayClient.getBranchOffices();
@@ -183,6 +184,35 @@ public class UnitepcGatewayClientTest {
         assertEquals(2, list.size());
         assertEquals("CBBA", list.get(0).code());
         assertEquals("La Paz", list.get(1).name());
+        this.mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("Should fetch active academic timeframe")
+    void shouldFetchActiveTimeFrame() {
+        this.gatewayClient.setCachedTokenForTesting("valid-auth-token", Instant.now().plusSeconds(200));
+
+        String tfJson = """
+                {
+                    "id": "tf-1",
+                    "name": "Gestión II-2026",
+                    "year": "2026",
+                    "term": "II",
+                    "active": true
+                }
+                """;
+
+        this.mockServer.expect(requestTo(BASE_URL + "/api/v1/university/externals/research/timeFrames/active"))
+                .andExpect(header("Authorization", "Bearer valid-auth-token"))
+                .andExpect(header("clientId", "sea-evaluaciones"))
+                .andRespond(withSuccess(tfJson, MediaType.APPLICATION_JSON));
+
+        bo.edu.unitepc.sisa.api.dto.gateway.TimeFrameDto tf = this.gatewayClient.getActiveTimeFrame();
+
+        assertNotNull(tf);
+        assertEquals("tf-1", tf.id());
+        assertEquals("Gestión II-2026", tf.name());
+        assertTrue(tf.active());
         this.mockServer.verify();
     }
 }

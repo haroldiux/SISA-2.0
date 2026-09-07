@@ -38,6 +38,7 @@ app:
       base-url: ${UNITEPC_GATEWAY_URL:https://gw-dev.unitepc.solutions}
       client-id: ${UNITEPC_CLIENT_ID:dev-syseng-research}
       client-secret: ${UNITEPC_CLIENT_SECRET:1XqjSsWL01xegB12z3mGKpF6eeFQLsZd}
+      request-client-id: ${UNITEPC_REQUEST_CLIENT_ID:sea-evaluaciones}
       token-endpoint: ${UNITEPC_TOKEN_ENDPOINT:/auth/token}
       connect-timeout-ms: 5000
       read-timeout-ms: 10000

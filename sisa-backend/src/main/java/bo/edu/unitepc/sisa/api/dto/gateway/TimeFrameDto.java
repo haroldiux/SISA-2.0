@@ -17,5 +17,11 @@ public record TimeFrameDto(
         String name,
         String year,
         String term,
-        Boolean active
-) {}
+        Boolean active,
+        String branchOfficeCode,
+        String careerCode
+) {
+    public TimeFrameDto(String id, String name, String year, String term, Boolean active) {
+        this(id, name, year, term, active, null, null);
+    }
+}

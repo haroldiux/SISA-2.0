@@ -33,6 +33,7 @@ public class UnitepcGatewayClient {
     private final String baseUrl;
     private final String clientId;
     private final String clientSecret;
+    private final String requestClientId;
     private final String tokenEndpoint;
 
     private final Object tokenLock = new Object();
@@ -42,12 +43,14 @@ public class UnitepcGatewayClient {
     @org.springframework.beans.factory.annotation.Autowired
     public UnitepcGatewayClient(
             @Value("${app.unitepc.gateway.base-url:https://gw-dev.unitepc.solutions}") String baseUrl,
-            @Value("${app.unitepc.gateway.client-id:sisa-backend}") String clientId,
-            @Value("${app.unitepc.gateway.client-secret:sisa-secret-2026}") String clientSecret,
+            @Value("${app.unitepc.gateway.client-id:dev-syseng-research}") String clientId,
+            @Value("${app.unitepc.gateway.client-secret:1XqjSsWL01xegB12z3mGKpF6eeFQLsZd}") String clientSecret,
+            @Value("${app.unitepc.gateway.request-client-id:sea-evaluaciones}") String requestClientId,
             @Value("${app.unitepc.gateway.token-endpoint:/auth/token}") String tokenEndpoint) {
         this.baseUrl = baseUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.requestClientId = requestClientId;
         this.tokenEndpoint = tokenEndpoint;
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
@@ -56,7 +59,25 @@ public class UnitepcGatewayClient {
     }
 
     /**
-     * Alternative constructor for testing and manual instantiation.
+     * Alternative constructor for testing and manual instantiation with explicit requestClientId.
+     */
+    public UnitepcGatewayClient(
+            String baseUrl,
+            String clientId,
+            String clientSecret,
+            String requestClientId,
+            String tokenEndpoint,
+            RestClient restClient) {
+        this.baseUrl = baseUrl;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        this.requestClientId = requestClientId;
+        this.tokenEndpoint = tokenEndpoint;
+        this.restClient = restClient;
+    }
+
+    /**
+     * Backwards-compatible alternative constructor for testing.
      */
     public UnitepcGatewayClient(
             String baseUrl,
@@ -64,11 +85,7 @@ public class UnitepcGatewayClient {
             String clientSecret,
             String tokenEndpoint,
             RestClient restClient) {
-        this.baseUrl = baseUrl;
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.tokenEndpoint = tokenEndpoint;
-        this.restClient = restClient;
+        this(baseUrl, clientId, clientSecret, "sea-evaluaciones", tokenEndpoint, restClient);
     }
 
     /**
@@ -137,8 +154,8 @@ public class UnitepcGatewayClient {
             List<BranchOfficeDto> result = this.restClient.get()
                     .uri("/api/v1/university/externals/research/branchOffices")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<BranchOfficeDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -166,8 +183,8 @@ public class UnitepcGatewayClient {
                         return uriBuilder.build();
                     })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<CareerDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -198,8 +215,8 @@ public class UnitepcGatewayClient {
                         return uriBuilder.build();
                     })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<CourseDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -236,8 +253,8 @@ public class UnitepcGatewayClient {
                         return uriBuilder.build();
                     })
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<GroupItemDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -259,8 +276,8 @@ public class UnitepcGatewayClient {
                             .queryParam("groupId", groupId)
                             .build())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<StudentItemDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -282,8 +299,8 @@ public class UnitepcGatewayClient {
                             .queryParam("branchOfficeId", branchOfficeId != null ? branchOfficeId : "")
                             .build())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<CampusDto>>() {});
             return result != null ? result : Collections.emptyList();
@@ -294,22 +311,114 @@ public class UnitepcGatewayClient {
     }
 
     /**
-     * Fetch active academic timeframe.
+     * Fetch all academic timeframes from UNITEPC Gateway.
      */
     public List<TimeFrameDto> getTimeFrames() {
         String token = getToken();
         try {
-            TimeFrameDto active = this.restClient.get()
+            List<TimeFrameDto> result = this.restClient.get()
+                    .uri("/api/v1/university/externals/research/timeFrames")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<TimeFrameDto>>() {});
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception ex) {
+            log.warn("Error fetching all timeframes: {}", ex.getMessage());
+            throw new RuntimeException("Gateway timeframes request failed", ex);
+        }
+    }
+
+    /**
+     * Fetch active institutional academic timeframe.
+     */
+    public TimeFrameDto getActiveTimeFrame() {
+        String token = getToken();
+        try {
+            return this.restClient.get()
                     .uri("/api/v1/university/externals/research/timeFrames/active")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .header("clientId", this.clientId)
-                    .header("X-Client-Id", this.clientId)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
                     .retrieve()
                     .body(TimeFrameDto.class);
-            return active != null ? List.of(active) : Collections.emptyList();
         } catch (Exception ex) {
             log.warn("Error fetching active timeframe: {}", ex.getMessage());
             throw new RuntimeException("Gateway active timeframe request failed", ex);
+        }
+    }
+
+    /**
+     * Fetch academic timeframes by career and branch office.
+     */
+    public List<TimeFrameDto> getTimeFrameCareers(String branchOfficeCode, String careerCode) {
+        String token = getToken();
+        try {
+            List<TimeFrameDto> result = this.restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/university/externals/research/timeFrameCareers")
+                            .queryParam("branchOfficeCode", branchOfficeCode != null && !branchOfficeCode.isBlank() ? branchOfficeCode : "CBA")
+                            .queryParam("careerCode", careerCode != null && !careerCode.isBlank() ? careerCode : "CARCCP")
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<TimeFrameDto>>() {});
+            return result != null ? result : Collections.emptyList();
+        } catch (Exception ex) {
+            log.warn("Error fetching timeFrameCareers for branch {} / career {}: {}", branchOfficeCode, careerCode, ex.getMessage());
+            throw new RuntimeException("Gateway timeFrameCareers request failed", ex);
+        }
+    }
+
+    /**
+     * Fetch active academic timeframe for a specific career and branch office.
+     */
+    public TimeFrameDto getActiveTimeFrameCareer(String branchOfficeCode, String careerCode) {
+        String token = getToken();
+        try {
+            return this.restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/university/externals/research/timeFrameCareers/active")
+                            .queryParam("branchOfficeCode", branchOfficeCode != null && !branchOfficeCode.isBlank() ? branchOfficeCode : "CBA")
+                            .queryParam("careerCode", careerCode != null && !careerCode.isBlank() ? careerCode : "CARCCP")
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
+                    .retrieve()
+                    .body(TimeFrameDto.class);
+        } catch (Exception ex) {
+            log.warn("Error fetching active timeFrameCareer for branch {} / career {}: {}", branchOfficeCode, careerCode, ex.getMessage());
+            throw new RuntimeException("Gateway active timeFrameCareer request failed", ex);
+        }
+    }
+
+    /**
+     * Fetch analytical program from UNITEPC Gateway (currently on hold on gateway side).
+     * Returns empty Optional if on hold or if server responds with error/empty body.
+     */
+    public java.util.Optional<Map<String, Object>> getAnalyticalProgram(String courseCode, String branchOfficeCode, String careerCode) {
+        try {
+            String token = getToken();
+            Map<String, Object> result = this.restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/university/externals/research/analyticalProgram")
+                            .queryParam("courseCode", courseCode)
+                            .queryParam("branchOfficeCode", branchOfficeCode != null && !branchOfficeCode.isBlank() ? branchOfficeCode : "CBA")
+                            .queryParam("careerCode", careerCode != null && !careerCode.isBlank() ? careerCode : "CARCCP")
+                            .build())
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("clientId", this.requestClientId)
+                    .header("X-Client-Id", this.requestClientId)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+            return java.util.Optional.ofNullable(result);
+        } catch (Exception ex) {
+            log.info("Analytical program endpoint on hold or returned error for course {}: {}", courseCode, ex.getMessage());
+            return java.util.Optional.empty();
         }
     }
 

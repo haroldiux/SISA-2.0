@@ -51,6 +51,10 @@ export const SCU_API = {
     DOCENTES: '/api/v1/catalogo-academico/docentes',
     STUDENTS_BY_GROUP: '/api/v1/catalogo-academico/students/byGroup',
     CAMPUSES: '/api/v1/catalogo-academico/campuses',
-    TIME_FRAMES: '/api/v1/catalogo-academico/timeFrames'
+    TIME_FRAMES: '/api/v1/catalogo-academico/timeFrames',
+    TIME_FRAMES_ACTIVE: '/api/v1/catalogo-academico/timeFrames/active',
+    TIME_FRAME_CAREERS: '/api/v1/catalogo-academico/timeFrameCareers',
+    TIME_FRAME_CAREERS_ACTIVE: '/api/v1/catalogo-academico/timeFrameCareers/active',
+    ANALYTICAL_PROGRAM: '/api/v1/catalogo-academico/analyticalProgram'
   }
 };

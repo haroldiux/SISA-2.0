@@ -244,10 +244,92 @@ export class UnitepcGatewayService {
   }
 
   /**
-   * Retrieves active academic timeframes.
+   * Retrieves all academic timeframes.
    */
   public getTimeFrames(): Observable<TimeFrameDto[]> {
     return this._http.get<TimeFrameDto[]>(SCU_API.CATALOGO_ACADEMICO.TIME_FRAMES).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves active academic timeframe.
+   */
+  public getActiveTimeFrame(): Observable<TimeFrameDto> {
+    return this._http.get<TimeFrameDto>(SCU_API.CATALOGO_ACADEMICO.TIME_FRAMES_ACTIVE).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves academic timeframes by career and branch office.
+   */
+  public getTimeFrameCareers(branchOfficeCode = 'CBA', careerCode = 'CARCCP'): Observable<TimeFrameDto[]> {
+    const params = new HttpParams()
+      .set('branchOfficeCode', branchOfficeCode)
+      .set('careerCode', careerCode);
+    return this._http.get<TimeFrameDto[]>(SCU_API.CATALOGO_ACADEMICO.TIME_FRAME_CAREERS, { params }).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves active academic timeframe for a specific career.
+   */
+  public getActiveTimeFrameCareer(branchOfficeCode = 'CBA', careerCode = 'CARCCP'): Observable<TimeFrameDto> {
+    const params = new HttpParams()
+      .set('branchOfficeCode', branchOfficeCode)
+      .set('careerCode', careerCode);
+    return this._http.get<TimeFrameDto>(SCU_API.CATALOGO_ACADEMICO.TIME_FRAME_CAREERS_ACTIVE, { params }).pipe(
+      tap(() => {
+        this.seaStatus.set('online');
+        this.lastChecked.set(new Date());
+        this._syncGlobalWindowStatus();
+      }),
+      catchError(err => {
+        this.seaStatus.set('offline');
+        this._syncGlobalWindowStatus();
+        throw err;
+      })
+    );
+  }
+
+  /**
+   * Retrieves analytical program for a course (handled gracefully if on hold in SEA).
+   */
+  public getAnalyticalProgram(courseCode: string, branchOfficeCode = 'CBA', careerCode = 'CARCCP'): Observable<any> {
+    const params = new HttpParams()
+      .set('courseCode', courseCode)
+      .set('branchOfficeCode', branchOfficeCode)
+      .set('careerCode', careerCode);
+    return this._http.get<any>(SCU_API.CATALOGO_ACADEMICO.ANALYTICAL_PROGRAM, { params }).pipe(
       tap(() => {
         this.seaStatus.set('online');
         this.lastChecked.set(new Date());
