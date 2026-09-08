@@ -5408,9 +5408,13 @@ document.addEventListener('change', (e) => {
     localStorage.removeItem('scu_access_token');
     localStorage.removeItem('scu_refresh_token');
     localStorage.removeItem('scu_user_info');
+    window._tempPasswordChangeUser = null;
+    window._tempPasswordChangeToken = null;
+
     const dropdown = document.getElementById('user-dropdown-menu');
     if (dropdown) dropdown.classList.add('hidden');
-    window.openLoginModal();
+
+    window.showLoginView();
     window.showToast('ℹ️ Sesión cerrada correctamente');
   };
 
@@ -5490,20 +5494,137 @@ document.addEventListener('change', (e) => {
     if (window.lucide) window.lucide.createIcons();
   };
 
-  // Login Modal
-  window.openLoginModal = function() {
-    const modal = document.getElementById('sisa-login-modal');
-    if (modal) {
-      modal.classList.remove('hidden');
-      const err = document.getElementById('login-error-container');
-      if (err) err.classList.add('hidden');
-      if (window.lucide) window.lucide.createIcons();
+  // ── ROOT VIEW SWITCHING ENGINE (UNITEPC-PRO ARCHITECTURE) ────────────────
+  window.showLoginView = function() {
+    const shell = document.getElementById('sp-shell');
+    const pwdView = document.getElementById('view-change-password');
+    const loginView = document.getElementById('view-login');
+
+    if (shell) shell.classList.add('hidden');
+    if (pwdView) pwdView.classList.add('hidden');
+    if (loginView) loginView.classList.remove('hidden');
+
+    // Reset errors and clear sensitive fields
+    const errBox = document.getElementById('login-error-container');
+    if (errBox) errBox.classList.add('hidden');
+    const pwdInput = document.getElementById('login-password');
+    if (pwdInput) pwdInput.value = '';
+
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '/login');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.showChangePasswordView = function(user, tempToken, isVoluntary = false, prefillCurrentPassword = '') {
+    window._tempPasswordChangeUser = user;
+    window._tempPasswordChangeToken = tempToken;
+    window._isVoluntaryPasswordChange = isVoluntary;
+
+    const shell = document.getElementById('sp-shell');
+    const loginView = document.getElementById('view-login');
+    const pwdView = document.getElementById('view-change-password');
+
+    if (shell) shell.classList.add('hidden');
+    if (loginView) loginView.classList.add('hidden');
+    if (pwdView) pwdView.classList.remove('hidden');
+
+    // Reset inputs
+    const cur = document.getElementById('change-current-password');
+    const n = document.getElementById('change-new-password');
+    const c = document.getElementById('change-confirm-password');
+    const errBox = document.getElementById('change-password-error');
+    const badge = document.getElementById('change-pwd-badge');
+    const cancelBtn = document.getElementById('btn-cancel-pwd-change');
+
+    if (cur) cur.value = prefillCurrentPassword || '';
+    if (n) n.value = '';
+    if (c) c.value = '';
+    if (errBox) errBox.classList.add('hidden');
+
+    if (badge) {
+      badge.innerText = isVoluntary ? 'SEGURIDAD DE LA CUENTA' : 'PRIMER INGRESO';
+    }
+    if (cancelBtn) {
+      cancelBtn.innerText = isVoluntary ? '← Volver al portal' : 'Cancelar y cerrar sesión';
+    }
+
+    window.validatePasswordLive();
+
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '/cambiar-contrasena');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.showPortalShell = function(targetViewId = 'view-dashboard') {
+    const loginView = document.getElementById('view-login');
+    const pwdView = document.getElementById('view-change-password');
+    const shell = document.getElementById('sp-shell');
+
+    if (loginView) loginView.classList.add('hidden');
+    if (pwdView) pwdView.classList.add('hidden');
+    if (shell) shell.classList.remove('hidden');
+
+    if (typeof window.switchView === 'function') {
+      window.switchView(targetViewId);
+    }
+
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '/dashboard');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  // Cancel handler from password change view
+  window.handlePasswordChangeCancel = function() {
+    if (window._isVoluntaryPasswordChange) {
+      window.showPortalShell();
+    } else {
+      window.logoutUser();
     }
   };
 
-  window.closeLoginModal = function() {
-    const modal = document.getElementById('sisa-login-modal');
-    if (modal) modal.classList.add('hidden');
+  // Dynamic Password Rule Evaluator (keyup & input event handler)
+  window.validatePasswordLive = function() {
+    const curInput = document.getElementById('change-current-password');
+    const newInput = document.getElementById('change-new-password');
+    const confInput = document.getElementById('change-confirm-password');
+
+    const curVal = curInput ? curInput.value : '';
+    const newVal = newInput ? newInput.value : '';
+    const confVal = confInput ? confInput.value : '';
+
+    const updateRule = (ruleId, isValid) => {
+      const el = document.getElementById(ruleId);
+      if (!el) return;
+      const icon = el.querySelector('.rule-icon');
+      if (isValid) {
+        el.className = 'flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium transition-colors';
+        if (icon) {
+          icon.innerText = '✓';
+          icon.className = 'rule-icon text-emerald-600 dark:text-emerald-400 font-bold';
+        }
+      } else {
+        el.className = 'flex items-center gap-2 text-slate-500 dark:text-slate-400 transition-colors';
+        if (icon) {
+          icon.innerText = '○';
+          icon.className = 'rule-icon text-slate-400';
+        }
+      }
+    };
+
+    // Rule 1: Length between 8 and 72 characters
+    const validLength = newVal.length >= 8 && newVal.length <= 72;
+    updateRule('rule-length', validLength);
+
+    // Rule 2: Different from current password
+    const validDiff = newVal.length > 0 && curVal.length > 0 && newVal !== curVal;
+    updateRule('rule-diff', validDiff);
+
+    // Rule 3: Confirmation matches new password
+    const validMatch = newVal.length > 0 && newVal === confVal;
+    updateRule('rule-match', validMatch);
   };
 
   window.toggleLoginPasswordVisibility = function() {
@@ -5563,7 +5684,7 @@ document.addEventListener('change', (e) => {
       const res = await resp.json();
 
       if (!resp.ok) {
-        throw new Error(res.message || res.error || 'Credenciales inválidas o cuenta desactivada.');
+        throw new Error(res.message || res.error || 'Credenciales incorrectas o cuenta inactiva.');
       }
 
       const authData = res.data || res;
@@ -5572,15 +5693,14 @@ document.addEventListener('change', (e) => {
       const mustChange = (authData.mustChangePassword === true || (user && user.mustChangePassword === true));
 
       if (mustChange) {
-        window.closeLoginModal();
-        window.openForcedPasswordModal(user, token);
+        // Transition directly to full-page password change, passing entered password as current
+        window.showChangePasswordView(user, token, false, password);
       } else {
         window.setAuthSession(token, user);
-        window.closeLoginModal();
+        window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
         window.showToast('✅ ¡Bienvenido a SISA, ' + (user.nombres || user.nombreCompleto || user.username) + '!');
 
-        if (user.role === 'ROLE_ADMIN') {
-          window.switchView('view6');
+        if (user.role === 'ROLE_ADMIN' && typeof window.loadAdminUsers === 'function') {
           window.loadAdminUsers();
         }
       }
@@ -5592,46 +5712,27 @@ document.addEventListener('change', (e) => {
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Ingresar a la Plataforma</span>';
+        btn.innerHTML = '<span>Ingresar al sistema</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
         if (window.lucide) window.lucide.createIcons();
       }
     }
   };
 
-  // Forced Password Change
+  // Forced / Voluntary Password Change
   window._tempPasswordChangeUser = null;
   window._tempPasswordChangeToken = null;
-
-  window.openForcedPasswordModal = function(user, tempToken) {
-    window._tempPasswordChangeUser = user;
-    window._tempPasswordChangeToken = tempToken;
-    const modal = document.getElementById('modal-forced-password-change');
-    const newPwd = document.getElementById('change-new-password');
-    const confPwd = document.getElementById('change-confirm-password');
-    const errBox = document.getElementById('change-password-error');
-
-    if (newPwd) newPwd.value = '';
-    if (confPwd) confPwd.value = '';
-    if (errBox) errBox.classList.add('hidden');
-    if (modal) modal.classList.remove('hidden');
-    if (window.lucide) window.lucide.createIcons();
-  };
-
-  window.closeForcedPasswordModal = function() {
-    const modal = document.getElementById('modal-forced-password-change');
-    if (modal) modal.classList.add('hidden');
-    window._tempPasswordChangeUser = null;
-    window._tempPasswordChangeToken = null;
-  };
+  window._isVoluntaryPasswordChange = false;
 
   window.handleForcedPasswordSubmit = async function(event) {
     if (event) event.preventDefault();
+    const curPwdInput = document.getElementById('change-current-password');
     const newPwdInput = document.getElementById('change-new-password');
     const confPwdInput = document.getElementById('change-confirm-password');
     const errBox = document.getElementById('change-password-error');
     const errMsg = document.getElementById('change-password-error-msg');
     const btn = document.getElementById('btn-do-change-password');
 
+    const currentPassword = curPwdInput ? curPwdInput.value : '';
     const newPassword = newPwdInput ? newPwdInput.value : '';
     const confirmPassword = confPwdInput ? confPwdInput.value : '';
     const user = window._tempPasswordChangeUser || window.getCurrentUser();
@@ -5646,21 +5747,26 @@ document.addEventListener('change', (e) => {
 
     if (errBox) errBox.classList.add('hidden');
 
-    if (!newPassword || newPassword.length < 8) {
-      showError('La nueva contraseña debe tener al menos 8 caracteres.');
+    if (!currentPassword) {
+      showError('Debes ingresar tu contraseña actual o temporal.');
       return;
     }
-
+    if (!newPassword || newPassword.length < 8 || newPassword.length > 72) {
+      showError('La nueva contraseña debe tener entre 8 y 72 caracteres.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      showError('La nueva contraseña debe ser diferente de la contraseña actual.');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       showError('La confirmación de la contraseña no coincide.');
       return;
     }
-
     if (user && user.ci && (newPassword === user.ci || newPassword.toLowerCase() === user.ci.toLowerCase())) {
       showError('La nueva contraseña no puede ser igual a tu Carnet de Identidad (CI).');
       return;
     }
-
     if (user && user.username && newPassword.toLowerCase() === user.username.toLowerCase()) {
       showError('La nueva contraseña no puede ser igual a tu nombre de usuario.');
       return;
@@ -5668,7 +5774,7 @@ document.addEventListener('change', (e) => {
 
     if (btn) {
       btn.disabled = true;
-      btn.innerText = 'Actualizando...';
+      btn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Guardando...';
     }
 
     try {
@@ -5677,14 +5783,18 @@ document.addEventListener('change', (e) => {
         headers['Authorization'] = 'Bearer ' + token;
       }
 
+      // Fully aligned payload matching ScuChangePasswordCmd
+      const payload = {
+        username: user ? user.username : undefined,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword
+      };
+
       const resp = await fetch('/api/v1/auth/change-password', {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({
-          username: user ? user.username : undefined,
-          newPassword: newPassword,
-          confirmPassword: confirmPassword
-        })
+        body: JSON.stringify(payload)
       });
 
       const res = await resp.json();
@@ -5698,11 +5808,10 @@ document.addEventListener('change', (e) => {
       if (updatedUser) updatedUser.mustChangePassword = false;
 
       window.setAuthSession(finalToken, updatedUser);
-      window.closeForcedPasswordModal();
+      window.showPortalShell(updatedUser && updatedUser.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
       window.showToast('✅ ¡Contraseña actualizada con éxito! Bienvenido a SISA.');
 
-      if (updatedUser && updatedUser.role === 'ROLE_ADMIN') {
-        window.switchView('view6');
+      if (updatedUser && updatedUser.role === 'ROLE_ADMIN' && typeof window.loadAdminUsers === 'function') {
         window.loadAdminUsers();
       }
     } catch (err) {
@@ -5710,10 +5819,17 @@ document.addEventListener('change', (e) => {
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerText = 'Actualizar e ingresar';
+        btn.innerHTML = '<span>Guardar nueva contraseña</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
+        if (window.lucide) window.lucide.createIcons();
       }
     }
   };
+
+  // Backward-compatibility wrappers for legacy callers
+  window.openLoginModal = function() { window.showLoginView(); };
+  window.closeLoginModal = function() {};
+  window.openForcedPasswordModal = function(user, token) { window.showChangePasswordView(user, token, false); };
+  window.closeForcedPasswordModal = function() {};
 
   // ── ADMIN USER MANAGEMENT (PHASE 5) ──────────────────────────────────
   window.adminUsersList = [];
@@ -6333,7 +6449,7 @@ document.addEventListener('change', (e) => {
     const user = window.getCurrentUser();
 
     if (!token) {
-      window.openLoginModal();
+      window.showLoginView();
       return;
     }
 
@@ -6349,20 +6465,24 @@ document.addEventListener('change', (e) => {
         window.setAuthSession(token, meUser);
 
         if (meUser.mustChangePassword) {
-          window.openForcedPasswordModal(meUser, token);
+          window.showChangePasswordView(meUser, token, false);
+        } else {
+          window.showPortalShell(meUser.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
         }
       } else if (resp.status === 401 || resp.status === 403) {
         // Token invalid or expired
         window.logoutUser();
       } else if (user) {
         window.updateUserProfileUi(user);
+        window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
       }
     } catch (err) {
       // Offline fallback: keep cached session if present
       if (user) {
         window.updateUserProfileUi(user);
+        window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
       } else {
-        window.openLoginModal();
+        window.showLoginView();
       }
     }
   };
@@ -6372,9 +6492,6 @@ document.addEventListener('change', (e) => {
     window.updateSeaGatewayStatus('online');
     window.loadDocentesFromApi();
     window.checkInitialAuth();
-    if (typeof window.switchView === 'function') {
-      window.switchView('view-dashboard');
-    }
   }, 150);
 })();
 
