@@ -4,29 +4,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* SEA Institutional Design System Tokens & Base */
+/* SEA Institutional Design System Tokens & Base (sea-portal-ui) */
 :root {
-  --sp-bg: #F8FAFC;
+  --sp-bg: #FAFAF9;
   --sp-surface: #FFFFFF;
-  --sp-ink: #0F172A;
+  --sp-surface-2: #F4F4F2;
+  --sp-surface-hover: #F7F6FA;
+
+  --sp-ink: #18171C;
+  --sp-ink-2: #3A3A41;
+  --sp-ink-3: #6B6873;
+  --sp-ink-4: #A3A0AA;
   --sp-ink-muted: #64748B;
-  --sp-border: #E2E8F0;
-  --sp-brand: #4F46E5;
+
+  --sp-border: #E6E5E8;
+  --sp-border-strong: #D4D2D9;
+
   --sp-purple: #7B47B8;
   --sp-purple-dark: #5C2E94;
   --sp-purple-soft: #F0E9F8;
+  --sp-purple-tint: rgba(123, 71, 184, 0.08);
+
   --sp-teal: #1F9FAD;
   --sp-teal-dark: #157985;
   --sp-teal-soft: #E0F2F4;
+  --sp-teal-tint: rgba(31, 159, 173, 0.08);
+
+  --sp-brand: #4F46E5;
+
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 76px;
+  --topbar-height: 64px;
 }
 
 .dark {
+  --sp-bg: #0F0E14;
+  --sp-surface: #1A1922;
+  --sp-surface-2: #1F1E28;
+  --sp-surface-hover: #252430;
+
+  --sp-ink: #F2F0F5;
+  --sp-ink-2: #C5C2CC;
+  --sp-ink-3: #888592;
+  --sp-ink-4: #56535E;
+
+  --sp-border: #2A2935;
+  --sp-border-strong: #3A3845;
+
   --sp-purple: #9B6FD0;
   --sp-purple-dark: #B58BE3;
   --sp-purple-soft: rgba(155, 111, 208, 0.18);
+  --sp-purple-tint: rgba(155, 111, 208, 0.10);
+
   --sp-teal: #4FBCC8;
   --sp-teal-dark: #6CCBD5;
   --sp-teal-soft: rgba(79, 188, 200, 0.18);
+  --sp-teal-tint: rgba(79, 188, 200, 0.10);
 }
 
 /* Component Type Badges (TA / PA / PL / PS) */
@@ -145,6 +178,44 @@ textarea {
 }
 
 
+/* ========================================================================= */
+/* GLOBAL SIDEBAR RAIL COLLAPSE MECHANISM                                    */
+/* ========================================================================= */
+
+#global-sidebar {
+  transition: width 250ms cubic-bezier(0.16, 0.84, 0.44, 1);
+
+  &.sidebar-collapsed {
+    width: var(--sidebar-collapsed-width) !important;
+
+    .sidebar-item-label,
+    .sidebar-label-wrap,
+    .sidebar-badge-wrap,
+    .sidebar-security-card {
+      display: none !important;
+    }
+
+    .global-nav-btn {
+      justify-content: center !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+
+      i {
+        margin: 0 auto;
+      }
+    }
+
+    #sidebar-collapse-btn {
+      margin: 0 auto;
+    }
+  }
+}
+
+.global-nav-btn.active {
+  background-color: var(--sp-purple-soft) !important;
+  color: var(--sp-purple-dark) !important;
+}
+
 /* PRINT / PDF STYLES */
 @media print {
   @page {
@@ -163,12 +234,29 @@ textarea {
     overflow: visible !important;
   }
 
-  /* Hide entire web app UI during print */
-  header, aside, .no-print, #toast-container, #modal-container, .view-tab-btn, #theme-toggle-btn, .top-prototype-bar, #view1, #view2, #view3, #view4, #view5 {
+  /* Strictly hide all application shell elements */
+  .sp-shell > aside,
+  #global-sidebar,
+  .sp-topbar,
+  header,
+  aside,
+  .no-print,
+  #toast-container,
+  #modal-container,
+  .view-tab-btn,
+  #theme-toggle-btn,
+  .top-prototype-bar,
+  #view-dashboard,
+  #view1,
+  #view2,
+  #view3,
+  #view4,
+  #view5,
+  #view6 {
     display: none !important;
   }
 
-  main {
+  main, #main-canvas {
     display: block !important;
     padding: 0 !important;
     margin: 0 !important;

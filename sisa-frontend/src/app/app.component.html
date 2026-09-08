@@ -260,212 +260,538 @@
     </div>
   </div>
 
-  <!-- TOP PROTOTYPE BAR & CONTROLLER -->
-  <header class="w-full bg-slate-900 border-b border-slate-800 text-white px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40 shadow-md no-print">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center font-bold text-white shadow-sm font-display">
-        <i data-lucide="layers" class="w-5 h-5"></i>
-      </div>
-      <div>
-        <h1 class="text-sm font-bold text-slate-100 font-display">SISA • Sistema Integrado de Seguimiento Académico</h1>
-        <p class="text-xs text-slate-400">Plataforma Institucional Multirrol • UNITEPC</p>
-      </div>
-    </div>
-
-    <!-- Role / View Switcher -->
-    <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700">
-      <button data-view="view1" id="btn-view1" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 bg-brand-600 text-white shadow-sm">
-        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
-        <span>1. Docente</span>
-      </button>
-      <button data-view="view2" id="btn-view2" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
-        <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
-        <span>2. Dir. Carrera</span>
-      </button>
-      <button data-view="view3" id="btn-view3" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
-        <i data-lucide="search-check" class="w-3.5 h-3.5"></i>
-        <span>3. Dir. Académica</span>
-      </button>
-      <button data-view="view4" id="btn-view4" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
-        <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
-        <span>4. Vicerrectorado Sede</span>
-      </button>
-      <button data-view="view5" id="btn-view5" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
-        <i data-lucide="globe-2" class="w-3.5 h-3.5"></i>
-        <span>5. Vicerrectorado Nal.</span>
-      </button>
-      <button data-view="view6" id="btn-view6" class="view-tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-2 text-slate-300 hover:text-white">
-        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
-        <span>6. Admin Usuarios</span>
-      </button>
-    </div>
-
-    <!-- Theme Switcher, Docente API Selector & Status Badge -->
-    <div class="flex items-center gap-3">
-      <!-- Docente Selector (100% Consuming SEA Gateway API) -->
-      <div class="flex items-center gap-2 bg-slate-800/90 px-3 py-1 rounded-xl border border-slate-700">
-        <i data-lucide="user-check" class="w-4 h-4 text-brand-400"></i>
-        <label for="docente-api-selector" class="text-xs text-slate-300 font-medium hidden sm:inline">Docente API:</label>
-        <select id="docente-api-selector" (change)="onDocenteSelectorChange($event)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1 focus:ring-1 focus:ring-brand-500 focus:outline-none cursor-pointer">
-          <optgroup label="🏛️ DOCENTES OFICIALES SEA - SEDE COCHABAMBA">
-            <option value="3065087" selected>💻 [INGENIERÍA] ROSMERY LUIZAGA SALINAS (3065087)</option>
-            <option value="6600808">💻 [SISTEMAS] WALTER JOSE CAZAS CASTRO (6600808)</option>
-            <option value="4421998">🩺 [MEDICINA] MARTIN XAVIER SANCHEZ FLORES (4421998)</option>
-            <option value="7906983">📊 [FACEFA] RUBEN SERGIO VELASQUEZ ADRIAZOLA (7906983)</option>
-          </optgroup>
-        </select>
-      </div>
-
-      <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold transition-all shadow-sm cursor-pointer">
-        <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
-        <span id="theme-label" class="text-slate-200">Tema Claro</span>
-      </button>
-      <!-- SEA Gateway Live / Offline Indicator Badge -->
-      <div id="sea-gateway-status-container" class="cursor-pointer" onclick="window.toggleSeaGatewaySimulation()" title="Click para simular estado Gateway Online/Offline">
-        <span id="sea-status-badge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 font-medium transition-all duration-300">
-          <span id="sea-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="sea-status-text">SEA Live</span>
-        </span>
-      </div>
-
-      <!-- User Profile Header Dropdown -->
-      <div class="relative" id="user-profile-header-dropdown">
-        <button id="user-dropdown-btn" onclick="window.toggleUserDropdown(event)" class="flex items-center gap-2.5 px-3 py-1 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-medium text-slate-200 transition-all cursor-pointer">
-          <div id="header-user-avatar" class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center">HI</div>
-          <div class="text-left hidden lg:block">
-            <div id="header-user-name" class="font-bold text-xs leading-tight truncate max-w-[120px]">Harold Iriarte</div>
-            <div id="header-user-role" class="text-[10px] text-purple-300">Docente</div>
-          </div>
-          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
-        </button>
-        <div id="user-dropdown-menu" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3 text-xs">
-          <div class="border-b border-slate-100 dark:border-slate-800 pb-2">
-            <div id="menu-user-fullname" class="font-bold text-slate-900 dark:text-white truncate">Harold Iriarte</div>
-            <div id="menu-user-email" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">docente@unitepc.edu.bo</div>
-            <div class="mt-1 flex items-center gap-1.5">
-              <span id="menu-user-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300">ROLE_DOCENTE</span>
-              <span id="menu-user-ci" class="text-[10px] text-slate-400 font-mono">CI: 3065087</span>
-            </div>
-          </div>
-          <button onclick="window.switchView('view6'); window.toggleUserDropdown();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-2 cursor-pointer font-medium">
-            <i data-lucide="shield" class="w-3.5 h-3.5 text-purple-600"></i>
-            <span>Administración de Usuarios</span>
-          </button>
-          <button onclick="window.logoutUser()" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center gap-2 cursor-pointer font-semibold border-t border-slate-100 dark:border-slate-800 pt-2">
-            <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-600"></i>
-            <span>Cerrar sesión</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- WORKSPACE CANVAS CONTAINER -->
-  <main class="w-full flex-1 p-6 flex justify-center items-start overflow-auto">
+  <!-- ========================================================================= -->
+  <!-- ROOT CANONICAL PORTAL SHELL (sea-portal-ui)                               -->
+  <!-- ========================================================================= -->
+  <div class="sp-shell flex h-screen w-screen bg-[var(--sp-bg)] text-[var(--sp-ink)] overflow-hidden font-sans select-none">
     
     <!-- ========================================================================= -->
-    <!-- VIEW 1: [DOCENTE] GESTIÓN CURRICULAR Y 4 TABS DE DOCUMENTOS               -->
+    <!-- 1. PERSISTENT GLOBAL LEFT SIDEBAR                                         -->
     <!-- ========================================================================= -->
-    <div id="view1" class="frame-view w-[1440px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative transition-colors duration-200 min-h-[920px]">
+    <aside id="global-sidebar" class="w-60 bg-[var(--sp-surface)] border-r border-[var(--sp-border)] flex flex-col justify-between flex-shrink-0 z-30 transition-all duration-250 ease-out no-print">
       
-      <!-- Component/SidebarNavigation: CARPETAS DOCENTES POR CARRERA Y MATERIA -->
-      <aside class="w-[280px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors no-print">
-        <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
-          
-          <!-- App Header -->
-          <div class="flex items-center justify-between px-2 py-1">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-              <div>
-                <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
-                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Carpetas Docentes</div>
-              </div>
+      <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-3 space-y-3">
+        
+        <!-- Sidebar Header & Rail Collapse Toggle -->
+        <div class="flex items-center justify-between px-2 py-1.5 border-b border-[var(--sp-border)]">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <div class="w-8 h-8 rounded-lg bg-[var(--sp-purple)] text-white flex items-center justify-center font-bold font-display shadow-sm flex-shrink-0">
+              <i data-lucide="layers" class="w-4 h-4"></i>
             </div>
-            <!-- Sidebar SEA Status Badge -->
-            <div id="sidebar-sea-badge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 transition-all">
-              <span id="sidebar-sea-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="sidebar-sea-text">Live</span>
+            <div class="sidebar-label-wrap">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-4)] block">MÓDULOS DEL PROCESO</span>
+              <span class="text-xs font-bold text-[var(--sp-ink)] truncate block font-display">SISA 2.0</span>
             </div>
           </div>
-
-          <!-- Section: CARPETAS ORGANIZADAS POR CARRERA & MATERIA (DYNAMIC VIA API) -->
-          <div id="sidebar-materias-container" class="space-y-2.5">
-            <div class="flex items-center justify-between px-2">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Carreras & Cátedras</span>
-              <span id="sidebar-summary-hours" class="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/60">3 Carreras • 16h</span>
-            </div>
-
-            <!-- Dynamic Subjects Skeleton (Replaced upon API response) -->
-            <div id="sidebar-materias-skeleton" class="space-y-2 p-1 animate-pulse">
-              <div class="h-12 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl"></div>
-              <div class="h-12 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl"></div>
-              <div class="h-12 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl"></div>
-            </div>
-          </div>
-
-          <!-- Section: PESTAÑAS DE LA CARPETA ACTIVA -->
-          <div class="space-y-1 pt-2.5 border-t border-slate-200 dark:border-slate-800">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-2 mb-1.5">Documentos de la Carpeta</div>
-            
-            <button onclick="window.switchDocMainTab('tab-analitico')" id="sidebar-tab-analitico" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700/60 font-bold text-xs text-left cursor-pointer transition-all">
-              <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
-              <span class="truncate">1. Prog. Analítico (.docx)</span>
-            </button>
-
-            <button onclick="window.switchDocMainTab('tab-pac-matrix')" id="sidebar-tab-pac-matrix" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
-              <span class="truncate">2. PAC Pedagógico (1-14)</span>
-            </button>
-
-            <button onclick="window.switchDocMainTab('tab-cronograma-semanas')" id="sidebar-tab-cronograma-semanas" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
-              <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400"></i>
-              <span class="truncate">3. Cronograma (20 Sem)</span>
-            </button>
-
-            <button onclick="window.switchDocMainTab('tab-cronograma-planes')" id="sidebar-tab-cronograma-planes" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium text-xs text-left cursor-pointer transition-all">
-              <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"></i>
-              <span class="truncate">4. Planes de Clase (.xlsx)</span>
-            </button>
-          </div>
-
-          <!-- Direct Export Center -->
-          <div class="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-[11px]">
-            <div class="font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5">
-              <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i>
-              <span>Exportar Carpeta Activa:</span>
-            </div>
-            <button onclick="window.exportExactFile('docx')" class="w-full text-left py-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
-              <i data-lucide="file-text" class="w-3 h-3 flex-shrink-0"></i> 1. Analítico (.docx)
-            </button>
-            <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
-              <i data-lucide="table" class="w-3 h-3 flex-shrink-0"></i> 2 y 3. PAC + Cronograma (.xlsx)
-            </button>
-            <button onclick="window.exportExactFile('planes_xlsx')" class="w-full text-left py-1 text-purple-600 dark:text-purple-400 font-semibold hover:underline flex items-center gap-1.5 truncate">
-              <i data-lucide="calendar-range" class="w-3 h-3 flex-shrink-0"></i> 4. Planes de Clase (.xlsx)
-            </button>
-            <button onclick="window.openPdfPrintModal()" class="w-full text-left py-1 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-700 truncate">
-              <i data-lucide="printer" class="w-3 h-3 flex-shrink-0"></i> 📄 Imprimir en PDF
-            </button>
-          </div>
-        </div>
-
-        <!-- User Profile Footer -->
-        <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
-          <div class="flex items-center gap-2.5">
-            <div id="user-profile-avatar" class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">HI</div>
-            <div>
-              <div id="user-profile-name" class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[130px]">Ing. Harold Iriarte</div>
-              <div id="user-profile-info" class="text-[10px] font-medium text-slate-500 dark:text-slate-400">8h • 1 Carrera</div>
-            </div>
-          </div>
-          <button onclick="window.logoutUser()" title="Cerrar sesión" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
-            <i data-lucide="log-out" class="w-4 h-4 text-slate-500 hover:text-red-500"></i>
+          <button id="sidebar-collapse-btn" onclick="window.toggleSidebarCollapse()" class="p-1.5 rounded-lg text-[var(--sp-ink-3)] hover:text-[var(--sp-purple)] hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer" title="Colapsar menú">
+            <i id="sidebar-collapse-icon" data-lucide="chevrons-left" class="w-4 h-4"></i>
           </button>
         </div>
-      </aside>
 
-      <!-- Main Layout -->
-      <div class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- 13 Canonical Process Module Navigation Buttons -->
+        <nav class="space-y-0.5" id="global-sidebar-nav">
+          
+          <!-- 1. Dashboard -->
+          <button onclick="window.switchView('view-dashboard')" id="nav-item-dashboard" class="global-nav-btn active w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Dashboard</span>
+          </button>
+
+          <!-- 2. Plan de Estudios (Carpeta Docente) -->
+          <button onclick="window.switchView('view1')" id="nav-item-view1" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="book-open" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Plan de Estudios</span>
+          </button>
+
+          <!-- 3. Banco de Preguntas -->
+          <button onclick="window.showToast('Módulo Banco de Preguntas en preparación')" id="nav-item-banco" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="database" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Banco de Preguntas</span>
+          </button>
+
+          <!-- 4. Lista de Evaluaciones -->
+          <button onclick="window.showToast('Módulo Lista de Evaluaciones')" id="nav-item-evaluaciones" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="list-ordered" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Lista de Evaluaciones</span>
+          </button>
+
+          <!-- 5. Rol de Exámenes -->
+          <button onclick="window.showToast('Módulo Rol de Exámenes')" id="nav-item-rol" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="calendar-days" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Rol de Exámenes</span>
+          </button>
+
+          <!-- 6. Servicios Académicos (with Live badge) -->
+          <button onclick="window.toggleSeaGatewaySimulation()" id="nav-item-servicios" class="global-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <div class="flex items-center gap-3 overflow-hidden">
+              <i data-lucide="cpu" class="w-4 h-4 flex-shrink-0"></i>
+              <span class="sidebar-item-label truncate">Servicios Académicos</span>
+            </div>
+            <span id="sidebar-sea-badge" class="sidebar-badge-wrap px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <span id="sidebar-sea-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="sidebar-sea-text">Live</span>
+            </span>
+          </button>
+
+          <!-- 7. Salas Virtuales -->
+          <button onclick="window.showToast('Salas Virtuales activas')" id="nav-item-salas" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="monitor-play" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Salas Virtuales</span>
+          </button>
+
+          <!-- 8. Calificación OMR -->
+          <button onclick="window.showToast('Calificación OMR')" id="nav-item-omr" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="scan-line" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Calificación OMR</span>
+          </button>
+
+          <!-- 9. Administración de Evaluaciones -->
+          <button onclick="window.switchView('view2')" id="nav-item-admin-eval" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Administración de Evaluaciones</span>
+          </button>
+
+          <!-- 10. Auditoría & Bitácora -->
+          <button onclick="window.switchView('view3')" id="nav-item-view3" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="scroll-text" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Auditoría & Bitácora</span>
+          </button>
+
+          <!-- 11. Respaldos y contingencias -->
+          <button onclick="window.showToast('Respaldos y contingencias')" id="nav-item-respaldos" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="hard-drive-download" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Respaldos y contingencias</span>
+          </button>
+
+          <!-- 12. Reporte de Evaluaciones -->
+          <button onclick="window.switchView('view4')" id="nav-item-reportes" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Reporte de Evaluaciones</span>
+          </button>
+
+          <!-- 13. Usuarios y accesos -->
+          <button onclick="window.switchView('view6')" id="nav-item-view6" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="user-cog" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Usuarios y accesos</span>
+          </button>
+        </nav>
+
+        <!-- Bottom Security Card -->
+        <div class="sidebar-security-card p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] text-xs space-y-1 cursor-pointer transition-colors hover:border-[var(--sp-purple)]/40" onclick="window.openModal('Seguridad de la cuenta', '<p>Por políticas de seguridad institucional de UNITEPC, recuerda actualizar tu contraseña periódicamente y no compartirla.</p>')">
+          <div class="flex items-center gap-2 font-bold text-[var(--sp-ink)]">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[var(--sp-purple)] flex-shrink-0"></i>
+            <span class="sidebar-item-label">Seguridad de la cuenta</span>
+          </div>
+          <p class="sidebar-item-label text-[11px] text-[var(--sp-ink-3)] leading-relaxed">Por seguridad, cambia periódicamente tu contraseña y no la compartas.</p>
+        </div>
+
+      </div>
+
+      <!-- Bottom User Profile Bar (Preserves legacy IDs for controller synchronization) -->
+      <div class="p-3 border-t border-[var(--sp-border)] flex items-center justify-between flex-shrink-0 bg-[var(--sp-surface)]">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div id="user-profile-avatar" class="sidebar-user-avatar w-8 h-8 rounded-full bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] font-bold flex items-center justify-center text-xs border border-[var(--sp-purple)]/20 flex-shrink-0 font-display">HM</div>
+          <div class="sidebar-label-wrap overflow-hidden">
+            <div id="user-profile-name" class="text-xs font-bold text-[var(--sp-ink)] truncate font-display">Harold Marco Antonio Rojas Torres</div>
+            <div id="user-profile-info" class="text-[10px] font-medium text-[var(--sp-ink-3)] truncate">Administrador • Sede Central</div>
+          </div>
+        </div>
+        <button onclick="window.logoutUser()" title="Cerrar sesión" class="p-1.5 rounded-lg text-[var(--sp-ink-3)] hover:text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer flex-shrink-0">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- 2. MAIN WORKSPACE CONTAINER                                               -->
+    <!-- ========================================================================= -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+      
+      <!-- Canonical Top Header (64px) -->
+      <header class="sp-topbar h-16 bg-[var(--sp-surface)] border-b border-[var(--sp-border)] px-6 flex items-center justify-between flex-shrink-0 z-20 no-print">
+        
+        <!-- Brand / Institutional Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[var(--sp-purple)] flex items-center justify-center text-white shadow-sm font-bold font-display">
+            <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold text-[var(--sp-ink)] font-display tracking-tight leading-none">Sistema de Evaluaciones</h1>
+            <p class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)] mt-0.5">GESTIÓN INTEGRAL DEL PROCESO DE EVALUACIONES ACADÉMICAS</p>
+          </div>
+        </div>
+
+        <!-- Right Header Controls Cluster -->
+        <div class="flex items-center gap-3">
+          
+          <!-- + Parametrizar Vista Action -->
+          <button onclick="window.showToast('Configurador de parámetros de vista')" class="px-3 py-1.5 rounded-xl border border-[var(--sp-border)] hover:bg-[var(--sp-surface-hover)] text-xs font-semibold text-[var(--sp-ink)] flex items-center gap-1.5 transition-colors cursor-pointer">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+            <span>Parametrizar vista</span>
+          </button>
+
+          <!-- GESTIÓN II-2026 Pill Dropdown -->
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--sp-purple-soft)] border border-[var(--sp-purple)]/20 text-[var(--sp-purple-dark)] text-xs font-bold cursor-pointer hover:opacity-90 transition-opacity">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+            <span>GESTIÓN: II-2026 (Activa)</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 opacity-60"></i>
+          </div>
+
+          <!-- Docente API Selector (SEA Gateway Ingestion) -->
+          <div class="hidden md:flex items-center gap-2 bg-[var(--sp-surface-2)] px-2.5 py-1 rounded-xl border border-[var(--sp-border)]">
+            <i data-lucide="user-check" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+            <label for="docente-api-selector" class="sr-only">Docente API</label>
+            <select id="docente-api-selector" (change)="onDocenteSelectorChange($event)" class="bg-transparent border-none text-xs text-[var(--sp-ink)] font-medium focus:outline-none cursor-pointer pr-1">
+              <optgroup label="DOCENTES OFICIALES SEA - SEDE COCHABAMBA">
+                <option value="3065087" selected>ROSMERY LUIZAGA SALINAS (3065087)</option>
+                <option value="6600808">WALTER JOSE CAZAS CASTRO (6600808)</option>
+                <option value="4421998">MARTIN XAVIER SANCHEZ FLORES (4421998)</option>
+                <option value="7906983">RUBEN SERGIO VELASQUEZ ADRIAZOLA (7906983)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Theme Switcher Button -->
+          <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="p-2 rounded-xl border border-[var(--sp-border)] text-[var(--sp-ink-3)] hover:text-[var(--sp-ink)] hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer" title="Alternar tema claro/oscuro">
+            <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
+          </button>
+
+          <!-- SEA Gateway Status Indicator -->
+          <div id="sea-gateway-status-container" class="cursor-pointer" onclick="window.toggleSeaGatewaySimulation()" title="Click para simular estado Gateway Online/Offline">
+            <span id="sea-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+              <span id="sea-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="sea-status-text">SEA Live</span>
+            </span>
+          </div>
+
+          <!-- User Profile Header Dropdown -->
+          <div class="relative" id="user-profile-header-dropdown">
+            <button id="user-dropdown-btn" onclick="window.toggleUserDropdown(event)" class="flex items-center gap-2 p-1 rounded-xl hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer">
+              <div id="header-user-avatar" class="w-8 h-8 rounded-full bg-[var(--sp-purple)] text-white font-bold text-xs flex items-center justify-center font-display">HM</div>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--sp-ink-3)]"></i>
+            </button>
+            <div id="user-dropdown-menu" class="hidden absolute right-0 mt-2 w-64 bg-[var(--sp-surface)] rounded-2xl shadow-2xl border border-[var(--sp-border)] p-3 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3 text-xs">
+              <div class="border-b border-[var(--sp-border)] pb-2">
+                <div id="menu-user-fullname" class="font-bold text-[var(--sp-ink)] truncate font-display">Harold Marco Antonio Rojas Torres</div>
+                <div id="menu-user-email" class="text-[11px] text-[var(--sp-ink-3)] truncate">admin@unitepc.edu.bo</div>
+                <div class="mt-1 flex items-center gap-1.5">
+                  <span id="menu-user-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)]">ROLE_ADMIN</span>
+                  <span id="menu-user-ci" class="text-[10px] text-[var(--sp-ink-3)] font-mono">CI: 3065087</span>
+                </div>
+              </div>
+              <button onclick="window.switchView('view6'); window.toggleUserDropdown();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[var(--sp-surface-hover)] text-[var(--sp-ink)] flex items-center gap-2 cursor-pointer font-medium">
+                <i data-lucide="user-cog" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+                <span>Administración de Usuarios</span>
+              </button>
+              <button onclick="window.logoutUser()" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 text-red-600 dark:text-red-400 flex items-center gap-2 cursor-pointer font-semibold border-t border-[var(--sp-border)] pt-2">
+                <i data-lucide="log-out" class="w-3.5 h-3.5 text-red-600"></i>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Main Canvas Viewport -->
+      <main id="main-canvas" class="flex-1 overflow-y-auto bg-[var(--sp-bg)] p-6 space-y-6 custom-scrollbar">
+        
+        <!-- ========================================================================= -->
+        <!-- VIEW DASHBOARD: INSTITUTIONAL OVERVIEW (CANONICAL DEFAULT LANDING)        -->
+        <!-- ========================================================================= -->
+        <div id="view-dashboard" class="frame-view space-y-6 max-w-7xl mx-auto">
+          
+          <!-- 1. Hero Banner (Indigo/Purple Gradient) -->
+          <section class="rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r from-[#1E1139] via-[#3B1F6A] to-[#4F2686] border border-purple-500/20">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div class="space-y-1.5 max-w-2xl">
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-300 block font-display">PANEL INSTITUCIONAL • UNITEPC</span>
+                <h2 class="text-2xl font-bold font-display tracking-tight text-white">Resumen institucional completo</h2>
+                <p class="text-xs text-purple-200/90 leading-relaxed">Monitoreo del ciclo académico, cobertura curricular y avance de evaluaciones en tiempo real.</p>
+              </div>
+              
+              <!-- Sede & Gestión Selectors + Action Button -->
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                  <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">SEDE</label>
+                  <select class="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer">
+                    <option value="CBB" class="bg-[#1E1139] text-white">Sede Central Cochabamba</option>
+                    <option value="LPZ" class="bg-[#1E1139] text-white">Sede La Paz</option>
+                    <option value="EAL" class="bg-[#1E1139] text-white">Sede El Alto</option>
+                    <option value="COB" class="bg-[#1E1139] text-white">Sede Cobija</option>
+                  </select>
+                </div>
+
+                <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                  <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">GESTIÓN</label>
+                  <span class="text-white text-xs font-semibold">II-2026 (Activa)</span>
+                </div>
+
+                <button onclick="window.showToast('Acceso a Evaluaciones del Día')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
+                  <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                  <span>Evaluaciones del Día</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Sub-header Card: Role Context & Authenticated User -->
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Left: Vista personalizada por cargo -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+              <div class="space-y-1">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">VISTA PERSONALIZADA POR CARGO</div>
+                <div class="flex items-center gap-2 pt-1">
+                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20">ROL ADMINISTRADOR</span>
+                  <span class="text-xs text-[var(--sp-ink-2)] font-medium">• Acceso total y supervisión</span>
+                </div>
+                <p class="text-xs text-[var(--sp-ink-3)] pt-1">Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] flex items-center justify-center flex-shrink-0">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+              </div>
+            </div>
+
+            <!-- Right: Usuario Autenticado -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+              <div class="space-y-1">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">USUARIO AUTENTICADO</div>
+                <div class="text-sm font-bold text-[var(--sp-ink)] font-display pt-1">Harold Marco Antonio Rojas Torres</div>
+                <div class="flex items-center gap-2 text-xs text-[var(--sp-ink-3)]">
+                  <span>CI: 3065087</span>
+                  <span>•</span>
+                  <span>admin@unitepc.edu.bo</span>
+                  <span>•</span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Sesión activa</span>
+                </div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. KPI Grid (4 Stat Cards with accent top bars) -->
+          <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Stat 1: Roles visibles -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+              <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-purple)]"></span>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Roles Visibles</div>
+              <div class="text-3xl font-black text-[var(--sp-ink)] font-display mt-2">2,597</div>
+              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                <i data-lucide="users" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+                <span>Total de asignaciones de rol</span>
+              </div>
+            </div>
+
+            <!-- Stat 2: En planificación -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+              <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-teal)]"></span>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">En Planificación</div>
+              <div class="text-3xl font-black text-[var(--sp-teal-dark)] dark:text-[var(--sp-teal)] font-display mt-2">2,594</div>
+              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-[var(--sp-teal)]"></i>
+                <span>Carpetas en elaboración</span>
+              </div>
+            </div>
+
+            <!-- Stat 3: En proceso -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+              <span class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></span>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">En Proceso</div>
+              <div class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">0</div>
+              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                <i data-lucide="play-circle" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span>Evaluaciones en ejecución</span>
+              </div>
+            </div>
+
+            <!-- Stat 4: Calificadas -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+              <span class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></span>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Calificadas</div>
+              <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">0</div>
+              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+                <span>Actas cerradas y consolidadas</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. Middle Row: Information & Direct Action Shortcuts -->
+          <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Col 1: Información a tu alcance -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+              <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
+                <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
+                  <i data-lucide="bell" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                  <span>INFORMACIÓN A TU ALCANCE</span>
+                </h3>
+                <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 bg-[var(--sp-purple-soft)] px-2 py-0.5 rounded">Hitos II-2026</span>
+              </div>
+              <div class="space-y-3 text-xs">
+                <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-[var(--sp-ink)]">Conexión con Gateway SEA Operativa</div>
+                    <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Sincronización activa con sedes Cochabamba, La Paz, El Alto y Cobija.</div>
+                  </div>
+                </div>
+                <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
+                  <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-[var(--sp-ink)]">Cierre de Planificación Curricular</div>
+                    <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Presentación oficial de carpetas pedagógicas y programas analíticos habilitada.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Col 2: Accesos Directos de tu Cargo -->
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+              <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
+                <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
+                  <i data-lucide="compass" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                  <span>ACCESOS DIRECTOS DE TU CARGO</span>
+                </h3>
+                <span class="text-[10px] uppercase font-bold text-[var(--sp-ink-3)]">Módulos habilitados</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <button onclick="window.switchView('view1')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="book-open" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">Carpeta Docente</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Planificación y 4 documentos</div>
+                </button>
+                <button onclick="window.switchView('view2')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="sliders-horizontal" class="w-5 h-5 text-[var(--sp-teal)] mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-teal-dark)]">Supervisión Carrera</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Avance y firmas digitales</div>
+                </button>
+                <button onclick="window.switchView('view3')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="scroll-text" class="w-5 h-5 text-amber-500 mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-amber-700 dark:group-hover:text-amber-300">Auditoría In Situ</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Bitácora de fiscalización</div>
+                </button>
+                <button onclick="window.switchView('view6')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="user-cog" class="w-5 h-5 text-indigo-500 mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-indigo-700 dark:group-hover:text-indigo-300">Usuarios y RBAC</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Gestión de cuentas y roles</div>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 5. Bottom Operational Metrics (4 cards) -->
+          <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Total Evaluaciones</div>
+              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Programadas en el ciclo</div>
+            </div>
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Turnos Hoy</div>
+              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Turnos activos para fecha</div>
+            </div>
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Variantes del Examen</div>
+              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Generadas en OMR</div>
+            </div>
+            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Cobertura de Bancos</div>
+              <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-1">100%</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Preguntas auditadas</div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- VIEW 1: [DOCENTE] GESTIÓN CURRICULAR Y 4 TABS DE DOCUMENTOS               -->
+        <!-- ========================================================================= -->
+        <div id="view1" class="frame-view hidden max-w-7xl mx-auto flex gap-6 min-h-[920px]">
+          
+          <!-- CONTEXTUAL SUB-RAIL: MIS CARRERAS & DOCUMENTOS -->
+          <aside class="w-[280px] bg-[var(--sp-surface)] rounded-2xl border border-[var(--sp-border)] flex flex-col justify-between p-4 flex-shrink-0 no-print shadow-sm">
+            <div class="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
+              
+              <!-- Section Header -->
+              <div class="flex items-center justify-between px-1 pb-2 border-b border-[var(--sp-border)]">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="book-marked" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                  <span class="text-xs font-bold text-[var(--sp-ink)] font-display">CARPETA DOCENTE</span>
+                </div>
+                <span id="sidebar-summary-hours" class="text-[10px] font-bold text-[var(--sp-purple-dark)] bg-[var(--sp-purple-soft)] px-1.5 py-0.5 rounded border border-[var(--sp-purple)]/20">3 Carreras • 16h</span>
+              </div>
+
+              <!-- Section: CARPETAS ORGANIZADAS POR CARRERA & MATERIA (DYNAMIC VIA API) -->
+              <div id="sidebar-materias-container" class="space-y-2">
+                <div class="px-1 text-[10px] font-bold uppercase tracking-wider text-[var(--sp-ink-3)]">Mis Carreras & Cátedras</div>
+                
+                <!-- Dynamic Subjects Skeleton (Replaced upon API response) -->
+                <div id="sidebar-materias-skeleton" class="space-y-2 p-1 animate-pulse">
+                  <div class="h-12 bg-[var(--sp-surface-2)] rounded-xl"></div>
+                  <div class="h-12 bg-[var(--sp-surface-2)] rounded-xl"></div>
+                  <div class="h-12 bg-[var(--sp-surface-2)] rounded-xl"></div>
+                </div>
+              </div>
+
+              <!-- Section: PESTAÑAS DE LA CARPETA ACTIVA (4 Tabs) -->
+              <div class="space-y-1 pt-3 border-t border-[var(--sp-border)]">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-[var(--sp-ink-3)] px-1 mb-1.5">Documentos de la Carpeta</div>
+                
+                <button onclick="window.switchDocMainTab('tab-analitico')" id="sidebar-tab-analitico" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/30 font-bold text-xs text-left cursor-pointer transition-all">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0"></i>
+                  <span class="truncate">1. Prog. Analítico (.docx)</span>
+                </button>
+
+                <button onclick="window.switchDocMainTab('tab-pac-matrix')" id="sidebar-tab-pac-matrix" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] font-medium text-xs text-left cursor-pointer transition-all">
+                  <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0"></i>
+                  <span class="truncate">2. PAC Pedagógico (1-14)</span>
+                </button>
+
+                <button onclick="window.switchDocMainTab('tab-cronograma-semanas')" id="sidebar-tab-cronograma-semanas" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] font-medium text-xs text-left cursor-pointer transition-all">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0"></i>
+                  <span class="truncate">3. Cronograma (20 Sem)</span>
+                </button>
+
+                <button onclick="window.switchDocMainTab('tab-cronograma-planes')" id="sidebar-tab-cronograma-planes" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] font-medium text-xs text-left cursor-pointer transition-all">
+                  <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0"></i>
+                  <span class="truncate">4. Planes de Clase (.xlsx)</span>
+                </button>
+              </div>
+
+              <!-- Direct Export Center -->
+              <div class="space-y-1.5 p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] text-[11px]">
+                <div class="font-bold text-[var(--sp-ink)] mb-1 flex items-center gap-1.5">
+                  <i data-lucide="download" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+                  <span>Exportar Carpeta Activa:</span>
+                </div>
+                <button onclick="window.exportExactFile('docx')" class="w-full text-left py-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+                  <i data-lucide="file-text" class="w-3 h-3 flex-shrink-0"></i> 1. Analítico (.docx)
+                </button>
+                <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+                  <i data-lucide="table" class="w-3 h-3 flex-shrink-0"></i> 2 y 3. PAC + Cronograma (.xlsx)
+                </button>
+                <button onclick="window.exportExactFile('planes_xlsx')" class="w-full text-left py-1 text-purple-600 dark:text-purple-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+                  <i data-lucide="calendar-range" class="w-3 h-3 flex-shrink-0"></i> 4. Planes de Clase (.xlsx)
+                </button>
+                <button onclick="window.openPdfPrintModal()" class="w-full text-left py-1 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-[var(--sp-border)] truncate cursor-pointer">
+                  <i data-lucide="printer" class="w-3 h-3 flex-shrink-0"></i> 📄 Imprimir en PDF
+                </button>
+              </div>
+
+            </div>
+          </aside>
+
+          <!-- Main Layout -->
+          <div class="flex-1 bg-[var(--sp-surface)] rounded-2xl border border-[var(--sp-border)] shadow-sm flex flex-col overflow-hidden">
         <!-- TopHeader -->
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors no-print">
           <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
@@ -1579,43 +1905,8 @@
     <!-- ========================================================================= -->
     <!-- VIEW 2: [DIRECCIÓN DE CARRERA] SUPERVISIÓN & APROBACIÓN POR SEMESTRE       -->
     <!-- ========================================================================= -->
-    <div id="view2" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view2" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
-      <!-- Sidebar -->
-      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
-        <div class="space-y-6">
-          <div class="flex items-center gap-3 px-2 py-1">
-            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-            <div>
-              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Dirección de Carrera</div>
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Supervisión</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
-              <i data-lucide="layout-grid" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
-              <span>Monitoreo Curricular</span>
-            </a>
-            <a href="#" onclick="window.showToast('Visualizando 32 docentes asignados a la carrera')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="users" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Plantel Docente (32)</span>
-            </a>
-            <a href="#" onclick="window.showToast('Aprobaciones finales del semestre')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="check-circle" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Aprobaciones Finales</span>
-            </a>
-          </div>
-        </div>
-        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">DC</div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 dark:text-white">Dr. Carlos Meneses</div>
-            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Director • Ing. de Sistemas</div>
-          </div>
-        </div>
-      </aside>
-
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
@@ -1786,43 +2077,8 @@
     <!-- ========================================================================= -->
     <!-- VIEW 3: [DIRECCIÓN ACADÉMICA] AUDITORÍA DE CLASES IN SITU & CONTROL       -->
     <!-- ========================================================================= -->
-    <div id="view3" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view3" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
-      <!-- Sidebar -->
-      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
-        <div class="space-y-6">
-          <div class="flex items-center gap-3 px-2 py-1">
-            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-            <div>
-              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Dirección Académica</div>
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Auditoría & Control</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
-              <i data-lucide="radar" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
-              <span>Auditoría In Situ</span>
-            </a>
-            <a href="#" onclick="window.showToast('Monitoreando 42 aulas simultáneas en Campus Central')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="building" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Monitoreo de Campus</span>
-            </a>
-            <a href="#" onclick="window.showToast('Consolidando informe semanal de sede')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="file-check-2" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Informes de Sede</span>
-            </a>
-          </div>
-        </div>
-        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 font-bold flex items-center justify-center text-xs border border-blue-200 dark:border-blue-800/60">DA</div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 dark:text-white">Lic. Rodrigo Morales</div>
-            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Auditor • Sede Cochabamba</div>
-          </div>
-        </div>
-      </aside>
-
       <!-- Main View Area + Drawer -->
       <div class="flex-1 flex h-full overflow-hidden relative">
         
@@ -2021,43 +2277,8 @@
     <!-- ========================================================================= -->
     <!-- VIEW 4: [VICERRECTORADO SEDE] PANEL REGIONAL & REINCIDENCIAS              -->
     <!-- ========================================================================= -->
-    <div id="view4" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view4" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
-      <!-- Sidebar -->
-      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
-        <div class="space-y-6">
-          <div class="flex items-center gap-3 px-2 py-1">
-            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-            <div>
-              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA ACADÉMICO</div>
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Vicerrectorado Sede</div>
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Gestión Regional</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
-              <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
-              <span>Tablero Regional CBBA</span>
-            </a>
-            <a href="#" onclick="window.showToast('Revisando 3 casos reincidentes para dictamen')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="alert-octagon" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Casos Reincidentes (3)</span>
-            </a>
-            <a href="#" onclick="window.showToast('Emisión de dictámenes e informes de acreditación')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="file-signature" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Dictámenes & Informes</span>
-            </a>
-          </div>
-        </div>
-        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-200 dark:border-amber-800/60">VS</div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 dark:text-white">Dr. Gonzalo Siles</div>
-            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Vicerrector Sede CBBA</div>
-          </div>
-        </div>
-      </aside>
-
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
@@ -2209,43 +2430,8 @@
     <!-- ========================================================================= -->
     <!-- VIEW 5: [VICERRECTORADO NACIONAL] TABLERO EJECUTIVO & ANÁLISIS MULTISEDE -->
     <!-- ========================================================================= -->
-    <div id="view5" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view5" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
-      <!-- Sidebar -->
-      <aside class="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 flex-shrink-0 transition-colors">
-        <div class="space-y-6">
-          <div class="flex items-center gap-3 px-2 py-1">
-            <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm font-bold text-lg font-display">S</div>
-            <div>
-              <div class="text-sm font-bold tracking-tight text-slate-900 dark:text-white font-display">SISA NACIONAL</div>
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Alta Dirección Universitaria</div>
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-2">Consolidado Nacional</div>
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-800/60 font-bold text-xs">
-              <i data-lucide="globe" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
-              <span>Tablero Multisede</span>
-            </a>
-            <a href="#" onclick="window.showToast('Ranking y acreditación de sedes universitarias')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Ranking & Calidad</span>
-            </a>
-            <a href="#" onclick="window.showToast('Descargando matriz nacional de docentes')" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-xs transition-colors">
-              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-              <span>Matriz Consolidada</span>
-            </a>
-          </div>
-        </div>
-        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-200 dark:border-purple-800/60">VN</div>
-          <div>
-            <div class="text-xs font-bold text-slate-900 dark:text-white">Vicerrectorado Nacional</div>
-            <div class="text-[10px] font-medium text-slate-500 dark:text-slate-400">Sede Central • Bolivia</div>
-          </div>
-        </div>
-      </aside>
-
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
@@ -2396,7 +2582,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 6: [ADMIN] ADMINISTRACIÓN DE USUARIOS, ACCESOS Y ASIGNACIONES ACADÉMICAS -->
     <!-- ========================================================================= -->
-    <div id="view6" class="frame-view w-[1440px] min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view6" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Top Header of Admin View -->
       <header class="h-[72px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0">
@@ -2481,6 +2667,9 @@
     <!-- Official PDF / Print Container for UNITEPC Folders -->
     <div id="print-official-folder-container" class="hidden"></div>
   </main>
+
+  </div>
+</div>
 
   <!-- Complete Interactive Scripts -->
   

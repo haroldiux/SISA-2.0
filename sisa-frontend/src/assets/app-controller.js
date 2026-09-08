@@ -86,11 +86,41 @@
     window.applyThemePreference();
 
 
+    // Mapping of viewId to sidebar navigation button ID
+    const VIEW_TO_NAV_ITEM = {
+      'view-dashboard': 'nav-item-dashboard',
+      'view1': 'nav-item-view1',
+      'view2': 'nav-item-admin-eval',
+      'view3': 'nav-item-view3',
+      'view4': 'nav-item-reportes',
+      'view5': 'nav-item-reportes',
+      'view6': 'nav-item-view6'
+    };
+
     window.switchView = function(viewId) {
+      if (!viewId) viewId = 'view-dashboard';
+
+      // 1. Hide all views and reveal target
       document.querySelectorAll('.frame-view').forEach(view => view.classList.add('hidden'));
       const target = document.getElementById(viewId);
       if (target) target.classList.remove('hidden');
 
+      // 2. Update Global Sidebar Nav active highlight
+      document.querySelectorAll('.global-nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-[var(--sp-purple-soft)]', 'text-[var(--sp-purple-dark)]', 'font-semibold');
+        btn.classList.add('text-[var(--sp-ink-2)]', 'font-medium');
+      });
+
+      const activeNavId = VIEW_TO_NAV_ITEM[viewId];
+      if (activeNavId) {
+        const activeNavBtn = document.getElementById(activeNavId);
+        if (activeNavBtn) {
+          activeNavBtn.classList.add('active', 'bg-[var(--sp-purple-soft)]', 'text-[var(--sp-purple-dark)]', 'font-semibold');
+          activeNavBtn.classList.remove('text-[var(--sp-ink-2)]', 'font-medium');
+        }
+      }
+
+      // 3. Backward-compatibility for prototype tabs if present
       document.querySelectorAll('.view-tab-btn').forEach(btn => {
         btn.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
         btn.classList.add('text-slate-300');
@@ -101,11 +131,50 @@
         activeBtn.classList.remove('text-slate-300');
         activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
       }
+
+      // 4. View-specific lifecycle hooks
       if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
         window.loadAdminUsers();
       }
+
       if (window.lucide) window.lucide.createIcons();
     };
+
+    // ── SIDEBAR RAIL COLLAPSE ENGINE ──────────────────────────────────────
+    window.toggleSidebarCollapse = function() {
+      const sidebar = document.getElementById('global-sidebar');
+      const icon = document.getElementById('sidebar-collapse-icon');
+      if (!sidebar) return;
+
+      const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+      
+      if (isCollapsed) {
+        sidebar.classList.remove('w-60');
+        sidebar.classList.add('w-20');
+        if (icon) icon.setAttribute('data-lucide', 'chevrons-right');
+      } else {
+        sidebar.classList.remove('w-20');
+        sidebar.classList.add('w-60');
+        if (icon) icon.setAttribute('data-lucide', 'chevrons-left');
+      }
+
+      localStorage.setItem('sp.sidebar.collapsed', isCollapsed ? 'true' : 'false');
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    // Auto-restore persisted collapse state on controller initialization
+    (function initSidebarState() {
+      const savedState = localStorage.getItem('sp.sidebar.collapsed');
+      if (savedState === 'true') {
+        const sidebar = document.getElementById('global-sidebar');
+        const icon = document.getElementById('sidebar-collapse-icon');
+        if (sidebar) {
+          sidebar.classList.add('sidebar-collapsed', 'w-20');
+          sidebar.classList.remove('w-60');
+        }
+        if (icon) icon.setAttribute('data-lucide', 'chevrons-right');
+      }
+    })();
 
     window.switchDocMainTab = function(tabId) {
       if (!tabId.startsWith('tab-')) {
@@ -5366,44 +5435,57 @@ document.addEventListener('change', (e) => {
 
   // UI Profile synchronizer
   window.updateUserProfileUi = function(user) {
+    if (!user) {
+      try {
+        const cached = localStorage.getItem('scu_user_info');
+        if (cached) user = JSON.parse(cached);
+      } catch (e) {}
+    }
     if (!user) return;
+
     const initials = (user.nombres && user.apellidos)
       ? (user.nombres.charAt(0) + user.apellidos.charAt(0)).toUpperCase()
-      : (user.nombreCompleto ? user.nombreCompleto.substring(0, 2).toUpperCase() : 'US');
+      : (user.nombreCompleto ? user.nombreCompleto.substring(0, 2).toUpperCase() : 'HM');
 
-    // Header Profile
+    // Canonical role label mapping
+    let roleLabel = 'Docente';
+    if (user.role === 'ROLE_ADMIN') roleLabel = 'Administrador';
+    else if (user.role === 'ROLE_VICERRECTOR_NACIONAL') roleLabel = 'Vicerrector Nal.';
+    else if (user.role === 'ROLE_VICERRECTOR_SEDE') roleLabel = 'Vicerrector Sede';
+    else if (user.role === 'ROLE_DIR_ACADEMICA') roleLabel = 'Dir. Académica';
+    else if (user.role === 'ROLE_DIR_CARRERA') roleLabel = 'Dir. Carrera';
+
+    // Canonical role & scope description
+    const roleScope = user.sedeNombre
+      ? (roleLabel + ' • ' + user.sedeNombre)
+      : (user.role === 'ROLE_ADMIN' ? 'Administrador del sistema • Sede Central' : (roleLabel + ' • Sede Central'));
+
+    // 1. Top Header elements
     const headerAvatar = document.getElementById('header-user-avatar');
     const headerName = document.getElementById('header-user-name');
     const headerRole = document.getElementById('header-user-role');
+    if (headerAvatar) headerAvatar.innerText = initials;
+    if (headerName) headerName.innerText = user.nombreCompleto || user.username;
+    if (headerRole) headerRole.innerText = roleLabel;
+
+    // 2. User Dropdown Menu items
     const menuFullname = document.getElementById('menu-user-fullname');
     const menuEmail = document.getElementById('menu-user-email');
     const menuBadge = document.getElementById('menu-user-badge');
     const menuCi = document.getElementById('menu-user-ci');
-
-    if (headerAvatar) headerAvatar.innerText = initials;
-    if (headerName) headerName.innerText = user.nombreCompleto || user.username;
-    if (headerRole) {
-      let roleLabel = 'Docente';
-      if (user.role === 'ROLE_ADMIN') roleLabel = 'Administrador';
-      else if (user.role === 'ROLE_VICERRECTOR_NACIONAL') roleLabel = 'Vicerrector Nal.';
-      else if (user.role === 'ROLE_VICERRECTOR_SEDE') roleLabel = 'Vicerrector Sede';
-      else if (user.role === 'ROLE_DIR_ACADEMICA') roleLabel = 'Dir. Académica';
-      else if (user.role === 'ROLE_DIR_CARRERA') roleLabel = 'Dir. Carrera';
-      headerRole.innerText = roleLabel;
-    }
-
     if (menuFullname) menuFullname.innerText = user.nombreCompleto || user.username;
     if (menuEmail) menuEmail.innerText = user.email || (user.username + '@unitepc.edu.bo');
     if (menuBadge) menuBadge.innerText = user.role || 'ROLE_DOCENTE';
     if (menuCi) menuCi.innerText = 'CI: ' + (user.ci || user.username || 'S/N');
 
-    // Sidebar View 1 Profile
-    const sideAvatar = document.getElementById('user-profile-avatar');
-    const sideName = document.getElementById('user-profile-name');
-    const sideInfo = document.getElementById('user-profile-info');
-    if (sideAvatar) sideAvatar.innerText = initials;
-    if (sideName) sideName.innerText = user.nombreCompleto || user.username;
-    if (sideInfo) sideInfo.innerText = user.sedeNombre || (user.role === 'ROLE_ADMIN' ? 'Sede Central • Bolivia' : '1 Carrera • UNITEPC');
+    // 3. Global Sidebar footer elements (both user-profile-* and sidebar-user-*)
+    const sideAvatars = [document.getElementById('user-profile-avatar'), document.getElementById('sidebar-user-avatar')];
+    const sideNames = [document.getElementById('user-profile-name'), document.getElementById('sidebar-user-name')];
+    const sideInfos = [document.getElementById('user-profile-info'), document.getElementById('sidebar-user-role')];
+
+    sideAvatars.forEach(el => { if (el) el.innerText = initials; });
+    sideNames.forEach(el => { if (el) el.innerText = user.nombreCompleto || user.username; });
+    sideInfos.forEach(el => { if (el) el.innerText = roleScope; });
 
     if (window.lucide) window.lucide.createIcons();
   };
@@ -6290,6 +6372,9 @@ document.addEventListener('change', (e) => {
     window.updateSeaGatewayStatus('online');
     window.loadDocentesFromApi();
     window.checkInitialAuth();
+    if (typeof window.switchView === 'function') {
+      window.switchView('view-dashboard');
+    }
   }, 150);
 })();
 
