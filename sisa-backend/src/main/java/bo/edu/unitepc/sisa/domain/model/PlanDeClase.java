@@ -35,6 +35,9 @@ public class PlanDeClase {
     @Column(nullable = false, length = 20)
     private EstadoPlanificacion estado = EstadoPlanificacion.BORRADOR;
 
+    @Column(name = "plan_type", length = 30)
+    private String planType;
+
     @Column(name = "duracion_total_min", nullable = false)
     private Integer duracionTotalMin;
 

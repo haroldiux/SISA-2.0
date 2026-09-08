@@ -40,4 +40,11 @@ public class SeaMateria {
 
     @Column(name = "carrera_id", length = 64)
     private String carreraId;
+
+    @Column(name = "course_type", length = 50)
+    private String courseType;
+
+    public SeaMateria(String id, String codigo, String nombre, Short semestre, String syllabusCourseId, String carreraId) {
+        this(id, codigo, nombre, semestre, syllabusCourseId, carreraId, null);
+    }
 }

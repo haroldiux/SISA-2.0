@@ -1,92 +1,61 @@
 package bo.edu.unitepc.sisa.api.request;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * PAC curriculum planning submission / update request DTO.
+ * Backwards compatible subclass of {@link ScuPacDto}.
  *
  * @author GentleAI SISA Architecture Team
  */
-@Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class ScuPacRequest {
+public class ScuPacRequest extends ScuPacDto {
 
-    private Long id;
-
-    @NotNull(message = "El ID de asignación es obligatorio")
-    private Long asignacionId;
-
-    /** 1.- Identificación de la Asignatura */
-    private String carrera;
-    private String nombreAsignatura;
-    private String codigoAsignatura;
-    private String tipoCurso;
-    private String modalidad;
-    private String semestre;
-    private String preRequisito;
-    private String creditos;
-    private String cargaHorariaTotal;
-    private String sesionesSemanales;
-    private String horasTeoricasPracticas;
-
-    /** 2.- Docente Responsable */
-    private String nombreDocente;
-    private String emailDocente;
-    private String formacionDocente;
-    private String telefonoDocente;
-
-    /** 3 & 4.- Justificación & Propósito General */
-    private String justificacion;
-    private String propositoGeneral;
-
-    /** 5 & 6.- Competencias & Elementos */
-    private String competenciaGlobal;
-    private String unidadCompetencia;
-    private String elementoCompetencia1;
-    private String elementoCompetencia2;
-    private List<String> elementosCompetencia = new ArrayList<>();
-
-
-    /** 8, 9, 12.- Metodología, Sistema de Evaluación, Normativas */
-    private String metodologiaAula;
-    private String metodologiaLaboratorio;
-    private String metodologiaSalud;
-    private String sistemaEvaluacion;
-    private String normativaCurso;
-
-    /** 9.- Ponderaciones de Evaluación */
-    private Integer p1NotaTeorica = 20;
-    private Integer p1NotaPractica = 10;
-    private Integer p2NotaTeorica = 20;
-    private Integer p2NotaPractica = 10;
-    private Integer efNotaTeorica = 30;
-    private Integer efNotaPractica = 10;
-
-
-
-    /** 14.- Bibliografía Oficial (Específica y Complementaria) */
-    private String bibliografiaOficial;
-
-
-    private Map<String, Object> seccionesIdentificacion = new HashMap<>();
-    private List<String> estrategiasMetodologicas = new ArrayList<>();
-    private List<String> recursosDidacticos = new ArrayList<>();
-    private List<String> normasCurso = new ArrayList<>();
-
-    @NotEmpty(message = "La matriz 7 debe contener al menos una sesión planificada")
-    @Valid
-    private List<ScuSesionMatriz7Dto> matriz7 = new ArrayList<>();
+    public ScuPacRequest(ScuPacDto dto) {
+        if (dto != null) {
+            this.setId(dto.getId());
+            this.setAsignacionId(dto.getAsignacionId());
+            this.setPacType(dto.getPacType());
+            this.setComponentType(dto.getComponentType());
+            this.setCarrera(dto.getCarrera());
+            this.setNombreAsignatura(dto.getNombreAsignatura());
+            this.setCodigoAsignatura(dto.getCodigoAsignatura());
+            this.setTipoCurso(dto.getTipoCurso());
+            this.setModalidad(dto.getModalidad());
+            this.setSemestre(dto.getSemestre());
+            this.setPreRequisito(dto.getPreRequisito());
+            this.setCreditos(dto.getCreditos());
+            this.setCargaHorariaTotal(dto.getCargaHorariaTotal());
+            this.setSesionesSemanales(dto.getSesionesSemanales());
+            this.setHorasTeoricasPracticas(dto.getHorasTeoricasPracticas());
+            this.setNombreDocente(dto.getNombreDocente());
+            this.setEmailDocente(dto.getEmailDocente());
+            this.setFormacionDocente(dto.getFormacionDocente());
+            this.setTelefonoDocente(dto.getTelefonoDocente());
+            this.setJustificacion(dto.getJustificacion());
+            this.setPropositoGeneral(dto.getPropositoGeneral());
+            this.setCompetenciaGlobal(dto.getCompetenciaGlobal());
+            this.setUnidadCompetencia(dto.getUnidadCompetencia());
+            this.setElementoCompetencia1(dto.getElementoCompetencia1());
+            this.setElementoCompetencia2(dto.getElementoCompetencia2());
+            this.setElementosCompetencia(dto.getElementosCompetencia());
+            this.setMetodologiaAula(dto.getMetodologiaAula());
+            this.setMetodologiaLaboratorio(dto.getMetodologiaLaboratorio());
+            this.setMetodologiaSalud(dto.getMetodologiaSalud());
+            this.setSistemaEvaluacion(dto.getSistemaEvaluacion());
+            this.setNormativaCurso(dto.getNormativaCurso());
+            this.setP1NotaTeorica(dto.getP1NotaTeorica());
+            this.setP1NotaPractica(dto.getP1NotaPractica());
+            this.setP2NotaTeorica(dto.getP2NotaTeorica());
+            this.setP2NotaPractica(dto.getP2NotaPractica());
+            this.setEfNotaTeorica(dto.getEfNotaTeorica());
+            this.setEfNotaPractica(dto.getEfNotaPractica());
+            this.setBibliografiaOficial(dto.getBibliografiaOficial());
+            this.setSeccionesIdentificacion(dto.getSeccionesIdentificacion());
+            this.setEstrategiasMetodologicas(dto.getEstrategiasMetodologicas());
+            this.setRecursosDidacticos(dto.getRecursosDidacticos());
+            this.setNormasCurso(dto.getNormasCurso());
+            this.setMatriz7(dto.getMatriz7());
+        }
+    }
 }

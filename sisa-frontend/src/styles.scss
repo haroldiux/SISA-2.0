@@ -12,6 +12,66 @@
   --sp-ink-muted: #64748B;
   --sp-border: #E2E8F0;
   --sp-brand: #4F46E5;
+  --sp-purple: #7B47B8;
+  --sp-purple-dark: #5C2E94;
+  --sp-purple-soft: #F0E9F8;
+  --sp-teal: #1F9FAD;
+  --sp-teal-dark: #157985;
+  --sp-teal-soft: #E0F2F4;
+}
+
+.dark {
+  --sp-purple: #9B6FD0;
+  --sp-purple-dark: #B58BE3;
+  --sp-purple-soft: rgba(155, 111, 208, 0.18);
+  --sp-teal: #4FBCC8;
+  --sp-teal-dark: #6CCBD5;
+  --sp-teal-soft: rgba(79, 188, 200, 0.18);
+}
+
+/* Component Type Badges (TA / PA / PL / PS) */
+.badge-ta {
+  background-color: rgba(123, 71, 184, 0.12) !important;
+  color: #7B47B8 !important;
+  border: 1px solid rgba(123, 71, 184, 0.3) !important;
+}
+.dark .badge-ta {
+  background-color: rgba(155, 111, 208, 0.18) !important;
+  color: #B58BE3 !important;
+  border-color: rgba(155, 111, 208, 0.4) !important;
+}
+
+.badge-pa {
+  background-color: rgba(31, 159, 173, 0.12) !important;
+  color: #1F9FAD !important;
+  border: 1px solid rgba(31, 159, 173, 0.3) !important;
+}
+.dark .badge-pa {
+  background-color: rgba(79, 188, 200, 0.18) !important;
+  color: #6CCBD5 !important;
+  border-color: rgba(79, 188, 200, 0.4) !important;
+}
+
+.badge-pl {
+  background-color: rgba(2, 132, 199, 0.12) !important;
+  color: #0284C7 !important;
+  border: 1px solid rgba(2, 132, 199, 0.3) !important;
+}
+.dark .badge-pl {
+  background-color: rgba(56, 189, 248, 0.18) !important;
+  color: #38BDF8 !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.badge-ps {
+  background-color: rgba(217, 119, 6, 0.12) !important;
+  color: #D97706 !important;
+  border: 1px solid rgba(217, 119, 6, 0.3) !important;
+}
+.dark .badge-ps {
+  background-color: rgba(251, 191, 36, 0.18) !important;
+  color: #FBBF24 !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
 }
 
 body {

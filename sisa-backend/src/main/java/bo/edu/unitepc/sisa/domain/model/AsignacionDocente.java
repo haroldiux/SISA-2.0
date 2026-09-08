@@ -65,4 +65,10 @@ public class AsignacionDocente {
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @Column(name = "course_type", length = 50)
+    private String courseType;
+
+    @Column(name = "component_type", length = 10)
+    private String componentType;
 }

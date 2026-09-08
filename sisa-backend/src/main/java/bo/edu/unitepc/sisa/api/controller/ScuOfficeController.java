@@ -41,6 +41,7 @@ public class ScuOfficeController {
     private final PacExcelParser pacExcelParser;
     private final PlanesClaseExcelParser planesClaseParser;
     private final ProgramaAnaliticoDocxParser programaParser;
+    private final bo.edu.unitepc.sisa.infrastructure.office.strategy.ParserFactory parserFactory;
 
     public ScuOfficeController(
             ScuExportPacXlsxCmd exportPacCmd,
@@ -48,13 +49,15 @@ public class ScuOfficeController {
             ScuExportProgramaDocxCmd exportProgramaCmd,
             PacExcelParser pacExcelParser,
             PlanesClaseExcelParser planesClaseParser,
-            ProgramaAnaliticoDocxParser programaParser) {
+            ProgramaAnaliticoDocxParser programaParser,
+            bo.edu.unitepc.sisa.infrastructure.office.strategy.ParserFactory parserFactory) {
         this.exportPacCmd = exportPacCmd;
         this.exportPlanClasesCmd = exportPlanClasesCmd;
         this.exportProgramaCmd = exportProgramaCmd;
         this.pacExcelParser = pacExcelParser;
         this.planesClaseParser = planesClaseParser;
         this.programaParser = programaParser;
+        this.parserFactory = parserFactory;
     }
 
     @GetMapping({"/export/pac/{id}", "/pac/{id}/export"})
@@ -99,10 +102,18 @@ public class ScuOfficeController {
     @PostMapping(value = {"/import/cronograma", "/cronograma/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> importCronograma(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "pacType", required = false) String pacTypeQuery,
+            @RequestHeader(value = "X-PAC-Type", required = false) String pacTypeHeader,
             @RequestParam(value = "asignacionId", required = false) Long asignacionId) {
         try {
             Long effectiveAsignacionId = (asignacionId != null) ? asignacionId : 1L;
-            ScuPacRequest parsed = this.pacExcelParser.parsePac(file.getInputStream(), effectiveAsignacionId);
+            String effectivePacType = (pacTypeQuery != null && !pacTypeQuery.isBlank()) ? pacTypeQuery : pacTypeHeader;
+            byte[] fileBytes = file.getBytes();
+            bo.edu.unitepc.sisa.infrastructure.office.strategy.PacParserStrategy strategy =
+                    this.parserFactory.getPacParser(effectivePacType, fileBytes, file.getOriginalFilename());
+            bo.edu.unitepc.sisa.api.request.ScuPacDto parsed =
+                    strategy.parse(new java.io.ByteArrayInputStream(fileBytes), file.getOriginalFilename());
+            parsed.setAsignacionId(effectiveAsignacionId);
             return ResponseEntity.ok(
                     ResourcesBuilder.of(parsed.getMatriz7() != null ? parsed.getMatriz7() : List.of())
                             .message("Cronograma Matriz 7 importado exitosamente")
@@ -121,10 +132,18 @@ public class ScuOfficeController {
     @PostMapping(value = {"/import/pac", "/pac/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> importPac(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "pacType", required = false) String pacTypeQuery,
+            @RequestHeader(value = "X-PAC-Type", required = false) String pacTypeHeader,
             @RequestParam(value = "asignacionId", required = false) Long asignacionId) {
         try {
             Long effectiveAsignacionId = (asignacionId != null) ? asignacionId : 1L;
-            ScuPacRequest parsed = this.pacExcelParser.parsePac(file.getInputStream(), effectiveAsignacionId);
+            String effectivePacType = (pacTypeQuery != null && !pacTypeQuery.isBlank()) ? pacTypeQuery : pacTypeHeader;
+            byte[] fileBytes = file.getBytes();
+            bo.edu.unitepc.sisa.infrastructure.office.strategy.PacParserStrategy strategy =
+                    this.parserFactory.getPacParser(effectivePacType, fileBytes, file.getOriginalFilename());
+            bo.edu.unitepc.sisa.api.request.ScuPacDto parsed =
+                    strategy.parse(new java.io.ByteArrayInputStream(fileBytes), file.getOriginalFilename());
+            parsed.setAsignacionId(effectiveAsignacionId);
             return ResponseEntity.ok(
                     ResourceBuilder.of(parsed)
                             .message("Documento PAC importado exitosamente")
@@ -143,11 +162,23 @@ public class ScuOfficeController {
     @PostMapping(value = {"/import/plan-clase", "/plan-clase/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> importPlanesClase(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "planType", required = false) String planTypeQuery,
+            @RequestHeader(value = "X-Plan-Type", required = false) String planTypeHeader,
             @RequestParam(value = "asignacionId", required = false) Long asignacionId,
             @RequestParam(value = "sesionId", required = false) Long sesionId) {
         try {
             Long effectiveSesionId = (sesionId != null) ? sesionId : (asignacionId != null ? asignacionId : 1L);
-            List<ScuPlanClaseRequest> planes = this.planesClaseParser.parsePlanes(file.getInputStream(), effectiveSesionId);
+            String effectivePlanType = (planTypeQuery != null && !planTypeQuery.isBlank()) ? planTypeQuery : planTypeHeader;
+            byte[] fileBytes = file.getBytes();
+            bo.edu.unitepc.sisa.infrastructure.office.strategy.PlanClaseParserStrategy strategy =
+                    this.parserFactory.getPlanClaseParser(effectivePlanType, fileBytes, file.getOriginalFilename());
+            List<bo.edu.unitepc.sisa.api.request.ScuPlanClaseDto> planes =
+                    strategy.parse(new java.io.ByteArrayInputStream(fileBytes), file.getOriginalFilename());
+            for (int i = 0; i < planes.size(); i++) {
+                if (planes.get(i).getSesionId() == null) {
+                    planes.get(i).setSesionId(effectiveSesionId + i);
+                }
+            }
             return ResponseEntity.ok(
                     ResourcesBuilder.of(planes)
                             .message("Planes de clase importados exitosamente")

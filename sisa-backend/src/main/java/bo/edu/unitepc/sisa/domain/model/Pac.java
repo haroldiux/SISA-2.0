@@ -38,6 +38,9 @@ public class Pac {
     @Column(nullable = false, length = 20)
     private EstadoPlanificacion estado = EstadoPlanificacion.BORRADOR;
 
+    @Column(name = "pac_type", length = 20)
+    private String pacType;
+
     @Convert(converter = JsonbMapConverter.class)
     @Column(name = "secciones_identificacion", nullable = false, columnDefinition = "JSONB")
     private Map<String, Object> seccionesIdentificacion = new HashMap<>();

@@ -351,6 +351,710 @@
       }
     };
 
+    // ── TASK 5.1: COMPONENT TYPE DETECTION ENGINE (SEA GATEWAY INTEGRATION) ────
+    window.detectComponentTypes = function(groups) {
+      if (!groups || !Array.isArray(groups) || groups.length === 0) {
+        return {
+          types: ['TA'],
+          hasTA: true,
+          hasPA: false,
+          hasPL: false,
+          hasPS: false,
+          hasPractice: false,
+          hasLabOrSim: false,
+          requiredPac: ['GRAL'],
+          requiredPlan: ['TEORICO'],
+          summary: 'TA (Teoría)',
+          primaryType: 'TA'
+        };
+      }
+
+      const detected = new Set();
+
+      groups.forEach(g => {
+        let codeStr = '';
+        let typeStr = '';
+        if (typeof g === 'string') {
+          codeStr = g.toUpperCase();
+        } else if (g && typeof g === 'object') {
+          codeStr = String(g.code || g.name || '').toUpperCase();
+          typeStr = String(g.classType || '').toUpperCase();
+        }
+
+        // Check explicit classType or prefixes (TA, PA, PL, PS)
+        if (typeStr === 'TA' || codeStr.startsWith('TA') || typeStr.includes('TEO')) {
+          detected.add('TA');
+        }
+        if (typeStr === 'PA' || codeStr.startsWith('PA')) {
+          detected.add('PA');
+        }
+        if (typeStr === 'PL' || codeStr.startsWith('PL') || typeStr.includes('LAB')) {
+          detected.add('PL');
+        }
+        if (typeStr === 'PS' || codeStr.startsWith('PS') || typeStr.includes('SIM')) {
+          detected.add('PS');
+        }
+
+        // Tokenized fallback checks (e.g. "SIS-213-TA-01", "MED-PL-02")
+        const parts = codeStr.split(/[-_\s/]+/);
+        parts.forEach(p => {
+          if (p === 'TA') detected.add('TA');
+          else if (p === 'PA') detected.add('PA');
+          else if (p === 'PL') detected.add('PL');
+          else if (p === 'PS') detected.add('PS');
+        });
+      });
+
+      if (detected.size === 0) {
+        detected.add('TA');
+      }
+
+      const order = { 'TA': 1, 'PA': 2, 'PL': 3, 'PS': 4 };
+      const sortedTypes = Array.from(detected).sort((a, b) => (order[a] || 99) - (order[b] || 99));
+
+      const hasTA = detected.has('TA');
+      const hasPA = detected.has('PA');
+      const hasPL = detected.has('PL');
+      const hasPS = detected.has('PS');
+      const hasLabOrSim = hasPL || hasPS;
+      const hasPractice = hasPA || hasPL || hasPS;
+
+      // UNITEPC Document Assignment Matrix:
+      // Scenario 1: TA + PA (Same teacher) -> PAC GRAL, Plan TEORICO-PRACTICO
+      // Scenario 2: TA + (PL or PS) -> PAC GRAL + PAC PRACTICO, Plan TEORICO + Plan PRACTICO
+      // Scenario 3: TA only -> PAC GRAL, Plan TEORICO
+      // Scenario 4 & 5: Practice only (PA, PL, or PS) -> PAC PRACTICO, Plan PRACTICO
+      let requiredPac = ['GRAL'];
+      let requiredPlan = ['TEORICO_PRACTICO'];
+
+      if (hasTA && hasPA && !hasLabOrSim) {
+        requiredPac = ['GRAL'];
+        requiredPlan = ['TEORICO_PRACTICO'];
+      } else if (hasTA && hasLabOrSim) {
+        requiredPac = ['GRAL', 'PRACTICO'];
+        requiredPlan = ['TEORICO', 'PRACTICO'];
+      } else if (hasTA && !hasPractice) {
+        requiredPac = ['GRAL'];
+        requiredPlan = ['TEORICO'];
+      } else if (!hasTA && hasPractice) {
+        requiredPac = ['PRACTICO'];
+        requiredPlan = ['PRACTICO'];
+      } else {
+        requiredPac = ['GRAL'];
+        requiredPlan = ['TEORICO_PRACTICO'];
+      }
+
+      return {
+        types: sortedTypes,
+        hasTA: hasTA,
+        hasPA: hasPA,
+        hasPL: hasPL,
+        hasPS: hasPS,
+        hasPractice: hasPractice,
+        hasLabOrSim: hasLabOrSim,
+        requiredPac: requiredPac,
+        requiredPlan: requiredPlan,
+        primaryType: sortedTypes[0] || 'TA',
+        summary: sortedTypes.join(' + ')
+      };
+    };
+
+    // ── TASK 5.5: VISUAL BADGES WITH OFFICIAL SEA DESIGN TOKENS ───────────────
+    // TA: #7B47B8 ($sp-purple), PA: #1F9FAD ($sp-teal), PL: #0284C7 ($sp-blue), PS: #D97706 ($sp-amber)
+    window.renderComponentBadge = function(type, small = false, active = false) {
+      const t = String(type || 'TA').toUpperCase();
+      const config = {
+        'TA': {
+          code: 'TA',
+          label: 'Teoría',
+          fullLabel: 'Trabajo de Aula (Teoría Institucional)',
+          classToken: 'badge-ta',
+          color: '#7B47B8'
+        },
+        'PA': {
+          code: 'PA',
+          label: 'Práctica Aula',
+          fullLabel: 'Práctica de Aula',
+          classToken: 'badge-pa',
+          color: '#1F9FAD'
+        },
+        'PL': {
+          code: 'PL',
+          label: 'Laboratorio',
+          fullLabel: 'Práctica de Laboratorio',
+          classToken: 'badge-pl',
+          color: '#0284C7'
+        },
+        'PS': {
+          code: 'PS',
+          label: 'Simulación',
+          fullLabel: 'Práctica de Simulación',
+          classToken: 'badge-ps',
+          color: '#D97706'
+        }
+      };
+
+      const c = config[t] || config['TA'];
+      const activeRing = active ? 'ring-2 ring-offset-1 ring-current' : '';
+
+      if (small) {
+        return `<span class="badge ${c.classToken} px-1.5 py-0.5 rounded text-[9.5px] font-extrabold uppercase tracking-tight inline-flex items-center gap-1 ${activeRing}" title="${c.fullLabel}"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>${c.code}</span>`;
+      }
+
+      return `<span class="badge ${c.classToken} px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-tight inline-flex items-center gap-1.5 ${activeRing}" title="${c.fullLabel}"><span class="w-2 h-2 rounded-full bg-current"></span><span>${c.code}</span><span class="text-[10.5px] font-semibold opacity-90">• ${c.label}</span></span>`;
+    };
+
+    // ── TASK 5.2: DYNAMIC PAC FORM (GRAL vs PRÁCTICO) ───────────────────────────
+    window.activePacType = 'GRAL';
+
+    window.pacPracticasList = [
+      {
+        numero: 1,
+        titulo: 'Reconocimiento de Instrumental, Bioseguridad y Normativa de Práctica',
+        escenario: 'Laboratorio Central',
+        duracion: '2',
+        desempeno: 'Fase 1 y 2: Identificación correcta de instrumental, EPP y reporte inicial de seguridad',
+        instrumento: 'Rúbrica de Desempeño'
+      },
+      {
+        numero: 2,
+        titulo: 'Procedimiento Guiado y Ejecución Experimental Paso a Paso',
+        escenario: 'Laboratorio Central',
+        duracion: '4',
+        desempeno: 'Fase 2 y 3: Ejecución técnica supervisada y recolección de mediciones experimentales',
+        instrumento: 'Lista de Cotejo Técnica'
+      },
+      {
+        numero: 3,
+        titulo: 'Simulación Avanzada, Resolución Autónoma de Casos y Cierre de Protocolo',
+        escenario: 'Gabinete / Laboratorio',
+        duracion: '4',
+        desempeno: 'Fase 3 y 4: Resolución autónoma de casos prácticos, análisis de resultados y síntesis',
+        instrumento: 'Evaluación de Producto y Rúbrica'
+      }
+    ];
+
+    window.renderPacPracticasTable = function() {
+      const tbody = document.getElementById('pac-practicas-table-body');
+      if (!tbody) return;
+
+      if (!window.pacPracticasList || window.pacPracticasList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-4 text-center text-xs text-slate-400">
+              No hay prácticas programadas. Haz clic en "Agregar Práctica" para registrar una nueva sesión.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = window.pacPracticasList.map((item, idx) => `
+        <tr class="hover:bg-teal-50/40 dark:hover:bg-teal-950/20 transition-colors">
+          <td class="py-2.5 px-3 text-center font-bold text-teal-800 dark:text-teal-300 font-mono">#${item.numero || (idx + 1)}</td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${item.titulo || ''}" onchange="window.updatePacPracticaField(${idx}, 'titulo', this.value)" placeholder="Título de la práctica..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs font-semibold text-slate-900 dark:text-white">
+          </td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${item.escenario || ''}" onchange="window.updatePacPracticaField(${idx}, 'escenario', this.value)" placeholder="Escenario..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs text-slate-800 dark:text-slate-200">
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            <input type="number" min="1" max="10" value="${item.duracion || 2}" onchange="window.updatePacPracticaField(${idx}, 'duracion', this.value)" class="w-14 text-center p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs font-bold text-teal-700 dark:text-teal-300">
+          </td>
+          <td class="py-2.5 px-3">
+            <input type="text" value="${item.desempeno || ''}" onchange="window.updatePacPracticaField(${idx}, 'desempeno', this.value)" placeholder="Desempeño / fases..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs text-slate-800 dark:text-slate-200">
+          </td>
+          <td class="py-2.5 px-3">
+            <div class="flex items-center gap-1.5">
+              <input type="text" value="${item.instrumento || ''}" onchange="window.updatePacPracticaField(${idx}, 'instrumento', this.value)" placeholder="Instrumento..." class="w-full p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs text-slate-800 dark:text-slate-200">
+              <button type="button" onclick="window.deletePacPracticaRow(${idx})" class="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer" title="Eliminar práctica">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.updatePacPracticaField = function(index, field, value) {
+      if (window.pacPracticasList && window.pacPracticasList[index]) {
+        window.pacPracticasList[index][field] = value;
+      }
+    };
+
+    window.addPacPracticaRow = function(data) {
+      if (!window.pacPracticasList) window.pacPracticasList = [];
+      const nextNum = window.pacPracticasList.length + 1;
+      window.pacPracticasList.push(data || {
+        numero: nextNum,
+        titulo: `Práctica ${nextNum}: Desarrollo Experimental y Guía Técnica`,
+        escenario: 'Laboratorio Asignado',
+        duracion: '2',
+        desempeno: 'Fases 2 y 3: Ejecución de procedimientos y registro de evidencias',
+        instrumento: 'Rúbrica de Evaluación Práctica'
+      });
+      window.renderPacPracticasTable();
+      window.showToast('✅ Práctica #' + nextNum + ' agregada al cronograma PAC');
+    };
+
+    window.deletePacPracticaRow = function(index) {
+      if (window.pacPracticasList && window.pacPracticasList.length > index) {
+        window.pacPracticasList.splice(index, 1);
+        window.renderPacPracticasTable();
+        window.showToast('🗑️ Práctica eliminada');
+      }
+    };
+
+    window.renderDynamicPacForm = function(pacType) {
+      const data = materiasData[activeMateriaKey];
+      const requiredPac = (data && data.components && data.components.requiredPac) ? data.components.requiredPac : ['GRAL'];
+      const hasMultiple = Array.isArray(requiredPac) && requiredPac.length > 1;
+
+      const currentType = pacType || window.activePacType || (hasMultiple ? requiredPac[0] : requiredPac[0] || 'GRAL');
+      window.activePacType = currentType;
+
+      const container = document.getElementById('pac-type-switcher-container');
+      if (container) {
+        if (hasMultiple) {
+          container.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i> Plantillas PAC Coordinadas:
+                </span>
+                <button type="button" onclick="window.switchActivePacType('GRAL')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'GRAL' ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5"></i> PAC General (Teoría)
+                </button>
+                <button type="button" onclick="window.switchActivePacType('PRACTICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'PRACTICO' ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> PAC Práctico (Laboratorio / Simulación)
+                </button>
+              </div>
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Asignación Multitipo:</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${currentType === 'PRACTICO' ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700'}">
+                  ${currentType === 'PRACTICO' ? '🔬 Modelo Metodológico en 4 Fases' : '📄 PAC General Institucional'}
+                </span>
+              </div>
+            </div>
+          `;
+        } else {
+          const singleType = requiredPac[0] || 'GRAL';
+          container.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Formato PAC Asignado:
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${singleType === 'PRACTICO' ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-700'}">
+                  ${singleType === 'PRACTICO' ? '🔬 PAC PRÁCTICO (Normativa de Laboratorio y Simulación)' : '📄 PAC GENERAL (Asignatura Teórica Institucional)'}
+                </span>
+              </div>
+              <span class="text-[11px] text-slate-400 font-medium">Determinado por componentes SEA: <strong>${data?.components?.summary || 'TA'}</strong></span>
+            </div>
+          `;
+        }
+      }
+
+      const secContenidos = document.getElementById('pac-sec-practico-contenidos');
+      const secMetodologia = document.getElementById('pac-sec-practico-metodologia');
+      const secCronograma = document.getElementById('pac-sec-practico-cronograma');
+
+      if (currentType === 'PRACTICO') {
+        if (secContenidos) secContenidos.classList.remove('hidden');
+        if (secMetodologia) secMetodologia.classList.remove('hidden');
+        if (secCronograma) secCronograma.classList.remove('hidden');
+        window.renderPacPracticasTable();
+      } else {
+        if (secContenidos) secContenidos.classList.add('hidden');
+        if (secMetodologia) secMetodologia.classList.add('hidden');
+        if (secCronograma) secCronograma.classList.add('hidden');
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchActivePacType = function(type) {
+      window.activePacType = type;
+      window.renderDynamicPacForm(type);
+      window.showToast('📋 Visualizando ' + (type === 'PRACTICO' ? 'PAC Práctico (Laboratorio)' : 'PAC General (Teoría)'));
+    };
+
+    // ── TASK 5.3 & 5.4: DYNAMIC PLAN DE CLASES & SHARED/PERSONAL UI SEPARATION ──
+    window.activePlanType = 'TEORICO_PRACTICO';
+
+    window.renderDynamicPlanForm = function(planType) {
+      const data = materiasData[activeMateriaKey];
+      const requiredPlan = (data && data.components && data.components.requiredPlan) ? data.components.requiredPlan : ['TEORICO_PRACTICO'];
+      const hasMultiple = Array.isArray(requiredPlan) && requiredPlan.length > 1;
+
+      const currentType = planType || window.activePlanType || (hasMultiple ? requiredPlan[0] : requiredPlan[0] || 'TEORICO_PRACTICO');
+      window.activePlanType = currentType;
+
+      const switcherContainer = document.getElementById('plan-type-switcher-container');
+      if (switcherContainer) {
+        if (hasMultiple) {
+          switcherContainer.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="sliders" class="w-4 h-4 text-brand-600"></i> Modalidad de Plan de Clases:
+                </span>
+                <button type="button" onclick="window.switchActivePlanType('TEORICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'TEORICO' ? 'bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Plan Teórico
+                </button>
+                <button type="button" onclick="window.switchActivePlanType('PRACTICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'PRACTICO' ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> Plan Práctico
+                </button>
+              </div>
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Secuencia en Ejecución:</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${currentType === 'PRACTICO' ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700'}">
+                  ${currentType === 'PRACTICO' ? '🔬 4 Fases Metodológicas' : '📖 5 Momentos Didácticos'}
+                </span>
+              </div>
+            </div>
+          `;
+        } else {
+          const typeNames = {
+            'TEORICO': '📖 PLAN TEÓRICO (Aula Conceptual)',
+            'PRACTICO': '🔬 PLAN PRÁCTICO (Laboratorio / Simulación)',
+            'TEORICO_PRACTICO': '⚡ PLAN TEÓRICO-PRÁCTICO (Integrado)'
+          };
+          switcherContainer.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="file-check" class="w-4 h-4 text-brand-600"></i> Plantilla Oficial Plan de Clases:
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${currentType === 'PRACTICO' ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-300' : (currentType === 'TEORICO' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300' : 'bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 border border-brand-300')}">
+                  ${typeNames[currentType] || typeNames['TEORICO_PRACTICO']}
+                </span>
+              </div>
+              <span class="text-[11px] text-slate-400 font-medium">Asignado a: <strong>${data?.components?.summary || 'TA'}</strong></span>
+            </div>
+          `;
+        }
+      }
+
+      // Procedimental Handling (Task 5.3):
+      // In TEÓRICO mode: do NOT delete procedural content, mute/lock it and show UNITEPC notification
+      const procTextarea = document.getElementById('plan-procedimental-input');
+      const procTag = document.getElementById('plan-procedimental-status-tag');
+      const procBadge = document.getElementById('plan-procedimental-omitted-badge');
+      const practicoFields = document.getElementById('plan-practico-fields');
+      const secStandard = document.getElementById('plan-secuencia-standard');
+      const secPractica = document.getElementById('plan-secuencia-practica');
+
+      if (currentType === 'TEORICO') {
+        if (procTextarea) {
+          procTextarea.readOnly = true;
+          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 text-xs cursor-not-allowed';
+        }
+        if (procTag) {
+          procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">Omitido en Teoría</span>';
+        }
+        if (procBadge) procBadge.classList.remove('hidden');
+        if (practicoFields) practicoFields.classList.add('hidden');
+        if (secStandard) secStandard.classList.remove('hidden');
+        if (secPractica) secPractica.classList.add('hidden');
+      } else if (currentType === 'PRACTICO') {
+        if (procTextarea) {
+          procTextarea.readOnly = false;
+          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
+        }
+        if (procTag) {
+          procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700">Requerido / Central</span>';
+        }
+        if (procBadge) procBadge.classList.add('hidden');
+        if (practicoFields) practicoFields.classList.remove('hidden');
+        if (secStandard) secStandard.classList.add('hidden');
+        if (secPractica) secPractica.classList.remove('hidden');
+        window.updateSecuenciaPracticaTotals();
+      } else {
+        // TEORICO_PRACTICO
+        if (procTextarea) {
+          procTextarea.readOnly = false;
+          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
+        }
+        if (procTag) {
+          procTag.innerHTML = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">Activo (Integrado)</span>';
+        }
+        if (procBadge) procBadge.classList.add('hidden');
+        if (practicoFields) practicoFields.classList.remove('hidden');
+        if (secStandard) secStandard.classList.remove('hidden');
+        if (secPractica) secPractica.classList.add('hidden');
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchActivePlanType = function(type) {
+      window.activePlanType = type;
+      window.renderDynamicPlanForm(type);
+      window.showToast('📋 Plan ajustado a: ' + (type === 'PRACTICO' ? 'Plan Práctico' : (type === 'TEORICO' ? 'Plan Teórico' : 'Plan Teórico-Práctico')));
+    };
+
+    window.updateSecuenciaPracticaTotals = function() {
+      const gn = id => { const el = document.getElementById(id); return el ? (parseInt(el.value, 10) || 0) : 0; };
+      const f1 = gn('plan-sec-fase1-dur');
+      const f2 = gn('plan-sec-fase2-dur');
+      const f3 = gn('plan-sec-fase3-dur');
+      const f4 = gn('plan-sec-fase4-dur');
+      const totalMin = f1 + f2 + f3 + f4;
+      const totalAcad = Math.round(totalMin / 45);
+
+      const totalBadge = document.getElementById('plan-sec-total-badge');
+      if (totalBadge) {
+        totalBadge.innerText = `${totalMin} min (${totalAcad}h acad)`;
+      }
+    };
+
+    // ── TASK 5.6: CONSOLIDATED VIEW FOR DIRECTOR DE CARRERA ─────────────────────
+    window.isDirectorView = false;
+
+    window.toggleDirectorConsolidatedView = function(forceState) {
+      if (typeof forceState === 'boolean') {
+        window.isDirectorView = forceState;
+      } else {
+        window.isDirectorView = !window.isDirectorView;
+      }
+
+      const panel = document.getElementById('director-consolidated-panel');
+      const toggleBtn = document.getElementById('btn-director-consolidated-toggle');
+      if (!panel) return;
+
+      if (window.isDirectorView) {
+        // Hide all regular documentation tab panels
+        document.querySelectorAll('.doc-tab-panel').forEach(p => p.classList.add('hidden'));
+        panel.classList.remove('hidden');
+
+        if (toggleBtn) {
+          toggleBtn.className = 'px-3.5 py-2 rounded-xl bg-purple-700 text-white border border-purple-800 font-bold text-xs flex items-center gap-1.5 shadow-md ring-2 ring-purple-400/50 cursor-pointer';
+          toggleBtn.innerHTML = '<i data-lucide="check-check" class="w-4 h-4"></i><span>✓ Vista Consolidada Activa</span>';
+        }
+
+        window.renderDirectorConsolidatedView();
+        window.showToast('🏛️ Vista Dirección de Carrera activada: Supervisión Consolidada de Cátedra');
+      } else {
+        panel.classList.add('hidden');
+        const activeTab = document.getElementById(activeTabId || 'tab-analitico');
+        if (activeTab) activeTab.classList.remove('hidden');
+
+        if (toggleBtn) {
+          toggleBtn.className = 'px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 dark:bg-purple-950/70 dark:text-purple-200 border border-purple-300 dark:border-purple-700/80 font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer';
+          toggleBtn.innerHTML = '<i data-lucide="building-2" class="w-4 h-4"></i><span>Vista Cátedra Consolidada</span>';
+        }
+
+        window.showToast('Volviendo a la vista docente');
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.renderDirectorConsolidatedView = function() {
+      const container = document.getElementById('director-consolidated-content');
+      if (!container) return;
+
+      const data = (activeMateriaKey && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : (Object.values(materiasData)[0] || {});
+      const compInfo = data.components || window.detectComponentTypes(data.groups || []);
+
+      const badgesHtml = (compInfo.types || ['TA']).map(t => window.renderComponentBadge(t, false, true)).join(' ');
+
+      // Teacher list: active teacher + co-teachers from groups
+      const currentDocenteName = (document.getElementById('user-profile-name') ? document.getElementById('user-profile-name').innerText : 'Docente Titular').trim();
+      const currentDocenteCi = (document.getElementById('docente-selector-input') ? document.getElementById('docente-selector-input').value : '4534123').trim();
+
+      container.innerHTML = `
+        <!-- Subject Overview Card -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-start justify-between flex-wrap gap-3">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-100 text-brand-800 dark:bg-brand-950/80 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                  ${data.codigo || 'UNITEPC'}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  ${data.carrera || 'Carrera Oficial'}
+                </span>
+                <span class="text-xs text-slate-400 font-semibold">• Semestre: ${data.semestre || '1º'}</span>
+              </div>
+              <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">${data.nombre || 'Asignatura'}</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">${data.meta || ''}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              ${badgesHtml}
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 1: 🤝 Secciones Compartidas Institucionales (Cátedra) -->
+        <div class="p-6 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border-2 border-blue-200 dark:border-blue-900/60 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </span>
+              <div>
+                <h3 class="text-sm font-bold text-blue-950 dark:text-blue-100 uppercase tracking-wider">🤝 Secciones Compartidas (Consenso de Cátedra)</h3>
+                <p class="text-xs text-blue-800 dark:text-blue-300">Macroestructura unificada para todos los docentes y comisiones de esta asignatura.</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-200 border border-blue-300">Unificado Cátedra</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-2">
+            <!-- Programa Analítico Compartido -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800/60 shadow-xs space-y-2">
+              <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                <i data-lucide="book-marked" class="w-4 h-4 text-blue-600"></i> Programa Analítico Oficial
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-3">
+                ${data.caracterizacion || 'Macrocompetencias y caracterización institucional definida por la Dirección de Carrera. 4 Unidades Temáticas y Bibliografías Básica y Complementaria vinculadas.'}
+              </p>
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ 4 Unidades Aprobadas</span>
+                <button type="button" onclick="window.switchDocMainTab('tab-analitico'); window.toggleDirectorConsolidatedView(false);" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Ver Programa ➔</button>
+              </div>
+            </div>
+
+            <!-- PAC Compartido -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800/60 shadow-xs space-y-2">
+              <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                <i data-lucide="clipboard-check" class="w-4 h-4 text-emerald-600"></i> PAC de Cátedra (Nivel Global)
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-3">
+                Identificación, justificación curricular, competencia global y sistema de ponderación institucional (30pts P1 + 30pts P2 + 40pts Final).
+              </p>
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Ponderaciones Validadas</span>
+                <button type="button" onclick="window.switchDocMainTab('tab-pac-matrix'); window.toggleDirectorConsolidatedView(false);" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Ver PAC ➔</button>
+              </div>
+            </div>
+
+            <!-- Plan de Clases Compartido -->
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800/60 shadow-xs space-y-2">
+              <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                <i data-lucide="layers" class="w-4 h-4 text-purple-600"></i> Plan de Clases: Planificación
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-3">
+                Unidades temáticas consensuadas, elementos de competencia, resultados de aprendizaje esperados e indicadores de logro institucionales.
+              </p>
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Saberes Conceptuales Comunes</span>
+                <button type="button" onclick="window.switchDocMainTab('tab-cronograma-planes'); window.toggleDirectorConsolidatedView(false);" class="text-purple-600 dark:text-purple-400 font-bold hover:underline">Ver Planificación ➔</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: 👤 Microplanificaciones Diferenciadas por Docente / Comisión -->
+        <div class="p-6 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border-2 border-purple-200 dark:border-purple-900/60 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="p-2.5 rounded-xl bg-purple-600 text-white shadow-xs">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+              </span>
+              <div>
+                <h3 class="text-sm font-bold text-purple-950 dark:text-purple-100 uppercase tracking-wider">👤 Microplanificaciones Docentes por Comisión (Vistas Individuales)</h3>
+                <p class="text-xs text-purple-800 dark:text-purple-300">Supervisión comparativa: Estrategias didácticas, ambientes de laboratorio y secuencias por docente asignado.</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-200 border border-purple-300">Comparativa Docente</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+            <!-- Docente Titular / Teoría -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/80 shadow-xs space-y-3">
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-extrabold text-slate-900 dark:text-white text-xs">${currentDocenteName}</h4>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200">Docente Titular</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">CI: ${currentDocenteCi} • Comisión: <strong>${data.teoCodes || 'TA-01'}</strong> (${data.shiftLabel || 'Turno Regular'})</p>
+                </div>
+                <div>${window.renderComponentBadge('TA', false, true)}</div>
+              </div>
+
+              <div class="space-y-2 text-[11px]">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Modalidad Plan de Clases:</span>
+                  <span class="font-bold text-purple-700 dark:text-purple-300">📖 Plan Teórico (5 Momentos Didácticos)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Saber Procedimental:</span>
+                  <span class="font-bold text-amber-600 dark:text-amber-400">Omitido (Normativa Teórica)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Estrategias Didácticas:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">Aprendizaje Basado en Problemas (ABP)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Evaluación Formativa:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">Rúbrica de Análisis Crítico y Cuestionario</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Teórico Validado
+                </span>
+                <button type="button" onclick="window.exportExactFile('planes_xlsx')" class="px-3 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
+                </button>
+              </div>
+            </div>
+
+            <!-- Docente Práctica / Laboratorio -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800/80 shadow-xs space-y-3">
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-extrabold text-slate-900 dark:text-white text-xs">Docente de Laboratorio / Comisión</h4>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200">Docente de Práctica</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Comisión: <strong>${data.pracCodes || 'PL-01'}</strong> • ${data.pracRoomsStr || 'Laboratorio Central'}</p>
+                </div>
+                <div>${window.renderComponentBadge(compInfo.hasPL ? 'PL' : (compInfo.hasPS ? 'PS' : 'PA'), false, true)}</div>
+              </div>
+
+              <div class="space-y-2 text-[11px]">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Modalidad Plan de Clases:</span>
+                  <span class="font-bold text-teal-700 dark:text-teal-300">🔬 Plan Práctico (4 Fases Metodológicas)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Saber Procedimental:</span>
+                  <span class="font-bold text-teal-600 dark:text-teal-400">Requerido / Central (100% activo)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Ambiente y Bioseguridad:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">${data.pracRoomsStr || 'Laboratorio Central'} • EPP Completo</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 font-medium">Cronograma de Prácticas:</span>
+                  <span class="font-bold text-teal-700 dark:text-teal-300">${(window.pacPracticasList || []).length} Prácticas Registradas</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Práctico Validado
+                </span>
+                <button type="button" onclick="window.exportExactFile('planes_xlsx')" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
     window.selectDocenteMateria = function(materiaKey) {
       // 1. Cancel pending auto-save timers to avoid saving old form over new subject
       if (typeof autoSaveTimer !== 'undefined' && autoSaveTimer) {
@@ -410,6 +1114,20 @@
       if (document.getElementById('banner-grupo-tag')) document.getElementById('banner-grupo-tag').innerText = data.grupoTag;
       if (document.getElementById('banner-materia-title')) document.getElementById('banner-materia-title').innerText = data.title;
       if (document.getElementById('banner-materia-meta')) document.getElementById('banner-materia-meta').innerHTML = data.meta;
+
+      // Update SEA Component Badges in Banner (Task 5.5)
+      const bannerBadgesContainer = document.getElementById('banner-components-badges');
+      if (bannerBadgesContainer) {
+        const comp = data.components || (typeof window.detectComponentTypes === 'function' ? window.detectComponentTypes(data.groups || []) : null);
+        if (comp && comp.types && comp.types.length > 0) {
+          bannerBadgesContainer.innerHTML = `
+            <span class="text-[10.5px] font-bold text-slate-300 uppercase tracking-wider mr-1">Componentes SEA:</span>
+            ${comp.types.map(t => window.renderComponentBadge(t, false, true)).join(' ')}
+          `;
+        } else {
+          bannerBadgesContainer.innerHTML = '';
+        }
+      }
       
       // Update form header inputs
       if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = data.codigo;
@@ -418,6 +1136,24 @@
       // Load that specific subject's documents & data
       if (typeof window.loadSavedDocenteData === 'function') {
         window.loadSavedDocenteData(activeMateriaKey);
+      }
+
+      // Render Dynamic PAC and Plan de Clases based on detected SEA components (Tasks 5.2, 5.3, 5.4)
+      const compInfo = data.components || (typeof window.detectComponentTypes === 'function' ? window.detectComponentTypes(data.groups || []) : null);
+      if (compInfo) {
+        const defPac = Array.isArray(compInfo.requiredPac) ? compInfo.requiredPac[0] : (compInfo.requiredPac || 'GRAL');
+        const defPlan = Array.isArray(compInfo.requiredPlan) ? compInfo.requiredPlan[0] : (compInfo.requiredPlan || 'TEORICO_PRACTICO');
+        if (typeof window.renderDynamicPacForm === 'function') {
+          window.renderDynamicPacForm(defPac);
+        }
+        if (typeof window.renderDynamicPlanForm === 'function') {
+          window.renderDynamicPlanForm(defPlan);
+        }
+      }
+
+      // If Director Consolidated View is active, update it
+      if (window.isDirectorView && typeof window.renderDirectorConsolidatedView === 'function') {
+        window.renderDirectorConsolidatedView();
       }
 
       // Render Career Sub-Tabs Switcher for Multicarrera preview
@@ -1738,6 +2474,29 @@
         setVal('plan-sec-cierre-dur', 55);
       }
 
+      // Parámetros de Práctica y 4 Fases Metodológicas (Tasks 5.3 & 5.4)
+      setVal('plan-grupo-input', p.comision || p.grupo || '');
+      setVal('plan-prac-ambiente', p.ambiente || p.escenario || '');
+      setVal('plan-prac-estudiantes', p.numEstudiantes || p.cantEstudiantes || '');
+      setVal('plan-prac-bloom', p.nivelBloom || '');
+      setVal('plan-prac-equipos', p.equipamiento || '');
+
+      setVal('plan-sec-fase1', p.fase1Prep || '');
+      setVal('plan-sec-fase1-dur', p.fase1PrepDur !== undefined ? p.fase1PrepDur : 15);
+      setVal('plan-sec-fase2', p.fase2Guiada || '');
+      setVal('plan-sec-fase2-dur', p.fase2GuiadaDur !== undefined ? p.fase2GuiadaDur : 25);
+      setVal('plan-sec-fase3', p.fase3Autonoma || '');
+      setVal('plan-sec-fase3-dur', p.fase3AutonomaDur !== undefined ? p.fase3AutonomaDur : 40);
+      setVal('plan-sec-fase4', p.fase4Cierre || '');
+      setVal('plan-sec-fase4-dur', p.fase4CierreDur !== undefined ? p.fase4CierreDur : 10);
+
+      if (typeof window.renderDynamicPlanForm === 'function') {
+        window.renderDynamicPlanForm(p.planType || window.activePlanType || 'TEORICO_PRACTICO');
+      }
+      if (typeof window.updateSecuenciaPracticaTotals === 'function') {
+        window.updateSecuenciaPracticaTotals();
+      }
+
       if (typeof window.updateSecuenciaTotals === 'function') {
         window.updateSecuenciaTotals();
       }
@@ -1830,8 +2589,28 @@
       mCie.actividadesDocente = gv('plan-sec-cierre');
       mCie.duracionMin = gn('plan-sec-cierre-dur');
 
+      // Sync practical fields and 4 phases (Tasks 5.3 & 5.4)
+      p.comision = gv('plan-grupo-input');
+      p.ambiente = gv('plan-prac-ambiente');
+      p.numEstudiantes = gv('plan-prac-estudiantes');
+      p.nivelBloom = gv('plan-prac-bloom');
+      p.equipamiento = gv('plan-prac-equipos');
+      p.planType = window.activePlanType || 'TEORICO_PRACTICO';
+
+      p.fase1Prep = gv('plan-sec-fase1');
+      p.fase1PrepDur = gn('plan-sec-fase1-dur');
+      p.fase2Guiada = gv('plan-sec-fase2');
+      p.fase2GuiadaDur = gn('plan-sec-fase2-dur');
+      p.fase3Autonoma = gv('plan-sec-fase3');
+      p.fase3AutonomaDur = gn('plan-sec-fase3-dur');
+      p.fase4Cierre = gv('plan-sec-fase4');
+      p.fase4CierreDur = gn('plan-sec-fase4-dur');
+
       if (typeof window.updateSecuenciaTotals === 'function') {
         window.updateSecuenciaTotals();
+      }
+      if (typeof window.updateSecuenciaPracticaTotals === 'function') {
+        window.updateSecuenciaPracticaTotals();
       }
 
       localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
@@ -2404,6 +3183,16 @@ window.saveCurrentDocenteData = async function(silent = false) {
   if (document.getElementById('pac-proposito-input')) curPac.propositoGeneral = document.getElementById('pac-proposito-input').value;
   if (document.getElementById('pac-competencia-global')) curPac.competenciaGlobal = document.getElementById('pac-competencia-global').value;
   if (document.getElementById('pac-unidad-competencia')) curPac.unidadCompetencia = document.getElementById('pac-unidad-competencia').value;
+
+  // Persist PAC Práctico fields (Task 5.2)
+  if (document.getElementById('pac-prac-escenario')) curPac.pracEscenario = document.getElementById('pac-prac-escenario').value;
+  if (document.getElementById('pac-prac-bioseguridad')) curPac.pracBioseguridad = document.getElementById('pac-prac-bioseguridad').value;
+  if (document.getElementById('pac-prac-equipamiento')) curPac.pracEquipamiento = document.getElementById('pac-prac-equipamiento').value;
+  if (document.getElementById('pac-prac-fase1-prep')) curPac.pracFase1Prep = document.getElementById('pac-prac-fase1-prep').value;
+  if (document.getElementById('pac-prac-fase2-guiada')) curPac.pracFase2Guiada = document.getElementById('pac-prac-fase2-guiada').value;
+  if (document.getElementById('pac-prac-fase3-autonoma')) curPac.pracFase3Autonoma = document.getElementById('pac-prac-fase3-autonoma').value;
+  if (document.getElementById('pac-prac-fase4-cierre')) curPac.pracFase4Cierre = document.getElementById('pac-prac-fase4-cierre').value;
+  curPac.pacPracticas = window.pacPracticasList || [];
   
   if (typeof window.extractCurrentCronogramaFromDom === 'function') {
     const liveCron = window.extractCurrentCronogramaFromDom();
@@ -2941,6 +3730,22 @@ window.populatePacDom = function(data) {
         window.autoResizeAllTextareas();
       }
     }, 20);
+  }
+
+  // PAC Práctico (Task 5.2)
+  setVal('pac-prac-escenario', data.pracEscenario || data.escenario);
+  setVal('pac-prac-bioseguridad', data.pracBioseguridad || data.bioseguridad);
+  setVal('pac-prac-equipamiento', data.pracEquipamiento || data.equipamiento);
+  setVal('pac-prac-fase1-prep', data.pracFase1Prep || data.fase1Prep);
+  setVal('pac-prac-fase2-guiada', data.pracFase2Guiada || data.fase2Guiada);
+  setVal('pac-prac-fase3-autonoma', data.pracFase3Autonoma || data.fase3Autonoma);
+  setVal('pac-prac-fase4-cierre', data.pracFase4Cierre || data.fase4Cierre);
+
+  if (data.pacPracticas && Array.isArray(data.pacPracticas) && data.pacPracticas.length > 0) {
+    window.pacPracticasList = data.pacPracticas;
+  }
+  if (typeof window.renderPacPracticasTable === 'function') {
+    window.renderPacPracticasTable();
   }
 };
 
@@ -4002,6 +4807,10 @@ document.addEventListener('change', (e) => {
       const grpTag = allGroupsCodes.replace(/[\s,]+/g, '_');
       const uniqueKey = `${teacherDoc}_${cleanCode}_${carTag}_${shiftTag}_${grpTag}`;
 
+      const compInfo = (typeof window.detectComponentTypes === 'function') 
+        ? window.detectComponentTypes(cluster) 
+        : { types: ['TA'], hasTA: true, hasPA: false, hasPL: false, hasPS: false, requiredPac: ['GRAL'], requiredPlan: ['TEORICO_PRACTICO'], summary: 'TA' };
+
       return {
         key: uniqueKey,
         code: officialCode,
@@ -4012,6 +4821,8 @@ document.addEventListener('change', (e) => {
         allCarrerasNames: allCarrerasNames,
         allCarrerasTags: allCarrerasTags,
         carrerasCodes: carrerasArr,
+        components: compInfo,
+        groups: cluster,
         teoList: teoList,
         pracList: pracList,
         teoCodes: teoCodes,
@@ -4135,6 +4946,8 @@ document.addEventListener('change', (e) => {
         elementosCompetencia: [],
         carrerasCodes: item.carrerasCodes,
         carrerasResolved: item.carrerasResolved,
+        components: item.components,
+        groups: item.groups,
         groupedSchedules: item.groupedSchedules,
         hierarchicalSchedules: item.hierarchicalSchedules,
         teoRoomsStr: item.teoRoomsStr,
@@ -4168,6 +4981,7 @@ document.addEventListener('change', (e) => {
                   ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
                 </span>
                 ${shiftBadgeHtml}
+                ${(item.components && item.components.types) ? item.components.types.map(t => window.renderComponentBadge(t, true)).join(' ') : ''}
                 <span class="px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-brand-100 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 flex-shrink-0">
                   ${item.totalPhysicalSessions} Comisiones • ${item.totalHours}h
                 </span>
@@ -4230,7 +5044,10 @@ document.addEventListener('change', (e) => {
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden mb-2.5">
           <div class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700/60">
             <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-brand-600"></i> ${item.code}</span>
-            <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${item.totalPhysicalSessions} Grupos</span>
+            <div class="flex items-center gap-1.5">
+              ${(item.components && item.components.types) ? item.components.types.map(t => window.renderComponentBadge(t, true)).join('') : ''}
+              <span class="text-[10px] text-brand-700 dark:text-brand-400 font-bold">${item.totalPhysicalSessions} Grupos</span>
+            </div>
           </div>
           <div class="p-1">
             <button onclick="window.selectDocenteMateria('${mKey}')" id="sidebar-materia-${mKey}" class="sidebar-materia-btn w-full text-left px-2.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">

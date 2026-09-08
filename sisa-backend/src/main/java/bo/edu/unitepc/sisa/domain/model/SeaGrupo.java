@@ -49,4 +49,14 @@ public class SeaGrupo {
 
     @Column(name = "materia_id", length = 64)
     private String materiaId;
+
+    @Column(name = "component_type", length = 10)
+    private String componentType;
+
+    public SeaGrupo(String id, String codigoGrupo, String tipoClase, String docenteNombre, String docenteCi, String horario, String aula, String campus, String materiaId) {
+        this(id, codigoGrupo, tipoClase, docenteNombre, docenteCi, horario, aula, campus, materiaId,
+                bo.edu.unitepc.sisa.domain.enums.ComponentType.fromGroupCode(codigoGrupo) != null
+                        ? bo.edu.unitepc.sisa.domain.enums.ComponentType.fromGroupCode(codigoGrupo).name()
+                        : null);
+    }
 }

@@ -257,6 +257,8 @@
                   <span id="banner-carrera-tag" class="px-2.5 py-0.5 rounded-md bg-white/20 text-xs font-bold tracking-wide backdrop-blur-sm">CARRERA EN CARGA</span>
                   <span id="banner-grupo-tag" class="text-xs text-purple-200">Sincronizando con SEA...</span>
                 </div>
+                <!-- Dynamic SEA Component Type Badges (TA / PA / PL / PS) -->
+                <div id="banner-components-badges" class="flex flex-wrap items-center gap-1.5 pt-1"></div>
                 <h2 id="banner-materia-title" class="text-2xl font-black tracking-tight drop-shadow-sm leading-tight">Cargando Cátedra Oficial...</h2>
                 <p id="banner-materia-meta" class="text-xs text-purple-100 flex items-center gap-4 pt-1">
                   <span><strong class="text-white">3º</strong> Semestre</span>
@@ -361,6 +363,11 @@
 
                 <!-- Right Action Buttons -->
                 <div class="flex items-center gap-2.5 py-1">
+                  <!-- Button: Director Consolidated View (Task 5.6) -->
+                  <button type="button" id="btn-director-consolidated-toggle" onclick="window.toggleDirectorConsolidatedView()" class="px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 dark:bg-purple-950/70 dark:text-purple-200 border border-purple-300 dark:border-purple-700/80 font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer" title="Ver Carpeta Consolidada de Cátedra (Vista Dirección de Carrera)">
+                    <i data-lucide="eye" class="w-4 h-4 text-purple-700 dark:text-purple-300"></i>
+                    <span id="director-toggle-label">Vista Director Cátedra</span>
+                  </button>
                   <div id="autosave-status-badge" class="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-semibold text-xs flex items-center gap-1.5 shadow-xs">
                     <i data-lucide="cloud-check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
                     <span>Guardado automático</span>
@@ -373,6 +380,37 @@
                     <i data-lucide="save" class="w-4 h-4"></i>
                     <span>Guardar Todo</span>
                   </button>
+                </div>
+              </div>
+
+              <!-- ================================================================= -->
+              <!-- DIRECTOR DE CARRERA: VISTA CONSOLIDADA DE CÁTEDRA (TASK 5.6)       -->
+              <!-- ================================================================= -->
+              <div id="director-consolidated-panel" class="p-8 space-y-6 hidden">
+                <!-- Top Banner Consolidated -->
+                <div class="p-5 rounded-2xl bg-gradient-to-r from-purple-900 via-brand-900 to-indigo-950 text-white border border-purple-700/80 shadow-lg flex items-center justify-between">
+                  <div class="flex items-center gap-3.5">
+                    <span class="p-3 rounded-xl bg-white/10 text-purple-200 shadow-inner">
+                      <i data-lucide="building-2" class="w-6 h-6"></i>
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/30 text-purple-200 border border-purple-400/40 uppercase tracking-wider">VISTA DIRECCIÓN DE CARRERA</span>
+                        <span class="text-xs text-purple-300 font-semibold">Gestión Activa II-2026</span>
+                      </div>
+                      <h3 class="text-lg font-bold text-white font-display mt-0.5">Carpeta Curricular Consolidada de Cátedra</h3>
+                      <p class="text-xs text-purple-200">Supervisión integrada: Secciones compartidas de cátedra y microplanificaciones diferenciadas por docente.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5">
+                    <button type="button" onclick="window.toggleDirectorConsolidatedView(false)" class="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer">
+                      <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Vista Normal
+                    </button>
+                  </div>
+                </div>
+
+                <div id="director-consolidated-content" class="space-y-6">
+                  <!-- Dynamically rendered by window.renderDirectorConsolidatedView() -->
                 </div>
               </div>
 
@@ -553,6 +591,9 @@
                 <!-- Sub-Tabs de Carrera / Filtro Contextual Multicarrera PAC -->
                 <div id="pac-carrera-subtabs" class="mb-4"></div>
 
+                <!-- Sub-Tabs / Selector de Tipo de PAC (GRAL vs PRÁCTICO) (Task 5.2) -->
+                <div id="pac-type-switcher-container" class="mb-4"></div>
+
                 <!-- 1.- Identificación de la Asignatura -->
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:emerald-400"><i data-lucide="check-circle" class="w-4 h-4"></i><span>1.- Identificación de la Asignatura</span></div>
@@ -646,6 +687,100 @@
                       <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Hospital y Centros de Salud (Si corresponde):</label>
                       <input id="pac-metodologia-salud" type="text" value="" placeholder="Hospital y centros de salud (si corresponde)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900">
                     </div>
+                  </div>
+                </div>
+
+                <!-- PAC PRÁCTICO: CONTENIDOS DE PRÁCTICA, BIOSEGURIDAD Y EQUIPAMIENTO (Task 5.2) -->
+                <div id="pac-sec-practico-contenidos" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-teal-200 dark:border-teal-800/60 shadow-sm space-y-4 hidden">
+                  <div class="form-section-title text-[#1F9FAD] dark:text-[#6CCBD5]">
+                    <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                    <span>PAC Práctico • Contenidos de Práctica, Escenarios y Bioseguridad</span>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Escenario / Ambiente de Práctica:</label>
+                      <input id="pac-prac-escenario" type="text" placeholder="ej. Laboratorio de Cómputo / Simulación Médica" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Normas de Bioseguridad / EPP:</label>
+                      <input id="pac-prac-bioseguridad" type="text" placeholder="ej. Mandil blanco, barbijo, guantes, protocolo ISO-14001" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Equipamiento, Insumos y Software:</label>
+                      <input id="pac-prac-equipamiento" type="text" placeholder="ej. Servidor Linux, simulador anatómico, kits de reactivos" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PAC PRÁCTICO: MODELO METODOLÓGICO EN 4 FASES INSTITUCIONALES (Task 5.2) -->
+                <div id="pac-sec-practico-metodologia" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-teal-200 dark:border-teal-800/60 shadow-sm space-y-4 hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="form-section-title text-[#1F9FAD] dark:text-[#6CCBD5]">
+                      <i data-lucide="git-merge" class="w-4 h-4"></i>
+                      <span>PAC Práctico • Modelo Metodológico en 4 Fases Institucionales</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border border-teal-200 dark:border-teal-700">Normativa UNITEPC</span>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 space-y-2">
+                      <div class="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-300">
+                        <span class="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px]">1</span>
+                        <span>Fase 1: Preparación (Inducción previa)</span>
+                      </div>
+                      <textarea id="pac-prac-fase1-prep" rows="2" placeholder="Organización previa, verificación de EPP, inducción teórica de la guía de práctica..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                    </div>
+                    <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 space-y-2">
+                      <div class="flex items-center gap-2 font-bold text-blue-800 dark:text-blue-300">
+                        <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">2</span>
+                        <span>Fase 2: Ejecución Guiada (Demostración docente)</span>
+                      </div>
+                      <textarea id="pac-prac-fase2-guiada" rows="2" placeholder="Modelado docente, demostración práctica de técnicas y procedimientos paso a paso..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                    </div>
+                    <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 space-y-2">
+                      <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                        <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px]">3</span>
+                        <span>Fase 3: Ejecución Autónoma (Práctica del estudiante)</span>
+                      </div>
+                      <textarea id="pac-prac-fase3-autonoma" rows="2" placeholder="Manipulación directa por los estudiantes, experimentación, resolución de casos prácticos..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                    </div>
+                    <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 space-y-2">
+                      <div class="flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">4</span>
+                        <span>Fase 4: Cierre (Evaluación y retroalimentación)</span>
+                      </div>
+                      <textarea id="pac-prac-fase4-cierre" rows="2" placeholder="Evaluación del producto o procedimiento, retroalimentación, registro de resultados, orden y limpieza..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PAC PRÁCTICO: CRONOGRAMA SEMESTRAL DE PRÁCTICA (Task 5.2) -->
+                <div id="pac-sec-practico-cronograma" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-teal-200 dark:border-teal-800/60 shadow-sm space-y-4 hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="form-section-title text-[#1F9FAD] dark:text-[#6CCBD5]">
+                      <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                      <span>PAC Práctico • Cronograma Semestral de Prácticas Programadas</span>
+                    </div>
+                    <button type="button" onclick="window.addPacPracticaRow()" class="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-300 dark:border-teal-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                      <span>Agregar Práctica</span>
+                    </button>
+                  </div>
+                  <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                      <thead class="bg-teal-50/70 dark:bg-teal-950/40 text-teal-950 dark:text-teal-200 font-bold uppercase text-[10px] tracking-wider border-b border-teal-200 dark:border-teal-800">
+                        <tr>
+                          <th class="py-2.5 px-3 w-16 text-center">N° Prác.</th>
+                          <th class="py-2.5 px-3 w-56">Título de la Práctica</th>
+                          <th class="py-2.5 px-3 w-40">Escenario / Lab</th>
+                          <th class="py-2.5 px-3 w-28 text-center">Duración (Hrs)</th>
+                          <th class="py-2.5 px-3">Desempeño Esperado / Fase</th>
+                          <th class="py-2.5 px-3 w-44">Instrumento Evaluación</th>
+                        </tr>
+                      </thead>
+                      <tbody id="pac-practicas-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Dynamically populated or rendered -->
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -797,6 +932,9 @@
                 <!-- Sub-Tabs de Carrera / Filtro Contextual Multicarrera Planes -->
                 <div id="planes-carrera-subtabs" class="mb-4"></div>
 
+                <!-- Sub-Tabs / Selector de Tipo de Plan de Clases (TEÓRICO vs PRÁCTICO vs TEÓRICO-PRÁCTICO) (Task 5.3) -->
+                <div id="plan-type-switcher-container" class="mb-4"></div>
+
                 <!-- Selector Dinámico de Pestañas de Temas / Hojas -->
                 <div id="plan-sheets-tabs-container" class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar no-print">
                   <!-- Generated dynamically from imported sheets or subject topics -->
@@ -806,28 +944,40 @@
                 <!-- FICHA DEL PLAN DE CLASE -->
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
                   
-                  <!-- 1. Encabezado -->
-                  <div class="grid grid-cols-4 gap-4 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Nombre del Docente:</span><input id="plan-docente-input" type="text" value="" placeholder="Nombre del Docente..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Fecha:</span><input id="plan-fecha-input" type="date" value="" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Asignatura:</span><input id="plan-asig-input" type="text" value="" placeholder="Asignatura..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Carrera:</span><input id="plan-carrera-input" type="text" value="" placeholder="Carrera..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                  <!-- ============================================================= -->
+                  <!-- 🤝 SECCIÓN COMPARTIDA (CÁTEDRA) (Task 5.4)                   -->
+                  <!-- ============================================================= -->
+                  <div class="flex items-center justify-between p-3.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border-2 border-blue-300 dark:border-blue-700/80 text-blue-950 dark:text-blue-200 shadow-sm">
+                    <div class="flex items-center gap-2.5">
+                      <span class="p-2 rounded-lg bg-blue-600 text-white shadow-xs"><i data-lucide="users" class="w-4 h-4"></i></span>
+                      <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">🤝 Sección Compartida (Cátedra)</h4>
+                        <p class="text-[11px] text-blue-700 dark:text-blue-300">Datos curriculares institucionales consensuados por todos los docentes de la cátedra</p>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/80 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700">Consenso Cátedra</span>
+                  </div>
+
+                  <!-- 1. Identificación Curricular Compartida -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Asignatura (Cátedra):</span><input id="plan-asig-input" type="text" value="" placeholder="Asignatura..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Carrera(s):</span><input id="plan-carrera-input" type="text" value="" placeholder="Carrera..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
                   </div>
 
                   <!-- 2. Unidad & Tema -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="grid grid-cols-3 gap-4">
-                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unidad:</label><input id="plan-unidad-input" type="text" value="" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-700 dark:text-brand-400 focus:bg-white dark:focus:bg-slate-900"></div>
-                      <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Tema:</label><input id="plan-tema-input" type="text" value="" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unidad Temática:</label><input id="plan-unidad-input" type="text" value="" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-700 dark:text-brand-400 focus:bg-white dark:focus:bg-slate-900"></div>
+                      <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Tema Específico:</label><input id="plan-tema-input" type="text" value="" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
                     </div>
-                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Elemento de Competencia:</label><textarea id="plan-elemento-input" rows="2" placeholder="Elemento de Competencia..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Elemento de Competencia Articulado:</label><textarea id="plan-elemento-input" rows="2" placeholder="Elemento de Competencia..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                   </div>
 
                   <!-- 3. Resultados, Logros & Indicadores -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Resultados de Aprendizaje:</label><textarea id="plan-resultados-input" rows="2" placeholder="Resultados de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Resultados de Aprendizaje (Cátedra):</label><textarea id="plan-resultados-input" rows="2" placeholder="Resultados de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                     <div class="grid grid-cols-2 gap-4">
-                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Logros Esperados:</label><textarea id="plan-logros-input" rows="2" placeholder="Criterios de Desempeño / Logros..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                      <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Criterios de Desempeño / Logros Esperados:</label><textarea id="plan-logros-input" rows="2" placeholder="Criterios de Desempeño / Logros..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                       <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Indicadores de Logro:</label><textarea id="plan-indicadores-input" rows="2" placeholder="Indicadores de Logro..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                     </div>
                   </div>
@@ -835,17 +985,90 @@
                   <!-- 4. Los 3 Saberes -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="layers" class="w-4 h-4"></i><span>Contenidos de la Sesión (Los 3 Saberes)</span></div>
-                    <div class="grid grid-cols-3 gap-4">
-                      <div class="p-3 bg-blue-50/60 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/60"><strong class="text-blue-800 dark:text-blue-300 block mb-1">Saber Conceptual:</strong><textarea id="plan-conceptual-input" rows="3" placeholder="Saberes Conceptuales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
-                      <div class="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/60"><strong class="text-emerald-800 dark:text-emerald-300 block mb-1">Saber Procedimental:</strong><textarea id="plan-procedimental-input" rows="3" placeholder="Saberes Procedimentales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
-                      <div class="p-3 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/60"><strong class="text-purple-800 dark:text-purple-300 block mb-1">Saber Actitudinal:</strong><textarea id="plan-actitudinal-input" rows="3" placeholder="Saberes Actitudinales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div class="p-3 bg-blue-50/60 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/60">
+                        <strong class="text-blue-800 dark:text-blue-300 block mb-1">Saber Conceptual:</strong>
+                        <textarea id="plan-conceptual-input" rows="3" placeholder="Saberes Conceptuales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
+                      
+                      <!-- Saber Procedimental with dynamic badge for TEÓRICO (Task 5.3) -->
+                      <div id="plan-procedimental-container" class="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/60 transition-all">
+                        <div class="flex items-center justify-between mb-1">
+                          <strong class="text-emerald-800 dark:text-emerald-300 block">Saber Procedimental:</strong>
+                          <span id="plan-procedimental-status-tag" class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Activo</span>
+                        </div>
+                        <textarea id="plan-procedimental-input" rows="3" placeholder="Saberes Procedimentales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                        <!-- Informative notice for TEÓRICO mode -->
+                        <div id="plan-procedimental-omitted-badge" class="hidden p-2 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-[11px] font-semibold flex items-center gap-1.5 mt-2">
+                          <i data-lucide="info" class="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400"></i>
+                          <span>Omitido en materias teóricas según normativa UNITEPC.</span>
+                        </div>
+                      </div>
+
+                      <div class="p-3 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/60">
+                        <strong class="text-purple-800 dark:text-purple-300 block mb-1">Saber Actitudinal:</strong>
+                        <textarea id="plan-actitudinal-input" rows="3" placeholder="Saberes Actitudinales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ============================================================= -->
+                  <!-- 👤 SECCIÓN PERSONAL (DOCENTE / COMISIÓN) (Task 5.4)          -->
+                  <!-- ============================================================= -->
+                  <div class="flex items-center justify-between p-3.5 rounded-xl bg-purple-50/80 dark:bg-purple-950/40 border-2 border-purple-300 dark:border-purple-700/80 text-purple-950 dark:text-purple-200 shadow-sm">
+                    <div class="flex items-center gap-2.5">
+                      <span class="p-2 rounded-lg bg-purple-600 text-white shadow-xs"><i data-lucide="user" class="w-4 h-4"></i></span>
+                      <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider">👤 Sección Personal (Docente / Comisión Asignada)</h4>
+                        <p class="text-[11px] text-purple-700 dark:text-purple-300">Microplanificación didáctica personalizada de su gestión de aula o laboratorio</p>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-900/80 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700">Individual Docente</span>
+                  </div>
+
+                  <!-- Datos Personales del Docente, Fecha y Comisión -->
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Nombre del Docente:</span><input id="plan-docente-input" type="text" value="" placeholder="Nombre del Docente..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Fecha de Ejecución:</span><input id="plan-fecha-input" type="date" value="" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Comisión / Grupo Asignado:</span><input id="plan-grupo-input" type="text" value="" placeholder="ej. TA-01 / PL-01..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
+                  </div>
+
+                  <!-- CAMPOS ESPECÍFICOS DE PRÁCTICA (Task 5.3/5.4) -->
+                  <div id="plan-practico-fields" class="p-4 rounded-xl border border-teal-200 dark:border-teal-800/60 bg-teal-50/20 dark:bg-teal-950/20 space-y-3 text-xs hidden">
+                    <div class="form-section-title text-[#1F9FAD] dark:text-[#6CCBD5]"><i data-lucide="flask-conical" class="w-4 h-4"></i><span>Parámetros de Práctica (Laboratorio / Simulación)</span></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Ambiente / Escenario:</label>
+                        <input id="plan-prac-ambiente" type="text" placeholder="ej. Lab de Redes / Gabinete 2" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      </div>
+                      <div>
+                        <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">N° Estudiantes por Grupo:</label>
+                        <input id="plan-prac-estudiantes" type="number" min="1" max="100" placeholder="25" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      </div>
+                      <div>
+                        <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Duración Práctica:</label>
+                        <input id="plan-prac-duracion" type="text" placeholder="ej. 90 min (2 Horas)" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      </div>
+                      <div>
+                        <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Nivel Taxonómico Bloom:</label>
+                        <select id="plan-prac-bloom" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                          <option value="APLICAR">Aplicar (Procedimental)</option>
+                          <option value="ANALIZAR">Analizar (Resolución)</option>
+                          <option value="EVALUAR">Evaluar (Criterio Técnico)</option>
+                          <option value="CREAR">Crear (Diseño / Síntesis)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Equipamiento, Insumos y Medidas de Bioseguridad:</label>
+                      <input id="plan-prac-equipamiento" type="text" placeholder="ej. Servidor Linux, kits de red, mandil institucional, guantes de nitrilo" class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                     </div>
                   </div>
 
                   <!-- 5. Estrategias Didácticas -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="compass" class="w-4 h-4"></i><span>Estrategias Didácticas (Docente, Estudiante y Recursos)</span></div>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">De Enseñanza (Docentes):</label><textarea id="plan-est-ensenanza" rows="2" placeholder="Estrategias de Enseñanza..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                       <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">De Aprendizaje (Estudiante):</label><textarea id="plan-est-aprendizaje" rows="2" placeholder="Estrategias de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                       <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Recursos de Enseñanza:</label><textarea id="plan-est-recursos" rows="2" placeholder="Recursos Didácticos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
@@ -883,12 +1106,12 @@
                     </div>
                   </div>
 
-                  <!-- 7. Secuencia Didáctica con Minutaje Configurable (5 Momentos Base Excel) -->
+                  <!-- 7. Secuencia Didáctica -->
                   <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between">
                       <div class="form-section-title text-purple-700 dark:text-purple-400 mb-0">
                         <i data-lucide="clock" class="w-4 h-4"></i>
-                        <span>Secuencia Didáctica (5 Momentos & Minutaje Configurable)</span>
+                        <span id="plan-secuencia-titulo">Secuencia Didáctica (5 Momentos & Minutaje Configurable)</span>
                       </div>
                       <div class="flex items-center gap-2">
                         <span class="text-[11px] text-slate-500 dark:text-slate-400">Total Minutos:</span>
@@ -896,94 +1119,172 @@
                       </div>
                     </div>
 
-                    <!-- 1. INTRODUCCIÓN -->
-                    <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2 text-xs">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                          <strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN:</strong>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                          <label for="plan-sec-intro-dur" class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Duración:</label>
-                          <div class="flex items-center">
-                            <input id="plan-sec-intro-dur" type="number" min="0" max="480" value="25" class="w-16 px-2 py-0.5 rounded-l border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-blue-500" oninput="window.updateSecuenciaTotals()">
-                            <span class="px-2 py-0.5 rounded-r bg-blue-100 dark:bg-blue-900/80 border border-l-0 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 text-[10px] font-bold">min</span>
+                    <!-- SECUENCIA DIDÁCTICA ESTÁNDAR (TEÓRICO / TEÓRICO-PRÁCTICO: 5 MOMENTOS) -->
+                    <div id="plan-secuencia-standard" class="space-y-3">
+                      <!-- 1. INTRODUCCIÓN -->
+                      <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <strong class="text-blue-800 dark:text-blue-300">1. INTRODUCCIÓN:</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-intro-dur" class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-intro-dur" type="number" min="0" max="480" value="25" class="w-16 px-2 py-0.5 rounded-l border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-blue-500" oninput="window.updateSecuenciaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-blue-100 dark:bg-blue-900/80 border border-l-0 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 text-[10px] font-bold">min</span>
+                            </div>
                           </div>
                         </div>
+                        <textarea id="plan-sec-intro" rows="2" placeholder="Activación cognitiva, presentación del sílabo, objetivos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
-                      <textarea id="plan-sec-intro" rows="2" placeholder="Activación cognitiva, presentación del sílabo, objetivos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+
+                      <!-- 2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS -->
+                      <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <strong class="text-indigo-800 dark:text-indigo-300">2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS:</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-resultados-dur" class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-resultados-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-indigo-500" oninput="window.updateSecuenciaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-indigo-100 dark:bg-indigo-900/80 border border-l-0 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 text-[10px] font-bold">min</span>
+                            </div>
+                          </div>
+                        </div>
+                        <textarea id="plan-sec-resultados" rows="2" placeholder="Resultados de aprendizaje y logros esperados observables..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
+
+                      <!-- 3. CONTENIDOS DE LA CLASE -->
+                      <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <strong class="text-amber-800 dark:text-amber-300">3. CONTENIDOS DE LA CLASE:</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-contenidos-dur" class="text-[11px] text-amber-700 dark:text-amber-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-contenidos-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-amber-500" oninput="window.updateSecuenciaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-amber-100 dark:bg-amber-900/80 border border-l-0 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] font-bold">min</span>
+                            </div>
+                          </div>
+                        </div>
+                        <textarea id="plan-sec-contenidos" rows="2" placeholder="Listado de contenidos temáticos de la clase..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
+
+                      <!-- 4. CUERPO DE CONTENIDOS -->
+                      <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            <strong class="text-purple-800 dark:text-purple-300">4. CUERPO DE CONTENIDOS:</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-cuerpo-dur" class="text-[11px] text-purple-700 dark:text-purple-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-cuerpo-dur" type="number" min="0" max="1800" value="100" class="w-16 px-2 py-0.5 rounded-l border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-purple-500" oninput="window.updateSecuenciaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-purple-100 dark:bg-purple-900/80 border border-l-0 border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-200 text-[10px] font-bold">min</span>
+                            </div>
+                          </div>
+                        </div>
+                        <textarea id="plan-sec-cuerpo" rows="3" placeholder="Desarrollo conceptual, dinámicas, ejercicios, resolución de problemas..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
+
+                      <!-- 5. CONCLUSIÓN O CIERRE -->
+                      <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <strong class="text-emerald-800 dark:text-emerald-300">5. CONCLUSIÓN O CIERRE:</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-cierre-dur" class="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-cierre-dur" type="number" min="0" max="480" value="55" class="w-16 px-2 py-0.5 rounded-l border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-emerald-500" oninput="window.updateSecuenciaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-emerald-100 dark:bg-emerald-900/80 border border-l-0 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold">min</span>
+                            </div>
+                          </div>
+                        </div>
+                        <textarea id="plan-sec-cierre" rows="2" placeholder="Retroalimentación, síntesis, tareas de cierre, evaluación..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
+                      </div>
                     </div>
 
-                    <!-- 2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS -->
-                    <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 space-y-2 text-xs">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                          <strong class="text-indigo-800 dark:text-indigo-300">2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS:</strong>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                          <label for="plan-sec-resultados-dur" class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium">Duración:</label>
-                          <div class="flex items-center">
-                            <input id="plan-sec-resultados-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-indigo-900 dark:text-indigo-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-indigo-500" oninput="window.updateSecuenciaTotals()">
-                            <span class="px-2 py-0.5 rounded-r bg-indigo-100 dark:bg-indigo-900/80 border border-l-0 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 text-[10px] font-bold">min</span>
+                    <!-- SECUENCIA DIDÁCTICA PRÁCTICA (4 FASES METODOLÓGICAS) (Task 5.3) -->
+                    <div id="plan-secuencia-practica" class="space-y-3 hidden">
+                      <!-- FASE 1: PREPARACIÓN -->
+                      <div class="p-3.5 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/20 dark:bg-teal-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                            <strong class="text-teal-800 dark:text-teal-300">FASE 1: PREPARACIÓN (Inducción previa y EPP):</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-fase1-dur" class="text-[11px] text-teal-700 dark:text-teal-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-fase1-dur" type="number" min="0" max="480" value="15" class="w-16 px-2 py-0.5 rounded-l border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-900 text-teal-900 dark:text-teal-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-teal-500" oninput="window.updateSecuenciaPracticaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-teal-100 dark:bg-teal-900/80 border border-l-0 border-teal-300 dark:border-teal-700 text-teal-800 dark:text-teal-200 text-[10px] font-bold">min</span>
+                            </div>
                           </div>
                         </div>
+                        <textarea id="plan-sec-fase1" rows="2" placeholder="Verificación de bioseguridad, EPP, inducción de la guía, comprobación de insumos y equipos..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
-                      <textarea id="plan-sec-resultados" rows="2" placeholder="Resultados de aprendizaje y logros esperados observables..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
-                    </div>
 
-                    <!-- 3. CONTENIDOS DE LA CLASE -->
-                    <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-2 text-xs">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                          <strong class="text-amber-800 dark:text-amber-300">3. CONTENIDOS DE LA CLASE:</strong>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                          <label for="plan-sec-contenidos-dur" class="text-[11px] text-amber-700 dark:text-amber-300 font-medium">Duración:</label>
-                          <div class="flex items-center">
-                            <input id="plan-sec-contenidos-dur" type="number" min="0" max="480" value="0" class="w-16 px-2 py-0.5 rounded-l border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-amber-500" oninput="window.updateSecuenciaTotals()">
-                            <span class="px-2 py-0.5 rounded-r bg-amber-100 dark:bg-amber-900/80 border border-l-0 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] font-bold">min</span>
+                      <!-- FASE 2: EJECUCIÓN GUIADA -->
+                      <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                            <strong class="text-blue-800 dark:text-blue-300">FASE 2: EJECUCIÓN GUIADA (Modelado docente y acompañamiento):</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-fase2-dur" class="text-[11px] text-blue-700 dark:text-blue-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-fase2-dur" type="number" min="0" max="480" value="25" class="w-16 px-2 py-0.5 rounded-l border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-900 text-blue-900 dark:text-blue-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-blue-500" oninput="window.updateSecuenciaPracticaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-blue-100 dark:bg-blue-900/80 border border-l-0 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200 text-[10px] font-bold">min</span>
+                            </div>
                           </div>
                         </div>
+                        <textarea id="plan-sec-fase2" rows="2" placeholder="Demostración práctica paso a paso por el docente, modelado de técnicas correctas y advertencia de errores comunes..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
-                      <textarea id="plan-sec-contenidos" rows="2" placeholder="Listado de contenidos temáticos de la clase..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
-                    </div>
 
-                    <!-- 4. CUERPO DE CONTENIDOS -->
-                    <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/20 space-y-2 text-xs">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                          <strong class="text-purple-800 dark:text-purple-300">4. CUERPO DE CONTENIDOS:</strong>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                          <label for="plan-sec-cuerpo-dur" class="text-[11px] text-purple-700 dark:text-purple-300 font-medium">Duración:</label>
-                          <div class="flex items-center">
-                            <input id="plan-sec-cuerpo-dur" type="number" min="0" max="1800" value="100" class="w-16 px-2 py-0.5 rounded-l border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-purple-500" oninput="window.updateSecuenciaTotals()">
-                            <span class="px-2 py-0.5 rounded-r bg-purple-100 dark:bg-purple-900/80 border border-l-0 border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-200 text-[10px] font-bold">min</span>
+                      <!-- FASE 3: EJECUCIÓN AUTÓNOMA -->
+                      <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] font-bold">3</span>
+                            <strong class="text-amber-800 dark:text-amber-300">FASE 3: EJECUCIÓN AUTÓNOMA (Práctica activa del estudiante):</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-fase3-dur" class="text-[11px] text-amber-700 dark:text-amber-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-fase3-dur" type="number" min="0" max="480" value="40" class="w-16 px-2 py-0.5 rounded-l border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-amber-900 dark:text-amber-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-amber-500" oninput="window.updateSecuenciaPracticaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-amber-100 dark:bg-amber-900/80 border border-l-0 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-[10px] font-bold">min</span>
+                            </div>
                           </div>
                         </div>
+                        <textarea id="plan-sec-fase3" rows="3" placeholder="Desarrollo por los estudiantes en sus puestos de trabajo, manipulación de instrumental, toma de datos, resolución del caso..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
-                      <textarea id="plan-sec-cuerpo" rows="3" placeholder="Desarrollo conceptual, dinámicas, ejercicios, resolución de problemas..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
-                    </div>
 
-                    <!-- 5. CONCLUSIÓN O CIERRE -->
-                    <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-2 text-xs">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                          <strong class="text-emerald-800 dark:text-emerald-300">5. CONCLUSIÓN O CIERRE:</strong>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                          <label for="plan-sec-cierre-dur" class="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Duración:</label>
-                          <div class="flex items-center">
-                            <input id="plan-sec-cierre-dur" type="number" min="0" max="480" value="55" class="w-16 px-2 py-0.5 rounded-l border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-emerald-500" oninput="window.updateSecuenciaTotals()">
-                            <span class="px-2 py-0.5 rounded-r bg-emerald-100 dark:bg-emerald-900/80 border border-l-0 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold">min</span>
+                      <!-- FASE 4: CIERRE -->
+                      <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold">4</span>
+                            <strong class="text-emerald-800 dark:text-emerald-300">FASE 4: CIERRE (Evaluación, retroalimentación y orden):</strong>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <label for="plan-sec-fase4-dur" class="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Duración:</label>
+                            <div class="flex items-center">
+                              <input id="plan-sec-fase4-dur" type="number" min="0" max="480" value="10" class="w-16 px-2 py-0.5 rounded-l border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-emerald-900 dark:text-emerald-100 text-center font-bold font-mono text-xs focus:ring-1 focus:ring-emerald-500" oninput="window.updateSecuenciaPracticaTotals()">
+                              <span class="px-2 py-0.5 rounded-r bg-emerald-100 dark:bg-emerald-900/80 border border-l-0 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold">min</span>
+                            </div>
                           </div>
                         </div>
+                        <textarea id="plan-sec-fase4" rows="2" placeholder="Evaluación del producto o reporte, síntesis de hallazgos, retroalimentación formativa, protocolo de limpieza y desinfección..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
-                      <textarea id="plan-sec-cierre" rows="2" placeholder="Retroalimentación, síntesis, tareas de cierre, evaluación..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                     </div>
                   </div>
 
