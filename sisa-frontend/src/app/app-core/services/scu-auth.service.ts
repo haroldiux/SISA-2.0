@@ -40,8 +40,12 @@ export class ScuAuthService {
   }
 
   public setSession(authData: ScuAuthResponseModel): void {
-    localStorage.setItem(this._TOKEN_KEY, authData.accessToken);
-    localStorage.setItem(this._REFRESH_KEY, authData.refreshToken);
+    localStorage.setItem(this._TOKEN_KEY, authData.accessToken || authData.token || '');
+    if (authData.refreshToken) {
+      localStorage.setItem(this._REFRESH_KEY, authData.refreshToken);
+    } else {
+      localStorage.removeItem(this._REFRESH_KEY);
+    }
     localStorage.setItem(this._USER_KEY, JSON.stringify(authData.user));
     this._currentUserSubject.next(authData.user);
   }
@@ -73,6 +77,21 @@ export class ScuAuthService {
 
   private _getPersonaForRole(role: ScuRoleEnum): ScuUserModel {
     switch (role) {
+      case ScuRoleEnum.ROLE_ADMIN:
+        return {
+          id: 236,
+          username: 'admin',
+          ci: '1000001',
+          email: 'admin@unitepc.edu.bo',
+          role: ScuRoleEnum.ROLE_ADMIN,
+          sedeId: null,
+          sedeNombre: 'Administración Central',
+          nombres: 'Administrador',
+          apellidos: 'General SISA',
+          nombreCompleto: 'Administrador General SISA',
+          mustChangePassword: false,
+          activo: true
+        };
       case ScuRoleEnum.ROLE_DOCENTE:
         return {
           id: 1,

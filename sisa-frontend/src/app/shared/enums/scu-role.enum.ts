@@ -4,6 +4,7 @@
  * @author GentleAI SISA Architecture Team
  */
 export enum ScuRoleEnum {
+  ROLE_ADMIN = 'ROLE_ADMIN',
   ROLE_DOCENTE = 'ROLE_DOCENTE',
   ROLE_DIR_CARRERA = 'ROLE_DIR_CARRERA',
   ROLE_DIR_ACADEMICA = 'ROLE_DIR_ACADEMICA',

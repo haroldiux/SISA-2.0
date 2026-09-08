@@ -18,6 +18,9 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long>, JpaSpecificationExecutor<Usuario> {
     Optional<Usuario> findByUsername(String username);
     Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByCi(String ci);
+    boolean existsByUsername(String username);
+    boolean existsByCi(String ci);
     List<Usuario> findBySedeId(Long sedeId);
     List<Usuario> findByRol(RolUsuario rol);
     List<Usuario> findBySedeIdAndRol(Long sedeId, RolUsuario rol);

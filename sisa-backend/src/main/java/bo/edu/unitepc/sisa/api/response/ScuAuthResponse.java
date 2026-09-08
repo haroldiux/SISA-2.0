@@ -18,8 +18,19 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ScuAuthResponse {
     private String accessToken;
+    private String token;
     private String refreshToken;
     private String tokenType;
     private Long expiresIn;
+    private Boolean mustChangePassword;
     private ScuUserResponse user;
+
+    public String getToken() {
+        return this.token != null ? this.token : this.accessToken;
+    }
+
+    public boolean isMustChangePassword() {
+        return Boolean.TRUE.equals(this.mustChangePassword);
+    }
 }
+

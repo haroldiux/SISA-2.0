@@ -27,4 +27,5 @@ public class ScuUserResponse {
     private String nombres;
     private String apellidos;
     private String nombreCompleto;
+    private Boolean mustChangePassword;
 }

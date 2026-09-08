@@ -45,6 +45,7 @@ public class JwtTokenProvider {
         claims.put("sedeNombre", user.getSede() != null ? user.getSede().getNombre() : "Nacional");
         claims.put("nombres", user.getNombres());
         claims.put("apellidos", user.getApellidos());
+        claims.put("mustChangePassword", Boolean.TRUE.equals(user.getMustChangePassword()));
 
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + this.jwtExpirationMs);
@@ -57,6 +58,32 @@ public class JwtTokenProvider {
                 .signWith(this._getSigningKey())
                 .compact();
     }
+
+    public String generatePasswordChangeToken(Usuario user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
+        claims.put("username", user.getUsername());
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRol() != null ? user.getRol().name() : null);
+        claims.put("sedeId", user.getSede() != null ? user.getSede().getId() : null);
+        claims.put("sedeNombre", user.getSede() != null ? user.getSede().getNombre() : "Nacional");
+        claims.put("nombres", user.getNombres());
+        claims.put("apellidos", user.getApellidos());
+        claims.put("mustChangePassword", true);
+        claims.put("passwordChangeOnly", true);
+
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 1800000L); // 30 minutes for password change
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(user.getUsername())
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(this._getSigningKey())
+                .compact();
+    }
+
 
     public String generateRefreshToken(Usuario user) {
         Date now = new Date();

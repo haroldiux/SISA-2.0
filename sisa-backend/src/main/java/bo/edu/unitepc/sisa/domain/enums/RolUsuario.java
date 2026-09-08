@@ -6,9 +6,11 @@ package bo.edu.unitepc.sisa.domain.enums;
  * @author GentleAI SISA Architecture Team
  */
 public enum RolUsuario {
+    ROLE_ADMIN,
     ROLE_DOCENTE,
     ROLE_DIR_CARRERA,
     ROLE_DIR_ACADEMICA,
     ROLE_VICERRECTOR_SEDE,
     ROLE_VICERRECTOR_NACIONAL
 }
+

@@ -45,8 +45,11 @@ public class ScuAuthenticateUserCmd {
             throw new ScuAuthException("Credenciales inválidas para usuario: " + request.getUsername());
         }
 
-        String accessToken = this.jwtTokenProvider.generateAccessToken(user);
-        String refreshToken = this.jwtTokenProvider.generateRefreshToken(user);
+        boolean mustChangePassword = Boolean.TRUE.equals(user.getMustChangePassword());
+        String accessToken = mustChangePassword
+                ? this.jwtTokenProvider.generatePasswordChangeToken(user)
+                : this.jwtTokenProvider.generateAccessToken(user);
+        String refreshToken = mustChangePassword ? null : this.jwtTokenProvider.generateRefreshToken(user);
 
         ScuUserResponse userResponse = ScuUserResponse.builder()
                 .id(user.getId())
@@ -58,13 +61,16 @@ public class ScuAuthenticateUserCmd {
                 .nombres(user.getNombres())
                 .apellidos(user.getApellidos())
                 .nombreCompleto(user.getNombreCompleto())
+                .mustChangePassword(mustChangePassword)
                 .build();
 
         return ScuAuthResponse.builder()
                 .accessToken(accessToken)
+                .token(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .expiresIn(28800L)
+                .expiresIn(mustChangePassword ? 1800L : 28800L)
+                .mustChangePassword(mustChangePassword)
                 .user(userResponse)
                 .build();
     }

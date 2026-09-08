@@ -101,6 +101,9 @@
         activeBtn.classList.remove('text-slate-300');
         activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
       }
+      if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
+        window.loadAdminUsers();
+      }
       if (window.lucide) window.lucide.createIcons();
     };
 
@@ -5304,10 +5307,989 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  // =========================================================================
+  // ── PHASE 4 & 5: AUTHENTICATION, FORCED PASSWORD CHANGE & USER MANAGEMENT ──
+  // =========================================================================
+
+  // Session helpers
+  window.getCurrentUser = function() {
+    try {
+      const raw = localStorage.getItem('scu_user_info');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  window.getAuthToken = function() {
+    return localStorage.getItem('scu_access_token') || null;
+  };
+
+  window.setAuthSession = function(token, user) {
+    if (token) {
+      localStorage.setItem('scu_access_token', token);
+    }
+    if (user) {
+      localStorage.setItem('scu_user_info', JSON.stringify(user));
+      window.updateUserProfileUi(user);
+    }
+  };
+
+  window.logoutUser = function() {
+    localStorage.removeItem('scu_access_token');
+    localStorage.removeItem('scu_refresh_token');
+    localStorage.removeItem('scu_user_info');
+    const dropdown = document.getElementById('user-dropdown-menu');
+    if (dropdown) dropdown.classList.add('hidden');
+    window.openLoginModal();
+    window.showToast('ℹ️ Sesión cerrada correctamente');
+  };
+
+  // Dropdown toggle
+  window.toggleUserDropdown = function(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('user-dropdown-menu');
+    if (menu) {
+      menu.classList.toggle('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    }
+  };
+
+  // Close dropdown on outside click
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('user-profile-header-dropdown');
+    const menu = document.getElementById('user-dropdown-menu');
+    if (menu && !menu.classList.contains('hidden') && dropdown && !dropdown.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+
+  // UI Profile synchronizer
+  window.updateUserProfileUi = function(user) {
+    if (!user) return;
+    const initials = (user.nombres && user.apellidos)
+      ? (user.nombres.charAt(0) + user.apellidos.charAt(0)).toUpperCase()
+      : (user.nombreCompleto ? user.nombreCompleto.substring(0, 2).toUpperCase() : 'US');
+
+    // Header Profile
+    const headerAvatar = document.getElementById('header-user-avatar');
+    const headerName = document.getElementById('header-user-name');
+    const headerRole = document.getElementById('header-user-role');
+    const menuFullname = document.getElementById('menu-user-fullname');
+    const menuEmail = document.getElementById('menu-user-email');
+    const menuBadge = document.getElementById('menu-user-badge');
+    const menuCi = document.getElementById('menu-user-ci');
+
+    if (headerAvatar) headerAvatar.innerText = initials;
+    if (headerName) headerName.innerText = user.nombreCompleto || user.username;
+    if (headerRole) {
+      let roleLabel = 'Docente';
+      if (user.role === 'ROLE_ADMIN') roleLabel = 'Administrador';
+      else if (user.role === 'ROLE_VICERRECTOR_NACIONAL') roleLabel = 'Vicerrector Nal.';
+      else if (user.role === 'ROLE_VICERRECTOR_SEDE') roleLabel = 'Vicerrector Sede';
+      else if (user.role === 'ROLE_DIR_ACADEMICA') roleLabel = 'Dir. Académica';
+      else if (user.role === 'ROLE_DIR_CARRERA') roleLabel = 'Dir. Carrera';
+      headerRole.innerText = roleLabel;
+    }
+
+    if (menuFullname) menuFullname.innerText = user.nombreCompleto || user.username;
+    if (menuEmail) menuEmail.innerText = user.email || (user.username + '@unitepc.edu.bo');
+    if (menuBadge) menuBadge.innerText = user.role || 'ROLE_DOCENTE';
+    if (menuCi) menuCi.innerText = 'CI: ' + (user.ci || user.username || 'S/N');
+
+    // Sidebar View 1 Profile
+    const sideAvatar = document.getElementById('user-profile-avatar');
+    const sideName = document.getElementById('user-profile-name');
+    const sideInfo = document.getElementById('user-profile-info');
+    if (sideAvatar) sideAvatar.innerText = initials;
+    if (sideName) sideName.innerText = user.nombreCompleto || user.username;
+    if (sideInfo) sideInfo.innerText = user.sedeNombre || (user.role === 'ROLE_ADMIN' ? 'Sede Central • Bolivia' : '1 Carrera • UNITEPC');
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  // Login Modal
+  window.openLoginModal = function() {
+    const modal = document.getElementById('sisa-login-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      const err = document.getElementById('login-error-container');
+      if (err) err.classList.add('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    }
+  };
+
+  window.closeLoginModal = function() {
+    const modal = document.getElementById('sisa-login-modal');
+    if (modal) modal.classList.add('hidden');
+  };
+
+  window.toggleLoginPasswordVisibility = function() {
+    const pwd = document.getElementById('login-password');
+    const eye = document.getElementById('login-pwd-eye');
+    if (!pwd) return;
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      if (eye) eye.setAttribute('data-lucide', 'eye-off');
+    } else {
+      pwd.type = 'password';
+      if (eye) eye.setAttribute('data-lucide', 'eye');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.fillDemoLogin = function(username, password) {
+    const u = document.getElementById('login-username');
+    const p = document.getElementById('login-password');
+    if (u) u.value = username;
+    if (p) p.value = password;
+  };
+
+  window.handleLoginSubmit = async function(event) {
+    if (event) event.preventDefault();
+    const uInput = document.getElementById('login-username');
+    const pInput = document.getElementById('login-password');
+    const errContainer = document.getElementById('login-error-container');
+    const errMsg = document.getElementById('login-error-msg');
+    const btn = document.getElementById('btn-do-login');
+
+    if (!uInput || !pInput) return;
+    const username = uInput.value.trim();
+    const password = pInput.value;
+
+    if (!username || !password) {
+      if (errContainer && errMsg) {
+        errMsg.innerText = 'Por favor ingrese su usuario y contraseña.';
+        errContainer.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Validando credenciales...';
+    }
+    if (errContainer) errContainer.classList.add('hidden');
+
+    try {
+      const resp = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const res = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(res.message || res.error || 'Credenciales inválidas o cuenta desactivada.');
+      }
+
+      const authData = res.data || res;
+      const token = authData.accessToken || authData.token;
+      const user = authData.user;
+      const mustChange = (authData.mustChangePassword === true || (user && user.mustChangePassword === true));
+
+      if (mustChange) {
+        window.closeLoginModal();
+        window.openForcedPasswordModal(user, token);
+      } else {
+        window.setAuthSession(token, user);
+        window.closeLoginModal();
+        window.showToast('✅ ¡Bienvenido a SISA, ' + (user.nombres || user.nombreCompleto || user.username) + '!');
+
+        if (user.role === 'ROLE_ADMIN') {
+          window.switchView('view6');
+          window.loadAdminUsers();
+        }
+      }
+    } catch (err) {
+      if (errContainer && errMsg) {
+        errMsg.innerText = err.message || 'Error de conexión con el servidor.';
+        errContainer.classList.remove('hidden');
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in" class="w-4 h-4"></i><span>Ingresar a la Plataforma</span>';
+        if (window.lucide) window.lucide.createIcons();
+      }
+    }
+  };
+
+  // Forced Password Change
+  window._tempPasswordChangeUser = null;
+  window._tempPasswordChangeToken = null;
+
+  window.openForcedPasswordModal = function(user, tempToken) {
+    window._tempPasswordChangeUser = user;
+    window._tempPasswordChangeToken = tempToken;
+    const modal = document.getElementById('modal-forced-password-change');
+    const newPwd = document.getElementById('change-new-password');
+    const confPwd = document.getElementById('change-confirm-password');
+    const errBox = document.getElementById('change-password-error');
+
+    if (newPwd) newPwd.value = '';
+    if (confPwd) confPwd.value = '';
+    if (errBox) errBox.classList.add('hidden');
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.closeForcedPasswordModal = function() {
+    const modal = document.getElementById('modal-forced-password-change');
+    if (modal) modal.classList.add('hidden');
+    window._tempPasswordChangeUser = null;
+    window._tempPasswordChangeToken = null;
+  };
+
+  window.handleForcedPasswordSubmit = async function(event) {
+    if (event) event.preventDefault();
+    const newPwdInput = document.getElementById('change-new-password');
+    const confPwdInput = document.getElementById('change-confirm-password');
+    const errBox = document.getElementById('change-password-error');
+    const errMsg = document.getElementById('change-password-error-msg');
+    const btn = document.getElementById('btn-do-change-password');
+
+    const newPassword = newPwdInput ? newPwdInput.value : '';
+    const confirmPassword = confPwdInput ? confPwdInput.value : '';
+    const user = window._tempPasswordChangeUser || window.getCurrentUser();
+    const token = window._tempPasswordChangeToken || window.getAuthToken();
+
+    const showError = (msg) => {
+      if (errBox && errMsg) {
+        errMsg.innerText = msg;
+        errBox.classList.remove('hidden');
+      }
+    };
+
+    if (errBox) errBox.classList.add('hidden');
+
+    if (!newPassword || newPassword.length < 8) {
+      showError('La nueva contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showError('La confirmación de la contraseña no coincide.');
+      return;
+    }
+
+    if (user && user.ci && (newPassword === user.ci || newPassword.toLowerCase() === user.ci.toLowerCase())) {
+      showError('La nueva contraseña no puede ser igual a tu Carnet de Identidad (CI).');
+      return;
+    }
+
+    if (user && user.username && newPassword.toLowerCase() === user.username.toLowerCase()) {
+      showError('La nueva contraseña no puede ser igual a tu nombre de usuario.');
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = 'Actualizando...';
+    }
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+
+      const resp = await fetch('/api/v1/auth/change-password', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          username: user ? user.username : undefined,
+          newPassword: newPassword,
+          confirmPassword: confirmPassword
+        })
+      });
+
+      const res = await resp.json();
+      if (!resp.ok) {
+        throw new Error(res.message || res.error || 'Error al actualizar la contraseña.');
+      }
+
+      const authData = res.data || res;
+      const finalToken = authData.accessToken || authData.token || token;
+      const updatedUser = authData.user || user;
+      if (updatedUser) updatedUser.mustChangePassword = false;
+
+      window.setAuthSession(finalToken, updatedUser);
+      window.closeForcedPasswordModal();
+      window.showToast('✅ ¡Contraseña actualizada con éxito! Bienvenido a SISA.');
+
+      if (updatedUser && updatedUser.role === 'ROLE_ADMIN') {
+        window.switchView('view6');
+        window.loadAdminUsers();
+      }
+    } catch (err) {
+      showError(err.message || 'Error al procesar el cambio de contraseña.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'Actualizar e ingresar';
+      }
+    }
+  };
+
+  // ── ADMIN USER MANAGEMENT (PHASE 5) ──────────────────────────────────
+  window.adminUsersList = [];
+  window.adminUserAssignments = [];
+  window.adminCareersCache = {};
+
+  window.loadAdminUsers = async function() {
+    const tbody = document.getElementById('admin-users-table-body');
+    const searchInput = document.getElementById('admin-search-input');
+    const roleFilter = document.getElementById('admin-role-filter');
+
+    const searchVal = searchInput ? searchInput.value.trim() : '';
+    const roleVal = roleFilter ? roleFilter.value : '';
+
+    let url = '/api/v1/admin/usuarios?';
+    if (searchVal) url += 'search=' + encodeURIComponent(searchVal) + '&';
+    if (roleVal) url += 'rol=' + encodeURIComponent(roleVal) + '&';
+
+    try {
+      const resp = await fetch(url, {
+        method: 'GET',
+        headers: window.getAuthHeaders()
+      });
+
+      if (resp.ok) {
+        const json = await resp.json();
+        const users = json.data || json || [];
+        window.adminUsersList = Array.isArray(users) ? users : [];
+        window.renderAdminUsersTable(window.adminUsersList);
+      } else {
+        // Fallback for demo when unauthenticated or offline
+        console.warn('Admin API returned HTTP ' + resp.status + ', using fallback list');
+        window.renderFallbackAdminUsers();
+      }
+    } catch (e) {
+      console.warn('Admin users fetch error, rendering fallback:', e);
+      window.renderFallbackAdminUsers();
+    }
+  };
+
+  window.renderFallbackAdminUsers = function() {
+    window.adminUsersList = [
+      {
+        id: 1,
+        username: 'docente.cbb',
+        ci: '3065087',
+        nombreCompleto: 'ROSMERY LUIZAGA SALINAS',
+        email: 'docente.cbb@unitepc.edu.bo',
+        rol: 'ROLE_DOCENTE',
+        activo: true,
+        mustChangePassword: false,
+        asignaciones: [{ sedeNombre: 'Sede Central Cochabamba', carreraNombre: 'Ingeniería de Sistemas' }]
+      },
+      {
+        id: 2,
+        username: 'dir.carrera.sis',
+        ci: '6600808',
+        nombreCompleto: 'WALTER JOSE CAZAS CASTRO',
+        email: 'dir.sistemas@unitepc.edu.bo',
+        rol: 'ROLE_DIR_CARRERA',
+        activo: true,
+        mustChangePassword: false,
+        asignaciones: [{ sedeNombre: 'Sede Central Cochabamba', carreraNombre: 'Ingeniería de Sistemas' }]
+      },
+      {
+        id: 3,
+        username: 'dir.academica.cbb',
+        ci: '4421998',
+        nombreCompleto: 'MARTIN XAVIER SANCHEZ FLORES',
+        email: 'dir.academica.cbb@unitepc.edu.bo',
+        rol: 'ROLE_DIR_ACADEMICA',
+        activo: true,
+        mustChangePassword: false,
+        asignaciones: [{ sedeNombre: 'Sede Central Cochabamba', carreraNombre: 'Medicina Humana' }]
+      },
+      {
+        id: 236,
+        username: 'admin',
+        ci: '1000001',
+        nombreCompleto: 'ADMINISTRADOR GENERAL SISA',
+        email: 'admin@unitepc.edu.bo',
+        rol: 'ROLE_ADMIN',
+        activo: true,
+        mustChangePassword: false,
+        asignaciones: []
+      }
+    ];
+    window.renderAdminUsersTable(window.adminUsersList);
+  };
+
+  window.renderAdminUsersTable = function(users) {
+    const tbody = document.getElementById('admin-users-table-body');
+    const counter = document.getElementById('admin-users-counter');
+    if (counter) counter.innerText = users.length;
+    if (!tbody) return;
+
+    if (!users || users.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-12 text-center text-slate-400">
+            <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+            <div>No se encontraron usuarios con los criterios especificados.</div>
+          </td>
+        </tr>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    const roleBadges = {
+      ROLE_ADMIN: 'bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+      ROLE_VICERRECTOR_NACIONAL: 'bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+      ROLE_VICERRECTOR_SEDE: 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      ROLE_DIR_ACADEMICA: 'bg-cyan-100 dark:bg-cyan-950/70 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+      ROLE_DIR_CARRERA: 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+      ROLE_DOCENTE: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+    };
+
+    const roleLabels = {
+      ROLE_ADMIN: 'Admin',
+      ROLE_VICERRECTOR_NACIONAL: 'Vicerrectorado nal',
+      ROLE_VICERRECTOR_SEDE: 'Vicerrectorado sede',
+      ROLE_DIR_ACADEMICA: 'Dir. académico sede',
+      ROLE_DIR_CARRERA: 'Dir. de carrera',
+      ROLE_DOCENTE: 'Docente'
+    };
+
+    let html = '';
+    users.forEach(u => {
+      const ciVal = u.ci || u.username;
+      const initials = (u.nombres && u.apellidos)
+        ? (u.nombres.charAt(0) + u.apellidos.charAt(0)).toUpperCase()
+        : (u.nombreCompleto ? u.nombreCompleto.substring(0, 2).toUpperCase() : 'US');
+
+      const roleBadgeClass = roleBadges[u.rol] || 'bg-slate-100 text-slate-700 border-slate-200';
+      const roleText = roleLabels[u.rol] || u.rol;
+
+      // Academic Assignments tags
+      let asigHtml = '<span class="text-slate-400 italic text-[11px]">Sin asignación</span>';
+      if (u.asignaciones && u.asignaciones.length > 0) {
+        asigHtml = '<div class="flex flex-wrap gap-1 max-w-sm">';
+        u.asignaciones.slice(0, 3).forEach(a => {
+          const sedeText = a.sedeNombre ? a.sedeNombre.replace('Sede Regional ', '').replace('Sede Central ', '') : 'Sede';
+          const carText = a.carreraNombre || (a.asignaturaNombre ? a.asignaturaNombre : 'General');
+          asigHtml += `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">${sedeText} • ${carText}</span>`;
+        });
+        if (u.asignaciones.length > 3) {
+          asigHtml += `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">+${u.asignaciones.length - 3}</span>`;
+        }
+        asigHtml += '</div>';
+      }
+
+      const isActive = (u.activo === true || u.isActive === true);
+
+      html += `
+        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+          <td class="py-3.5 px-6 font-mono font-bold text-slate-900 dark:text-white">
+            ${ciVal}
+            ${u.mustChangePassword ? '<span class="ml-1.5 px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800" title="Debe cambiar clave en próximo ingreso">Clave CI</span>' : ''}
+          </td>
+          <td class="py-3.5 px-6">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold flex items-center justify-center text-[10px] border border-purple-200 dark:border-purple-800/60 flex-shrink-0">
+                ${initials}
+              </div>
+              <div class="truncate max-w-[200px]">
+                <div class="font-bold text-slate-900 dark:text-white truncate">${u.nombreCompleto || u.username}</div>
+                <div class="text-[11px] text-slate-400 truncate">${u.email || ''}</div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-6">
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} inline-flex items-center gap-1">
+              ${roleText}
+            </span>
+          </td>
+          <td class="py-3.5 px-6">${asigHtml}</td>
+          <td class="py-3.5 px-6 text-center">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${isActive ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'}">
+              ${isActive ? 'ACTIVO' : 'INACTIVO'}
+            </span>
+          </td>
+          <td class="py-3.5 px-6 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button onclick="window.openEditUserModal(${u.id})" class="p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Editar usuario">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </button>
+              <button onclick="window.resetUserPassword(${u.id}, '${ciVal}')" class="p-1.5 text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Restablecer clave a CI">
+                <i data-lucide="key-round" class="w-4 h-4"></i>
+              </button>
+              <button onclick="window.toggleUserActive(${u.id})" class="p-1.5 text-slate-500 hover:text-${isActive ? 'red' : 'emerald'}-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="${isActive ? 'Desactivar usuario' : 'Activar usuario'}">
+                <i data-lucide="${isActive ? 'user-x' : 'user-check'}" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  let _adminSearchDebounce = null;
+  window.onAdminSearchInput = function() {
+    clearTimeout(_adminSearchDebounce);
+    _adminSearchDebounce = setTimeout(() => {
+      window.loadAdminUsers();
+    }, 250);
+  };
+
+  window.onAdminRoleFilterChange = function() {
+    window.loadAdminUsers();
+  };
+
+  // ── REGISTRAR / EDITAR USUARIO MODAL (EXACT REFERENCE UI) ─────────────
+
+  window.openRegisterUserModal = function() {
+    const modal = document.getElementById('modal-register-user');
+    const idInput = document.getElementById('admin-user-id');
+    const ciInput = document.getElementById('admin-user-ci');
+    const rolSelect = document.getElementById('admin-user-rol');
+    const nombreInput = document.getElementById('admin-user-nombre');
+    const activoInput = document.getElementById('admin-user-activo');
+    const title = document.getElementById('admin-modal-title');
+    const subtitle = document.getElementById('admin-modal-subtitle');
+    const saveBtn = document.getElementById('admin-btn-save-user');
+
+    if (idInput) idInput.value = '';
+    if (ciInput) {
+      ciInput.value = '';
+      ciInput.disabled = false;
+    }
+    if (rolSelect) rolSelect.value = 'ROLE_DOCENTE';
+    if (nombreInput) nombreInput.value = '';
+    if (activoInput) activoInput.checked = true;
+
+    if (title) title.innerText = 'Registrar usuario';
+    if (subtitle) subtitle.innerText = 'La contraseña inicial será el CI y se exigirá cambiarla en el primer ingreso.';
+    if (saveBtn) saveBtn.innerHTML = '<span>Guardar usuario</span>';
+
+    // Reset assignments picker & array
+    window.adminUserAssignments = [];
+    window.resetAcademicAssignmentPickers();
+    window.renderAdminAssignmentsList();
+
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.closeRegisterUserModal = function() {
+    const modal = document.getElementById('modal-register-user');
+    if (modal) modal.classList.add('hidden');
+  };
+
+  window.resetAcademicAssignmentPickers = function() {
+    const sedeSel = document.getElementById('admin-asignacion-sede');
+    const carSel = document.getElementById('admin-asignacion-carrera');
+    const asigSel = document.getElementById('admin-asignacion-asignatura');
+
+    if (sedeSel) sedeSel.value = '';
+    if (carSel) {
+      carSel.innerHTML = '<option value="">Seleccionar carrera...</option>';
+      carSel.disabled = true;
+    }
+    if (asigSel) {
+      asigSel.innerHTML = '<option value="">Opcional / Todas las materias...</option>';
+      asigSel.disabled = true;
+    }
+  };
+
+  window.onAdminAsignacionSedeChange = async function() {
+    const sedeSel = document.getElementById('admin-asignacion-sede');
+    const carSel = document.getElementById('admin-asignacion-carrera');
+    const asigSel = document.getElementById('admin-asignacion-asignatura');
+
+    if (!sedeSel || !carSel) return;
+    const selectedOption = sedeSel.options[sedeSel.selectedIndex];
+    const sedeCode = selectedOption ? selectedOption.getAttribute('data-code') : null;
+
+    if (!sedeSel.value) {
+      carSel.innerHTML = '<option value="">Seleccionar carrera...</option>';
+      carSel.disabled = true;
+      if (asigSel) {
+        asigSel.innerHTML = '<option value="">Opcional / Todas las materias...</option>';
+        asigSel.disabled = true;
+      }
+      return;
+    }
+
+    carSel.disabled = false;
+    carSel.innerHTML = '<option value="">Cargando carreras...</option>';
+
+    try {
+      let careers = [];
+      const resp = await fetch(`/api/v1/catalogo-academico/careers?branchOfficeCode=${sedeCode || ''}`);
+      if (resp.ok) {
+        careers = await resp.json();
+      }
+
+      if (!careers || careers.length === 0) {
+        // Fallback default careers
+        careers = [
+          { id: 2, code: 'SIS', name: 'Ingeniería de Sistemas' },
+          { id: 1, code: 'MED', name: 'Medicina Humana' },
+          { id: 3, code: 'DER', name: 'Derecho y Ciencias Jurídicas' },
+          { id: 4, code: 'ODO', name: 'Odontología' },
+          { id: 5, code: 'FAR', name: 'Bioquímica y Farmacia' }
+        ];
+      }
+
+      let carOptions = '<option value="">Seleccionar carrera...</option>';
+      careers.forEach(c => {
+        carOptions += `<option value="${c.id || c.code}" data-code="${c.code}" data-name="${c.name}">${c.name}</option>`;
+      });
+      carSel.innerHTML = carOptions;
+    } catch (e) {
+      carSel.innerHTML = `
+        <option value="">Seleccionar carrera...</option>
+        <option value="2" data-code="SIS" data-name="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+        <option value="1" data-code="MED" data-name="Medicina Humana">Medicina Humana</option>
+      `;
+    }
+  };
+
+  window.onAdminAsignacionCarreraChange = async function() {
+    const sedeSel = document.getElementById('admin-asignacion-sede');
+    const carSel = document.getElementById('admin-asignacion-carrera');
+    const asigSel = document.getElementById('admin-asignacion-asignatura');
+
+    if (!asigSel || !carSel) return;
+    const selectedSedeOpt = sedeSel ? sedeSel.options[sedeSel.selectedIndex] : null;
+    const selectedCarOpt = carSel.options[carSel.selectedIndex];
+    const sedeCode = selectedSedeOpt ? selectedSedeOpt.getAttribute('data-code') : 'CBA';
+    const carCode = selectedCarOpt ? selectedCarOpt.getAttribute('data-code') : '';
+
+    if (!carSel.value) {
+      asigSel.innerHTML = '<option value="">Opcional / Todas las materias...</option>';
+      asigSel.disabled = true;
+      return;
+    }
+
+    asigSel.disabled = false;
+    asigSel.innerHTML = '<option value="">Cargando asignaturas...</option>';
+
+    try {
+      let courses = [];
+      const resp = await fetch(`/api/v1/catalogo-academico/courses?branchOfficeCode=${sedeCode}&careerCode=${carCode}`);
+      if (resp.ok) {
+        courses = await resp.json();
+      }
+
+      if (!courses || courses.length === 0) {
+        courses = [
+          { id: 1, code: 'SIS-301', name: 'Programación III' },
+          { id: 2, code: 'SIS-105', name: 'Taller de Idiomas Técnico' },
+          { id: 3, code: 'MED-101', name: 'Anatomía Humana I' }
+        ];
+      }
+
+      let asigOptions = '<option value="">Opcional / Todas las materias...</option>';
+      courses.forEach(m => {
+        asigOptions += `<option value="${m.id || m.code}" data-name="${m.name}">${m.code ? m.code + ' - ' : ''}${m.name}</option>`;
+      });
+      asigSel.innerHTML = asigOptions;
+    } catch (e) {
+      asigSel.innerHTML = '<option value="">Opcional / Todas las materias...</option>';
+    }
+  };
+
+  window.addAcademicAssignment = function() {
+    const sedeSel = document.getElementById('admin-asignacion-sede');
+    const carSel = document.getElementById('admin-asignacion-carrera');
+    const asigSel = document.getElementById('admin-asignacion-asignatura');
+
+    if (!sedeSel || !sedeSel.value) {
+      window.showToast('⚠️ Por favor selecciona al menos una Sede.');
+      return;
+    }
+
+    const sedeOpt = sedeSel.options[sedeSel.selectedIndex];
+    const carOpt = (carSel && carSel.value) ? carSel.options[carSel.selectedIndex] : null;
+    const asigOpt = (asigSel && asigSel.value) ? asigSel.options[asigSel.selectedIndex] : null;
+
+    const sedeIdNum = parseInt(sedeSel.value) || 1;
+    const carreraIdNum = carOpt ? (parseInt(carSel.value) || null) : null;
+    const asignaturaIdNum = asigOpt ? (parseInt(asigSel.value) || null) : null;
+
+    const assignment = {
+      sedeId: sedeIdNum,
+      sedeNombre: sedeOpt ? sedeOpt.text : 'Sede',
+      carreraId: carreraIdNum,
+      carreraNombre: carOpt ? (carOpt.getAttribute('data-name') || carOpt.text) : null,
+      asignaturaId: asignaturaIdNum,
+      asignaturaNombre: asigOpt ? (asigOpt.getAttribute('data-name') || asigOpt.text) : null
+    };
+
+    window.adminUserAssignments.push(assignment);
+    window.renderAdminAssignmentsList();
+    window.resetAcademicAssignmentPickers();
+    window.showToast('✓ Asignación agregada');
+  };
+
+  window.removeAcademicAssignment = function(index) {
+    window.adminUserAssignments.splice(index, 1);
+    window.renderAdminAssignmentsList();
+  };
+
+  window.renderAdminAssignmentsList = function() {
+    const container = document.getElementById('admin-asignaciones-list');
+    if (!container) return;
+
+    if (!window.adminUserAssignments || window.adminUserAssignments.length === 0) {
+      container.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay asignaciones agregadas todavía.</span>';
+      return;
+    }
+
+    let html = '';
+    window.adminUserAssignments.forEach((a, idx) => {
+      const sedeText = a.sedeNombre ? a.sedeNombre.replace('Sede Regional ', '').replace('Sede Central ', '') : 'Sede';
+      const carText = a.carreraNombre ? ' • ' + a.carreraNombre : '';
+      const asigText = a.asignaturaNombre ? ' (' + a.asignaturaNombre + ')' : '';
+
+      html += `
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-800 shadow-xs">
+          <span>${sedeText}${carText}${asigText}</span>
+          <button type="button" onclick="window.removeAcademicAssignment(${idx})" class="text-purple-500 hover:text-red-600 cursor-pointer p-0.5 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900 transition-colors">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </span>
+      `;
+    });
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.saveRegisterUser = async function() {
+    const idInput = document.getElementById('admin-user-id');
+    const ciInput = document.getElementById('admin-user-ci');
+    const rolSelect = document.getElementById('admin-user-rol');
+    const nombreInput = document.getElementById('admin-user-nombre');
+    const activoInput = document.getElementById('admin-user-activo');
+    const saveBtn = document.getElementById('admin-btn-save-user');
+
+    const userId = idInput ? idInput.value : '';
+    const ci = ciInput ? ciInput.value.trim() : '';
+    const rol = rolSelect ? rolSelect.value : 'ROLE_DOCENTE';
+    const nombreCompleto = nombreInput ? nombreInput.value.trim() : '';
+    const activo = activoInput ? activoInput.checked : true;
+
+    if (!ci) {
+      window.showToast('⚠️ El CI / Usuario es obligatorio.');
+      return;
+    }
+    if (!nombreCompleto) {
+      window.showToast('⚠️ El Nombre Completo es obligatorio.');
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Guardando...';
+    }
+
+    const payload = {
+      ci: ci,
+      username: ci,
+      rol: rol,
+      nombreCompleto: nombreCompleto,
+      activo: activo,
+      isActive: activo,
+      asignaciones: window.adminUserAssignments || []
+    };
+
+    try {
+      const isEdit = !!userId;
+      const url = isEdit ? `/api/v1/admin/usuarios/${userId}` : '/api/v1/admin/usuarios';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const resp = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...window.getAuthHeaders()
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const res = await resp.json();
+      if (!resp.ok) {
+        throw new Error(res.message || res.error || 'Error al guardar el usuario.');
+      }
+
+      window.closeRegisterUserModal();
+      window.showToast(isEdit ? '✅ Usuario actualizado exitosamente.' : '✅ Usuario creado exitosamente con su CI como contraseña inicial.');
+      window.loadAdminUsers();
+    } catch (err) {
+      window.showToast('❌ Error: ' + err.message);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Guardar usuario';
+      }
+    }
+  };
+
+  // ── EDIT USER & PASSWORD RESET (TASK 5.3) ─────────────────────────────
+
+  window.openEditUserModal = async function(userId) {
+    const modal = document.getElementById('modal-register-user');
+    const idInput = document.getElementById('admin-user-id');
+    const ciInput = document.getElementById('admin-user-ci');
+    const rolSelect = document.getElementById('admin-user-rol');
+    const nombreInput = document.getElementById('admin-user-nombre');
+    const activoInput = document.getElementById('admin-user-activo');
+    const title = document.getElementById('admin-modal-title');
+    const subtitle = document.getElementById('admin-modal-subtitle');
+    const saveBtn = document.getElementById('admin-btn-save-user');
+
+    // Find in memory or fetch
+    let user = window.adminUsersList.find(u => u.id === userId);
+
+    try {
+      const resp = await fetch(`/api/v1/admin/usuarios/${userId}`, {
+        headers: window.getAuthHeaders()
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        user = json.data || json;
+      }
+    } catch (e) {
+      console.warn('Could not fetch user by ID, using local cached user:', e);
+    }
+
+    if (!user) {
+      window.showToast('❌ No se encontró el usuario a editar.');
+      return;
+    }
+
+    if (idInput) idInput.value = user.id;
+    if (ciInput) {
+      ciInput.value = user.ci || user.username || '';
+      ciInput.disabled = true; // CI is immutable during edit
+    }
+    if (rolSelect) rolSelect.value = user.rol || 'ROLE_DOCENTE';
+    if (nombreInput) nombreInput.value = user.nombreCompleto || '';
+    if (activoInput) activoInput.checked = (user.activo === true || user.isActive === true);
+
+    if (title) title.innerText = 'Editar usuario';
+    if (subtitle) subtitle.innerText = 'Actualiza los datos institucionales y asignaciones académicas.';
+    if (saveBtn) saveBtn.innerHTML = '<span>Guardar cambios</span>';
+
+    window.adminUserAssignments = (user.asignaciones || []).map(a => ({
+      id: a.id,
+      sedeId: a.sedeId,
+      sedeNombre: a.sedeNombre,
+      carreraId: a.carreraId,
+      carreraNombre: a.carreraNombre,
+      asignaturaId: a.asignaturaId,
+      asignaturaNombre: a.asignaturaNombre
+    }));
+
+    window.resetAcademicAssignmentPickers();
+    window.renderAdminAssignmentsList();
+
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.resetUserPassword = async function(userId, userCi) {
+    const confirmPrompt = confirm(`⚠️ ¿Estás seguro de restablecer la contraseña del usuario (${userCi}) a su número de CI?\n\nEl usuario deberá cambiarla obligatoriamente en su próximo inicio de sesión.`);
+    if (!confirmPrompt) return;
+
+    try {
+      const resp = await fetch(`/api/v1/admin/usuarios/${userId}/reset-password`, {
+        method: 'POST',
+        headers: window.getAuthHeaders()
+      });
+
+      const res = await resp.json();
+      if (!resp.ok) {
+        throw new Error(res.message || res.error || 'Error al restablecer la contraseña.');
+      }
+
+      window.showToast(`✅ Contraseña del usuario ${userCi} restablecida a su CI exitosamente.`);
+      window.loadAdminUsers();
+    } catch (e) {
+      window.showToast('❌ Error: ' + e.message);
+    }
+  };
+
+  window.toggleUserActive = async function(userId) {
+    try {
+      const resp = await fetch(`/api/v1/admin/usuarios/${userId}/toggle-active`, {
+        method: 'PATCH',
+        headers: window.getAuthHeaders()
+      });
+
+      const res = await resp.json();
+      if (!resp.ok) {
+        throw new Error(res.message || res.error || 'Error al cambiar estado.');
+      }
+
+      const user = res.data || res;
+      const statusText = user.activo ? 'activado' : 'desactivado';
+      window.showToast(`✅ Usuario ${statusText} correctamente.`);
+      window.loadAdminUsers();
+    } catch (e) {
+      window.showToast('❌ Error: ' + e.message);
+    }
+  };
+
+  // Check auth session on startup
+  window.checkInitialAuth = async function() {
+    const token = window.getAuthToken();
+    const user = window.getCurrentUser();
+
+    if (!token) {
+      window.openLoginModal();
+      return;
+    }
+
+    // Validate token against backend /api/v1/auth/me
+    try {
+      const resp = await fetch('/api/v1/auth/me', {
+        headers: window.getAuthHeaders()
+      });
+
+      if (resp.ok) {
+        const json = await resp.json();
+        const meUser = json.data || json;
+        window.setAuthSession(token, meUser);
+
+        if (meUser.mustChangePassword) {
+          window.openForcedPasswordModal(meUser, token);
+        }
+      } else if (resp.status === 401 || resp.status === 403) {
+        // Token invalid or expired
+        window.logoutUser();
+      } else if (user) {
+        window.updateUserProfileUi(user);
+      }
+    } catch (err) {
+      // Offline fallback: keep cached session if present
+      if (user) {
+        window.updateUserProfileUi(user);
+      } else {
+        window.openLoginModal();
+      }
+    }
+  };
+
   // Initial check on load
   setTimeout(() => {
     window.updateSeaGatewayStatus('online');
     window.loadDocentesFromApi();
+    window.checkInitialAuth();
   }, 150);
 })();
 

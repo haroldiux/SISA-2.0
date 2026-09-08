@@ -1,5 +1,6 @@
 package bo.edu.unitepc.sisa.api.controller;
 
+import bo.edu.unitepc.sisa.api.request.ScuChangePasswordRequest;
 import bo.edu.unitepc.sisa.api.request.ScuLoginRequest;
 import bo.edu.unitepc.sisa.api.request.ScuRefreshTokenRequest;
 import bo.edu.unitepc.sisa.api.response.ScuAuthResponse;
@@ -11,6 +12,7 @@ import bo.edu.unitepc.sisa.exception.ScuAuthException;
 import bo.edu.unitepc.sisa.infrastructure.security.TenantContext;
 import bo.edu.unitepc.sisa.infrastructure.security.TenantInfo;
 import bo.edu.unitepc.sisa.service.command.ScuAuthenticateUserCmd;
+import bo.edu.unitepc.sisa.service.command.ScuChangePasswordCmd;
 import bo.edu.unitepc.sisa.service.command.ScuRefreshTokenCmd;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +31,17 @@ public class ScuAuthController {
 
     private final ScuAuthenticateUserCmd authenticateUserCmd;
     private final ScuRefreshTokenCmd refreshTokenCmd;
+    private final ScuChangePasswordCmd changePasswordCmd;
     private final UsuarioRepository usuarioRepository;
 
     public ScuAuthController(
             ScuAuthenticateUserCmd authenticateUserCmd,
             ScuRefreshTokenCmd refreshTokenCmd,
+            ScuChangePasswordCmd changePasswordCmd,
             UsuarioRepository usuarioRepository) {
         this.authenticateUserCmd = authenticateUserCmd;
         this.refreshTokenCmd = refreshTokenCmd;
+        this.changePasswordCmd = changePasswordCmd;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -56,6 +61,16 @@ public class ScuAuthController {
         return ResponseEntity.ok(
                 ResourceBuilder.of(response)
                         .message("Token renovado exitosamente")
+                        .build()
+        );
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(@Valid @RequestBody ScuChangePasswordRequest request) {
+        ScuAuthResponse response = this.changePasswordCmd.execute(request);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(response)
+                        .message("Contraseña actualizada exitosamente")
                         .build()
         );
     }
@@ -80,6 +95,7 @@ public class ScuAuthController {
                 .nombres(user.getNombres())
                 .apellidos(user.getApellidos())
                 .nombreCompleto(user.getNombreCompleto())
+                .mustChangePassword(Boolean.TRUE.equals(user.getMustChangePassword()))
                 .build();
 
         return ResponseEntity.ok(
@@ -89,3 +105,4 @@ public class ScuAuthController {
         );
     }
 }
+

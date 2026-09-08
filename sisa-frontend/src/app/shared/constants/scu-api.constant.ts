@@ -8,7 +8,13 @@ export const SCU_API = {
   AUTH: {
     LOGIN: '/api/v1/system/auth/login',
     REFRESH: '/api/v1/system/auth/refresh',
-    ME: '/api/v1/system/auth/me'
+    ME: '/api/v1/system/auth/me',
+    CHANGE_PASSWORD: '/api/v1/system/auth/change-password'
+  },
+  ADMIN_USUARIOS: {
+    BASE: '/api/v1/admin/usuarios',
+    RESET_PASSWORD: (id: number | string) => `/api/v1/admin/usuarios/${id}/reset-password`,
+    TOGGLE_ACTIVE: (id: number | string) => `/api/v1/admin/usuarios/${id}/toggle-active`
   },
   ACADEMIC: {
     ASSIGNMENTS: '/api/v1/academic/assignments',

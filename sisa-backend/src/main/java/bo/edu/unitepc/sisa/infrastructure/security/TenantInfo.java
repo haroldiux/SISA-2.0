@@ -27,6 +27,8 @@ public class TenantInfo {
     private List<Long> carreraIds;
 
     public boolean isNationalScope() {
-        return RolUsuario.ROLE_VICERRECTOR_NACIONAL.equals(this.rol) || this.sedeId == null;
+        return RolUsuario.ROLE_VICERRECTOR_NACIONAL.equals(this.rol)
+                || RolUsuario.ROLE_ADMIN.equals(this.rol)
+                || this.sedeId == null;
     }
 }

@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * System user entity with 5-tier role and optional regional sede association.
@@ -47,13 +49,38 @@ public class Usuario {
     @Column(nullable = false, length = 100)
     private String apellidos;
 
+    @Column(length = 30)
+    private String ci;
+
+    @Column(name = "must_change_password", nullable = false)
+    private Boolean mustChangePassword = false;
+
     @Column(nullable = false)
     private Boolean activo = true;
 
     @Column(name = "creado_en", nullable = false, updatable = false)
     private OffsetDateTime creadoEn = OffsetDateTime.now();
 
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UsuarioAsignacionAcademica> asignacionesAcademicas = new ArrayList<>();
+
     public String getNombreCompleto() {
         return this.nombres + " " + this.apellidos;
     }
+
+    public void addAsignacionAcademica(UsuarioAsignacionAcademica asignacion) {
+        if (this.asignacionesAcademicas == null) {
+            this.asignacionesAcademicas = new ArrayList<>();
+        }
+        this.asignacionesAcademicas.add(asignacion);
+        asignacion.setUsuario(this);
+    }
+
+    public void removeAsignacionAcademica(UsuarioAsignacionAcademica asignacion) {
+        if (this.asignacionesAcademicas != null) {
+            this.asignacionesAcademicas.remove(asignacion);
+            asignacion.setUsuario(null);
+        }
+    }
 }
+
