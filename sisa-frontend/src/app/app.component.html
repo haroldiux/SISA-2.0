@@ -412,91 +412,49 @@
           </button>
         </div>
 
-        <!-- 13 Canonical Process Module Navigation Buttons -->
+        <!-- SISA Canonical Process Module Navigation Buttons -->
         <nav class="space-y-0.5" id="global-sidebar-nav">
           
-          <!-- 1. Dashboard -->
-          <button onclick="window.switchView('view-dashboard')" id="nav-item-dashboard" class="global-nav-btn active w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all">
+          <!-- 1. Dashboard (All roles) -->
+          <button onclick="window.switchView('view-dashboard')" id="nav-item-dashboard" data-roles="ALL" class="global-nav-btn active w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all">
             <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
             <span class="sidebar-item-label truncate">Dashboard</span>
           </button>
 
-          <!-- 2. Plan de Estudios (Carpeta Docente) -->
-          <button onclick="window.switchView('view1')" id="nav-item-view1" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="book-open" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Plan de Estudios</span>
+          <!-- 2. Carpeta Docente (Docente, Dir Carrera, Admin) -->
+          <button onclick="window.switchView('view1')" id="nav-item-view1" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="folder-kanban" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Carpeta Docente</span>
           </button>
 
-          <!-- 3. Banco de Preguntas -->
-          <button onclick="window.showToast('Módulo Banco de Preguntas en preparación')" id="nav-item-banco" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="database" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Banco de Preguntas</span>
+          <!-- 3. Seguimiento Curricular (Dir Carrera, Dir Academica, Vicerrector Sede, Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view2')" id="nav-item-view2" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="clipboard-check" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Seguimiento Curricular</span>
           </button>
 
-          <!-- 4. Lista de Evaluaciones -->
-          <button onclick="window.showToast('Módulo Lista de Evaluaciones')" id="nav-item-evaluaciones" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="list-ordered" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Lista de Evaluaciones</span>
+          <!-- 4. Supervisión de Carreras (Dir Carrera, Dir Academica, Admin) -->
+          <button onclick="window.switchView('view3')" id="nav-item-view3" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="graduation-cap" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Supervisión de Carreras</span>
           </button>
 
-          <!-- 5. Rol de Exámenes -->
-          <button onclick="window.showToast('Módulo Rol de Exámenes')" id="nav-item-rol" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="calendar-days" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Rol de Exámenes</span>
+          <!-- 5. Auditoría In Situ (Dir Academica, Vicerrector Sede, Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view4')" id="nav-item-view4" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="file-check-2" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Auditoría In Situ</span>
           </button>
 
-          <!-- 6. Servicios Académicos (with Live badge) -->
-          <button onclick="window.toggleSeaGatewaySimulation()" id="nav-item-servicios" class="global-nav-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <div class="flex items-center gap-3 overflow-hidden">
-              <i data-lucide="cpu" class="w-4 h-4 flex-shrink-0"></i>
-              <span class="sidebar-item-label truncate">Servicios Académicos</span>
-            </div>
-            <span id="sidebar-sea-badge" class="sidebar-badge-wrap px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <span id="sidebar-sea-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="sidebar-sea-text">Live</span>
-            </span>
+          <!-- 6. Panel Regional / Nacional (Vicerrector Sede, Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view5')" id="nav-item-view5" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="network" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Panel Regional / Nacional</span>
           </button>
 
-          <!-- 7. Salas Virtuales -->
-          <button onclick="window.showToast('Salas Virtuales activas')" id="nav-item-salas" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="monitor-play" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Salas Virtuales</span>
-          </button>
-
-          <!-- 8. Calificación OMR -->
-          <button onclick="window.showToast('Calificación OMR')" id="nav-item-omr" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="scan-line" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Calificación OMR</span>
-          </button>
-
-          <!-- 9. Administración de Evaluaciones -->
-          <button onclick="window.switchView('view2')" id="nav-item-admin-eval" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="sliders-horizontal" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Administración de Evaluaciones</span>
-          </button>
-
-          <!-- 10. Auditoría & Bitácora -->
-          <button onclick="window.switchView('view3')" id="nav-item-view3" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="scroll-text" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Auditoría & Bitácora</span>
-          </button>
-
-          <!-- 11. Respaldos y contingencias -->
-          <button onclick="window.showToast('Respaldos y contingencias')" id="nav-item-respaldos" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="hard-drive-download" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Respaldos y contingencias</span>
-          </button>
-
-          <!-- 12. Reporte de Evaluaciones -->
-          <button onclick="window.switchView('view4')" id="nav-item-reportes" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Reporte de Evaluaciones</span>
-          </button>
-
-          <!-- 13. Usuarios y accesos -->
-          <button onclick="window.switchView('view6')" id="nav-item-view6" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+          <!-- 7. Usuarios y Accesos (Admin only) -->
+          <button onclick="window.switchView('view6')" id="nav-item-view6" data-roles="ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
             <i data-lucide="user-cog" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Usuarios y accesos</span>
+            <span class="sidebar-item-label truncate">Usuarios y Accesos</span>
           </button>
         </nav>
 
@@ -604,7 +562,7 @@
                   <span id="menu-user-ci" class="text-[10px] text-[var(--sp-ink-3)] font-mono">CI: 3065087</span>
                 </div>
               </div>
-              <button onclick="window.switchView('view6'); window.toggleUserDropdown();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[var(--sp-surface-hover)] text-[var(--sp-ink)] flex items-center gap-2 cursor-pointer font-medium">
+              <button id="menu-btn-admin-users" data-roles="ROLE_ADMIN" onclick="window.switchView('view6'); window.toggleUserDropdown();" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[var(--sp-surface-hover)] text-[var(--sp-ink)] flex items-center gap-2 cursor-pointer font-medium">
                 <i data-lucide="user-cog" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
                 <span>Administración de Usuarios</span>
               </button>
@@ -652,9 +610,9 @@
                   <span class="text-white text-xs font-semibold">II-2026 (Activa)</span>
                 </div>
 
-                <button onclick="window.showToast('Acceso a Evaluaciones del Día')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
-                  <i data-lucide="calendar-check" class="w-4 h-4"></i>
-                  <span>Evaluaciones del Día</span>
+                <button onclick="window.switchView('view1')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
+                  <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                  <span>Ir a Carpeta Docente</span>
                 </button>
               </div>
             </div>
@@ -667,10 +625,10 @@
               <div class="space-y-1">
                 <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">VISTA PERSONALIZADA POR CARGO</div>
                 <div class="flex items-center gap-2 pt-1">
-                  <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20">ROL ADMINISTRADOR</span>
-                  <span class="text-xs text-[var(--sp-ink-2)] font-medium">• Acceso total y supervisión</span>
+                  <span id="dash-user-role-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20">ROL ADMINISTRADOR</span>
+                  <span id="dash-user-role-desc" class="text-xs text-[var(--sp-ink-2)] font-medium">• Acceso total y supervisión</span>
                 </div>
-                <p class="text-xs text-[var(--sp-ink-3)] pt-1">Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.</p>
+                <p id="dash-user-role-subtext" class="text-xs text-[var(--sp-ink-3)] pt-1">Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.</p>
               </div>
               <div class="w-10 h-10 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] flex items-center justify-center flex-shrink-0">
                 <i data-lucide="shield" class="w-5 h-5"></i>
@@ -681,11 +639,11 @@
             <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
               <div class="space-y-1">
                 <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">USUARIO AUTENTICADO</div>
-                <div class="text-sm font-bold text-[var(--sp-ink)] font-display pt-1">Harold Marco Antonio Rojas Torres</div>
+                <div id="dash-user-fullname" class="text-sm font-bold text-[var(--sp-ink)] font-display pt-1">Harold Marco Antonio Rojas Torres</div>
                 <div class="flex items-center gap-2 text-xs text-[var(--sp-ink-3)]">
-                  <span>CI: 3065087</span>
+                  <span id="dash-user-ci">CI: 3065087</span>
                   <span>•</span>
-                  <span>admin@unitepc.edu.bo</span>
+                  <span id="dash-user-email">admin@unitepc.edu.bo</span>
                   <span>•</span>
                   <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Sesión activa</span>
                 </div>
@@ -786,24 +744,34 @@
                 <span class="text-[10px] uppercase font-bold text-[var(--sp-ink-3)]">Módulos habilitados</span>
               </div>
               <div class="grid grid-cols-2 gap-3">
-                <button onclick="window.switchView('view1')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="book-open" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
+                <button onclick="window.switchView('view1')" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="folder-kanban" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
                   <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">Carpeta Docente</div>
                   <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Planificación y 4 documentos</div>
                 </button>
-                <button onclick="window.switchView('view2')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="sliders-horizontal" class="w-5 h-5 text-[var(--sp-teal)] mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-teal-dark)]">Supervisión Carrera</div>
+                <button onclick="window.switchView('view2')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="clipboard-check" class="w-5 h-5 text-[var(--sp-teal)] mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-teal-dark)]">Seguimiento Curricular</div>
                   <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Avance y firmas digitales</div>
                 </button>
-                <button onclick="window.switchView('view3')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="scroll-text" class="w-5 h-5 text-amber-500 mb-2"></i>
+                <button onclick="window.switchView('view3')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="graduation-cap" class="w-5 h-5 text-indigo-500 mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-indigo-700 dark:group-hover:text-indigo-300">Supervisión Carrera</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Supervisión docente</div>
+                </button>
+                <button onclick="window.switchView('view4')" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="file-check-2" class="w-5 h-5 text-amber-500 mb-2"></i>
                   <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-amber-700 dark:group-hover:text-amber-300">Auditoría In Situ</div>
                   <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Bitácora de fiscalización</div>
                 </button>
-                <button onclick="window.switchView('view6')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="user-cog" class="w-5 h-5 text-indigo-500 mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-indigo-700 dark:group-hover:text-indigo-300">Usuarios y RBAC</div>
+                <button onclick="window.switchView('view5')" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="network" class="w-5 h-5 text-emerald-500 mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Panel Regional/Nacional</div>
+                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Monitoreo de sedes</div>
+                </button>
+                <button onclick="window.switchView('view6')" data-roles="ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <i data-lucide="user-cog" class="w-5 h-5 text-purple-600 mb-2"></i>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-purple-800 dark:group-hover:text-purple-300">Usuarios y Accesos</div>
                   <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Gestión de cuentas y roles</div>
                 </button>
               </div>
@@ -813,24 +781,24 @@
           <!-- 5. Bottom Operational Metrics (4 cards) -->
           <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Total Evaluaciones</div>
-              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Programadas en el ciclo</div>
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Total Asignaturas</div>
+              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">1,284</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Cátedras activas en el periodo</div>
             </div>
             <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Turnos Hoy</div>
-              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Turnos activos para fecha</div>
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Docentes Registrados</div>
+              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">717</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Sincronizados con SEA Gateway</div>
             </div>
             <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Variantes del Examen</div>
-              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">0</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Generadas en OMR</div>
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Cumplimiento PAC</div>
+              <div class="text-xl font-black text-purple-600 dark:text-purple-400 font-display mt-1">94.8%</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Planificaciones aprobadas</div>
             </div>
             <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Cobertura de Bancos</div>
+              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Auditorías de Aula</div>
               <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-1">100%</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Preguntas auditadas</div>
+              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Monitoreo y seguimiento in situ</div>
             </div>
           </section>
 

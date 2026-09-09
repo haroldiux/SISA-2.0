@@ -90,15 +90,51 @@
     const VIEW_TO_NAV_ITEM = {
       'view-dashboard': 'nav-item-dashboard',
       'view1': 'nav-item-view1',
-      'view2': 'nav-item-admin-eval',
+      'view2': 'nav-item-view2',
       'view3': 'nav-item-view3',
-      'view4': 'nav-item-reportes',
-      'view5': 'nav-item-reportes',
+      'view4': 'nav-item-view4',
+      'view5': 'nav-item-view5',
       'view6': 'nav-item-view6'
+    };
+
+    // Role-based Navigation and UI Filtering
+    window.updateSidebarNavForRole = function(role) {
+      let currentRole = role;
+      if (!currentRole && typeof window.getCurrentUser === 'function') {
+        const u = window.getCurrentUser();
+        if (u && u.role) currentRole = u.role;
+      }
+      if (!currentRole) currentRole = 'ROLE_DOCENTE';
+
+      const roleGatedElements = document.querySelectorAll('[data-roles]');
+      roleGatedElements.forEach(el => {
+        const allowedRoles = el.getAttribute('data-roles');
+        if (!allowedRoles || allowedRoles === 'ALL') {
+          el.classList.remove('hidden');
+        } else {
+          const rolesArray = allowedRoles.split(',').map(r => r.trim());
+          if (rolesArray.includes(currentRole)) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+      });
+
+      if (window.lucide) window.lucide.createIcons();
     };
 
     window.switchView = function(viewId) {
       if (!viewId) viewId = 'view-dashboard';
+
+      // Security check: If current user is ROLE_DOCENTE and tries to access admin/director views
+      const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+      if (currentUser && currentUser.role === 'ROLE_DOCENTE' && ['view2', 'view3', 'view4', 'view5', 'view6'].includes(viewId)) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ No tienes permisos para acceder a este módulo institucional');
+        }
+        viewId = 'view-dashboard';
+      }
 
       // 1. Hide all views and reveal target
       document.querySelectorAll('.frame-view').forEach(view => view.classList.add('hidden'));
@@ -5494,6 +5530,42 @@ document.addEventListener('change', (e) => {
     sideNames.forEach(el => { if (el) el.innerText = user.nombreCompleto || user.username; });
     sideInfos.forEach(el => { if (el) el.innerText = roleScope; });
 
+    // 4. View-Dashboard Role Context & Authenticated User Cards
+    const dashRoleBadge = document.getElementById('dash-user-role-badge');
+    const dashRoleDesc = document.getElementById('dash-user-role-desc');
+    const dashRoleSubtext = document.getElementById('dash-user-role-subtext');
+    const dashFullname = document.getElementById('dash-user-fullname');
+    const dashCi = document.getElementById('dash-user-ci');
+    const dashEmail = document.getElementById('dash-user-email');
+
+    if (dashRoleBadge) dashRoleBadge.innerText = ('ROL ' + roleLabel).toUpperCase();
+    if (dashFullname) dashFullname.innerText = user.nombreCompleto || user.username;
+    if (dashCi) dashCi.innerText = 'CI: ' + (user.ci || user.username || 'S/N');
+    if (dashEmail) dashEmail.innerText = user.email || (user.username + '@unitepc.edu.bo');
+
+    if (dashRoleDesc) {
+      if (user.role === 'ROLE_DOCENTE') dashRoleDesc.innerText = '• Carpeta docente y avance curricular';
+      else if (user.role === 'ROLE_DIR_CARRERA') dashRoleDesc.innerText = '• Revisión y seguimiento curricular';
+      else if (user.role === 'ROLE_DIR_ACADEMICA') dashRoleDesc.innerText = '• Supervisión y auditoría académica';
+      else if (user.role === 'ROLE_VICERRECTOR_SEDE') dashRoleDesc.innerText = '• Monitoreo regional de sede';
+      else if (user.role === 'ROLE_VICERRECTOR_NACIONAL') dashRoleDesc.innerText = '• Monitoreo nacional consolidado';
+      else dashRoleDesc.innerText = '• Acceso total y supervisión';
+    }
+
+    if (dashRoleSubtext) {
+      if (user.role === 'ROLE_DOCENTE') dashRoleSubtext.innerText = 'Acceso directo a tus asignaturas, programa analítico, PAC, cronograma y planes de clase.';
+      else if (user.role === 'ROLE_DIR_CARRERA') dashRoleSubtext.innerText = 'Revisión curricular, aprobación de carpetas docentes y supervisión de carrera.';
+      else if (user.role === 'ROLE_DIR_ACADEMICA') dashRoleSubtext.innerText = 'Supervisión institucional, auditorías de aula presenciales y calidad académica.';
+      else if (user.role === 'ROLE_VICERRECTOR_SEDE') dashRoleSubtext.innerText = 'Monitoreo consolidado de sedes, cumplimiento normativo y dictámenes académicos.';
+      else if (user.role === 'ROLE_VICERRECTOR_NACIONAL') dashRoleSubtext.innerText = 'Supervisión nacional estratégica de todas las sedes y vicerrectorados.';
+      else dashRoleSubtext.innerText = 'Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.';
+    }
+
+    // 5. Dynamic Sidebar and Workspace Role Filtering
+    if (typeof window.updateSidebarNavForRole === 'function') {
+      window.updateSidebarNavForRole(user.role);
+    }
+
     if (window.lucide) window.lucide.createIcons();
   };
 
@@ -5524,9 +5596,9 @@ document.addEventListener('change', (e) => {
 
   window.showChangePasswordView = function(user, tempToken, isVoluntary = false, prefillCurrentPassword = '') {
     window._isAuthScreenActive = true;
+    window._isVoluntaryPasswordChange = isVoluntary;
     window._tempPasswordChangeUser = user;
     window._tempPasswordChangeToken = tempToken;
-    window._isVoluntaryPasswordChange = isVoluntary;
 
     if (user) {
       try { sessionStorage.setItem('scu_temp_user', JSON.stringify(user)); } catch (e) {}
@@ -5587,6 +5659,14 @@ document.addEventListener('change', (e) => {
     if (loginView) loginView.classList.add('hidden');
     if (pwdView) pwdView.classList.add('hidden');
     if (shell) shell.classList.remove('hidden');
+
+    const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+    if (currentUser && typeof window.updateSidebarNavForRole === 'function') {
+      window.updateSidebarNavForRole(currentUser.role);
+    }
+    if (currentUser && currentUser.role === 'ROLE_DOCENTE' && targetViewId !== 'view-dashboard' && targetViewId !== 'view1') {
+      targetViewId = 'view-dashboard';
+    }
 
     if (typeof window.switchView === 'function') {
       window.switchView(targetViewId);
