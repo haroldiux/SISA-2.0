@@ -76,7 +76,7 @@
             </div>
             <div>
               <div class="font-bold text-sm text-[#18171C] dark:text-white">Proceso trazable</div>
-              <div class="text-xs text-[#6B6873] dark:text-slate-400">Evaluaciones controladas desde su configuración hasta el resultado.</div>
+              <div class="text-xs text-[#6B6873] dark:text-slate-400">Gestión documental, planificación de aula y seguimiento docente.</div>
             </div>
           </div>
         </div>
@@ -433,22 +433,22 @@
             <span class="sidebar-item-label truncate">Seguimiento Curricular</span>
           </button>
 
-          <!-- 4. Supervisión de Carreras (Dir Carrera, Dir Academica, Admin) -->
-          <button onclick="window.switchView('view3')" id="nav-item-view3" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
-            <i data-lucide="graduation-cap" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Supervisión de Carreras</span>
-          </button>
-
-          <!-- 5. Auditoría In Situ (Dir Academica, Vicerrector Sede, Vicerrector Nal, Admin) -->
-          <button onclick="window.switchView('view4')" id="nav-item-view4" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+          <!-- 4. Auditoría In Situ (Dir Academica, Vicerrector Sede, Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view3')" id="nav-item-view3" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
             <i data-lucide="file-check-2" class="w-4 h-4 flex-shrink-0"></i>
             <span class="sidebar-item-label truncate">Auditoría In Situ</span>
           </button>
 
-          <!-- 6. Panel Regional / Nacional (Vicerrector Sede, Vicerrector Nal, Admin) -->
-          <button onclick="window.switchView('view5')" id="nav-item-view5" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+          <!-- 5. Panel Regional (Vicerrector Sede, Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view4')" id="nav-item-view4" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+            <i data-lucide="building-2" class="w-4 h-4 flex-shrink-0"></i>
+            <span class="sidebar-item-label truncate">Panel Regional</span>
+          </button>
+
+          <!-- 6. Panel Nacional (Vicerrector Nal, Admin) -->
+          <button onclick="window.switchView('view5')" id="nav-item-view5" data-roles="ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
             <i data-lucide="network" class="w-4 h-4 flex-shrink-0"></i>
-            <span class="sidebar-item-label truncate">Panel Regional / Nacional</span>
+            <span class="sidebar-item-label truncate">Panel Nacional</span>
           </button>
 
           <!-- 7. Usuarios y Accesos (Admin only) -->
@@ -590,7 +590,7 @@
               <div class="space-y-1.5 max-w-2xl">
                 <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-300 block font-display">SISA • SISTEMA INTEGRAL DE SEGUIMIENTO ACADÉMICO</span>
                 <h2 class="text-2xl font-bold font-display tracking-tight text-white">Resumen institucional completo</h2>
-                <p class="text-xs text-purple-200/90 leading-relaxed">Monitoreo del ciclo académico, cobertura curricular y avance de evaluaciones en tiempo real.</p>
+                <p class="text-xs text-purple-200/90 leading-relaxed">Monitoreo del ciclo académico, cobertura curricular y seguimiento pedagógico docente en tiempo real.</p>
               </div>
               
               <!-- Sede & Gestión Selectors + Action Button -->
@@ -678,25 +678,25 @@
               </div>
             </div>
 
-            <!-- Stat 3: En proceso -->
+            <!-- Stat 3: Carpetas Aprobadas -->
             <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
               <span class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">En Proceso</div>
-              <div class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">0</div>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Carpetas Aprobadas</div>
+              <div class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">1,840</div>
               <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="play-circle" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span>Evaluaciones en ejecución</span>
+                <i data-lucide="check-check" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span>Revisadas por Dirección de Carrera</span>
               </div>
             </div>
 
-            <!-- Stat 4: Calificadas -->
+            <!-- Stat 4: Seguimiento Docente -->
             <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
               <span class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Calificadas</div>
-              <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">0</div>
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Seguimiento Docente</div>
+              <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">98.4%</div>
               <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
-                <span>Actas cerradas y consolidadas</span>
+                <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                <span>Cumplimiento pedagógico verificado</span>
               </div>
             </div>
           </section>
