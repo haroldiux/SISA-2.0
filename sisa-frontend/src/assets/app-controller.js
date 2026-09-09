@@ -106,6 +106,34 @@
       }
       if (!currentRole) currentRole = 'ROLE_DOCENTE';
 
+      const isDocente = (currentRole === 'ROLE_DOCENTE');
+
+      // Toggle Docente Dashboard vs Admin Dashboard
+      const docenteDash = document.getElementById('dashboard-docente');
+      const adminDash = document.getElementById('dashboard-admin');
+      if (docenteDash && adminDash) {
+        if (isDocente) {
+          docenteDash.classList.remove('hidden');
+          adminDash.classList.add('hidden');
+          if (typeof window.renderDocenteDashboard === 'function') {
+            window.renderDocenteDashboard();
+          }
+        } else {
+          docenteDash.classList.add('hidden');
+          adminDash.classList.remove('hidden');
+        }
+      }
+
+      // Hide/Show teacher selector in topbar (only for admin & directors)
+      const topbarTeacherSelector = document.getElementById('topbar-docente-selector-wrap');
+      if (topbarTeacherSelector) {
+        if (isDocente) {
+          topbarTeacherSelector.classList.add('hidden');
+        } else {
+          topbarTeacherSelector.classList.remove('hidden');
+        }
+      }
+
       const roleGatedElements = document.querySelectorAll('[data-roles]');
       roleGatedElements.forEach(el => {
         const allowedRoles = el.getAttribute('data-roles');
@@ -169,7 +197,12 @@
       }
 
       // 4. View-specific lifecycle hooks
-      if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
+      if (viewId === 'view-dashboard') {
+        const role = (currentUser && currentUser.role) ? currentUser.role : 'ROLE_DOCENTE';
+        if (typeof window.updateSidebarNavForRole === 'function') {
+          window.updateSidebarNavForRole(role);
+        }
+      } else if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
         window.loadAdminUsers();
       }
 
@@ -4236,8 +4269,15 @@ document.addEventListener('change', (e) => {
           }
         });
 
-        const savedCi = localStorage.getItem('sisa_active_docente_ci');
-        const defaultCi = (savedCi && targetDocentes.some(t => String(t.ci) === String(savedCi))) ? savedCi : '3065087';
+        const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+        let defaultCi = (currentUser && currentUser.role === 'ROLE_DOCENTE' && (currentUser.ci || currentUser.username)) 
+          ? (currentUser.ci || currentUser.username) 
+          : localStorage.getItem('sisa_active_docente_ci');
+        if (!defaultCi || !targetDocentes.some(t => String(t.ci) === String(defaultCi))) {
+          defaultCi = (currentUser && currentUser.role === 'ROLE_DOCENTE' && (currentUser.ci || currentUser.username)) 
+            ? (currentUser.ci || currentUser.username) 
+            : '3065087';
+        }
         selector.value = defaultCi;
         window.selectDocenteFromApi(defaultCi, true);
       }
@@ -5181,12 +5221,150 @@ document.addEventListener('change', (e) => {
 
     if (cardsGrid) cardsGrid.innerHTML = cardsHtml;
     if (sidebarContainer) sidebarContainer.innerHTML = sidebarHtml;
-    if (window.lucide) window.lucide.createIcons();
+
+    window.__DOCENTE_ITEMS__ = items;
+    if (typeof window.renderDocenteDashboard === 'function') {
+      window.renderDocenteDashboard(docente, items);
+    }
 
     // Auto-select first subject of this teacher
     const firstItem = items[0];
     if (firstItem) {
       window.selectDocenteMateria(firstItem.key);
+    }
+  };
+
+  // ── DOCENTE EXCLUSIVE DASHBOARD ENGINE ─────────────────────────────────
+  window.renderDocenteDashboard = function(docenteOverride, itemsOverride) {
+    let docente = docenteOverride || window.__ACTIVE_DOCENTE__;
+    if (!docente && typeof window.getCurrentUser === 'function') {
+      const u = window.getCurrentUser();
+      if (u) {
+        docente = {
+          ci: u.ci || u.username,
+          nombreCompleto: u.nombreCompleto || u.username,
+          email: u.email || (u.username + '@unitepc.edu.bo'),
+          sedeCodigo: u.sedeCodigo || 'CBA',
+          sedeNombre: u.sedeNombre || 'Sede Central Cochabamba'
+        };
+      }
+    }
+    const items = itemsOverride || window.__DOCENTE_ITEMS__ || [];
+
+    const welcomeName = document.getElementById('docente-dash-welcome-name');
+    if (welcomeName && docente) {
+      const name = docente.nombres || docente.nombreCompleto || docente.username || 'Docente';
+      welcomeName.textContent = name;
+    }
+
+    const sedeBadge = document.getElementById('docente-dash-sede-badge');
+    if (sedeBadge && docente) {
+      sedeBadge.textContent = docente.sedeNombre || (docente.sedeCodigo === 'CBA' ? 'Sede Central Cochabamba' : (docente.sedeCodigo || 'Sede Central Cochabamba'));
+    }
+
+    // Update KPIs
+    const kpiMaterias = document.getElementById('docente-dash-kpi-materias');
+    if (kpiMaterias) kpiMaterias.textContent = items.length;
+
+    const totalWeeklyHours = items.reduce((sum, it) => sum + (it.totalHours || 0), 0);
+    const kpiHoras = document.getElementById('docente-dash-kpi-horas');
+    if (kpiHoras) kpiHoras.textContent = totalWeeklyHours + ' hrs';
+
+    const totalGroups = items.reduce((sum, it) => sum + (it.totalPhysicalSessions || it.totalGroupsInCluster || 1), 0);
+    const kpiGrupos = document.getElementById('docente-dash-kpi-grupos');
+    if (kpiGrupos) kpiGrupos.textContent = totalGroups;
+
+    const matBadge = document.getElementById('docente-dash-materias-badge');
+    if (matBadge) matBadge.textContent = `${items.length} Asignatura(s)`;
+
+    // Update carreras list summary
+    const carrerasListEl = document.getElementById('docente-dash-carreras-list');
+    if (carrerasListEl) {
+      if (items.length > 0) {
+        const carreras = [...new Set(items.flatMap(it => (it.carrerasResolved || []).map(cr => cr.name)))];
+        carrerasListEl.textContent = carreras.length > 0 ? `Carreras: ${carreras.join(' • ')}` : 'Asignaturas asignadas para el periodo activo';
+      } else {
+        carrerasListEl.textContent = 'Cátedras asignadas para el periodo activo';
+      }
+    }
+
+    // Render subject cards in grid
+    const gridEl = document.getElementById('docente-dash-cards-grid');
+    if (gridEl) {
+      if (items.length === 0) {
+        gridEl.innerHTML = `
+          <div class="col-span-full p-8 text-center bg-[var(--sp-surface-2)] rounded-xl border border-[var(--sp-border)] text-[var(--sp-ink-3)] text-xs">
+            <i data-lucide="book-open" class="w-8 h-8 mx-auto text-[var(--sp-purple)] mb-2 opacity-60"></i>
+            <p class="font-bold text-[var(--sp-ink)]">Cargando asignaturas del docente...</p>
+            <p class="text-[11px] mt-1">Sincronizando información académica con el Gateway SEA.</p>
+          </div>
+        `;
+      } else {
+        gridEl.innerHTML = items.map((item) => {
+          const carTags = item.allCarrerasTags || (item.carrerasResolved && item.carrerasResolved[0] ? item.carrerasResolved[0].tag : 'UNITEPC');
+          const hours = item.totalHours || 4;
+          const code = item.code || 'DOC-101';
+          const name = item.name || 'Materia Asignada';
+          const mKey = item.key || '';
+          const shift = item.shiftLabel || 'Regular';
+
+          return `
+            <div class="p-5 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/40 hover:shadow-md transition-all flex flex-col justify-between space-y-4 group">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20 font-mono">${code}</span>
+                  <span class="text-[10px] font-bold text-[var(--sp-ink-3)] bg-[var(--sp-surface)] px-2 py-0.5 rounded border border-[var(--sp-border)]">${hours} hrs/sem</span>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)] transition-colors leading-tight font-display">${name}</h4>
+                  <p class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">${carTags} • ${shift}</p>
+                </div>
+                <div class="pt-2 flex flex-wrap gap-1.5 text-[10px]">
+                  <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Analítico
+                  </span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> PAC 20 Sem
+                  </span>
+                  <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Cronograma
+                  </span>
+                  <span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 font-semibold flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> 4 Planes
+                  </span>
+                </div>
+              </div>
+              <button onclick="window.selectDocenteMateriaAndGo('${mKey}')" class="w-full py-2 px-3 rounded-lg bg-[var(--sp-surface)] hover:bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20 hover:border-[var(--sp-purple)]/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                <span>Abrir Carpeta Docente</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.selectDocenteMateriaAndGo = function(materiaKey, tabId) {
+    if (typeof window.selectDocenteMateria === 'function' && materiaKey) {
+      window.selectDocenteMateria(materiaKey);
+    }
+    if (typeof window.switchView === 'function') {
+      window.switchView('view1');
+    }
+    if (tabId && typeof window.switchDocMainTab === 'function') {
+      window.switchDocMainTab(tabId);
+    }
+  };
+
+  window.goToDocenteDocument = function(tabId) {
+    if (typeof window.switchView === 'function') {
+      window.switchView('view1');
+    }
+    if (typeof window.switchDocMainTab === 'function') {
+      window.switchDocMainTab(tabId);
     }
   };
 
@@ -5440,6 +5618,12 @@ document.addEventListener('change', (e) => {
     if (user) {
       localStorage.setItem('scu_user_info', JSON.stringify(user));
       window.updateUserProfileUi(user);
+      if (user.role === 'ROLE_DOCENTE') {
+        const teacherCi = user.ci || user.username;
+        if (teacherCi && typeof window.selectDocenteFromApi === 'function') {
+          window.selectDocenteFromApi(teacherCi, true);
+        }
+      }
     }
   };
 
@@ -5564,6 +5748,9 @@ document.addEventListener('change', (e) => {
     // 5. Dynamic Sidebar and Workspace Role Filtering
     if (typeof window.updateSidebarNavForRole === 'function') {
       window.updateSidebarNavForRole(user.role);
+    }
+    if (user.role === 'ROLE_DOCENTE' && typeof window.renderDocenteDashboard === 'function') {
+      window.renderDocenteDashboard(user);
     }
 
     if (window.lucide) window.lucide.createIcons();

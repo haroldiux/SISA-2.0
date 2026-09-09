@@ -508,7 +508,7 @@
         <div class="flex items-center gap-3">
           
           <!-- + Parametrizar Vista Action -->
-          <button onclick="window.showToast('Configurador de parámetros de vista')" class="px-3 py-1.5 rounded-xl border border-[var(--sp-border)] hover:bg-[var(--sp-surface-hover)] text-xs font-semibold text-[var(--sp-ink)] flex items-center gap-1.5 transition-colors cursor-pointer">
+          <button data-roles="ROLE_ADMIN,ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.showToast('Configurador de parámetros de vista')" class="px-3 py-1.5 rounded-xl border border-[var(--sp-border)] hover:bg-[var(--sp-surface-hover)] text-xs font-semibold text-[var(--sp-ink)] flex items-center gap-1.5 transition-colors cursor-pointer">
             <i data-lucide="plus" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
             <span>Parametrizar vista</span>
           </button>
@@ -520,8 +520,8 @@
             <i data-lucide="chevron-down" class="w-3 h-3 opacity-60"></i>
           </div>
 
-          <!-- Docente API Selector (SEA Gateway Ingestion) -->
-          <div class="hidden md:flex items-center gap-2 bg-[var(--sp-surface-2)] px-2.5 py-1 rounded-xl border border-[var(--sp-border)]">
+          <!-- Docente API Selector (SEA Gateway Ingestion - Admin & Director view only) -->
+          <div id="topbar-docente-selector-wrap" data-roles="ROLE_ADMIN,ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" class="hidden md:flex items-center gap-2 bg-[var(--sp-surface-2)] px-2.5 py-1 rounded-xl border border-[var(--sp-border)]">
             <i data-lucide="user-check" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
             <label for="docente-api-selector" class="sr-only">Docente API</label>
             <select id="docente-api-selector" (change)="onDocenteSelectorChange($event)" class="bg-transparent border-none text-xs text-[var(--sp-ink)] font-medium focus:outline-none cursor-pointer pr-1">
@@ -580,227 +580,457 @@
       <main id="main-canvas" class="flex-1 overflow-y-auto bg-[var(--sp-bg)] p-4 sm:p-5 lg:p-6 space-y-6 custom-scrollbar w-full">
         
         <!-- ========================================================================= -->
-        <!-- VIEW DASHBOARD: INSTITUTIONAL OVERVIEW (CANONICAL DEFAULT LANDING)        -->
+        <!-- VIEW DASHBOARD: ADAPTIVE DASHBOARD (DOCENTE VS INSTITUCIONAL)             -->
         <!-- ========================================================================= -->
         <div id="view-dashboard" class="frame-view space-y-6 w-full">
           
-          <!-- 1. Hero Banner (Indigo/Purple Gradient) -->
-          <section class="rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r from-[#1E1139] via-[#3B1F6A] to-[#4F2686] border border-purple-500/20">
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div class="space-y-1.5 max-w-2xl">
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-300 block font-display">SISA • SISTEMA INTEGRAL DE SEGUIMIENTO ACADÉMICO</span>
-                <h2 class="text-2xl font-bold font-display tracking-tight text-white">Resumen institucional completo</h2>
-                <p class="text-xs text-purple-200/90 leading-relaxed">Monitoreo del ciclo académico, cobertura curricular y seguimiento pedagógico docente en tiempo real.</p>
-              </div>
-              
-              <!-- Sede & Gestión Selectors + Action Button -->
-              <div class="flex flex-wrap items-center gap-3">
-                <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
-                  <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">SEDE</label>
-                  <select class="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer">
-                    <option value="CBB" class="bg-[#1E1139] text-white">Sede Central Cochabamba</option>
-                    <option value="LPZ" class="bg-[#1E1139] text-white">Sede La Paz</option>
-                    <option value="EAL" class="bg-[#1E1139] text-white">Sede El Alto</option>
-                    <option value="COB" class="bg-[#1E1139] text-white">Sede Cobija</option>
-                  </select>
+          <!-- ----------------------------------------------------------------------- -->
+          <!-- A. DASHBOARD DOCENTE: ESPACIO PERSONAL EXCLUSIVO DEL DOCENTE           -->
+          <!-- ----------------------------------------------------------------------- -->
+          <div id="dashboard-docente" class="space-y-6">
+            
+            <!-- 1. Hero Banner Docente (Personalized & Focused) -->
+            <section class="rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r from-[#1E1139] via-[#3B1F6A] to-[#4F2686] border border-purple-500/20">
+              <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-1.5 max-w-2xl">
+                  <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-300 block font-display">SISA • ESPACIO DE GESTIÓN DOCENTE</span>
+                  <h2 class="text-2xl font-bold font-display tracking-tight text-white flex items-center gap-2">
+                    <span>Bienvenido(a), </span>
+                    <span id="docente-dash-welcome-name" class="text-purple-200">Docente</span>
+                  </h2>
+                  <p class="text-xs text-purple-200/90 leading-relaxed">Planificación curricular, seguimiento pedagógico y entrega de documentación académica para el periodo activo.</p>
                 </div>
+                
+                <!-- Sede asignada, Gestión y Botón a Carpeta Docente -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                    <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">SEDE ASIGNADA</label>
+                    <span id="docente-dash-sede-badge" class="text-white text-xs font-semibold">Sede Central Cochabamba</span>
+                  </div>
 
-                <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
-                  <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">GESTIÓN</label>
-                  <span class="text-white text-xs font-semibold">II-2026 (Activa)</span>
-                </div>
+                  <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                    <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">GESTIÓN</label>
+                    <span class="text-white text-xs font-semibold">II-2026 (Activa)</span>
+                  </div>
 
-                <button onclick="window.switchView('view1')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
-                  <i data-lucide="folder-kanban" class="w-4 h-4"></i>
-                  <span>Ir a Carpeta Docente</span>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <!-- 2. Sub-header Card: Role Context & Authenticated User -->
-          <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Left: Vista personalizada por cargo -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
-              <div class="space-y-1">
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">VISTA PERSONALIZADA POR CARGO</div>
-                <div class="flex items-center gap-2 pt-1">
-                  <span id="dash-user-role-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20">ROL ADMINISTRADOR</span>
-                  <span id="dash-user-role-desc" class="text-xs text-[var(--sp-ink-2)] font-medium">• Acceso total y supervisión</span>
-                </div>
-                <p id="dash-user-role-subtext" class="text-xs text-[var(--sp-ink-3)] pt-1">Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.</p>
-              </div>
-              <div class="w-10 h-10 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] flex items-center justify-center flex-shrink-0">
-                <i data-lucide="shield" class="w-5 h-5"></i>
-              </div>
-            </div>
-
-            <!-- Right: Usuario Autenticado -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
-              <div class="space-y-1">
-                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">USUARIO AUTENTICADO</div>
-                <div id="dash-user-fullname" class="text-sm font-bold text-[var(--sp-ink)] font-display pt-1">Harold Marco Antonio Rojas Torres</div>
-                <div class="flex items-center gap-2 text-xs text-[var(--sp-ink-3)]">
-                  <span id="dash-user-ci">CI: 3065087</span>
-                  <span>•</span>
-                  <span id="dash-user-email">admin@unitepc.edu.bo</span>
-                  <span>•</span>
-                  <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Sesión activa</span>
+                  <button onclick="window.switchView('view1')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
+                    <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                    <span>Abrir mi Carpeta Docente</span>
+                  </button>
                 </div>
               </div>
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="user-check" class="w-5 h-5"></i>
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <!-- 3. KPI Grid (4 Stat Cards with accent top bars) -->
-          <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Stat 1: Roles visibles -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
-              <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-purple)]"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Roles Visibles</div>
-              <div class="text-3xl font-black text-[var(--sp-ink)] font-display mt-2">2,597</div>
-              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="users" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
-                <span>Total de asignaciones de rol</span>
+            <!-- 2. Sub-header Card: Datos del Docente y Estado de Entrega -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Left: Información Académica del Docente -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+                <div class="space-y-1.5">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">DATOS DEL DOCENTE</div>
+                  <div class="docente-nombre-label text-sm font-bold text-[var(--sp-ink)] font-display pt-0.5">Docente</div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--sp-ink-3)]">
+                    <span>CI: <strong class="docente-ci-label text-[var(--sp-ink)] font-mono">--</strong></span>
+                    <span>•</span>
+                    <span class="docente-email-label">--</span>
+                    <span>•</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">Activo SEA</span>
+                  </div>
+                  <div id="docente-dash-carreras-list" class="text-xs text-[var(--sp-purple-dark)] dark:text-purple-300 font-medium pt-1">
+                    Cátedras asignadas para el periodo activo
+                  </div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="user-check" class="w-5 h-5"></i>
+                </div>
               </div>
-            </div>
 
-            <!-- Stat 2: En planificación -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
-              <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-teal)]"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">En Planificación</div>
-              <div class="text-3xl font-black text-[var(--sp-teal-dark)] dark:text-[var(--sp-teal)] font-display mt-2">2,594</div>
-              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="clock" class="w-3.5 h-3.5 text-[var(--sp-teal)]"></i>
-                <span>Carpetas en elaboración</span>
+              <!-- Right: Estado de la Documentación Pedagógica -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+                <div class="space-y-1.5">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">ESTADO DE CARPETA DOCENTE</div>
+                  <div class="flex items-center gap-2 pt-0.5">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">En Elaboración</span>
+                    <span class="text-xs text-[var(--sp-ink-2)] font-medium">• Gestión II-2026</span>
+                  </div>
+                  <p class="text-xs text-[var(--sp-ink-3)] leading-relaxed pt-0.5">Los 4 documentos oficiales (Analítico, PAC, Cronograma y Planes de Clase) están habilitados para edición y exportación.</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="clock" class="w-5 h-5"></i>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <!-- Stat 3: Carpetas Aprobadas -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
-              <span class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Carpetas Aprobadas</div>
-              <div class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">1,840</div>
-              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="check-check" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span>Revisadas por Dirección de Carrera</span>
+            <!-- 3. KPI Grid Exclusivo del Docente (4 Tarjetas Personales) -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- KPI 1: Mis Asignaturas -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-purple)]"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Mis Asignaturas</div>
+                <div id="docente-dash-kpi-materias" class="text-3xl font-black text-[var(--sp-ink)] font-display mt-2">0</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+                  <span>Cátedras activas asignadas</span>
+                </div>
               </div>
-            </div>
 
-            <!-- Stat 4: Seguimiento Docente -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
-              <span class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></span>
-              <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Seguimiento Docente</div>
-              <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">98.4%</div>
-              <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
-                <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-emerald-500"></i>
-                <span>Cumplimiento pedagógico verificado</span>
+              <!-- KPI 2: Carga Horaria Semanal -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-teal)]"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Carga Horaria Semanal</div>
+                <div id="docente-dash-kpi-horas" class="text-3xl font-black text-[var(--sp-teal-dark)] dark:text-[var(--sp-teal)] font-display mt-2">0 hrs</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-[var(--sp-teal)]"></i>
+                  <span>Horas académicas programadas</span>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <!-- 4. Middle Row: Information & Direct Action Shortcuts -->
-          <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Col 1: Información a tu alcance -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+              <!-- KPI 3: Grupos / Paralelos a Cargo -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Grupos a Cargo</div>
+                <div id="docente-dash-kpi-grupos" class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">0</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="users" class="w-3.5 h-3.5 text-amber-500"></i>
+                  <span>Comisiones teóricas y prácticas</span>
+                </div>
+              </div>
+
+              <!-- KPI 4: Documentos de la Carpeta -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Documentos Requeridos</div>
+                <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">4</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="folder-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                  <span>Analítico, PAC, Cronograma y Planes</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 4. Sección Destacada: Mis Asignaturas Asignadas (Cards de Materias) -->
+            <section class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--sp-border)] pb-3">
+                <div>
+                  <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
+                    <i data-lucide="book-marked" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                    <span>MIS ASIGNATURAS ASIGNADAS - GESTIÓN II-2026</span>
+                  </h3>
+                  <p class="text-xs text-[var(--sp-ink-3)] mt-0.5">Selecciona cualquier materia para acceder de inmediato a su Carpeta Docente oficial.</p>
+                </div>
+                <span id="docente-dash-materias-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] self-start sm:self-auto">0 Asignaturas</span>
+              </div>
+
+              <!-- Dynamic Grid of Teacher Subject Cards -->
+              <div id="docente-dash-cards-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <!-- Se inyecta dinámicamente mediante renderDocenteDashboard -->
+              </div>
+            </section>
+
+            <!-- 5. Accesos Rápidos a los 4 Documentos Oficiales de la Carpeta Docente -->
+            <section class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
               <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
                 <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
-                  <i data-lucide="bell" class="w-4 h-4 text-[var(--sp-purple)]"></i>
-                  <span>INFORMACIÓN A TU ALCANCE</span>
+                  <i data-lucide="files" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                  <span>ACCESOS RÁPIDOS A TU PLANIFICACIÓN PEDAGÓGICA</span>
                 </h3>
-                <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 bg-[var(--sp-purple-soft)] px-2 py-0.5 rounded">Hitos II-2026</span>
+                <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 bg-[var(--sp-purple-soft)] px-2 py-0.5 rounded">4 Documentos</span>
               </div>
-              <div class="space-y-3 text-xs">
-                <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
-                  <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                    <i data-lucide="check" class="w-4 h-4"></i>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Doc 1: Programa Analítico -->
+                <div onclick="window.goToDocenteDocument('tab-analitico')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <div class="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
                   </div>
-                  <div>
-                    <div class="font-bold text-[var(--sp-ink)]">Conexión con Gateway SEA Operativa</div>
-                    <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Sincronización activa con sedes Cochabamba, La Paz, El Alto y Cobija.</div>
-                  </div>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">1. Programa Analítico</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 leading-relaxed">Competencias, unidades de aprendizaje y bibliografía oficial.</div>
+                  <span class="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mt-2 block">Editar programa ➔</span>
                 </div>
-                <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
-                  <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 flex items-center justify-center flex-shrink-0">
+
+                <!-- Doc 2: Plan de Aprendizaje Cuantitativo (PAC) -->
+                <div onclick="window.goToDocenteDocument('tab-pac-matrix')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <i data-lucide="table" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">2. Matriz PAC (20 Sem)</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 leading-relaxed">Ponderaciones, criterios de evaluación y distribución de notas.</div>
+                  <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-2 block">Editar matriz PAC ➔</span>
+                </div>
+
+                <!-- Doc 3: Cronograma de Clases Semanal -->
+                <div onclick="window.goToDocenteDocument('tab-cronograma-semanas')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                     <i data-lucide="calendar" class="w-4 h-4"></i>
                   </div>
-                  <div>
-                    <div class="font-bold text-[var(--sp-ink)]">Cierre de Planificación Curricular</div>
-                    <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Presentación oficial de carpetas pedagógicas y programas analíticos habilitada.</div>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">3. Cronograma Semanal</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 leading-relaxed">Planificación semana a semana del avance temático y tareas.</div>
+                  <span class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-2 block">Editar cronograma ➔</span>
+                </div>
+
+                <!-- Doc 4: Planes de Clase (4 Fases) -->
+                <div onclick="window.goToDocenteDocument('tab-cronograma-planes')" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">4. Planes de Clase</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 leading-relaxed">Fases Diagnóstica, Formativa, Sumativa y Evaluación Final.</div>
+                  <span class="text-[10px] font-semibold text-purple-600 dark:text-purple-400 mt-2 block">Editar planes ➔</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 6. Información y Recordatorios Institucionales para el Docente -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="file-check" class="w-5 h-5"></i>
+                </div>
+                <div class="space-y-1 text-xs">
+                  <div class="font-bold text-[var(--sp-ink)]">Entrega Oficial de Carpeta Docente</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] leading-relaxed">
+                    Recuerda completar y validar el Programa Analítico y la Matriz PAC de 20 semanas para la revisión y aprobación por la Dirección de Carrera.
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Col 2: Accesos Directos de tu Cargo -->
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
-              <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
-                <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
-                  <i data-lucide="compass" class="w-4 h-4 text-[var(--sp-purple)]"></i>
-                  <span>ACCESOS DIRECTOS DE TU CARGO</span>
-                </h3>
-                <span class="text-[10px] uppercase font-bold text-[var(--sp-ink-3)]">Módulos habilitados</span>
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="download" class="w-5 h-5"></i>
+                </div>
+                <div class="space-y-1 text-xs">
+                  <div class="font-bold text-[var(--sp-ink)]">Formatos Oficiales de Descarga</div>
+                  <div class="text-[11px] text-[var(--sp-ink-3)] leading-relaxed">
+                    Puedes exportar tu carpeta en formatos oficiales Word (.docx), Excel (.xlsx) o generar el PDF consolidado para archivo físico e institucional.
+                  </div>
+                </div>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <button onclick="window.switchView('view1')" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="folder-kanban" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">Carpeta Docente</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Planificación y 4 documentos</div>
-                </button>
-                <button onclick="window.switchView('view2')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="clipboard-check" class="w-5 h-5 text-[var(--sp-teal)] mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-teal-dark)]">Seguimiento Curricular</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Avance y firmas digitales</div>
-                </button>
-                <button onclick="window.switchView('view3')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="graduation-cap" class="w-5 h-5 text-indigo-500 mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-indigo-700 dark:group-hover:text-indigo-300">Supervisión Carrera</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Supervisión docente</div>
-                </button>
-                <button onclick="window.switchView('view4')" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="file-check-2" class="w-5 h-5 text-amber-500 mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-amber-700 dark:group-hover:text-amber-300">Auditoría In Situ</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Bitácora de fiscalización</div>
-                </button>
-                <button onclick="window.switchView('view5')" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="network" class="w-5 h-5 text-emerald-500 mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Panel Regional/Nacional</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Monitoreo de sedes</div>
-                </button>
-                <button onclick="window.switchView('view6')" data-roles="ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
-                  <i data-lucide="user-cog" class="w-5 h-5 text-purple-600 mb-2"></i>
-                  <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-purple-800 dark:group-hover:text-purple-300">Usuarios y Accesos</div>
-                  <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Gestión de cuentas y roles</div>
-                </button>
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <!-- 5. Bottom Operational Metrics (4 cards) -->
-          <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Total Asignaturas</div>
-              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">1,284</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Cátedras activas en el periodo</div>
-            </div>
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Docentes Registrados</div>
-              <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">717</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Sincronizados con SEA Gateway</div>
-            </div>
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Cumplimiento PAC</div>
-              <div class="text-xl font-black text-purple-600 dark:text-purple-400 font-display mt-1">94.8%</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Planificaciones aprobadas</div>
-            </div>
-            <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
-              <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Auditorías de Aula</div>
-              <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-1">100%</div>
-              <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Monitoreo y seguimiento in situ</div>
-            </div>
-          </section>
+          </div>
+
+          <!-- ----------------------------------------------------------------------- -->
+          <!-- B. DASHBOARD INSTITUCIONAL: VISIBLE PARA ROLES DIRECTIVOS Y ADMIN       -->
+          <!-- ----------------------------------------------------------------------- -->
+          <div id="dashboard-admin" class="space-y-6 hidden">
+            
+            <!-- 1. Hero Banner (Indigo/Purple Gradient) -->
+            <section class="rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r from-[#1E1139] via-[#3B1F6A] to-[#4F2686] border border-purple-500/20">
+              <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-1.5 max-w-2xl">
+                  <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-300 block font-display">SISA • SISTEMA INTEGRAL DE SEGUIMIENTO ACADÉMICO</span>
+                  <h2 class="text-2xl font-bold font-display tracking-tight text-white">Resumen institucional completo</h2>
+                  <p class="text-xs text-purple-200/90 leading-relaxed">Monitoreo del ciclo académico, cobertura curricular y seguimiento pedagógico docente en tiempo real.</p>
+                </div>
+                
+                <!-- Sede & Gestión Selectors + Action Button -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                    <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">SEDE</label>
+                    <select class="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer">
+                      <option value="CBB" class="bg-[#1E1139] text-white">Sede Central Cochabamba</option>
+                      <option value="LPZ" class="bg-[#1E1139] text-white">Sede La Paz</option>
+                      <option value="EAL" class="bg-[#1E1139] text-white">Sede El Alto</option>
+                      <option value="COB" class="bg-[#1E1139] text-white">Sede Cobija</option>
+                    </select>
+                  </div>
+
+                  <div class="bg-black/30 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 text-xs">
+                    <label class="text-[10px] text-purple-300 font-bold block uppercase tracking-wider">GESTIÓN</label>
+                    <span class="text-white text-xs font-semibold">II-2026 (Activa)</span>
+                  </div>
+
+                  <button onclick="window.switchView('view1')" class="px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-purple-900/40 flex items-center gap-2 transition-all cursor-pointer">
+                    <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                    <span>Ir a Carpeta Docente</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- 2. Sub-header Card: Role Context & Authenticated User -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Left: Vista personalizada por cargo -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+                <div class="space-y-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">VISTA PERSONALIZADA POR CARGO</div>
+                  <div class="flex items-center gap-2 pt-1">
+                    <span id="dash-user-role-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] border border-[var(--sp-purple)]/20">ROL ADMINISTRADOR</span>
+                    <span id="dash-user-role-desc" class="text-xs text-[var(--sp-ink-2)] font-medium">• Acceso total y supervisión</span>
+                  </div>
+                  <p id="dash-user-role-subtext" class="text-xs text-[var(--sp-ink-3)] pt-1">Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="shield" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <!-- Right: Usuario Autenticado -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] flex items-start justify-between">
+                <div class="space-y-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">USUARIO AUTENTICADO</div>
+                  <div id="dash-user-fullname" class="text-sm font-bold text-[var(--sp-ink)] font-display pt-1">Harold Marco Antonio Rojas Torres</div>
+                  <div class="flex items-center gap-2 text-xs text-[var(--sp-ink-3)]">
+                    <span id="dash-user-ci">CI: 3065087</span>
+                    <span>•</span>
+                    <span id="dash-user-email">admin@unitepc.edu.bo</span>
+                    <span>•</span>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">Sesión activa</span>
+                  </div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                  <i data-lucide="user-check" class="w-5 h-5"></i>
+                </div>
+              </div>
+            </section>
+
+            <!-- 3. KPI Grid (4 Stat Cards with accent top bars) -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Stat 1: Roles visibles -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-purple)]"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Roles Visibles</div>
+                <div class="text-3xl font-black text-[var(--sp-ink)] font-display mt-2">2,597</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="users" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
+                  <span>Total de asignaciones de rol</span>
+                </div>
+              </div>
+
+              <!-- Stat 2: En planificación -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-[var(--sp-teal)]"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">En Planificación</div>
+                <div class="text-3xl font-black text-[var(--sp-teal-dark)] dark:text-[var(--sp-teal)] font-display mt-2">2,594</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-[var(--sp-teal)]"></i>
+                  <span>Carpetas en elaboración</span>
+                </div>
+              </div>
+
+              <!-- Stat 3: Carpetas Aprobadas -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Carpetas Aprobadas</div>
+                <div class="text-3xl font-black text-amber-600 dark:text-amber-400 font-display mt-2">1,840</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="check-check" class="w-3.5 h-3.5 text-amber-500"></i>
+                  <span>Revisadas por Dirección de Carrera</span>
+                </div>
+              </div>
+
+              <!-- Stat 4: Seguimiento Docente -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-5 border border-[var(--sp-border)] relative overflow-hidden">
+                <span class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></span>
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--sp-ink-3)]">Seguimiento Docente</div>
+                <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-2">98.4%</div>
+                <div class="text-[11px] text-[var(--sp-ink-3)] mt-1 flex items-center gap-1">
+                  <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                  <span>Cumplimiento pedagógico verificado</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 4. Middle Row: Information & Direct Action Shortcuts -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- Col 1: Información a tu alcance -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+                <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
+                  <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
+                    <i data-lucide="bell" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                    <span>INFORMACIÓN A TU ALCANCE</span>
+                  </h3>
+                  <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 bg-[var(--sp-purple-soft)] px-2 py-0.5 rounded">Hitos II-2026</span>
+                </div>
+                <div class="space-y-3 text-xs">
+                  <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                      <i data-lucide="check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <div class="font-bold text-[var(--sp-ink)]">Conexión con Gateway SEA Operativa</div>
+                      <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Sincronización activa con sedes Cochabamba, La Paz, El Alto y Cobija.</div>
+                    </div>
+                  </div>
+                  <div class="p-3 rounded-xl bg-[var(--sp-surface-2)] border border-[var(--sp-border)] flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 flex items-center justify-center flex-shrink-0">
+                      <i data-lucide="calendar" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <div class="font-bold text-[var(--sp-ink)]">Cierre de Planificación Curricular</div>
+                      <div class="text-[11px] text-[var(--sp-ink-3)] mt-0.5">Presentación oficial de carpetas pedagógicas y programas analíticos habilitada.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Col 2: Accesos Directos de tu Cargo -->
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-6 border border-[var(--sp-border)] space-y-4">
+                <div class="flex items-center justify-between border-b border-[var(--sp-border)] pb-3">
+                  <h3 class="text-sm font-bold text-[var(--sp-ink)] font-display flex items-center gap-2">
+                    <i data-lucide="compass" class="w-4 h-4 text-[var(--sp-purple)]"></i>
+                    <span>ACCESOS DIRECTOS DE TU CARGO</span>
+                  </h3>
+                  <span class="text-[10px] uppercase font-bold text-[var(--sp-ink-3)]">Módulos habilitados</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <button onclick="window.switchView('view1')" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="folder-kanban" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">Carpeta Docente</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Planificación y 4 documentos</div>
+                  </button>
+                  <button onclick="window.switchView('view2')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="clipboard-check" class="w-5 h-5 text-[var(--sp-teal)] mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-teal-dark)]">Seguimiento Curricular</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Avance y firmas digitales</div>
+                  </button>
+                  <button onclick="window.switchView('view3')" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="graduation-cap" class="w-5 h-5 text-indigo-500 mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-indigo-700 dark:group-hover:text-indigo-300">Supervisión Carrera</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Supervisión docente</div>
+                  </button>
+                  <button onclick="window.switchView('view4')" data-roles="ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="file-check-2" class="w-5 h-5 text-amber-500 mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-amber-700 dark:group-hover:text-amber-300">Auditoría In Situ</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Bitácora de fiscalización</div>
+                  </button>
+                  <button onclick="window.switchView('view5')" data-roles="ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="network" class="w-5 h-5 text-emerald-500 mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Panel Regional/Nacional</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Monitoreo de sedes</div>
+                  </button>
+                  <button onclick="window.switchView('view6')" data-roles="ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                    <i data-lucide="user-cog" class="w-5 h-5 text-purple-600 mb-2"></i>
+                    <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-purple-800 dark:group-hover:text-purple-300">Usuarios y Accesos</div>
+                    <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Gestión de cuentas y roles</div>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- 5. Bottom Operational Metrics (4 cards) -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+                <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Total Asignaturas</div>
+                <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">1,284</div>
+                <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Cátedras activas en el periodo</div>
+              </div>
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+                <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Docentes Registrados</div>
+                <div class="text-xl font-black text-[var(--sp-ink)] font-display mt-1">717</div>
+                <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Sincronizados con SEA Gateway</div>
+              </div>
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+                <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Cumplimiento PAC</div>
+                <div class="text-xl font-black text-purple-600 dark:text-purple-400 font-display mt-1">94.8%</div>
+                <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Planificaciones aprobadas</div>
+              </div>
+              <div class="bg-[var(--sp-surface)] rounded-2xl p-4 border border-[var(--sp-border)]">
+                <div class="text-[10px] font-bold text-[var(--sp-ink-3)] uppercase">Auditorías de Aula</div>
+                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 font-display mt-1">100%</div>
+                <div class="text-[10px] text-[var(--sp-ink-4)] mt-0.5">Monitoreo y seguimiento in situ</div>
+              </div>
+            </section>
+
+          </div>
 
         </div>
 
