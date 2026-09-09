@@ -36,18 +36,21 @@ public class CatalogoAcademicoController {
     private final SeaCarreraRepository seaCarreraRepository;
     private final SeaMateriaRepository seaMateriaRepository;
     private final SeaGrupoRepository seaGrupoRepository;
+    private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
 
     public CatalogoAcademicoController(
             UnitepcGatewayClient gatewayClient,
             SeaSedeRepository seaSedeRepository,
             SeaCarreraRepository seaCarreraRepository,
             SeaMateriaRepository seaMateriaRepository,
-            SeaGrupoRepository seaGrupoRepository) {
+            SeaGrupoRepository seaGrupoRepository,
+            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService) {
         this.gatewayClient = gatewayClient;
         this.seaSedeRepository = seaSedeRepository;
         this.seaCarreraRepository = seaCarreraRepository;
         this.seaMateriaRepository = seaMateriaRepository;
         this.seaGrupoRepository = seaGrupoRepository;
+        this.seaDocenteAutoProvisionService = seaDocenteAutoProvisionService;
     }
 
     /**
@@ -253,6 +256,12 @@ public class CatalogoAcademicoController {
                     })
                     .toList();
 
+            try {
+                this.seaDocenteAutoProvisionService.provisionDocentesFromList(remoteDocentes);
+            } catch (Exception e) {
+                log.warn("Could not auto-provision remote docentes: {}", e.getMessage());
+            }
+
             return ResponseEntity.ok(remoteDocentes);
         }
 
@@ -307,6 +316,12 @@ public class CatalogoAcademicoController {
                     );
                 })
                 .toList();
+
+        try {
+            this.seaDocenteAutoProvisionService.provisionDocentesFromList(result);
+        } catch (Exception e) {
+            log.warn("Could not auto-provision local mirror docentes: {}", e.getMessage());
+        }
 
         return ResponseEntity.ok(result);
     }

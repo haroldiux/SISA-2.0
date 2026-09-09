@@ -3163,11 +3163,13 @@ window.updateAutoSaveStatus = function(status) {
 window.updateAutoSaveBadge = window.updateAutoSaveStatus;
 
 window.scheduleAutoSave = function(delayMs = 1200) {
+  if (!window.getAuthToken() || window._isAuthScreenActive) return;
   window.updateAutoSaveStatus('DIRTY');
   if (autoSaveTimer) {
     clearTimeout(autoSaveTimer);
   }
   autoSaveTimer = setTimeout(async () => {
+    if (!window.getAuthToken() || window._isAuthScreenActive) return;
     window.updateAutoSaveStatus('SAVING');
     try {
       await window.saveCurrentDocenteData(true);
@@ -3180,6 +3182,7 @@ window.scheduleAutoSave = function(delayMs = 1200) {
 
 
 window.saveCurrentDocenteData = async function(silent = false) {
+  if (!window.getAuthToken() || window._isAuthScreenActive) return;
   if (!silent) {
     window.showToast('⏳ Guardando cambios en la base de datos...');
   }
@@ -5495,7 +5498,10 @@ document.addEventListener('change', (e) => {
   };
 
   // ── ROOT VIEW SWITCHING ENGINE (UNITEPC-PRO ARCHITECTURE) ────────────────
+  window._isAuthScreenActive = false;
+
   window.showLoginView = function() {
+    window._isAuthScreenActive = true;
     const shell = document.getElementById('sp-shell');
     const pwdView = document.getElementById('view-change-password');
     const loginView = document.getElementById('view-login');
@@ -5517,9 +5523,17 @@ document.addEventListener('change', (e) => {
   };
 
   window.showChangePasswordView = function(user, tempToken, isVoluntary = false, prefillCurrentPassword = '') {
+    window._isAuthScreenActive = true;
     window._tempPasswordChangeUser = user;
     window._tempPasswordChangeToken = tempToken;
     window._isVoluntaryPasswordChange = isVoluntary;
+
+    if (user) {
+      try { sessionStorage.setItem('scu_temp_user', JSON.stringify(user)); } catch (e) {}
+    }
+    if (tempToken) {
+      try { sessionStorage.setItem('scu_temp_token', tempToken); } catch (e) {}
+    }
 
     const shell = document.getElementById('sp-shell');
     const loginView = document.getElementById('view-login');
@@ -5558,6 +5572,14 @@ document.addEventListener('change', (e) => {
   };
 
   window.showPortalShell = function(targetViewId = 'view-dashboard') {
+    window._isAuthScreenActive = false;
+    window._tempPasswordChangeUser = null;
+    window._tempPasswordChangeToken = null;
+    try {
+      sessionStorage.removeItem('scu_temp_user');
+      sessionStorage.removeItem('scu_temp_token');
+    } catch (e) {}
+
     const loginView = document.getElementById('view-login');
     const pwdView = document.getElementById('view-change-password');
     const shell = document.getElementById('sp-shell');
@@ -5735,8 +5757,22 @@ document.addEventListener('change', (e) => {
     const currentPassword = curPwdInput ? curPwdInput.value : '';
     const newPassword = newPwdInput ? newPwdInput.value : '';
     const confirmPassword = confPwdInput ? confPwdInput.value : '';
-    const user = window._tempPasswordChangeUser || window.getCurrentUser();
-    const token = window._tempPasswordChangeToken || window.getAuthToken();
+    
+    let user = window._tempPasswordChangeUser || window.getCurrentUser();
+    let token = window._tempPasswordChangeToken || window.getAuthToken();
+    if (!user) {
+      try {
+        const stored = sessionStorage.getItem('scu_temp_user');
+        if (stored) user = JSON.parse(stored);
+      } catch (e) {}
+    }
+    if (!token) {
+      try {
+        token = sessionStorage.getItem('scu_temp_token');
+      } catch (e) {}
+    }
+
+    const targetUsername = (user && (user.username || user.ci)) ? (user.username || user.ci) : currentPassword;
 
     const showError = (msg) => {
       if (errBox && errMsg) {
@@ -5785,7 +5821,7 @@ document.addEventListener('change', (e) => {
 
       // Fully aligned payload matching ScuChangePasswordCmd
       const payload = {
-        username: user ? user.username : undefined,
+        username: targetUsername,
         currentPassword: currentPassword,
         newPassword: newPassword,
         confirmPassword: confirmPassword
@@ -5806,6 +5842,14 @@ document.addEventListener('change', (e) => {
       const finalToken = authData.accessToken || authData.token || token;
       const updatedUser = authData.user || user;
       if (updatedUser) updatedUser.mustChangePassword = false;
+
+      window._isAuthScreenActive = false;
+      window._tempPasswordChangeUser = null;
+      window._tempPasswordChangeToken = null;
+      try {
+        sessionStorage.removeItem('scu_temp_user');
+        sessionStorage.removeItem('scu_temp_token');
+      } catch (e) {}
 
       window.setAuthSession(finalToken, updatedUser);
       window.showPortalShell(updatedUser && updatedUser.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');

@@ -52,7 +52,8 @@ public class CatalogoAcademicoControllerTest {
                 this.seaSedeRepository,
                 this.seaCarreraRepository,
                 this.seaMateriaRepository,
-                this.seaGrupoRepository
+                this.seaGrupoRepository,
+                mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class)
         );
     }
 

@@ -28,9 +28,13 @@ import java.util.Map;
 public class ScuAdminUsuarioController {
 
     private final ScuAdminUsuarioService adminUsuarioService;
+    private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
 
-    public ScuAdminUsuarioController(ScuAdminUsuarioService adminUsuarioService) {
+    public ScuAdminUsuarioController(
+            ScuAdminUsuarioService adminUsuarioService,
+            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService) {
         this.adminUsuarioService = adminUsuarioService;
+        this.seaDocenteAutoProvisionService = seaDocenteAutoProvisionService;
     }
 
     @GetMapping
@@ -107,6 +111,16 @@ public class ScuAdminUsuarioController {
         return ResponseEntity.ok(
                 ResourceBuilder.of(null)
                         .message("Usuario deshabilitado exitosamente")
+                        .build()
+        );
+    }
+
+    @PostMapping("/sync-sea-docentes")
+    public ResponseEntity<Map<String, Object>> syncSeaDocentes() {
+        int synced = this.seaDocenteAutoProvisionService.syncAllSeaDocentes();
+        return ResponseEntity.ok(
+                ResourceBuilder.of(Map.of("syncedCount", synced))
+                        .message("Sincronización de docentes completada: " + synced + " nuevos docentes aprovisionados")
                         .build()
         );
     }

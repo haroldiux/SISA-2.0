@@ -79,7 +79,10 @@ public class AdminUsuarioControllerTest {
                 this.passwordEncoder
         );
 
-        this.controller = new ScuAdminUsuarioController(this.adminUsuarioService);
+        this.controller = new ScuAdminUsuarioController(
+                this.adminUsuarioService,
+                mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class)
+        );
 
         this.sedeCbb = new Sede("CBB", "Sede Central Cochabamba", "Cochabamba");
         this.sedeCbb.setId(1L);
