@@ -577,12 +577,12 @@
       </header>
 
       <!-- Main Canvas Viewport -->
-      <main id="main-canvas" class="flex-1 overflow-y-auto bg-[var(--sp-bg)] p-6 space-y-6 custom-scrollbar">
+      <main id="main-canvas" class="flex-1 overflow-y-auto bg-[var(--sp-bg)] p-4 sm:p-5 lg:p-6 space-y-6 custom-scrollbar w-full">
         
         <!-- ========================================================================= -->
         <!-- VIEW DASHBOARD: INSTITUTIONAL OVERVIEW (CANONICAL DEFAULT LANDING)        -->
         <!-- ========================================================================= -->
-        <div id="view-dashboard" class="frame-view space-y-6 max-w-7xl mx-auto">
+        <div id="view-dashboard" class="frame-view space-y-6 w-full">
           
           <!-- 1. Hero Banner (Indigo/Purple Gradient) -->
           <section class="rounded-2xl p-6 text-white shadow-lg relative overflow-hidden bg-gradient-to-r from-[#1E1139] via-[#3B1F6A] to-[#4F2686] border border-purple-500/20">
@@ -807,7 +807,7 @@
         <!-- ========================================================================= -->
         <!-- VIEW 1: [DOCENTE] GESTIÓN CURRICULAR Y 4 TABS DE DOCUMENTOS               -->
         <!-- ========================================================================= -->
-        <div id="view1" class="frame-view hidden max-w-7xl mx-auto flex gap-6 min-h-[920px]">
+        <div id="view1" class="frame-view hidden w-full flex gap-4 lg:gap-5 min-h-[calc(100vh-112px)]">
           
           <!-- CONTEXTUAL SUB-RAIL: MIS CARRERAS & DOCUMENTOS -->
           <aside class="w-[280px] bg-[var(--sp-surface)] rounded-2xl border border-[var(--sp-border)] flex flex-col justify-between p-4 flex-shrink-0 no-print shadow-sm">
@@ -883,7 +883,7 @@
           </aside>
 
           <!-- Main Layout -->
-          <div class="flex-1 bg-[var(--sp-surface)] rounded-2xl border border-[var(--sp-border)] shadow-sm flex flex-col overflow-hidden">
+          <div class="flex-1 min-w-0 bg-[var(--sp-surface)] rounded-2xl border border-[var(--sp-border)] shadow-sm flex flex-col overflow-hidden">
         <!-- TopHeader -->
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors no-print">
           <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
@@ -1997,7 +1997,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 2: [DIRECCIÓN DE CARRERA] SUPERVISIÓN & APROBACIÓN POR SEMESTRE       -->
     <!-- ========================================================================= -->
-    <div id="view2" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view2" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
@@ -2169,7 +2169,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 3: [DIRECCIÓN ACADÉMICA] AUDITORÍA DE CLASES IN SITU & CONTROL       -->
     <!-- ========================================================================= -->
-    <div id="view3" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view3" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Main View Area + Drawer -->
       <div class="flex-1 flex h-full overflow-hidden relative">
@@ -2369,7 +2369,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 4: [VICERRECTORADO SEDE] PANEL REGIONAL & REINCIDENCIAS              -->
     <!-- ========================================================================= -->
-    <div id="view4" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view4" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
@@ -2522,7 +2522,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 5: [VICERRECTORADO NACIONAL] TABLERO EJECUTIVO & ANÁLISIS MULTISEDE -->
     <!-- ========================================================================= -->
-    <div id="view5" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view5" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
@@ -2674,7 +2674,7 @@
     <!-- ========================================================================= -->
     <!-- VIEW 6: [ADMIN] ADMINISTRACIÓN DE USUARIOS, ACCESOS Y ASIGNACIONES ACADÉMICAS -->
     <!-- ========================================================================= -->
-    <div id="view6" class="frame-view max-w-7xl mx-auto min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view6" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Top Header of Admin View -->
       <header class="h-[72px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0">

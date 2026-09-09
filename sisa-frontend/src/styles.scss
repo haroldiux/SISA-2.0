@@ -37,6 +37,12 @@
   --topbar-height: 64px;
 }
 
+scu-root {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .dark {
   --sp-bg: #0F0E14;
   --sp-surface: #1A1922;
