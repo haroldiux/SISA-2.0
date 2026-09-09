@@ -191,7 +191,7 @@
       </p>
 
       <!-- Password Change Form -->
-      <form id="forced-password-form" onsubmit="window.handleForcedPasswordSubmit(event)" class="space-y-4 text-left">
+      <form id="forced-password-form" (submit)="handlePasswordSubmit($event)" onsubmit="window.handleForcedPasswordSubmit(event)" class="space-y-4 text-left">
         <!-- Error Notification Box -->
         <div id="change-password-error" class="hidden p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-xs text-red-600 dark:text-red-300 flex items-start gap-2">
           <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
@@ -245,7 +245,7 @@
         </div>
 
         <!-- Action Button -->
-        <button id="btn-do-change-password" type="button" onclick="window.handleForcedPasswordSubmit(event)" class="w-full py-3 px-4 rounded-xl bg-[#9079ED] hover:bg-[#8064E8] text-white font-semibold text-xs tracking-wide shadow-md shadow-[#9079ED]/25 flex items-center justify-center gap-2 transition-all mt-6 cursor-pointer">
+        <button id="btn-do-change-password" type="button" (click)="handlePasswordSubmit($event)" onclick="window.handleForcedPasswordSubmit(event)" class="w-full py-3 px-4 rounded-xl bg-[#9079ED] hover:bg-[#8064E8] text-white font-semibold text-xs tracking-wide shadow-md shadow-[#9079ED]/25 flex items-center justify-center gap-2 transition-all mt-6 cursor-pointer">
           <span>Guardar nueva contraseña</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>

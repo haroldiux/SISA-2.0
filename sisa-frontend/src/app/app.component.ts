@@ -30,4 +30,13 @@ export class AppComponent implements AfterViewInit {
       (window as any).onDocenteSelectorChange(ci);
     }
   }
+
+  public handlePasswordSubmit(event: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+    if (typeof (window as any).handleForcedPasswordSubmit === 'function') {
+      (window as any).handleForcedPasswordSubmit(event);
+    }
+  }
 }

@@ -5746,7 +5746,11 @@ document.addEventListener('change', (e) => {
   window._isVoluntaryPasswordChange = false;
 
   window.handleForcedPasswordSubmit = async function(event) {
-    if (event) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      if (typeof event.stopPropagation === 'function') event.stopPropagation();
+    }
+    console.log('[SISA] handleForcedPasswordSubmit is executing...');
     const curPwdInput = document.getElementById('change-current-password');
     const newPwdInput = document.getElementById('change-new-password');
     const confPwdInput = document.getElementById('change-confirm-password');
@@ -5859,6 +5863,7 @@ document.addEventListener('change', (e) => {
         window.loadAdminUsers();
       }
     } catch (err) {
+      console.error('[SISA] Password change exception:', err);
       showError(err.message || 'Error al procesar el cambio de contraseña.');
     } finally {
       if (btn) {
@@ -5868,6 +5873,27 @@ document.addEventListener('change', (e) => {
       }
     }
   };
+
+  // Capturing event listeners ensuring button clicks and form submits never get swallowed
+  document.addEventListener('click', function(e) {
+    const btn = e.target && e.target.closest ? e.target.closest('#btn-do-change-password') : null;
+    if (btn) {
+      console.log('[SISA] Capturing click on #btn-do-change-password');
+      e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      window.handleForcedPasswordSubmit(e);
+    }
+  }, true);
+
+  document.addEventListener('submit', function(e) {
+    const form = e.target && e.target.closest ? e.target.closest('#forced-password-form') : null;
+    if (form) {
+      console.log('[SISA] Capturing submit on #forced-password-form');
+      e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      window.handleForcedPasswordSubmit(e);
+    }
+  }, true);
 
   // Backward-compatibility wrappers for legacy callers
   window.openLoginModal = function() { window.showLoginView(); };
