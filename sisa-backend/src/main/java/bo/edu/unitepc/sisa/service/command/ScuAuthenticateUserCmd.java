@@ -35,6 +35,7 @@ public class ScuAuthenticateUserCmd {
     @Transactional(readOnly = true)
     public ScuAuthResponse execute(ScuLoginRequest request) {
         Usuario user = this.usuarioRepository.findByUsername(request.getUsername())
+                .or(() -> this.usuarioRepository.findByCi(request.getUsername()))
                 .orElseThrow(() -> new ScuAuthException("Credenciales inválidas para usuario: " + request.getUsername()));
 
         if (!Boolean.TRUE.equals(user.getActivo())) {

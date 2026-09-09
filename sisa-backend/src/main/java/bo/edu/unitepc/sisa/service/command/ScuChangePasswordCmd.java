@@ -62,6 +62,7 @@ public class ScuChangePasswordCmd {
 
         final String targetUsername = username;
         Usuario user = this.usuarioRepository.findByUsername(targetUsername)
+                .or(() -> this.usuarioRepository.findByCi(targetUsername))
                 .orElseThrow(() -> new ScuAuthException("Usuario no encontrado: " + targetUsername));
 
         if (!Boolean.TRUE.equals(user.getActivo())) {
