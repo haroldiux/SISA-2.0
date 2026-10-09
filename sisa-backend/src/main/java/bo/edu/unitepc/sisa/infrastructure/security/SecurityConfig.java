@@ -53,8 +53,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/system/auth/**",
-                                "/api/v1/office/**",
-                                "/api/v1/planificaciones/**",
                                 "/api/v1/academic/**",
                                 "/api/v1/auditorias/**",
                                 "/api/v1/catalogo-academico/**",
@@ -65,6 +63,12 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/v1/office/**",
+                                "/api/v1/system/office/**",
+                                "/api/v1/planificaciones/**",
+                                "/api/v1/system/planning/**"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(this.authenticationProvider())

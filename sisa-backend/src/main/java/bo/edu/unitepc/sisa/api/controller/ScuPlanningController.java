@@ -70,6 +70,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/pac")
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> savePac(@Valid @RequestBody ScuPacRequest request) {
         ScuPacResponse response = this.savePacCmd.execute(request);
         return new ResponseEntity<>(
@@ -126,7 +127,7 @@ public class ScuPlanningController {
 
     @PostMapping("/pac/{id}/review")
     @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', " +
-            "'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL')")
+            "'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> reviewPac(
             @PathVariable Long id,
             @Valid @RequestBody ScuPacReviewRequest request) {
@@ -139,6 +140,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/programa-analitico")
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> saveProgramaAnalitico(
             @Valid @RequestBody ScuProgramaAnaliticoRequest request) {
         ScuProgramaAnaliticoResponse response = this.saveProgramaCmd.execute(request);
@@ -162,6 +164,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/plan-clase")
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> savePlanClase(
             @Valid @RequestBody ScuPlanClaseRequest request) {
         ScuPlanClaseResponse response = this.savePlanClaseCmd.execute(request);

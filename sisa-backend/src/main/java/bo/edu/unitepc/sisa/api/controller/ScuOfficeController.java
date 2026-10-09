@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -100,6 +101,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/cronograma", "/cronograma/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importCronograma(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "pacType", required = false) String pacTypeQuery,
@@ -130,6 +132,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/pac", "/pac/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPac(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "pacType", required = false) String pacTypeQuery,
@@ -160,6 +163,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/plan-clase", "/plan-clase/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPlanesClase(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "planType", required = false) String planTypeQuery,
@@ -196,6 +200,7 @@ public class ScuOfficeController {
 
     @PostMapping(value = {"/import/programa-analitico", "/programa-analitico/import"},
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPrograma(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "asignacionId", required = false) Long asignacionId) {
