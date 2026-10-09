@@ -1882,13 +1882,11 @@
                     <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/80 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700">Consenso Cátedra</span>
                   </div>
 
-                  <!-- 1. Identificación Curricular Compartida -->
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Asignatura (Cátedra):</span><input id="plan-asig-input" type="text" value="" placeholder="Asignatura..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
-                    <div><span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] block">Carrera(s):</span><input id="plan-carrera-input" type="text" value="" placeholder="Carrera..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-900 dark:text-white mt-1 focus:bg-white dark:focus:bg-slate-900"></div>
-                  </div>
+                  <!-- Campos contextuales no redundantes (preservados como hidden para compatibilidad de comandos) -->
+                  <input type="hidden" id="plan-asig-input" value="">
+                  <input type="hidden" id="plan-carrera-input" value="">
 
-                  <!-- 2. Unidad & Tema -->
+                  <!-- 1. Unidad & Tema -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="grid grid-cols-3 gap-4">
                       <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unidad Temática:</label><input id="plan-unidad-input" type="text" value="" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-700 dark:text-brand-400 focus:bg-white dark:focus:bg-slate-900"></div>
@@ -1897,7 +1895,7 @@
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Elemento de Competencia Articulado:</label><textarea id="plan-elemento-input" rows="2" placeholder="Elemento de Competencia..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                   </div>
 
-                  <!-- 3. Resultados, Logros & Indicadores -->
+                  <!-- 2. Resultados, Logros & Indicadores -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Resultados de Aprendizaje (Cátedra):</label><textarea id="plan-resultados-input" rows="2" placeholder="Resultados de Aprendizaje..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea></div>
                     <div class="grid grid-cols-2 gap-4">
@@ -1906,7 +1904,7 @@
                     </div>
                   </div>
 
-                  <!-- 4. Los 3 Saberes -->
+                  <!-- 3. Los 3 Saberes -->
                   <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div class="form-section-title text-purple-700 dark:text-purple-400"><i data-lucide="layers" class="w-4 h-4"></i><span>Contenidos de la Sesión (Los 3 Saberes)</span></div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1933,6 +1931,27 @@
                         <strong class="text-purple-800 dark:text-purple-300 block mb-1">Saber Actitudinal:</strong>
                         <textarea id="plan-actitudinal-input" rows="3" placeholder="Saberes Actitudinales..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"></textarea>
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- 4. Referencias Bibliográficas del Tema (Selección y Paginación) -->
+                  <div class="space-y-3 text-xs pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                          <i data-lucide="book-open" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                          <h4 class="font-bold text-sm text-slate-900 dark:text-white">Referencias Bibliográficas</h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">Selecciona las bibliografías y las páginas donde se encuentra el contenido de este tema.</p>
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.addPlanReferenciaBibliografica()" class="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-semibold text-xs border border-blue-200 dark:border-blue-800/80 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Referencia
+                      </button>
+                    </div>
+                    <div id="plan-referencias-list" class="space-y-3 pt-1">
+                      <!-- Renderizado dinámicamente -->
                     </div>
                   </div>
 

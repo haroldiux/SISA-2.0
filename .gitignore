@@ -40,3 +40,6 @@ Thumbs.db
 *.temp
 ~$*
 scratch/
+# Local AI runtime state
+.atl/
+.codegraph/

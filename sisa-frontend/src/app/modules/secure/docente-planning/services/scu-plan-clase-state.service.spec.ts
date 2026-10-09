@@ -59,6 +59,17 @@ describe('ScuPlanClaseStateService', () => {
     expect(service.getAllCachedPlans().size).toBe(2);
   });
 
+  it('should create exactly the canonical INICIO, DESARROLLO and CIERRE moments', () => {
+    service.initializeSessions([mockSession1]);
+
+    expect(service.currentPlan?.momentos.map(m => [m.tipoMomento, m.duracionMin])).toEqual([
+      ['INICIO', 25],
+      ['DESARROLLO', 100],
+      ['CIERRE', 55]
+    ]);
+    expect(service.currentValidation.isValid).toBeTrue();
+  });
+
   it('should switch active session without losing cached data', () => {
     service.initializeSessions([mockSession1, mockSession2]);
 

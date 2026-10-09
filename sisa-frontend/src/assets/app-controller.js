@@ -2493,6 +2493,139 @@
       if (el) el.value = (val !== null && val !== undefined) ? val : '';
     }
 
+    // ── REFERENCIAS BIBLIOGRÁFICAS DEL PLAN DE CLASE ─────────────────────
+    window.getAvailableSubjectBibliography = function() {
+      const books = [];
+      const mKey = activeMateriaKey || localStorage.getItem('sisa_active_materia_key') || '';
+      if (mKey) {
+        const savedProgStr = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
+        if (savedProgStr) {
+          try {
+            const p = JSON.parse(savedProgStr);
+            if (p.bibliografia && Array.isArray(p.bibliografia) && p.bibliografia.length > 0) {
+              p.bibliografia.forEach(b => {
+                const title = b.citaApa || (b.autor ? `${b.autor} (${b.anio || ''}). ${b.titulo || ''}` : b.titulo);
+                if (title && !books.includes(title)) books.push(title);
+              });
+            }
+          } catch(e) {}
+        }
+      }
+      const basicaEl = document.getElementById('analitico-biblio-basica-input');
+      if (basicaEl && basicaEl.value) {
+        basicaEl.value.split('\n\n').forEach(line => {
+          const clean = line.trim();
+          if (clean && !books.includes(clean)) books.push(clean);
+        });
+      }
+      const compEl = document.getElementById('analitico-biblio-comp-input');
+      if (compEl && compEl.value) {
+        compEl.value.split('\n\n').forEach(line => {
+          const clean = line.trim();
+          if (clean && !books.includes(clean)) books.push(clean);
+        });
+      }
+      if (books.length === 0) {
+        books.push('Victor Chungara - Apuntes y Problemas de Calculo 1 (2025)');
+        books.push('Joyanes Aguilar, L. (2021). Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos (6ª ed.). McGraw-Hill.');
+        books.push('García Llinás, L. F. (2022). Todo sobre Patrones de Diseño: Un enfoque práctico orientado a objetos. Ediciones de la U.');
+        books.push('Vaughan, J. (2023). Object-Oriented Game Development: Real-World Design and Architecture. CRC Press.');
+        books.push('Sznajdleder, P. (2021). Programación Orientada a Objetos y Estructuras de Datos. Alfaomega.');
+      }
+      return books;
+    };
+
+    window.renderPlanReferenciasBibliograficas = function(sheetIndex) {
+      const container = document.getElementById('plan-referencias-list');
+      if (!container) return;
+      const idx = (sheetIndex !== undefined && sheetIndex !== null) ? sheetIndex : activePlanSheetIndex;
+      if (!activePlanesList || !activePlanesList[idx]) {
+        container.innerHTML = '<div class="text-[11px] text-slate-400 italic">No hay tema activo seleccionado.</div>';
+        return;
+      }
+      const p = activePlanesList[idx];
+      if (!p.referenciasBibliograficas || !Array.isArray(p.referenciasBibliograficas)) {
+        p.referenciasBibliograficas = [
+          { texto: 'Victor Chungara - Apuntes y Problemas de Calculo 1 (2025)', pagDesde: '', pagHasta: '' }
+        ];
+      }
+      const availableBooks = window.getAvailableSubjectBibliography();
+
+      if (p.referenciasBibliograficas.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-slate-400 text-xs">
+            No se añadieron referencias bibliográficas para este tema. Haz clic en <strong>+ Agregar Referencia</strong>.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      p.referenciasBibliograficas.forEach((ref, refIdx) => {
+        const selectedBook = ref.texto || availableBooks[0] || '';
+        const optionsHtml = availableBooks.map(b => {
+          const isSel = (b === selectedBook) ? 'selected' : '';
+          return `<option value="${escapeHtml(b)}" ${isSel}>${escapeHtml(b)}</option>`;
+        }).join('');
+
+        html += `
+          <div class="plan-ref-item p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs flex items-center gap-3.5 transition-all">
+            <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <i data-lucide="book" class="w-4 h-4"></i>
+            </div>
+            <div class="flex-1 space-y-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Bibliografía:</label>
+                <select class="plan-ref-select w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:bg-white dark:focus:bg-slate-900 cursor-pointer" onchange="window.syncCurrentPlanFormToState();">
+                  ${optionsHtml}
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-28">
+                  <input type="text" value="${escapeHtml(ref.pagDesde || '')}" placeholder="Pág. desde" class="plan-ref-desde w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-center font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900" oninput="window.syncCurrentPlanFormToState();">
+                </div>
+                <div class="w-28">
+                  <input type="text" value="${escapeHtml(ref.pagHasta || '')}" placeholder="Pág. hasta" class="plan-ref-hasta w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-center font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-900" oninput="window.syncCurrentPlanFormToState();">
+                </div>
+              </div>
+            </div>
+            <button type="button" title="Eliminar referencia" onclick="window.removePlanReferenciaBibliografica(${refIdx})" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer shrink-0">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.addPlanReferenciaBibliografica = function() {
+      if (!activePlanesList || !activePlanesList[activePlanSheetIndex]) return;
+      const p = activePlanesList[activePlanSheetIndex];
+      if (!p.referenciasBibliograficas || !Array.isArray(p.referenciasBibliograficas)) {
+        p.referenciasBibliograficas = [];
+      }
+      const books = window.getAvailableSubjectBibliography();
+      p.referenciasBibliograficas.push({
+        texto: books[0] || '',
+        pagDesde: '',
+        pagHasta: ''
+      });
+      window.renderPlanReferenciasBibliograficas(activePlanSheetIndex);
+      window.syncCurrentPlanFormToState();
+    };
+
+    window.removePlanReferenciaBibliografica = function(refIndex) {
+      if (!activePlanesList || !activePlanesList[activePlanSheetIndex]) return;
+      const p = activePlanesList[activePlanSheetIndex];
+      if (p.referenciasBibliograficas && Array.isArray(p.referenciasBibliograficas)) {
+        p.referenciasBibliograficas.splice(refIndex, 1);
+      }
+      window.renderPlanReferenciasBibliograficas(activePlanSheetIndex);
+      window.syncCurrentPlanFormToState();
+    };
+
     window.renderPlanesSheetsTabs = function() {
       const container = document.getElementById('plan-sheets-tabs-container');
       if (!container) return;
@@ -2547,7 +2680,8 @@
       if (!p) return;
 
       // 1. Encabezado
-      setVal('plan-docente-input', p.nombreDocente || '');
+      const curPlanDoc = (typeof window.resolveCurrentDocente === 'function') ? window.resolveCurrentDocente() : { nombre: '' };
+      setVal('plan-docente-input', curPlanDoc.nombre || p.nombreDocente || '');
       setVal('plan-fecha-input', p.fecha || '');
       setVal('plan-asig-input', p.nombreAsignatura || '');
       setVal('plan-carrera-input', p.carrera || '');
@@ -2640,6 +2774,11 @@
 
       if (typeof window.updateSecuenciaTotals === 'function') {
         window.updateSecuenciaTotals();
+      }
+
+      // Render Referencias Bibliográficas del Tema
+      if (typeof window.renderPlanReferenciasBibliograficas === 'function') {
+        window.renderPlanReferenciasBibliograficas(sheetIndex);
       }
 
       // Auto-resize all textareas to show 100% text without scrollbars
@@ -2753,6 +2892,23 @@
       if (typeof window.updateSecuenciaPracticaTotals === 'function') {
         window.updateSecuenciaPracticaTotals();
       }
+
+      // Sync Referencias Bibliográficas del Tema
+      const refList = [];
+      const refCards = document.querySelectorAll('#plan-referencias-list .plan-ref-item');
+      refCards.forEach(item => {
+        const sel = item.querySelector('.plan-ref-select');
+        const desde = item.querySelector('.plan-ref-desde');
+        const hasta = item.querySelector('.plan-ref-hasta');
+        if (sel && sel.value) {
+          refList.push({
+            texto: sel.value,
+            pagDesde: desde ? desde.value.trim() : '',
+            pagHasta: hasta ? hasta.value.trim() : ''
+          });
+        }
+      });
+      p.referenciasBibliograficas = refList;
 
       localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
     };
@@ -3328,6 +3484,12 @@ window.saveCurrentDocenteData = async function(silent = false) {
   if (document.getElementById('pac-competencia-global')) curPac.competenciaGlobal = document.getElementById('pac-competencia-global').value;
   if (document.getElementById('pac-unidad-competencia')) curPac.unidadCompetencia = document.getElementById('pac-unidad-competencia').value;
 
+  // Persist Docente Responsable fields
+  if (document.getElementById('pac-docente-nombre')) curPac.nombreDocente = document.getElementById('pac-docente-nombre').value;
+  if (document.getElementById('pac-docente-email')) curPac.emailDocente = document.getElementById('pac-docente-email').value;
+  if (document.getElementById('pac-docente-formacion')) curPac.formacionDocente = document.getElementById('pac-docente-formacion').value;
+  if (document.getElementById('pac-docente-telefono')) curPac.telefonoDocente = document.getElementById('pac-docente-telefono').value;
+
   // Persist PAC Práctico fields (Task 5.2)
   if (document.getElementById('pac-prac-escenario')) curPac.pracEscenario = document.getElementById('pac-prac-escenario').value;
   if (document.getElementById('pac-prac-bioseguridad')) curPac.pracBioseguridad = document.getElementById('pac-prac-bioseguridad').value;
@@ -3740,6 +3902,24 @@ window.importProgramaDocx = function() {
 
 
 
+// Helper to resolve currently active teacher identity from SEA or auth session
+window.resolveCurrentDocente = function() {
+  if (window.__ACTIVE_DOCENTE__) {
+    const d = window.__ACTIVE_DOCENTE__;
+    return {
+      nombre: d.nombreCompleto || d.teacherName || '',
+      email: d.email || (d.ci ? `${d.ci}@unitepc.edu.bo` : '')
+    };
+  }
+  const user = (typeof window.getCurrentUser === 'function') ? window.getCurrentUser() : null;
+  if (user) {
+    const nombre = user.nombreCompleto || ((user.nombres || '') + ' ' + (user.apellidos || '')).trim() || user.username || '';
+    const email = user.email || (user.ci ? `${user.ci}@unitepc.edu.bo` : '');
+    return { nombre, email };
+  }
+  return { nombre: '', email: '' };
+};
+
 // Helper to populate PAC Pedagógico Oficial in the DOM
 window.populatePacDom = function(data) {
 
@@ -3768,10 +3948,16 @@ window.populatePacDom = function(data) {
   setVal('pac-horas-tp', data.horasTeoricasPracticas || '2T / 4P');
 
   // 2.- Docente Responsable
-  setVal('pac-docente-nombre', data.nombreDocente);
-  setVal('pac-docente-email', data.emailDocente);
-  setVal('pac-docente-formacion', data.formacionDocente);
-  setVal('pac-docente-telefono', data.telefonoDocente);
+  // Auto-rellena estrictamente sólo la información disponible desde el SEA o sesión activa (nombre y email).
+  // Formación y teléfono NO se rellenan automáticamente; sólo cargan lo guardado previamente por el usuario.
+  const currentDoc = (typeof window.resolveCurrentDocente === 'function') ? window.resolveCurrentDocente() : { nombre: '', email: '' };
+  const docenteNombreToSet = currentDoc.nombre || data.nombreDocente || '';
+  const docenteEmailToSet = currentDoc.email || data.emailDocente || '';
+
+  setVal('pac-docente-nombre', docenteNombreToSet);
+  setVal('pac-docente-email', docenteEmailToSet);
+  setVal('pac-docente-formacion', data.formacionDocente || '');
+  setVal('pac-docente-telefono', data.telefonoDocente || '');
 
   // 3 & 4.- Justificación & Propósito General
   setVal('pac-justificacion-input', data.justificacion);
@@ -4366,12 +4552,20 @@ document.addEventListener('change', (e) => {
         el.textContent = docente.ci;
       });
 
-      // Update inputs with teacher information
-      const docenteInputs = ['docente-input', 'caratula-docente', 'pac-docente-input', 'planes-docente-input'];
-      docenteInputs.forEach(id => {
+      // Update inputs with teacher information (auto-rellena sólo lo disponible en SEA/sesión)
+      const currentDocName = docente.nombreCompleto || '';
+      const currentDocEmail = docente.email || (docente.ci ? `${docente.ci}@unitepc.edu.bo` : '');
+
+      const docNameInputs = ['docente-input', 'caratula-docente', 'pac-docente-nombre', 'plan-docente-input'];
+      docNameInputs.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.value = docente.nombreCompleto;
+        if (el) el.value = currentDocName;
       });
+
+      const pacEmailInput = document.getElementById('pac-docente-email');
+      if (pacEmailInput) {
+        pacEmailInput.value = currentDocEmail;
+      }
 
       window.renderDynamicSidebarForDocente(docente, courses, activeGroups);
 
