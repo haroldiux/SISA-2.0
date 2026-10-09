@@ -53,13 +53,30 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportPacXlsx(Pac pac) throws Exception {
-        return exportPacXlsx(pac, null);
+        return exportPacXlsx(pac, null, null);
     }
 
     public byte[] exportPacXlsx(Pac pac, Long carreraId) throws Exception {
-        try (InputStream is = this.loadTemplate("template_pac.xlsx");
-             XlsxTemplateCloner cloner = new XlsxTemplateCloner(is)) {
+        return exportPacXlsx(pac, carreraId, null);
+    }
 
+    public byte[] exportPacXlsx(Pac pac, Long carreraId, String pacType) throws Exception {
+        String effectiveType = (pacType != null && !pacType.isBlank())
+                ? pacType
+                : (pac.getPacType() != null ? pac.getPacType() : "GRAL");
+        String templateName = "PRACTICO".equalsIgnoreCase(effectiveType)
+                ? "template_pac_practico.xlsx"
+                : "template_pac_gral.xlsx";
+
+        String resolvedTemplate = templateName;
+        try {
+            this.loadTemplate(templateName);
+        } catch (Exception e) {
+            resolvedTemplate = "template_pac.xlsx";
+        }
+
+        try (InputStream is = this.loadTemplate(resolvedTemplate);
+             XlsxTemplateCloner cloner = new XlsxTemplateCloner(is)) {
             XSSFSheet sheet = cloner.getSheetAt(0);
             if (sheet == null) {
                 throw new IllegalStateException("Sheet 0 not found in PAC template");

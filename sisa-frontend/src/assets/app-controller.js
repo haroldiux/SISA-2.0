@@ -427,41 +427,66 @@
     };
 
     window.vaciarPacYCronograma = function() {
-      if (!confirm('¿Deseas vaciar todos los campos pedagógicos del PAC y las sesiones del Cronograma para esta materia?')) return;
-      const pacIds = [
-        'pac-carrera-input', 'pac-codigo-input', 'pac-semestre-input', 'pac-asig-input',
-        'pac-tipo-curso', 'pac-modalidad', 'pac-prerequisito', 'pac-creditos',
-        'pac-sesiones-sem', 'pac-horas-tp', 'pac-docente-nombre', 'pac-docente-email',
-        'pac-docente-formacion', 'pac-docente-telefono', 'pac-justificacion-input',
-        'pac-proposito-input', 'pac-competencia-global', 'pac-unidad-competencia',
-        'pac-metodologia-aula', 'pac-metodologia-escenarios', 'pac-metodologia-evaluacion',
-        'pac-criterios-reglamento', 'pac-normativa-curso', 'pac-biblio-oficial'
-      ];
-      pacIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      activePacElementosCompetencia = [];
-      if (typeof window.renderPacElementosCompetencia === 'function') {
-        window.renderPacElementosCompetencia();
+      const isPractico = (window.activePacType === 'PRACTICO');
+      const docName = isPractico ? 'PAC Práctico' : 'PAC General y el Cronograma';
+      if (!confirm(`¿Deseas vaciar los datos de ${docName} para esta materia?`)) return;
+
+      if (isPractico) {
+        const pracIds = [
+          'pac-prac-escenario', 'pac-prac-bioseguridad', 'pac-prac-equipamiento',
+          'pac-prac-fase1-prep', 'pac-prac-fase2-guiada', 'pac-prac-fase3-autonoma', 'pac-prac-fase4-cierre',
+          'pac-prac-eval-criterios', 'pac-prac-eval-instrumentos',
+          'pac-justificacion-input', 'pac-proposito-input', 'pac-competencia-global', 'pac-unidad-competencia'
+        ];
+        pracIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        window.pacPracticasList = [];
+        if (typeof window.renderPacPracticasTable === 'function') {
+          window.renderPacPracticasTable();
+        }
+        window.activePacPracData = null;
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_pac_prac_' + activeMateriaKey);
+        }
+        window.showToast('🗑️ PAC Práctico vaciado.');
+      } else {
+        const pacIds = [
+          'pac-justificacion-input', 'pac-proposito-input', 'pac-competencia-global', 'pac-unidad-competencia',
+          'pac-metodologia-aula', 'pac-metodologia-lab', 'pac-metodologia-salud',
+          'pac-sistema-evaluacion', 'pac-normativa-acuerdos', 'pac-bibliografia-textarea',
+          'pac-p1-teorica', 'pac-p1-practica', 'pac-p2-teorica', 'pac-p2-practica',
+          'pac-ef-teorica', 'pac-ef-practica'
+        ];
+        pacIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        activePacElementosCompetencia = [];
+        if (typeof window.renderPacElementosCompetencia === 'function') {
+          window.renderPacElementosCompetencia();
+        }
+        const cronTbody = document.getElementById('cronograma-table-body');
+        if (cronTbody) {
+          cronTbody.innerHTML = `
+            <tr>
+              <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma</p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+              </td>
+            </tr>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+        }
+        window.activePacGralData = null;
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_pac_gral_' + activeMateriaKey);
+          localStorage.removeItem('sisa_saved_pac_' + activeMateriaKey);
+        }
+        window.showToast('🗑️ PAC General y Cronograma vaciados.');
       }
-      const cronTbody = document.getElementById('cronograma-table-body');
-      if (cronTbody) {
-        cronTbody.innerHTML = `
-          <tr>
-            <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
-              <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-              <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma</p>
-              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
-            </td>
-          </tr>
-        `;
-        if (window.lucide) window.lucide.createIcons();
-      }
-      if (activeMateriaKey) {
-        localStorage.removeItem('sisa_saved_pac_' + activeMateriaKey);
-      }
-      window.showToast('🗑️ PAC y Cronograma vaciados.');
     };
 
     window.vaciarPlanesClase = function() {
@@ -748,6 +773,150 @@
       }
     };
 
+    window.activePacGralData = null;
+    window.activePacPracData = null;
+
+    window.syncCurrentPacDomToState = function() {
+      const currentType = window.activePacType || 'GRAL';
+      const mKey = activeMateriaKey;
+      if (!mKey) return;
+
+      const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      const targetObj = (currentType === 'PRACTICO')
+        ? (window.activePacPracData || {})
+        : (window.activePacGralData || {});
+
+      targetObj.carrera = getVal('pac-carrera-input');
+      targetObj.nombreAsignatura = getVal('pac-asig-input');
+      targetObj.codigoAsignatura = getVal('pac-codigo-input');
+      targetObj.tipoCurso = getVal('pac-tipo-curso');
+      targetObj.modalidad = getVal('pac-modalidad');
+      targetObj.semestre = getVal('pac-semestre-input');
+      targetObj.preRequisito = getVal('pac-prerequisito');
+      targetObj.creditos = getVal('pac-creditos');
+      targetObj.sesionesSemanales = getVal('pac-sesiones-sem');
+      targetObj.horasTeoricasPracticas = getVal('pac-horas-tp');
+
+      targetObj.nombreDocente = getVal('pac-docente-nombre');
+      targetObj.emailDocente = getVal('pac-docente-email');
+      targetObj.formacionDocente = getVal('pac-docente-formacion');
+      targetObj.telefonoDocente = getVal('pac-docente-telefono');
+
+      targetObj.justificacion = getVal('pac-justificacion-input');
+      targetObj.propositoGeneral = getVal('pac-proposito-input');
+      targetObj.competenciaGlobal = getVal('pac-competencia-global');
+      targetObj.unidadCompetencia = getVal('pac-unidad-competencia');
+
+      if (currentType === 'PRACTICO') {
+        targetObj.pracEscenario = getVal('pac-prac-escenario');
+        targetObj.pracBioseguridad = getVal('pac-prac-bioseguridad');
+        targetObj.pracEquipamiento = getVal('pac-prac-equipamiento');
+        targetObj.pracFase1Prep = getVal('pac-prac-fase1-prep');
+        targetObj.pracFase2Guiada = getVal('pac-prac-fase2-guiada');
+        targetObj.pracFase3Autonoma = getVal('pac-prac-fase3-autonoma');
+        targetObj.pracFase4Cierre = getVal('pac-prac-fase4-cierre');
+        targetObj.pracEvalCriterios = getVal('pac-prac-eval-criterios');
+        targetObj.pracEvalInstrumentos = getVal('pac-prac-eval-instrumentos');
+        targetObj.pacPracticas = window.pacPracticasList || [];
+        window.activePacPracData = targetObj;
+        localStorage.setItem('sisa_saved_pac_prac_' + mKey, JSON.stringify(targetObj));
+      } else {
+        targetObj.elementosCompetencia = window.activePacElementosCompetencia || [];
+        targetObj.metodologiaAula = getVal('pac-metodologia-aula');
+        targetObj.metodologiaLab = getVal('pac-metodologia-lab');
+        targetObj.metodologiaSalud = getVal('pac-metodologia-salud');
+        targetObj.sistemaEvaluacion = getVal('pac-sistema-evaluacion');
+        targetObj.p1NotaTeorica = getVal('pac-p1-teorica');
+        targetObj.p1NotaPractica = getVal('pac-p1-practica');
+        targetObj.p2NotaTeorica = getVal('pac-p2-teorica');
+        targetObj.p2NotaPractica = getVal('pac-p2-practica');
+        targetObj.efNotaTeorica = getVal('pac-ef-teorica');
+        targetObj.efNotaPractica = getVal('pac-ef-practica');
+        targetObj.normativaCurso = getVal('pac-normativa-acuerdos');
+        targetObj.bibliografiaOficial = getVal('pac-bibliografia-textarea');
+        if (typeof window.extractCurrentCronogramaFromDom === 'function') {
+          const liveCron = window.extractCurrentCronogramaFromDom();
+          if (liveCron.length > 0) targetObj.matriz7 = liveCron;
+        }
+        window.activePacGralData = targetObj;
+        localStorage.setItem('sisa_saved_pac_gral_' + mKey, JSON.stringify(targetObj));
+        localStorage.setItem('sisa_saved_pac_' + mKey, JSON.stringify(targetObj));
+      }
+    };
+
+    window.loadActivePacStateToDom = function(type) {
+      const currentType = type || window.activePacType || 'GRAL';
+      const mKey = activeMateriaKey;
+      const defData = (mKey && materiasData[mKey]) ? materiasData[mKey] : {};
+      const officialCode = defData.codigo || 'SIS-423';
+
+      if (currentType === 'PRACTICO') {
+        let prac = null;
+        const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + mKey);
+        if (savedPrac) {
+          try { prac = JSON.parse(savedPrac); } catch(e) {}
+        }
+        if (!prac) {
+          prac = {
+            carrera: defData.carrera || '',
+            nombreAsignatura: defData.nombre || '',
+            codigoAsignatura: officialCode,
+            semestre: defData.semestre || '',
+            creditos: defData.creditos || '',
+            horasTeoricasPracticas: (defData.horasPracticas ? defData.horasPracticas + 'P (Laboratorio / Simulación)' : '4P'),
+            sesionesSemanales: '1 a 2 Sesiones Prácticas',
+            justificacion: '',
+            propositoGeneral: '',
+            competenciaGlobal: defData.macroCompetencia || '',
+            unidadCompetencia: '',
+            pracEscenario: 'Laboratorio de Computación / Simulación Técnica',
+            pracBioseguridad: 'Normativa institucional de seguridad, orden, cuidado de equipos y registro de bitácora.',
+            pracEquipamiento: 'PCs con entorno de desarrollo, servidores locales y conectividad institucional.',
+            pracFase1Prep: 'Presentación de objetivos, revisión de conceptos previos y lineamientos de la práctica.',
+            pracFase2Guiada: 'Demostración paso a paso del procedimiento experimental/técnico por el docente.',
+            pracFase3Autonoma: 'Desarrollo independiente del protocolo por los equipos de estudiantes y captura de evidencias.',
+            pracFase4Cierre: 'Análisis de resultados, discusión de casos de prueba y conclusiones técnicas.',
+            pracEvalCriterios: 'Correcta implementación de requerimientos, estabilidad de ejecución y sustentación técnica.',
+            pracEvalInstrumentos: 'Rúbrica de laboratorio y lista de cotejo de evidencias.',
+            pacPracticas: [
+              { numero: 1, titulo: 'Práctica 1: Configuración de Entorno Experimental y Normas de Trabajo', escenario: 'Laboratorio Asignado', duracion: '2', desempeno: 'Fases 1 y 2: Preparación y reconocimiento del entorno', instrumento: 'Lista de Cotejo' },
+              { numero: 2, titulo: 'Práctica 2: Implementación Técnica y Verificación de Resultados', escenario: 'Laboratorio Asignado', duracion: '2', desempeno: 'Fases 2 y 3: Ejecución autónoma y pruebas', instrumento: 'Rúbrica de Práctica' }
+            ]
+          };
+        }
+        window.activePacPracData = prac;
+        window.populatePacDom(prac);
+      } else {
+        let gral = null;
+        const savedGral = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
+        if (savedGral) {
+          try { gral = JSON.parse(savedGral); } catch(e) {}
+        }
+        if (!gral) {
+          gral = {
+            carrera: defData.carrera || '',
+            nombreAsignatura: defData.nombre || '',
+            codigoAsignatura: officialCode,
+            semestre: defData.semestre || '',
+            creditos: defData.creditos || '',
+            horasTeoricasPracticas: (defData.horasTeoricas ? defData.horasTeoricas + 'T / ' : '') + (defData.horasPracticas ? defData.horasPracticas + 'P' : ''),
+            sesionesSemanales: '2 Sesiones (4 Horas)',
+            justificacion: '',
+            propositoGeneral: '',
+            competenciaGlobal: defData.macroCompetencia || '',
+            unidadCompetencia: '',
+            metodologiaAula: '',
+            sistemaEvaluacion: '',
+            normativaCurso: '',
+            elementosCompetencia: [],
+            matriz7: []
+          };
+        }
+        window.activePacGralData = gral;
+        window.populatePacDom(gral);
+      }
+    };
+
     window.renderDynamicPacForm = function(pacType) {
       const data = materiasData[activeMateriaKey];
       const requiredPac = (data && data.components && data.components.requiredPac) ? data.components.requiredPac : ['GRAL'];
@@ -755,6 +924,7 @@
 
       const currentType = pacType || window.activePacType || (hasMultiple ? requiredPac[0] : requiredPac[0] || 'GRAL');
       window.activePacType = currentType;
+      const isPractico = (currentType === 'PRACTICO');
 
       const container = document.getElementById('pac-type-switcher-container');
       if (container) {
@@ -775,7 +945,7 @@
               <div class="flex items-center gap-2 text-[11px]">
                 <span class="text-slate-500 dark:text-slate-400 font-medium">Asignación Multitipo:</span>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${currentType === 'PRACTICO' ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700'}">
-                  ${currentType === 'PRACTICO' ? '🔬 Modelo Metodológico en 4 Fases' : '📄 PAC General Institucional'}
+                  ${currentType === 'PRACTICO' ? '🔬 PAC Práctico Oficial (Laboratorio / Simulación)' : '📄 PAC General Institucional (Teoría)'}
                 </span>
               </div>
             </div>
@@ -798,28 +968,108 @@
         }
       }
 
+      // Secciones específicas de PAC Práctico
       const secContenidos = document.getElementById('pac-sec-practico-contenidos');
-      const secMetodologia = document.getElementById('pac-sec-practico-metodologia');
-      const secCronograma = document.getElementById('pac-sec-practico-cronograma');
+      const secMetodologiaPrac = document.getElementById('pac-sec-practico-metodologia');
+      const secCronogramaPrac = document.getElementById('pac-sec-practico-cronograma');
+      const secEvaluacionPrac = document.getElementById('pac-sec-practico-evaluacion');
 
-      if (currentType === 'PRACTICO') {
+      // Secciones específicas de PAC General (Teoría)
+      const secElementos = document.getElementById('pac-sec-6-elementos');
+      const secMetodologiaGral = document.getElementById('pac-sec-8-metodologia');
+      const secEvaluacionGral = document.getElementById('pac-sec-9-evaluacion');
+      const secNormativa = document.getElementById('pac-sec-10-normativa');
+      const secBibliografia = document.getElementById('pac-sec-14-bibliografia');
+
+      if (isPractico) {
         if (secContenidos) secContenidos.classList.remove('hidden');
-        if (secMetodologia) secMetodologia.classList.remove('hidden');
-        if (secCronograma) secCronograma.classList.remove('hidden');
+        if (secMetodologiaPrac) secMetodologiaPrac.classList.remove('hidden');
+        if (secCronogramaPrac) secCronogramaPrac.classList.remove('hidden');
+        if (secEvaluacionPrac) secEvaluacionPrac.classList.remove('hidden');
+
+        if (secElementos) secElementos.classList.add('hidden');
+        if (secMetodologiaGral) secMetodologiaGral.classList.add('hidden');
+        if (secEvaluacionGral) secEvaluacionGral.classList.add('hidden');
+        if (secNormativa) secNormativa.classList.add('hidden');
+        if (secBibliografia) secBibliografia.classList.add('hidden');
+
         window.renderPacPracticasTable();
       } else {
         if (secContenidos) secContenidos.classList.add('hidden');
-        if (secMetodologia) secMetodologia.classList.add('hidden');
-        if (secCronograma) secCronograma.classList.add('hidden');
+        if (secMetodologiaPrac) secMetodologiaPrac.classList.add('hidden');
+        if (secCronogramaPrac) secCronogramaPrac.classList.add('hidden');
+        if (secEvaluacionPrac) secEvaluacionPrac.classList.add('hidden');
+
+        if (secElementos) secElementos.classList.remove('hidden');
+        if (secMetodologiaGral) secMetodologiaGral.classList.remove('hidden');
+        if (secEvaluacionGral) secEvaluacionGral.classList.remove('hidden');
+        if (secNormativa) secNormativa.classList.remove('hidden');
+        if (secBibliografia) secBibliografia.classList.remove('hidden');
       }
+
+      // Actualizar rótulo y placeholder de Horas
+      const lblHoras = document.getElementById('pac-horas-tp-label');
+      const inputHoras = document.getElementById('pac-horas-tp');
+      if (lblHoras && inputHoras) {
+        if (isPractico) {
+          lblHoras.innerText = 'HORAS PRÁCTICAS:';
+          inputHoras.placeholder = 'ej. 4 Horas Prácticas (Laboratorio)';
+        } else {
+          lblHoras.innerText = 'TEÓRICAS / PRÁCTICAS:';
+          inputHoras.placeholder = 'ej. 2T / 4P';
+        }
+      }
+
+      // Título de Sección 3 y 4
+      const sec3Title = document.getElementById('pac-sec-3-4-title');
+      const lblJust = document.getElementById('pac-justificacion-label');
+      const lblProp = document.getElementById('pac-proposito-label');
+      if (sec3Title) {
+        sec3Title.innerHTML = isPractico
+          ? '<i data-lucide="align-left" class="w-4 h-4"></i><span>3 y 4.- Justificación & Propósito de la Práctica (Laboratorio / Simulación)</span>'
+          : '<i data-lucide="align-left" class="w-4 h-4"></i><span>3 y 4.- Justificación & Propósito General</span>';
+      }
+      if (lblJust) {
+        lblJust.innerText = isPractico
+          ? '3.- JUSTIFICACIÓN DE LA FORMACIÓN PRÁCTICA:'
+          : '3.- JUSTIFICACIÓN DE LA ASIGNATURA:';
+      }
+      if (lblProp) {
+        lblProp.innerText = isPractico
+          ? '4.- PROPÓSITO GENERAL DE LA PRÁCTICA / LABORATORIO:'
+          : '4.- PROPÓSITO GENERAL DE LA UNIDAD DE FORMACIÓN:';
+      }
+
+      // Título de Sección 5
+      const sec5Title = document.getElementById('pac-sec-5-title');
+      if (sec5Title) {
+        sec5Title.innerHTML = isPractico
+          ? '<i data-lucide="award" class="w-4 h-4"></i><span>5.- Alineación Curricular (Práctica)</span>'
+          : '<i data-lucide="award" class="w-4 h-4"></i><span>5.- Competencias</span>';
+      }
+
+      // Actualizar textos de botones superiores
+      const btnVaciarText = document.getElementById('btn-pac-vaciar-text');
+      const btnImportText = document.getElementById('btn-pac-import-text');
+      const btnExportText = document.getElementById('btn-pac-export-text');
+      if (btnVaciarText) btnVaciarText.innerText = isPractico ? 'Vaciar PAC Práctico' : 'Vaciar PAC General';
+      if (btnImportText) btnImportText.innerText = isPractico ? 'Importar PAC Práctico (.xlsx)' : 'Importar PAC General (.xlsx)';
+      if (btnExportText) btnExportText.innerText = isPractico ? 'Exportar PAC Práctico (.xlsx)' : 'Exportar PAC General (.xlsx)';
 
       if (window.lucide) window.lucide.createIcons();
     };
 
     window.switchActivePacType = function(type) {
+      if (type === window.activePacType) return;
+      if (typeof window.syncCurrentPacDomToState === 'function') {
+        window.syncCurrentPacDomToState();
+      }
       window.activePacType = type;
+      if (typeof window.loadActivePacStateToDom === 'function') {
+        window.loadActivePacStateToDom(type);
+      }
       window.renderDynamicPacForm(type);
-      window.showToast('📋 Visualizando ' + (type === 'PRACTICO' ? 'PAC Práctico (Laboratorio)' : 'PAC General (Teoría)'));
+      window.showToast('📋 Visualizando ' + (type === 'PRACTICO' ? 'PAC Práctico (Laboratorio / Simulación)' : 'PAC General (Teoría)'));
     };
 
     // ── TASK 5.3 & 5.4: DYNAMIC PLAN DE CLASES & SHARED/PERSONAL UI SEPARATION ──
@@ -1328,11 +1578,16 @@
         window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
         window.location.href = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
       } else if (type === 'pac_cronograma_xlsx' || type === 'pac_xlsx') {
-        window.showToast('📥 Generando y descargando PAC + Cronograma (.xlsx)...');
-        window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}`;
+        const pacType = window.activePacType || 'GRAL';
+        const sep = careerParam ? '&' : '?';
+        const label = (pacType === 'PRACTICO') ? 'PAC Práctico (.xlsx)' : 'PAC General + Cronograma (.xlsx)';
+        window.showToast(`📥 Generando y descargando ${label}...`);
+        window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=${encodeURIComponent(pacType)}`;
       } else if (type === 'planes_xlsx') {
+        const planType = window.activePlanType || 'TEORICO_PRACTICO';
+        const sep = careerParam ? '&' : '?';
         window.showToast('📥 Generando y descargando Planes de Clase (.xlsx)...');
-        window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}`;
+        window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=${encodeURIComponent(planType)}`;
       } else {
         const files = {
           'docx': '1. Programa Analitico (.docx)',
@@ -3472,42 +3727,10 @@ window.saveCurrentDocenteData = async function(silent = false) {
   localStorage.setItem('sisa_active_materia_key', activeMateriaKey);
   localStorage.setItem('sisa_saved_user_configured', 'true');
 
-  // Also persist PAC state including dynamic elementos de competencia
-  const savedPacStr = localStorage.getItem('sisa_saved_pac_' + activeMateriaKey);
-  let curPac = {};
-  if (savedPacStr) {
-    try { curPac = JSON.parse(savedPacStr); } catch(e) {}
+  // Also persist PAC state with dual isolation (GRAL vs PRACTICO)
+  if (typeof window.syncCurrentPacDomToState === 'function') {
+    window.syncCurrentPacDomToState();
   }
-  curPac.elementosCompetencia = activePacElementosCompetencia;
-  if (document.getElementById('pac-justificacion-input')) curPac.justificacion = document.getElementById('pac-justificacion-input').value;
-  if (document.getElementById('pac-proposito-input')) curPac.propositoGeneral = document.getElementById('pac-proposito-input').value;
-  if (document.getElementById('pac-competencia-global')) curPac.competenciaGlobal = document.getElementById('pac-competencia-global').value;
-  if (document.getElementById('pac-unidad-competencia')) curPac.unidadCompetencia = document.getElementById('pac-unidad-competencia').value;
-
-  // Persist Docente Responsable fields
-  if (document.getElementById('pac-docente-nombre')) curPac.nombreDocente = document.getElementById('pac-docente-nombre').value;
-  if (document.getElementById('pac-docente-email')) curPac.emailDocente = document.getElementById('pac-docente-email').value;
-  if (document.getElementById('pac-docente-formacion')) curPac.formacionDocente = document.getElementById('pac-docente-formacion').value;
-  if (document.getElementById('pac-docente-telefono')) curPac.telefonoDocente = document.getElementById('pac-docente-telefono').value;
-
-  // Persist PAC Práctico fields (Task 5.2)
-  if (document.getElementById('pac-prac-escenario')) curPac.pracEscenario = document.getElementById('pac-prac-escenario').value;
-  if (document.getElementById('pac-prac-bioseguridad')) curPac.pracBioseguridad = document.getElementById('pac-prac-bioseguridad').value;
-  if (document.getElementById('pac-prac-equipamiento')) curPac.pracEquipamiento = document.getElementById('pac-prac-equipamiento').value;
-  if (document.getElementById('pac-prac-fase1-prep')) curPac.pracFase1Prep = document.getElementById('pac-prac-fase1-prep').value;
-  if (document.getElementById('pac-prac-fase2-guiada')) curPac.pracFase2Guiada = document.getElementById('pac-prac-fase2-guiada').value;
-  if (document.getElementById('pac-prac-fase3-autonoma')) curPac.pracFase3Autonoma = document.getElementById('pac-prac-fase3-autonoma').value;
-  if (document.getElementById('pac-prac-fase4-cierre')) curPac.pracFase4Cierre = document.getElementById('pac-prac-fase4-cierre').value;
-  curPac.pacPracticas = window.pacPracticasList || [];
-  
-  if (typeof window.extractCurrentCronogramaFromDom === 'function') {
-    const liveCron = window.extractCurrentCronogramaFromDom();
-    if (liveCron.length > 0) {
-      curPac.matriz7 = liveCron;
-    }
-  }
-  
-  localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(curPac));
 
 
   try {
@@ -3590,48 +3813,12 @@ window.loadSavedDocenteData = function(materiaKey) {
   window.renderAnaliticoUnidades();
   window.renderAnaliticoBibliografia(pData.bibliografia || []);
 
-  // 2. PAC Pedagógico
-  const savedPac = localStorage.getItem('sisa_saved_pac_' + mKey);
-  if (savedPac) {
-    try {
-      const pacData = JSON.parse(savedPac);
-      if (pacData.codigoAsignatura && (pacData.codigoAsignatura.startsWith('P-') || pacData.codigoAsignatura.startsWith('MAT-'))) {
-        pacData.codigoAsignatura = officialCode;
-      }
-      if (!pacData.matriz7 || !Array.isArray(pacData.matriz7)) {
-        pacData.matriz7 = [];
-      }
-      if (typeof window.populatePacDom === 'function') {
-        window.populatePacDom(pacData);
-      }
-    } catch (pe) {}
-  } else {
-    const defPac = {
-      carrera: defData.carrera || '',
-      nombreAsignatura: defData.nombre || '',
-      codigoAsignatura: officialCode,
-      semestre: defData.semestre || '',
-      creditos: defData.creditos || '',
-      horasTeoricasPracticas: (defData.horasTeoricas ? defData.horasTeoricas + 'T / ' : '') + (defData.horasPracticas ? defData.horasPracticas + 'P' : ''),
-      justificacion: '',
-      propositoGeneral: '',
-      competenciaGlobal: '',
-      unidadCompetencia: '',
-      elementoCompetencia1: '',
-      elementoCompetencia2: '',
-      metodologiaAula: '',
-      sistemaEvaluacion: '',
-      normativaCurso: '',
-      p1NotaTeorica: '', p1NotaPractica: '',
-      p2NotaTeorica: '', p2NotaPractica: '',
-      efNotaTeorica: '', efNotaPractica: '',
-      bibliografia: [],
-      elementosCompetencia: [],
-      matriz7: []
-    };
-    if (typeof window.populatePacDom === 'function') {
-      window.populatePacDom(defPac);
-    }
+  // 2. PAC Pedagógico (Dual Isolation: General vs Práctico)
+  if (typeof window.loadActivePacStateToDom === 'function') {
+    window.loadActivePacStateToDom(window.activePacType);
+  }
+  if (typeof window.renderDynamicPacForm === 'function') {
+    window.renderDynamicPacForm(window.activePacType);
   }
 
   // Load Planes de Clase (Tab 4)
@@ -4062,7 +4249,29 @@ window.populatePacDom = function(data) {
     }, 20);
   }
 
-  // PAC Práctico (Task 5.2)
+  // PAC Práctico (Task 5.2 & Official Blank Template Sections)
+  if (data.seccionesIdentificacion && data.seccionesIdentificacion.modeloMetodologico) {
+    const mm = data.seccionesIdentificacion.modeloMetodologico;
+    const f1 = mm['Fase 1'] || mm['Fase 1: Preparación'] || mm['Preparación'] || {};
+    const f2 = mm['Fase 2'] || mm['Fase 2: Ejecución guiada'] || mm['Ejecución guiada'] || {};
+    const f3 = mm['Fase 3'] || mm['Fase 3: Ejecución autónoma'] || mm['Ejecución autónoma'] || {};
+    const f4 = mm['Fase 4'] || mm['Fase 4: Cierre'] || mm['Cierre'] || {};
+    if (!data.pracFase1Prep) data.pracFase1Prep = f1.finalidad || f1.actuacionDocente || '';
+    if (!data.pracFase2Guiada) data.pracFase2Guiada = f2.finalidad || f2.actuacionDocente || '';
+    if (!data.pracFase3Autonoma) data.pracFase3Autonoma = f3.finalidad || f3.actuacionEstudiante || '';
+    if (!data.pracFase4Cierre) data.pracFase4Cierre = f4.finalidad || f4.actuacionDocente || '';
+  }
+
+  if (data.seccionesIdentificacion && Array.isArray(data.seccionesIdentificacion.evaluacionActividades)) {
+    const evals = data.seccionesIdentificacion.evaluacionActividades;
+    if (!data.pracEvalCriterios && evals.length > 0) {
+      data.pracEvalCriterios = evals.map(e => `${e.actividad || ''} (${e.tipo || ''}) - Ponderación: ${e.ponderacion || ''}`).join('\n');
+    }
+    if (!data.pracEvalInstrumentos && evals.length > 0) {
+      data.pracEvalInstrumentos = evals.map(e => `Instrumento: ${e.instrumento || ''} | Evidencia: ${e.evidencia || ''}`).join('\n');
+    }
+  }
+
   setVal('pac-prac-escenario', data.pracEscenario || data.escenario);
   setVal('pac-prac-bioseguridad', data.pracBioseguridad || data.bioseguridad);
   setVal('pac-prac-equipamiento', data.pracEquipamiento || data.equipamiento);
@@ -4070,9 +4279,20 @@ window.populatePacDom = function(data) {
   setVal('pac-prac-fase2-guiada', data.pracFase2Guiada || data.fase2Guiada);
   setVal('pac-prac-fase3-autonoma', data.pracFase3Autonoma || data.fase3Autonoma);
   setVal('pac-prac-fase4-cierre', data.pracFase4Cierre || data.fase4Cierre);
+  setVal('pac-prac-eval-criterios', data.pracEvalCriterios || data.evalCriterios || '');
+  setVal('pac-prac-eval-instrumentos', data.pracEvalInstrumentos || data.evalInstrumentos || '');
 
   if (data.pacPracticas && Array.isArray(data.pacPracticas) && data.pacPracticas.length > 0) {
     window.pacPracticasList = data.pacPracticas;
+  } else if (data.seccionesIdentificacion && Array.isArray(data.seccionesIdentificacion.contenidosPractica) && data.seccionesIdentificacion.contenidosPractica.length > 0) {
+    window.pacPracticasList = data.seccionesIdentificacion.contenidosPractica.map(cp => ({
+      numero: cp.numero || 1,
+      titulo: cp.titulo || '',
+      escenario: cp.escenario || 'Laboratorio Asignado',
+      duracion: cp.duracion || '2',
+      desempeno: cp.resultadoAprendizaje || '',
+      instrumento: cp.instrumento || 'Rúbrica de Práctica'
+    }));
   }
   if (typeof window.renderPacPracticasTable === 'function') {
     window.renderPacPracticasTable();
@@ -4114,24 +4334,38 @@ window.extractCurrentCronogramaFromDom = function() {
   return sessions;
 };
 
-// 3. Real Excel Import for PAC Matriz 7
+// 3. Real Excel Import for PAC (General vs Práctico)
 window.importPacExcel = function(goToCronograma) {
+  const currentPacType = window.activePacType || 'GRAL';
+  const docLabel = (currentPacType === 'PRACTICO') ? 'PAC Práctico' : 'PAC General';
   window.triggerFileUpload('.xlsx', async (file) => {
-    window.showToast('⏳ Subiendo y procesando PAC Excel: ' + file.name + '...');
+    window.showToast(`⏳ Subiendo y procesando ${docLabel} Excel: ${file.name}...`);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('asignacionId', String(activeAsignacionId || 1));
+    formData.append('pacType', currentPacType);
     try {
+      const headers = {
+        ...window.getAuthHeaders(),
+        'X-PAC-Type': currentPacType
+      };
       const resp = await fetch('/api/v1/office/import/pac', {
         method: 'POST',
-        headers: window.getAuthHeaders(),
+        headers: headers,
         body: formData
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const json = await resp.json();
       const data = json.data || json;
-      activePacData = data;
-      localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(data));
+
+      if (currentPacType === 'PRACTICO') {
+        window.activePacPracData = data;
+        localStorage.setItem('sisa_saved_pac_prac_' + activeMateriaKey, JSON.stringify(data));
+      } else {
+        window.activePacGralData = data;
+        localStorage.setItem('sisa_saved_pac_gral_' + activeMateriaKey, JSON.stringify(data));
+        localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(data));
+      }
 
       window.populatePacDom(data);
 
@@ -4145,18 +4379,24 @@ window.importPacExcel = function(goToCronograma) {
         }
       }, 50);
 
-      const sesCount = (data.matriz7 && Array.isArray(data.matriz7)) ? data.matriz7.length : 0;
-      if (goToCronograma || activeTabId === 'tab-cronograma-semanas') {
-        window.showToast('✅ ¡Cronograma importado con éxito! (' + sesCount + ' sesiones cargadas en la Matriz 7)');
-        window.switchDocMainTab('tab-cronograma-semanas');
-      } else {
-        window.showToast('✅ ¡PAC Pedagógico y Cronograma importados con éxito! (' + sesCount + ' sesiones)');
+      if (currentPacType === 'PRACTICO') {
+        const pracCount = (data.pacPracticas && Array.isArray(data.pacPracticas)) ? data.pacPracticas.length : 0;
+        window.showToast(`✅ ¡PAC Práctico importado con éxito! (${pracCount} prácticas de laboratorio registradas)`);
         window.switchDocMainTab('tab-pac-matrix');
+      } else {
+        const sesCount = (data.matriz7 && Array.isArray(data.matriz7)) ? data.matriz7.length : 0;
+        if (goToCronograma || activeTabId === 'tab-cronograma-semanas') {
+          window.showToast('✅ ¡Cronograma importado con éxito! (' + sesCount + ' sesiones cargadas en la Matriz 7)');
+          window.switchDocMainTab('tab-cronograma-semanas');
+        } else {
+          window.showToast('✅ ¡PAC General y Cronograma importados con éxito! (' + sesCount + ' sesiones)');
+          window.switchDocMainTab('tab-pac-matrix');
+        }
       }
 
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {
-      window.showToast('❌ Error al importar PAC: ' + err.message);
+      window.showToast('❌ Error al importar ' + docLabel + ': ' + err.message);
     }
   });
 };

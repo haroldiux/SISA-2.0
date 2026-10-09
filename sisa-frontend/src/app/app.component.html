@@ -1501,13 +1501,13 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <button type="button" onclick="window.vaciarPacYCronograma()" class="px-3 py-1.5 bg-white text-red-600 border border-red-200 dark:border-red-800/80 dark:bg-slate-800 dark:text-red-400 font-bold rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Vaciar campos del PAC y Cronograma">
-                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> Vaciar PAC
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i> <span id="btn-pac-vaciar-text">Vaciar PAC</span>
                     </button>
                     <button type="button" onclick="window.importPacExcel(false)" class="px-3.5 py-1.5 bg-white text-emerald-700 border border-emerald-300 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 font-bold rounded-lg text-xs hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
-                      <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar PAC (.xlsx)
+                      <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span id="btn-pac-import-text">Importar PAC (.xlsx)</span>
                     </button>
                     <button type="button" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
-                      <i data-lucide="table" class="w-3.5 h-3.5"></i> Exportar PAC + Cronograma (.xlsx)
+                      <i data-lucide="table" class="w-3.5 h-3.5"></i> <span id="btn-pac-export-text">Exportar PAC + Cronograma (.xlsx)</span>
                     </button>
                   </div>
                 </div>
@@ -1519,7 +1519,7 @@
                 <div id="pac-type-switcher-container" class="mb-4"></div>
 
                 <!-- 1.- Identificación de la Asignatura -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-1-identificacion" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:emerald-400"><i data-lucide="check-circle" class="w-4 h-4"></i><span>1.- Identificación de la Asignatura</span></div>
                   <div class="grid grid-cols-4 gap-4 text-xs">
                     <div class="col-span-2"><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CARRERA:</label><input id="pac-carrera-input" type="text" value="" placeholder="ej. INGENIERÍA DE SISTEMAS" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
@@ -1535,12 +1535,12 @@
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">PRE-REQUISITO:</label><input id="pac-prerequisito" type="text" value="" placeholder="ej. Pre-requisito" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">CRÉDITOS:</label><input id="pac-creditos" type="text" value="" placeholder="ej. 8.0" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">SESIONES SEMANALES:</label><input id="pac-sesiones-sem" type="text" value="" placeholder="ej. 2 Sesiones (4 Horas)" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
-                    <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">TEÓRICAS / PRÁCTICAS:</label><input id="pac-horas-tp" type="text" value="" placeholder="ej. 1.0 T / 2.0 P" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
+                    <div id="pac-horas-tp-col"><label id="pac-horas-tp-label" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">TEÓRICAS / PRÁCTICAS:</label><input id="pac-horas-tp" type="text" value="" placeholder="ej. 1.0 T / 2.0 P" class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
                   </div>
                 </div>
 
                 <!-- 2.- Docente Responsable -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-2-docente" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="user-check" class="w-4 h-4"></i><span>2.- Docente Responsable de la Asignatura</span></div>
                   <div class="grid grid-cols-2 gap-4 text-xs">
                     <div><label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">NOMBRE DEL DOCENTE:</label><input id="pac-docente-nombre" type="text" value="" placeholder="Nombre del docente..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></div>
@@ -1551,37 +1551,37 @@
                 </div>
 
                 <!-- 3 & 4.- Justificación & Propósito -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="align-left" class="w-4 h-4"></i><span>3 y 4.- Justificación & Propósito General</span></div>
+                <div id="pac-sec-3-4-justificacion" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div id="pac-sec-3-4-title" class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="align-left" class="w-4 h-4"></i><span>3 y 4.- Justificación & Propósito General</span></div>
                   <div class="space-y-3 text-xs">
                     <div>
-                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">3.- JUSTIFICACIÓN DE LA ASIGNATURA:</label>
+                      <label id="pac-justificacion-label" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">3.- JUSTIFICACIÓN DE LA ASIGNATURA:</label>
                       <textarea id="pac-justificacion-input" rows="3" placeholder="3.- Justificación de la asignatura..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
                     </div>
                     <div>
-                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">4.- PROPÓSITO GENERAL DE LA UNIDAD DE FORMACIÓN:</label>
+                      <label id="pac-proposito-label" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">4.- PROPÓSITO GENERAL DE LA UNIDAD DE FORMACIÓN:</label>
                       <textarea id="pac-proposito-input" rows="3" placeholder="4.- Propósito general de la unidad de formación..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
                     </div>
                   </div>
                 </div>
 
                 <!-- 5.- Competencias -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-                  <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="award" class="w-4 h-4"></i><span>5.- Competencias</span></div>
+                <div id="pac-sec-5-competencias" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                  <div id="pac-sec-5-title" class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="award" class="w-4 h-4"></i><span>5.- Competencias</span></div>
                   <div class="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">COMPETENCIA GLOBAL ESPECÍFICA:</label>
+                      <label id="pac-competencia-global-label" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">COMPETENCIA GLOBAL ESPECÍFICA:</label>
                       <textarea id="pac-competencia-global" rows="3" placeholder="Competencia global específica..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
                     </div>
                     <div>
-                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">UNIDAD DE COMPETENCIA ESPECÍFICA:</label>
+                      <label id="pac-unidad-competencia-label" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">UNIDAD DE COMPETENCIA ESPECÍFICA:</label>
                       <textarea id="pac-unidad-competencia" rows="3" placeholder="Unidad de competencia específica..." class="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900"></textarea>
                     </div>
                   </div>
                 </div>
 
                 <!-- 6.- Elementos de Competencia (Dinámico por Unidades) -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-6-elementos" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="flex items-center justify-between">
                     <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="list-checks" class="w-4 h-4"></i><span>6.- Elementos de Competencia (Articulados por Unidad)</span></div>
                     <button type="button" onclick="window.addPacElementoCompetencia()" class="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
@@ -1596,7 +1596,7 @@
 
 
                 <!-- 8.- Metodología General -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-8-metodologia" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="compass" class="w-4 h-4"></i><span>8.- Metodología General de la Asignatura</span></div>
                   <div class="space-y-3 text-xs">
                     <div>
@@ -1708,8 +1708,29 @@
                   </div>
                 </div>
 
+                <!-- PAC PRÁCTICO: 9.- EVALUACIÓN DE LAS ACTIVIDADES (Task 5.2 / Excel Oficial) -->
+                <div id="pac-sec-practico-evaluacion" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-teal-200 dark:border-teal-800/60 shadow-sm space-y-4 hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="form-section-title text-[#1F9FAD] dark:text-[#6CCBD5]">
+                      <i data-lucide="check-square" class="w-4 h-4"></i>
+                      <span>PAC Práctico • 9.- Evaluación de las Actividades</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border border-teal-200 dark:border-teal-700">Rúbrica & Ponderación</span>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Criterios e Indicadores de Desempeño Práctico:</label>
+                      <textarea id="pac-prac-eval-criterios" rows="3" placeholder="Criterios e indicadores de desempeño en laboratorio o simulación..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Instrumentos y Evidencias de Evaluación:</label>
+                      <textarea id="pac-prac-eval-instrumentos" rows="3" placeholder="Instrumentos (Rúbricas, listas de cotejo) y evidencias (informes técnicos, demostraciones)..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white leading-relaxed focus:bg-white dark:focus:bg-slate-900"></textarea>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- 9.- Sistema de Evaluación & Ponderaciones (EDITABLE) -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-9-evaluacion" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="check-square" class="w-4 h-4"></i><span>9.- Sistema de Evaluación & Ponderaciones</span></div>
                   <div class="text-xs">
                     <label class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Proceso Evaluador (Diagnóstica, Formativa y Sumativa):</label>
@@ -1741,7 +1762,7 @@
                 </div>
 
                 <!-- 12.- Criterios y Normativa de la Asignatura -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-10-normativa" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="alert-triangle" class="w-4 h-4"></i><span>12.- Criterios y Normativa de la Asignatura</span></div>
                   <div class="space-y-3 text-xs">
                     <div>
@@ -1752,7 +1773,7 @@
                 </div>
 
                 <!-- 14.- Bibliografía Oficial (Específica y Complementaria) -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div id="pac-sec-14-bibliografia" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                   <div class="form-section-title text-emerald-700 dark:text-emerald-400"><i data-lucide="book-marked" class="w-4 h-4"></i><span>14.- Bibliografía Oficial</span></div>
                   <div class="text-xs space-y-2">
                     <label class="font-bold text-slate-700 dark:text-slate-300 block">Bibliografía Específica y Complementaria:</label>

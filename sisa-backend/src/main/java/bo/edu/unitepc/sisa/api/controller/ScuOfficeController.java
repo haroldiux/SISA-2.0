@@ -64,12 +64,14 @@ public class ScuOfficeController {
     @GetMapping({"/export/pac/{id}", "/pac/{id}/export"})
     public ResponseEntity<byte[]> exportPac(
             @PathVariable Long id,
-            @RequestParam(value = "carreraId", required = false) Long carreraId) {
-        byte[] content = this.exportPacCmd.execute(id, carreraId);
+            @RequestParam(value = "carreraId", required = false) Long carreraId,
+            @RequestParam(value = "pacType", required = false) String pacType) {
+        byte[] content = this.exportPacCmd.execute(id, carreraId, pacType);
+        String filename = ("PRACTICO".equalsIgnoreCase(pacType)) ? "PAC_Practico_" + id + ".xlsx" : "PAC_General_" + id + ".xlsx";
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"PAC_Matriz7_" + id + ".xlsx\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(mediaType)
                 .body(content);
     }

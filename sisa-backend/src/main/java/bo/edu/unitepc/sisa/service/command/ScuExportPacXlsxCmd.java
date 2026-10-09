@@ -28,16 +28,21 @@ public class ScuExportPacXlsxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long pacId) {
-        return execute(pacId, null);
+        return execute(pacId, null, null);
     }
 
     @Transactional(readOnly = true)
     public byte[] execute(Long pacId, Long carreraId) {
+        return execute(pacId, carreraId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long pacId, Long carreraId, String pacType) {
         Pac pac = this.pacRepository.findById(pacId)
                 .orElseThrow(() -> new ScuException("PAC_NOT_FOUND", "PAC no encontrado con ID: " + pacId, HttpStatus.NOT_FOUND));
 
         try {
-            return this.officeTemplateService.exportPacXlsx(pac, carreraId);
+            return this.officeTemplateService.exportPacXlsx(pac, carreraId, pacType);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del PAC: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }
