@@ -28,11 +28,16 @@ public class ScuExportPlanClasesXlsxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long sesionId) {
+        return execute(sesionId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long sesionId, Long carreraId, String planType) {
         PlanDeClase plan = this.planRepository.findBySesionId(sesionId)
                 .orElseThrow(() -> new ScuException("PLAN_NOT_FOUND", "Plan de clase no encontrado para sesión: " + sesionId, HttpStatus.NOT_FOUND));
 
         try {
-            return this.officeTemplateService.exportPlanClasesXlsx(plan);
+            return this.officeTemplateService.exportPlanClasesXlsx(plan, planType);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del Plan de Clase: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }

@@ -136,7 +136,25 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportPlanClasesXlsx(PlanDeClase plan) throws Exception {
-        try (InputStream is = this.loadTemplate("template_plan_clases.xlsx");
+        return exportPlanClasesXlsx(plan, null);
+    }
+
+    public byte[] exportPlanClasesXlsx(PlanDeClase plan, String planType) throws Exception {
+        String templateName = "template_plan_teorico_practico.xlsx";
+        if ("PRACTICO".equalsIgnoreCase(planType)) {
+            templateName = "template_plan_practico.xlsx";
+        } else if ("TEORICO".equalsIgnoreCase(planType)) {
+            templateName = "template_plan_teorico.xlsx";
+        }
+
+        String resolvedTemplate = templateName;
+        try {
+            this.loadTemplate(templateName);
+        } catch (Exception e) {
+            resolvedTemplate = "template_plan_clases.xlsx";
+        }
+
+        try (InputStream is = this.loadTemplate(resolvedTemplate);
              XlsxTemplateCloner cloner = new XlsxTemplateCloner(is)) {
 
             XSSFSheet sheet = cloner.getSheetAt(0);

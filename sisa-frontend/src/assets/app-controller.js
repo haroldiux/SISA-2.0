@@ -490,19 +490,34 @@
     };
 
     window.vaciarPlanesClase = function() {
-      if (!confirm('¿Deseas vaciar todas las hojas y datos de los Planes de Clase para esta materia?')) return;
+      const isPractico = (window.activePlanType === 'PRACTICO');
+      const docName = isPractico ? 'Planes de Clase Prácticos' : 'Planes de Clase Teóricos';
+      if (!confirm(`¿Deseas vaciar todas las hojas y datos de los ${docName} para esta materia?`)) return;
+
       activePlanesList = [];
       activePlanSheetIndex = 0;
+
+      if (isPractico) {
+        window.activePlanesPracticoList = [];
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_planes_prac_' + activeMateriaKey);
+        }
+        window.showToast('🗑️ Planes de clase prácticos vaciados.');
+      } else {
+        window.activePlanesTeoricoList = [];
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_planes_teorico_' + activeMateriaKey);
+          localStorage.removeItem('sisa_saved_planes_' + activeMateriaKey);
+        }
+        window.showToast('🗑️ Planes de clase teóricos vaciados.');
+      }
+
       if (typeof window.renderPlanesSheetsTabs === 'function') {
         window.renderPlanesSheetsTabs();
       }
       if (typeof window.renderPlanSheetForm === 'function') {
         window.renderPlanSheetForm(0);
       }
-      if (activeMateriaKey) {
-        localStorage.removeItem('sisa_saved_planes_' + activeMateriaKey);
-      }
-      window.showToast('🗑️ Planes de clase vaciados.');
     };
 
     window.vaciarDocumentacionPestanaActiva = function() {
@@ -1065,15 +1080,324 @@
         window.syncCurrentPacDomToState();
       }
       window.activePacType = type;
+      window.activeCronogramaType = type;
       if (typeof window.loadActivePacStateToDom === 'function') {
         window.loadActivePacStateToDom(type);
       }
       window.renderDynamicPacForm(type);
+      if (typeof window.renderDynamicCronograma === 'function') {
+        window.renderDynamicCronograma(type);
+      }
       window.showToast('📋 Visualizando ' + (type === 'PRACTICO' ? 'PAC Práctico (Laboratorio / Simulación)' : 'PAC General (Teoría)'));
+    };
+
+    // ── DECOUPLED CRONOGRAMA ENGINE (TEORÍA VS PRÁCTICA) ──────────────────────
+    window.activeCronogramaType = 'GRAL';
+
+    window.extractCurrentCronogramaPracticoFromDom = function() {
+      const tbody = document.getElementById('cronograma-practico-table-body');
+      if (!tbody) return [];
+      const rows = tbody.querySelectorAll('tr');
+      const sessions = [];
+      rows.forEach(r => {
+        const inputs = r.querySelectorAll('input, textarea');
+        if (inputs.length >= 7) {
+          const sem = parseInt(inputs[0].value, 10) || (sessions.length + 1);
+          const nroPrac = parseInt(inputs[1].value, 10) || (sessions.length + 1);
+          sessions.push({
+            semana: sem,
+            nroSesion: nroPrac,
+            numero: nroPrac,
+            unidadTematica: inputs[2].value.trim(),
+            titulo: inputs[2].value.trim(),
+            contenidoEspecifico: inputs[3].value.trim(),
+            actividad: inputs[3].value.trim(),
+            saberProcedimental: inputs[4].value.trim(),
+            criterioDesempeno: inputs[4].value.trim(),
+            instrumentoEvaluacion: inputs[5].value.trim() || 'Rúbrica de Práctica',
+            instrumento: inputs[5].value.trim() || 'Rúbrica de Práctica',
+            evidenciaAprendizaje: inputs[6].value.trim() || 'Guía o reporte evaluado',
+            evidencias: inputs[6].value.trim() || 'Guía o reporte evaluado'
+          });
+        }
+      });
+      return sessions;
+    };
+
+    window.renderCronogramaPracticoTable = function(sessions) {
+      const tbody = document.getElementById('cronograma-practico-table-body');
+      if (!tbody) return;
+      const list = sessions || (window.activePacPracData && (window.activePacPracData.matriz7 || window.activePacPracData.pacPracticas)) || [];
+      if (!Array.isArray(list) || list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="flask-conical" class="w-8 h-8 mx-auto mb-2 opacity-50 text-teal-500"></i>
+              <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin prácticas registradas en el cronograma de laboratorio</p>
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+            </td>
+          </tr>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = '';
+      list.forEach((s, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+        tr.innerHTML = `
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.semana || (idx + 1)))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-slate-800 font-bold text-teal-800 dark:text-teal-300 text-xs"></td>
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="${escapeHtml(String(s.nroSesion || s.numero || (idx + 1)))}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-slate-800 font-bold text-teal-600 dark:text-teal-400 text-xs"></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Título de la práctica..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.unidadTematica || s.titulo || '')}</textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Actividad de la práctica..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.contenidoEspecifico || s.actividad || '')}</textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Desempeño procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.saberProcedimental || s.criterioDesempeno || '')}</textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.instrumentoEvaluacion || s.instrumento || 'Rúbrica de Práctica')}</textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Evidencias..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">${escapeHtml(s.evidenciaAprendizaje || s.evidencias || 'Guía o reporte evaluado')}</textarea></td>
+          <td class="py-2 px-1 text-center align-top no-print">
+            <button type="button" onclick="this.closest('tr').remove(); window.scheduleAutoSave();" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer" title="Eliminar fila">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (window.lucide) window.lucide.createIcons();
+      setTimeout(() => {
+        if (typeof window.autoResizeAllTextareas === 'function') window.autoResizeAllTextareas();
+      }, 20);
+    };
+
+    window.renderDynamicCronograma = function(cronType) {
+      const data = materiasData[activeMateriaKey];
+      const requiredPac = (data && data.components && data.components.requiredPac) ? data.components.requiredPac : ['GRAL'];
+      const hasMultiple = Array.isArray(requiredPac) && requiredPac.length > 1;
+
+      const currentType = cronType || window.activeCronogramaType || (hasMultiple ? requiredPac[0] : requiredPac[0] || 'GRAL');
+      window.activeCronogramaType = currentType;
+      const isPractico = (currentType === 'PRACTICO');
+
+      const container = document.getElementById('cronograma-type-switcher-container');
+      if (container) {
+        if (hasMultiple) {
+          container.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="calendar" class="w-4 h-4 text-amber-600"></i> Modalidad de Cronograma:
+                </span>
+                <button type="button" onclick="window.switchActiveCronogramaType('GRAL')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'GRAL' ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Cronograma Teórico (Aula - 20 Sem)
+                </button>
+                <button type="button" onclick="window.switchActiveCronogramaType('PRACTICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'PRACTICO' ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> Cronograma Práctico (Laboratorio / Simulación)
+                </button>
+              </div>
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Asignación Multitipo:</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${currentType === 'PRACTICO' ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700'}">
+                  ${currentType === 'PRACTICO' ? '🔬 Cronograma Semestral de Prácticas' : '📅 Cronograma Semestral de Clases Teóricas'}
+                </span>
+              </div>
+            </div>
+          `;
+        } else {
+          const singleType = requiredPac[0] || 'GRAL';
+          container.innerHTML = `
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Cronograma Asignado:
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${singleType === 'PRACTICO' ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700'}">
+                  ${singleType === 'PRACTICO' ? '🔬 CRONOGRAMA PRÁCTICO (Laboratorio / Taller)' : '📅 CRONOGRAMA TEÓRICO (20 Semanas de Aula)'}
+                </span>
+              </div>
+              <span class="text-[11px] text-slate-400 font-medium">Determinado por: <strong>${data?.components?.summary || 'TA'}</strong></span>
+            </div>
+          `;
+        }
+      }
+
+      const teoricoContainer = document.getElementById('cronograma-teorico-container');
+      const practicoContainer = document.getElementById('cronograma-practico-container');
+      const docTitle = document.getElementById('cronograma-doc-title');
+      const docSubtitle = document.getElementById('cronograma-doc-subtitle');
+      const btnVaciar = document.getElementById('btn-cronograma-vaciar-text');
+      const btnImport = document.getElementById('btn-cronograma-import-text');
+      const btnExport = document.getElementById('btn-cronograma-export-text');
+
+      if (isPractico) {
+        if (teoricoContainer) teoricoContainer.classList.add('hidden');
+        if (practicoContainer) practicoContainer.classList.remove('hidden');
+        if (docTitle) docTitle.innerText = 'Documento 3: Cronograma Semestral de la Práctica (Sección 8 del PAC Práctico):';
+        if (docSubtitle) docSubtitle.innerText = 'Planificación oficial de actividades prácticas, escenarios, bioseguridad y evidencias.';
+        if (btnVaciar) btnVaciar.innerText = 'Vaciar Cronograma Práctico';
+        if (btnImport) btnImport.innerText = 'Importar Cronograma Práctico (.xlsx)';
+        if (btnExport) btnExport.innerText = 'Exportar PAC Práctico (.xlsx)';
+        window.renderCronogramaPracticoTable();
+      } else {
+        if (teoricoContainer) teoricoContainer.classList.remove('hidden');
+        if (practicoContainer) practicoContainer.classList.add('hidden');
+        if (docTitle) docTitle.innerText = 'Documento 3: Cronograma de 20 Semanas (Sección 7 del PAC):';
+        if (docSubtitle) docSubtitle.innerText = 'Matriz curricular editable de 20 semanas y sesiones extraídas del PAC.';
+        if (btnVaciar) btnVaciar.innerText = 'Vaciar Cronograma Teórico';
+        if (btnImport) btnImport.innerText = 'Importar Cronograma Teórico (.xlsx)';
+        if (btnExport) btnExport.innerText = 'Exportar PAC + Cronograma (.xlsx)';
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchActiveCronogramaType = function(type) {
+      if (type === window.activeCronogramaType) return;
+      window.activeCronogramaType = type;
+      window.activePacType = type;
+      if (typeof window.syncCurrentPacDomToState === 'function') {
+        window.syncCurrentPacDomToState();
+      }
+      window.renderDynamicCronograma(type);
+      if (typeof window.renderDynamicPacForm === 'function') {
+        window.renderDynamicPacForm(type);
+      }
+      window.showToast('📅 Cronograma ajustado a: ' + (type === 'PRACTICO' ? 'Prácticas de Laboratorio' : 'Clases Teóricas de Aula'));
+    };
+
+    window.vaciarCronogramaActivo = function() {
+      const isPractico = (window.activeCronogramaType === 'PRACTICO');
+      const docName = isPractico ? 'Cronograma Semestral de Prácticas' : 'Cronograma de 20 Semanas de Teoría';
+      if (!confirm(`¿Deseas vaciar todas las sesiones del ${docName}?`)) return;
+
+      if (isPractico) {
+        const tbody = document.getElementById('cronograma-practico-table-body');
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                <i data-lucide="flask-conical" class="w-8 h-8 mx-auto mb-2 opacity-50 text-teal-500"></i>
+                <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin prácticas registradas en el cronograma de laboratorio</p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+              </td>
+            </tr>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+        }
+        if (window.activePacPracData) window.activePacPracData.matriz7 = [];
+        if (activeMateriaKey) localStorage.removeItem('sisa_saved_cron_prac_' + activeMateriaKey);
+        window.showToast('🗑️ Cronograma Práctico vaciado.');
+      } else {
+        const tbody = document.getElementById('cronograma-table-body');
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="10" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin sesiones cargadas en el cronograma teórico</p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+              </td>
+            </tr>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+        }
+        if (window.activePacGralData) window.activePacGralData.matriz7 = [];
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_cron_gral_' + activeMateriaKey);
+          const saved = localStorage.getItem('sisa_saved_pac_' + activeMateriaKey);
+          if (saved) {
+            try {
+              const p = JSON.parse(saved);
+              p.matriz7 = [];
+              localStorage.setItem('sisa_saved_pac_' + activeMateriaKey, JSON.stringify(p));
+            } catch(e) {}
+          }
+        }
+        window.showToast('🗑️ Cronograma Teórico vaciado.');
+      }
+    };
+
+    window.importCronogramaExcel = function() {
+      window.importPacExcel(true);
     };
 
     // ── TASK 5.3 & 5.4: DYNAMIC PLAN DE CLASES & SHARED/PERSONAL UI SEPARATION ──
     window.activePlanType = 'TEORICO_PRACTICO';
+    window.activePlanesTeoricoList = null;
+    window.activePlanesPracticoList = null;
+
+    window.loadActivePlanStateToDom = function(planType) {
+      const currentType = planType || window.activePlanType || 'TEORICO';
+      const mKey = activeMateriaKey;
+      if (!mKey) return;
+
+      if (currentType === 'PRACTICO') {
+        let prac = null;
+        const savedPrac = localStorage.getItem('sisa_saved_planes_prac_' + mKey);
+        if (savedPrac) {
+          try { prac = JSON.parse(savedPrac); } catch(e) {}
+        }
+        if (!prac || !Array.isArray(prac) || prac.length === 0) {
+          const defData = materiasData[mKey] || {};
+          prac = [
+            {
+              sesionId: 1,
+              nombreHoja: 'Práctica 1',
+              contenidoTema: 'Configuración de Entorno Experimental y Bioseguridad',
+              unidadTitulo: 'Unidad de Práctica 1',
+              elementoCompetencia: 'Aplica protocolos de trabajo seguro y alista el instrumental técnico.',
+              objetivoSesion: 'Preparar y validar el entorno de laboratorio conforme a normas institucionales.',
+              comision: 'PL-01',
+              ambiente: 'Laboratorio Asignado',
+              numEstudiantes: 25,
+              nivelBloom: 'Aplicación',
+              equipamiento: 'Equipos y guías de trabajo institucional.',
+              planType: 'PRACTICO',
+              fase1Prep: 'Revisión de conceptos previos y verificación de instrumental.',
+              fase1PrepDur: 20,
+              fase2Guiada: 'Demostración paso a paso del procedimiento por el docente.',
+              fase2GuiadaDur: 40,
+              fase3Autonoma: 'Desarrollo autónomo del protocolo y captura de evidencias por los estudiantes.',
+              fase3AutonomaDur: 50,
+              fase4Cierre: 'Análisis de resultados, conclusiones y registro de bitácora.',
+              fase4CierreDur: 25,
+              referenciasBibliograficas: []
+            }
+          ];
+        }
+        window.activePlanesPracticoList = prac;
+        activePlanesList = prac;
+      } else {
+        let teorico = null;
+        const savedTeorico = localStorage.getItem('sisa_saved_planes_teorico_' + mKey) || localStorage.getItem('sisa_saved_planes_' + mKey);
+        if (savedTeorico) {
+          try { teorico = JSON.parse(savedTeorico); } catch(e) {}
+        }
+        if (!teorico || !Array.isArray(teorico) || teorico.length === 0) {
+          const defData = materiasData[mKey] || {};
+          teorico = [
+            {
+              sesionId: 1,
+              nombreHoja: 'UA-1',
+              contenidoTema: defData.nombre || 'Introducción y Fundamentos',
+              unidadTitulo: 'Unidad 1',
+              elementoCompetencia: 'Comprende los conceptos clave y fundamentos teóricos de la asignatura.',
+              objetivoSesion: 'Identificar y contrastar los principios teóricos fundamentales.',
+              planType: 'TEORICO',
+              referenciasBibliograficas: []
+            }
+          ];
+        }
+        window.activePlanesTeoricoList = teorico;
+        activePlanesList = teorico;
+      }
+
+      activePlanSheetIndex = 0;
+      if (typeof window.renderPlanesSheetsTabs === 'function') {
+        window.renderPlanesSheetsTabs();
+      }
+      if (typeof window.renderPlanSheetForm === 'function') {
+        window.renderPlanSheetForm(0);
+      }
+    };
 
     window.renderDynamicPlanForm = function(planType) {
       const data = materiasData[activeMateriaKey];
@@ -1082,6 +1406,7 @@
 
       const currentType = planType || window.activePlanType || (hasMultiple ? requiredPlan[0] : requiredPlan[0] || 'TEORICO_PRACTICO');
       window.activePlanType = currentType;
+      const isPractico = (currentType === 'PRACTICO');
 
       const switcherContainer = document.getElementById('plan-type-switcher-container');
       if (switcherContainer) {
@@ -1178,13 +1503,41 @@
         if (secPractica) secPractica.classList.add('hidden');
       }
 
+      // Update button texts and headers in Tab 4
+      const btnPlanVaciar = document.getElementById('btn-plan-vaciar-text');
+      const btnPlanImport = document.getElementById('btn-plan-import-text');
+      const btnPlanExport = document.getElementById('btn-plan-export-text');
+      const planDocTitle = document.getElementById('plan-doc-title');
+      const planDocSubtitle = document.getElementById('plan-doc-subtitle');
+
+      if (isPractico) {
+        if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Prácticos';
+        if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Práctico (.xlsx)';
+        if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Práctico (.xlsx)';
+        if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Prácticos (.xlsx):';
+        if (planDocSubtitle) planDocSubtitle.innerText = 'Guías de laboratorio con 4 Fases Metodológicas Institucionales por práctica.';
+      } else {
+        if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Teóricos';
+        if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Teórico (.xlsx)';
+        if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Teórico (.xlsx)';
+        if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Teóricos (.xlsx):';
+        if (planDocSubtitle) planDocSubtitle.innerText = 'Microdidáctica de aula conceptual con Momentos Didácticos por tema.';
+      }
+
       if (window.lucide) window.lucide.createIcons();
     };
 
     window.switchActivePlanType = function(type) {
+      if (type === window.activePlanType) return;
+      if (typeof window.syncCurrentPlanFormToState === 'function') {
+        window.syncCurrentPlanFormToState();
+      }
       window.activePlanType = type;
+      if (typeof window.loadActivePlanStateToDom === 'function') {
+        window.loadActivePlanStateToDom(type);
+      }
       window.renderDynamicPlanForm(type);
-      window.showToast('📋 Plan ajustado a: ' + (type === 'PRACTICO' ? 'Plan Práctico' : (type === 'TEORICO' ? 'Plan Teórico' : 'Plan Teórico-Práctico')));
+      window.showToast('📋 Plan ajustado a: ' + (type === 'PRACTICO' ? 'Plan Práctico (Laboratorio / Simulación)' : (type === 'TEORICO' ? 'Plan Teórico (Aula Conceptual)' : 'Plan Teórico-Práctico')));
     };
 
     window.updateSecuenciaPracticaTotals = function() {
@@ -2685,26 +3038,61 @@
     };
 
     window.addCronogramaRow = function() {
-      const tbody = document.getElementById('cronograma-table-body');
-      if (!tbody) return;
-      const tr = document.createElement('tr');
-      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
-      tr.innerHTML = `
-        <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs"></td>
-        <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-600 dark:text-brand-400 text-xs"></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Conceptual..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-        <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
-      `;
-      tbody.appendChild(tr);
-      setTimeout(() => {
-        tr.querySelectorAll('textarea').forEach(t => window.autoResizeTextarea(t));
-      }, 10);
-      window.showToast('✓ Nueva fila agregada al cronograma');
+      if (window.activeCronogramaType === 'PRACTICO') {
+        const tbody = document.getElementById('cronograma-practico-table-body');
+        if (!tbody) return;
+        const currentRows = tbody.querySelectorAll('tr').length;
+        const nextSem = Math.min(20, currentRows + 1);
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+        tr.innerHTML = `
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="${nextSem}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-slate-800 font-bold text-teal-800 dark:text-teal-300 text-xs"></td>
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="${nextSem}" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/50 dark:bg-slate-800 font-bold text-teal-600 dark:text-teal-400 text-xs"></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Título de la práctica..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Actividad de la práctica..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Desempeño procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">Rúbrica de Práctica</textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Evidencias..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none">Guía de laboratorio evaluada</textarea></td>
+          <td class="py-2 px-1 text-center align-top no-print">
+            <button type="button" onclick="this.closest('tr').remove(); window.scheduleAutoSave();" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer" title="Eliminar fila">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+          tr.querySelectorAll('textarea').forEach(t => window.autoResizeTextarea(t));
+        }, 10);
+        window.showToast('✓ Nueva fila agregada al cronograma de prácticas');
+      } else {
+        const tbody = document.getElementById('cronograma-table-body');
+        if (!tbody) return;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+        tr.innerHTML = `
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs"></td>
+          <td class="py-2 px-1 text-center align-top"><input type="text" value="+" oninput="window.scheduleAutoSave()" class="w-10 text-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-brand-600 dark:text-brand-400 text-xs"></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Unidad Temática..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-semibold text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Tema específico..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Conceptual..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Procedimental..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Saber Actitudinal..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Criterio de Desempeño..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-2 align-top"><textarea rows="1" oninput="window.autoResizeTextarea(this); window.scheduleAutoSave();" placeholder="Instrumento..." class="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white text-xs leading-relaxed overflow-hidden resize-none"></textarea></td>
+          <td class="py-2 px-1 text-center align-top no-print">
+            <button type="button" onclick="this.closest('tr').remove(); window.scheduleAutoSave();" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer" title="Eliminar fila">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+          tr.querySelectorAll('textarea').forEach(t => window.autoResizeTextarea(t));
+        }, 10);
+        window.showToast('✓ Nueva fila agregada al cronograma teórico');
+      }
     };
 
 
@@ -3165,7 +3553,15 @@
       });
       p.referenciasBibliograficas = refList;
 
-      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
+      const mKey = activeMateriaKey || 'default';
+      if (window.activePlanType === 'PRACTICO') {
+        window.activePlanesPracticoList = activePlanesList;
+        localStorage.setItem('sisa_saved_planes_prac_' + mKey, JSON.stringify(activePlanesList));
+      } else {
+        window.activePlanesTeoricoList = activePlanesList;
+        localStorage.setItem('sisa_saved_planes_teorico_' + mKey, JSON.stringify(activePlanesList));
+      }
+      localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
     };
 
     document.addEventListener('input', function(e) {
@@ -3815,30 +4211,40 @@ window.loadSavedDocenteData = function(materiaKey) {
 
   // 2. PAC Pedagógico (Dual Isolation: General vs Práctico)
   if (typeof window.loadActivePacStateToDom === 'function') {
-    window.loadActivePacStateToDom(window.activePacType);
+    window.loadActivePacStateToDom(window.activePacType || 'GRAL');
   }
   if (typeof window.renderDynamicPacForm === 'function') {
-    window.renderDynamicPacForm(window.activePacType);
+    window.renderDynamicPacForm(window.activePacType || 'GRAL');
   }
 
-  // Load Planes de Clase (Tab 4)
-  const savedPlanesStr = localStorage.getItem('sisa_saved_planes_' + mKey);
-  if (savedPlanesStr) {
-    try {
-      activePlanesList = JSON.parse(savedPlanesStr);
-    } catch (e) {
+  // 3. Cronograma (Dual Isolation: General vs Práctico)
+  if (typeof window.renderDynamicCronograma === 'function') {
+    window.renderDynamicCronograma(window.activeCronogramaType || (window.activePacType === 'PRACTICO' ? 'PRACTICO' : 'GRAL'));
+  }
+
+  // 4. Planes de Clase (Dual Isolation: Teórico vs Práctico)
+  const currentPlanType = window.activePlanType || (window.activePacType === 'PRACTICO' ? 'PRACTICO' : 'TEORICO');
+  if (typeof window.loadActivePlanStateToDom === 'function') {
+    window.loadActivePlanStateToDom(currentPlanType);
+  } else {
+    const savedPlanesStr = localStorage.getItem('sisa_saved_planes_' + mKey);
+    if (savedPlanesStr) {
+      try {
+        activePlanesList = JSON.parse(savedPlanesStr);
+      } catch (e) {
+        activePlanesList = [];
+      }
+    } else {
       activePlanesList = [];
     }
-  } else {
-    activePlanesList = [];
-  }
 
-  activePlanSheetIndex = 0;
-  if (typeof window.renderPlanesSheetsTabs === 'function') {
-    window.renderPlanesSheetsTabs();
-  }
-  if (typeof window.renderPlanSheetForm === 'function') {
-    window.renderPlanSheetForm(0);
+    activePlanSheetIndex = 0;
+    if (typeof window.renderPlanesSheetsTabs === 'function') {
+      window.renderPlanesSheetsTabs();
+    }
+    if (typeof window.renderPlanSheetForm === 'function') {
+      window.renderPlanSheetForm(0);
+    }
   }
 
   return true;
@@ -4407,14 +4813,21 @@ window.importPacExcel = function(goToCronograma) {
 // 4. Real Excel Import for Planes de Clase
 window.importPlanesExcel = function() {
   window.triggerFileUpload('.xlsx', async (file) => {
-    window.showToast('⏳ Subiendo y procesando Planes de Clase: ' + file.name + '...');
+    const currentType = window.activePlanType || 'TEORICO';
+    const typeLabel = (currentType === 'PRACTICO') ? 'Práctico' : 'Teórico';
+    window.showToast(`⏳ Subiendo y procesando Planes de Clase (${typeLabel}): ${file.name}...`);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('asignacionId', String(activeAsignacionId || 1));
+    formData.append('planType', currentType);
     try {
+      const authHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
       const resp = await fetch('/api/v1/office/import/plan-clase', {
         method: 'POST',
-        headers: window.getAuthHeaders(),
+        headers: {
+          ...authHeaders,
+          'X-Plan-Type': currentType
+        },
         body: formData
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -4422,7 +4835,16 @@ window.importPlanesExcel = function() {
       const data = json.data || json;
       activePlanesList = Array.isArray(data) ? data : [data];
       activePlanSheetIndex = 0;
-      localStorage.setItem('sisa_saved_planes_' + activeMateriaKey, JSON.stringify(activePlanesList));
+
+      const mKey = activeMateriaKey || 'default';
+      if (currentType === 'PRACTICO') {
+        window.activePlanesPracticoList = activePlanesList;
+        localStorage.setItem('sisa_saved_planes_prac_' + mKey, JSON.stringify(activePlanesList));
+      } else {
+        window.activePlanesTeoricoList = activePlanesList;
+        localStorage.setItem('sisa_saved_planes_teorico_' + mKey, JSON.stringify(activePlanesList));
+      }
+      localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
 
       if (typeof window.renderPlanesSheetsTabs === 'function') {
         window.renderPlanesSheetsTabs();
@@ -4436,7 +4858,7 @@ window.importPlanesExcel = function() {
         await window.saveCurrentDocenteData(true);
       }
 
-      window.showToast('✅ ¡Planes de Clase importados con éxito! (' + activePlanesList.length + ' temas/hojas cargadas)');
+      window.showToast(`✅ ¡Planes de Clase (${typeLabel}) importados con éxito! (${activePlanesList.length} temas/hojas cargadas)`);
       window.switchDocMainTab('tab-cronograma-planes');
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {
@@ -4463,17 +4885,23 @@ window.exportDocxOfficial = async function() {
 window.exportPacOfficial = async function() {
   const asigId = activeAsignacionId || 1;
   const careerCode = window.currentSelectedCareerCode || '';
-  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
-  window.showToast('📥 Generando y descargando PAC + Cronograma (.xlsx)...');
-  window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}`;
+  const pacType = window.activePacType || 'GRAL';
+  const typeLabel = (pacType === 'PRACTICO') ? 'Práctico' : 'General';
+  const pacParam = `pacType=${encodeURIComponent(pacType)}`;
+  const careerParam = (careerCode && careerCode !== 'ALL') ? `&careerCode=${encodeURIComponent(careerCode)}` : '';
+  window.showToast(`📥 Generando y descargando PAC (${typeLabel}) + Cronograma (.xlsx)...`);
+  window.location.href = `/api/v1/office/export/pac/${asigId}?${pacParam}${careerParam}`;
 };
 
 window.exportPlanesOfficial = async function() {
   const asigId = activeAsignacionId || 1;
   const careerCode = window.currentSelectedCareerCode || '';
-  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
-  window.showToast('📥 Generando y descargando Plan de Clases (.xlsx)...');
-  window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}`;
+  const planType = window.activePlanType || 'TEORICO';
+  const typeLabel = (planType === 'PRACTICO') ? 'Práctico' : 'Teórico';
+  const planParam = `planType=${encodeURIComponent(planType)}`;
+  const careerParam = (careerCode && careerCode !== 'ALL') ? `&careerCode=${encodeURIComponent(careerCode)}` : '';
+  window.showToast(`📥 Generando y descargando Plan de Clases (${typeLabel}) (.xlsx)...`);
+  window.location.href = `/api/v1/office/export/plan-clase/${asigId}?${planParam}${careerParam}`;
 };
 
 // Override triggerAutoCapture modal with real actions

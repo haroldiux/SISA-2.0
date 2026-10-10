@@ -77,13 +77,21 @@ public class ScuOfficeController {
     }
 
     @GetMapping({"/export/plan-clase/{sesionId}", "/plan-clase/{sesionId}/export"})
-    public ResponseEntity<byte[]> exportPlanClases(@PathVariable Long sesionId) {
-        byte[] content = this.exportPlanClasesCmd.execute(sesionId);
+    public ResponseEntity<byte[]> exportPlanClases(
+            @PathVariable Long sesionId,
+            @RequestParam(value = "carreraId", required = false) Long carreraId,
+            @RequestParam(value = "planType", required = false) String planType) {
+        byte[] content = this.exportPlanClasesCmd.execute(sesionId, carreraId, planType);
+        String filename = ("PRACTICO".equalsIgnoreCase(planType))
+                ? "Plan_Clase_Practico_Sesion_" + sesionId + ".xlsx"
+                : ("TEORICO".equalsIgnoreCase(planType)
+                ? "Plan_Clase_Teorico_Sesion_" + sesionId + ".xlsx"
+                : "Plan_Clase_Sesion_" + sesionId + ".xlsx");
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"Plan_Clase_Sesion_" + sesionId + ".xlsx\"")
+                        "attachment; filename=\"" + filename + "\"")
                 .contentType(mediaType)
                 .body(content);
     }
