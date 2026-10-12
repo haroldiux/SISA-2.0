@@ -2315,7 +2315,29 @@
     window.buildOfficialFolderHtml = function(selectedSections, selectedCareerCode) {
       const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
       const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
-      const docenteName = (document.getElementById('docente-api-selector')?.selectedOptions?.[0]?.text?.replace(/\[.*?\]\s*/, '')?.replace(/\(.*?\)/, '')) || 'ROSMERY LUIZAGA SALINAS';
+
+      // 1. Resolve docente name & email cleanly without emojis or internal tags
+      let docenteName = 'DOCENTE ASIGNADO';
+      if (window.__ACTIVE_DOCENTE__ && window.__ACTIVE_DOCENTE__.nombreCompleto) {
+        docenteName = window.__ACTIVE_DOCENTE__.nombreCompleto;
+      } else {
+        const selOption = document.getElementById('docente-api-selector')?.selectedOptions?.[0];
+        if (selOption) {
+          docenteName = selOption.text
+            .replace(/\(.*?\)/g, '')
+            .replace(/\[.*?\]/g, '')
+            .trim();
+        }
+      }
+      docenteName = docenteName.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() || 'ROSMERY LUIZAGA SALINAS';
+      const docenteEmail = (window.__ACTIVE_DOCENTE__ && window.__ACTIVE_DOCENTE__.email) ? window.__ACTIVE_DOCENTE__.email : 'docente@unitepc.edu.bo';
+
+      // 2. Retrieve saved program data for active subject if available
+      let savedProg = {};
+      try {
+        const spStr = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
+        if (spStr) savedProg = JSON.parse(spStr);
+      } catch(e) {}
 
       let targetCareerCode = selectedCareerCode;
       if (targetCareerCode === 'ALL') {
@@ -2326,6 +2348,14 @@
       const officialSingleCode = typeof window.resolveOfficialCourseCode === 'function' ? window.resolveOfficialCourseCode(data.nombre, [targetCareerCode]) : data.codigo;
       const displayCode = selectedCareerCode === 'ALL' ? data.codigo : officialSingleCode;
       const displayCareerName = selectedCareerCode === 'ALL' ? data.carrera : careerMeta.carrera;
+
+      const currentAsignatura = document.getElementById('analitico-asig-input')?.value || savedProg.nombreAsignatura || savedProg.nombre || data.nombre || 'Asignatura Asignada';
+      const currentCodigo = document.getElementById('analitico-codigo-input')?.value || savedProg.codigoAsignatura || savedProg.codigo || displayCode;
+      const currentSemestre = document.getElementById('analitico-semestre-input')?.value || savedProg.semestre || data.semestre || '1º';
+      const currentCreditos = document.getElementById('analitico-creditos-input')?.value || savedProg.creditos || data.creditos || '8';
+      const currentHt = document.getElementById('analitico-ht-input')?.value?.replace(/\D/g, '') || savedProg.horasTeoricas || data.horasTeoricas || '2';
+      const currentHp = document.getElementById('analitico-hp-input')?.value?.replace(/\D/g, '') || savedProg.horasPracticas || data.horasPracticas || '4';
+      const currentHs = document.getElementById('analitico-hs-input')?.value?.replace(/\D/g, '') || savedProg.horasSemestre || data.horasTotal || '120';
 
       const safe = (val, fb = '') => {
         if (val === null || val === undefined || val === '') return fb;
@@ -2341,18 +2371,18 @@
       // 1. PORTADA OFICIAL
       if (selectedSections.includes('portada')) {
         docHtml += `
-          <div class="print-page" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 250mm; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 25mm 20mm 15mm 20mm; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+          <div class="print-page" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 250mm; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 25mm 20mm 15mm 20mm; background: #fff; box-shadow: none; border-radius: 0; margin-bottom: 20px;">
             <div>
               <h2 style="font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; color: #000;">${careerMeta.facultad}</h2>
               <h3 style="font-size: 13pt; font-weight: bold; margin: 8px 0 0 0; text-transform: uppercase; color: #000;">CARRERA DE ${displayCareerName}</h3>
               <h1 style="font-size: 20pt; font-weight: 900; margin: 20px 0 0 0; letter-spacing: 1px; color: #000;">CARPETA PEDAGÓGICA DOCENTE</h1>
             </div>
 
-            <div style="margin: 35mm 0 25mm 0;">
-              <div style="font-size: 42pt; font-weight: 900; color: #581c87; letter-spacing: 2px; font-family: 'Arial Black', sans-serif;">
+            <div style="margin: 25mm 0 20mm 0; text-align: center;">
+              <div style="font-size: 40pt; font-weight: 900; color: #581c87; letter-spacing: 2px; font-family: 'Arial Black', sans-serif; line-height: 1.1; margin: 0;">
                 UNITEPC
               </div>
-              <div style="font-size: 13pt; font-weight: bold; color: #0d9488; letter-spacing: 3px; margin-top: -6px;">
+              <div style="font-size: 12pt; font-weight: bold; color: #0d9488; letter-spacing: 3px; margin: 6px 0 0 0; line-height: 1.2;">
                 UNIVERSIDAD PRIVADA
               </div>
             </div>
@@ -2361,9 +2391,9 @@
               <div style="border: 2.5px solid #6b21a8; border-radius: 4px; padding: 22px 30px; width: 90%; max-width: 520px; text-align: left; line-height: 1.8; font-size: 11pt;">
                 <p style="margin: 0;"><strong>Nombre del Docente:</strong> ${docenteName}</p>
                 <p style="margin: 3px 0 0 0;"><strong>Carrera:</strong> ${displayCareerName}</p>
-                <p style="margin: 3px 0 0 0;"><strong>Asignatura:</strong> ${data.nombre}</p>
-                <p style="margin: 3px 0 0 0;"><strong>Código de la asignatura:</strong> ${displayCode}</p>
-                <p style="margin: 3px 0 0 0;"><strong>Semestre:</strong> ${data.semestre || '1º Semestre'}</p>
+                <p style="margin: 3px 0 0 0;"><strong>Asignatura:</strong> ${currentAsignatura}</p>
+                <p style="margin: 3px 0 0 0;"><strong>Código de la asignatura:</strong> ${currentCodigo}</p>
+                <p style="margin: 3px 0 0 0;"><strong>Semestre:</strong> ${currentSemestre}</p>
                 <p style="margin: 3px 0 0 0;"><strong>Gestión:</strong> II/2026</p>
               </div>
             </div>
@@ -2376,8 +2406,8 @@
         docHtml += `
           <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 8mm;">
-              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
-              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px; line-height: 1.1; margin: 0;">UNITEPC</div>
+              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin: 4px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
             </div>
 
             <div style="background: #6b21a8; color: white; padding: 8px 15px; font-size: 15pt; font-weight: bold; margin-bottom: 12px;">
@@ -2460,8 +2490,8 @@
         docHtml += `
           <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 8mm;">
-              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
-              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px; line-height: 1.1; margin: 0;">UNITEPC</div>
+              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin: 4px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
             </div>
 
             <div style="margin-bottom: 8mm;">
@@ -2517,8 +2547,8 @@
         docHtml += `
           <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 10mm;">
-              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px;">UNITEPC</div>
-              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin-top: -4px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 28pt; font-weight: 900; color: #581c87; letter-spacing: 1.5px; line-height: 1.1; margin: 0;">UNITEPC</div>
+              <div style="font-size: 10pt; font-weight: bold; color: #0d9488; letter-spacing: 2px; margin: 4px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
             </div>
 
             <div style="margin-bottom: 12mm;">
@@ -2588,12 +2618,152 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <div style="border-left: 1.5px solid #cbd5e1; height: 28px; margin-right: 2px;"></div>
               <div style="text-align: center;">
-                <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
-                <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
+                <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1.1; margin: 0;">UNITEPC</div>
+                <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin: 2px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
               </div>
             </div>
           </div>
         `;
+
+        let unitsToRender = [];
+        if (typeof activeAnaliticoUnidades !== 'undefined' && Array.isArray(activeAnaliticoUnidades) && activeAnaliticoUnidades.length > 0) {
+          unitsToRender = activeAnaliticoUnidades;
+        } else if (savedProg.unidades && Array.isArray(savedProg.unidades) && savedProg.unidades.length > 0) {
+          unitsToRender = savedProg.unidades;
+        }
+
+        if (!unitsToRender || unitsToRender.length === 0) {
+          const isIdiomas = currentAsignatura.toUpperCase().includes('IDIOMA') || currentAsignatura.toUpperCase().includes('INGL') || currentCodigo.includes('SIS-423') || currentCodigo.includes('IDI');
+          if (isIdiomas) {
+            unitsToRender = [
+              {
+                numeroUnidad: 1,
+                titulo: 'UNIDAD DE APRENDIZAJE I.- COMUNICACIÓN TÉCNICA Y LÉXICO ESPECIALIZADO.',
+                temas: [
+                  { numeroTema: 1, titulo: 'TÉRMINOS TÉCNICOS EN INGENIERÍA Y COMPUTACIÓN', contenido: 'Adquisición de vocabulario específico, definiciones de hardware, software y sistemas en lengua técnica.' },
+                  { numeroTema: 2, titulo: 'ESTRUCTURAS GRAMATICALES Y TIEMPOS VERBALES EN TEXTOS TÉCNICOS', contenido: 'Lectura comprensiva de artículos científicos, sintaxis aplicada a la documentación de software y especificaciones.' },
+                  { numeroTema: 3, titulo: 'TRADUCCIÓN E INTERPRETACIÓN DE MANUALES Y DATASHEETS', contenido: 'Estrategias de traducción directa, interpretación de guías de usuario y normativas de la industria.' }
+                ]
+              },
+              {
+                numeroUnidad: 2,
+                titulo: 'UNIDAD DE APRENDIZAJE II.- ESCRITURA ACADÉMICA Y DOCUMENTACIÓN TÉCNICA.',
+                temas: [
+                  { numeroTema: 4, titulo: 'REDACCIÓN DE INFORMES TÉCNICOS Y BITÁCORAS', contenido: 'Estructuración formal de informes de laboratorio, bitácoras de avance y resúmenes ejecutivos.' },
+                  { numeroTema: 5, titulo: 'ESPECIFICACIONES DE REQUERIMIENTOS Y DOCUMENTACIÓN DE CÓDIGO', contenido: 'Uso de terminología estándar internacional para la especificación funcional y comentarios de código.' }
+                ]
+              },
+              {
+                numeroUnidad: 3,
+                titulo: 'UNIDAD DE APRENDIZAJE III.- COMUNICACIÓN ORAL Y PRESENTACIÓN DE PROYECTOS.',
+                temas: [
+                  { numeroTema: 6, titulo: 'PRESENTACIÓN Y DEFENSAS TÉCNICAS', contenido: 'Técnicas de exposición oral, presentación de avances ante comités y defensa de proyectos de ingeniería.' },
+                  { numeroTema: 7, titulo: 'SIMULACIÓN DE REUNIONES TÉCNICAS Y TRABAJO EN EQUIPO', contenido: 'Interacción profesional, formulación de preguntas técnicas y debates aplicados.' }
+                ]
+              },
+              {
+                numeroUnidad: 4,
+                titulo: 'UNIDAD DE APRENDIZAJE IV.- PRODUCCIÓN Y PROYECTO INTEGRADOR.',
+                temas: [
+                  { numeroTema: 8, titulo: 'PROYECTO FINAL Y ARTÍCULO TÉCNICO', contenido: 'Desarrollo de un artículo técnico o manual estructurado en idioma técnico con defensa evaluada.' }
+                ]
+              }
+            ];
+          } else {
+            unitsToRender = [
+              {
+                numeroUnidad: 1,
+                titulo: 'UNIDAD DE APRENDIZAJE I.- FUNDAMENTOS Y CONCEPTOS CLAVE.',
+                temas: [
+                  { numeroTema: 1, titulo: 'CONCEPTOS FUNDAMENTALES Y MARCO TEÓRICO', contenido: 'Introducción, bases conceptuales, estructuras esenciales y principios rectores de la materia.' },
+                  { numeroTema: 2, titulo: 'METODOLOGÍAS Y MODELOS APLICADOS', contenido: 'Modelos de análisis, herramientas fundamentales y buenas prácticas aplicadas.' },
+                  { numeroTema: 3, titulo: 'PROCESOS Y CRITERIOS TÉCNICOS', contenido: 'Estandarización, normas operativas y control de calidad en los procesos.' }
+                ]
+              },
+              {
+                numeroUnidad: 2,
+                titulo: 'UNIDAD DE APRENDIZAJE II.- TÉCNICAS Y DESARROLLO APLICADO.',
+                temas: [
+                  { numeroTema: 4, titulo: 'DESARROLLO DE CASOS Y SOLUCIONES', contenido: 'Implementación estructurada de metodologías y análisis de casos prácticos.' },
+                  { numeroTema: 5, titulo: 'HERRAMIENTAS OPERATIVAS E INSTRUMENTACIÓN', contenido: 'Uso de herramientas específicas, entornos técnicos y validación funcional.' }
+                ]
+              },
+              {
+                numeroUnidad: 3,
+                titulo: 'UNIDAD DE APRENDIZAJE III.- ANÁLISIS AVANZADO E INTEGRACIÓN.',
+                temas: [
+                  { numeroTema: 6, titulo: 'DISEÑO Y FORMULACIÓN AVANZADA', contenido: 'Análisis de requerimientos complejos, integración de módulos y evaluación de rendimiento.' },
+                  { numeroTema: 7, titulo: 'OPTIMIZACIÓN Y GESTIÓN DE PROCESOS', contenido: 'Mejora continua, control de versiones y estándares de desempeño.' }
+                ]
+              },
+              {
+                numeroUnidad: 4,
+                titulo: 'UNIDAD DE APRENDIZAJE IV.- APLICACIÓN PROFESIONAL Y PROYECTO FINAL.',
+                temas: [
+                  { numeroTema: 8, titulo: 'PRÁCTICA EN ESCENARIOS REALES', contenido: 'Aplicación integral de conocimientos en proyectos de simulación profesional.' },
+                  { numeroTema: 9, titulo: 'PROYECTO INTEGRADOR DE FIN DE CURSO', contenido: 'Defensa, documentación formal y sustentación de resultados evaluados.' }
+                ]
+              }
+            ];
+          }
+        }
+
+        const splitIdx = Math.max(1, Math.ceil(unitsToRender.length / 2));
+        const page1Units = unitsToRender.slice(0, splitIdx);
+        const page2Units = unitsToRender.slice(splitIdx);
+
+        const renderUnitsHtml = (unitsList) => {
+          let html = '';
+          unitsList.forEach(u => {
+            html += `<div style="font-weight: bold; font-size: 10pt; margin-top: 10px; margin-bottom: 6px; text-align: left; text-transform: uppercase;">${safe(u.titulo)}</div>`;
+            (u.temas || []).forEach(t => {
+              html += `
+                <div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 2px; text-align: left;">
+                  TEMA Nº ${t.numeroTema || 1}. ${safe(t.titulo)}
+                </div>
+                <div style="font-size: 9.5pt; line-height: 1.25; text-align: left; margin-bottom: 8px; white-space: pre-line;">
+                  ${safe(t.contenido)}
+                </div>
+              `;
+            });
+          });
+          return html;
+        };
+
+        let bibBasicaList = [];
+        let bibCompList = [];
+        const basicaEl = document.getElementById('analitico-biblio-basica-input');
+        const compEl = document.getElementById('analitico-biblio-comp-input');
+        if (basicaEl && basicaEl.value.trim()) {
+          bibBasicaList = basicaEl.value.split('\n\n').map(s => s.trim()).filter(Boolean);
+        } else if (savedProg.bibliografia && savedProg.bibliografia.length > 0) {
+          bibBasicaList = savedProg.bibliografia.filter(b => b.tipo === 'BASICA').map(b => b.citaApa || (b.autor ? `${b.autor} (${b.anio || ''}). ${b.titulo}` : b.titulo));
+        }
+        if (compEl && compEl.value.trim()) {
+          bibCompList = compEl.value.split('\n\n').map(s => s.trim()).filter(Boolean);
+        } else if (savedProg.bibliografia && savedProg.bibliografia.length > 0) {
+          bibCompList = savedProg.bibliografia.filter(b => b.tipo === 'COMPLEMENTARIA').map(b => b.citaApa || (b.autor ? `${b.autor} (${b.anio || ''}). ${b.titulo}` : b.titulo));
+        }
+
+        if (bibBasicaList.length === 0) {
+          bibBasicaList = [
+            `Bibliografía oficial de la cátedra para ${safe(currentAsignatura)} (Edición actualizada). Fondo Editorial UNITEPC.`
+          ];
+        }
+        if (bibCompList.length === 0) {
+          bibCompList = [
+            `Manual y guías de referencia institucional para la formación académica en ${safe(displayCareerName)}. UNITEPC.`
+          ];
+        }
+
+        const renderBibListHtml = (items) => {
+          return items.map(item => `
+            <div style="font-size: 9.5pt; line-height: 1.25; text-align: left; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px;">
+              <span>✓</span>
+              <span>${safe(item)}</span>
+            </div>
+          `).join('');
+        };
 
         // PÁGINA 1
         docHtml += `
@@ -2601,7 +2771,7 @@
             ${headerComponent}
 
             <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 14px; letter-spacing: 0.5px;">
-              PROGRAMA ANALÍTICO: ${safe(data.nombre.toUpperCase())}
+              PROGRAMA ANALÍTICO: ${safe(currentAsignatura.toUpperCase())}
             </div>
 
             <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 18px;">
@@ -2622,65 +2792,19 @@
               </thead>
               <tbody>
                 <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '3º'}</td>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${safe(data.nombre)}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '8'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTeoricas || '2'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasPracticas || '4'}</td>
-                  <td style="border: 1px solid #000; padding: 4px;">${data.horasTotal || '120'}</td>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${currentCodigo}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${currentSemestre}</td>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${safe(currentAsignatura)}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${currentCreditos}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${currentHt}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${currentHp}</td>
+                  <td style="border: 1px solid #000; padding: 4px;">${currentHs}</td>
                   <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">2</td>
                 </tr>
               </tbody>
             </table>
 
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
-              UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS.
-            </div>
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 1. CONCEPTOS FUNDAMENTALES DE LA PROGRAMACIÓN ORIENTADA A OBJETOS
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Introducción a la programación orientada a objetos. Clases y objetos. Estructuras de la POO.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 2. HERENCIA Y POLIMORFISMO
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 3. ABSTRACCIÓN Y ENCAPSULAMIENTO
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 4. MANEJO DE EXCEPCIONES
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
-              Manejo de errores y excepciones. Try-catch y lanzamiento de excepciones. Buenas prácticas de manejo de errores.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
-              UNIDAD DE APRENDIZAJE II.- INTERFAZ DE USUARIO CON WINDOWS FORM.
-            </div>
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 5. INTRODUCCIÓN A WINDOWS FORMS
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Introducción a la creación de interfaces de usuario con Windows Forms. Diseño de ventanas y formularios. Uso de controles y elementos gráficos básicos.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 6. MANEJO DE EVENTOS
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; white-space: pre-line;">
-              Eventos en Windows Forms. Asociación de eventos con métodos. Implementación de respuestas a eventos de usuario.
-            </div>
+            ${renderUnitsHtml(page1Units)}
           </div>
         `;
 
@@ -2689,69 +2813,17 @@
           <div class="print-page" style="padding: 20mm 22mm 20mm 28mm; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.25; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 7. DISEÑO DE INTERFACES GRÁFICAS
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
-              Diseño avanzado de interfaces de usuario. Personalización de controles y formularios. Diseño de menús y barras de herramientas.
-            </div>
+            ${renderUnitsHtml(page2Units)}
 
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
-              UNIDAD DE APRENDIZAJE III.- DESARROLLO DE APLICACIONES SIMPLES
+            <div style="font-weight: bold; font-size: 10pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
+              BIBLIOGRAFÍA OFICIAL BÁSICA
             </div>
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 8. DISEÑO DE PROGRAMAS
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Análisis de requerimientos. Diseño de algoritmos. Estructuras de datos e interfaces de usuario. Diagramas de flujo y pseudocódigo.
-            </div>
+            ${renderBibListHtml(bibBasicaList)}
 
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 9. DESARROLLO DE APLICACIONES
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Creación de aplicaciones simples. Interfaz de usuario básica. Pruebas y depuración.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 10. GESTIÓN DE PROYECTOS Y CONTROL DE VERSIONES
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
-              Colaboración en equipos de desarrollo. Manejo de metodologías de desarrollo.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
-              UNIDAD DE APRENDIZAJE V.- PRÁCTICA Y PROYECTO FINAL
-            </div>
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 11. PRÁCTICA EN PROYECTOS REALES
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
-              Desarrollo de proyecto. Aplicación de los conocimientos adquiridos.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
-              TEMA Nº 12. PROYECTO FINAL
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 16px; white-space: pre-line;">
-              Definición y desarrollo de un proyecto completo. Documentación y presentación del proyecto.
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
-              BIBLIOGRAFÍA OFICIAL
-            </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px;">
-              <span>✓</span>
-              <span>Deitel, P. J., & Deitel, H. M. (2019). <em>Visual C# How to Program</em> (6th ed.). Pearson.</span>
-            </div>
-
-            <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 6px; text-align: left;">
+            <div style="font-weight: bold; font-size: 10pt; margin-top: 12px; margin-bottom: 6px; text-align: left;">
               BIBLIOGRAFÍA COMPLEMENTARIA
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; display: flex; align-items: flex-start; gap: 8px;">
-              <span>✓</span>
-              <span>Schildt, H. (2017). <em>C#. The Complete Reference</em> (5th ed.). McGraw-Hill Education.</span>
-            </div>
+            ${renderBibListHtml(bibCompList)}
           </div>
         `;
       }
@@ -2856,8 +2928,8 @@
         docHtml += `
           <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="text-align: center; margin-bottom: 6px;">
-              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
-              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1.1; margin: 0;">UNITEPC</div>
+              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin: 2px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
               <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL / TEÓRICO)</div>
             </div>
 
@@ -2865,18 +2937,18 @@
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(data.nombre.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(currentAsignatura.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${currentCodigo}</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>ÁREA DE DESEMPEÑO:</strong> FORMACIÓN PROFESIONAL</td>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>TIPO DE CURSO:</strong> REGULAR / OBLIGATORIO</td>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>MODALIDAD:</strong> PRESENCIAL</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '3º Semestre'}</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${currentSemestre}</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>PRE-REQUISITO:</strong> NINGUNO</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CRÉDITOS:</strong> ${data.creditos || '8'}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CARGA HORARIA TOTAL:</strong> ${data.horasTotal || '120'} HORAS &nbsp;&nbsp;|&nbsp;&nbsp; <strong>HORAS:</strong> TEÓRICAS: ${data.horasTeoricas || '2'}h / PRÁCTICAS: ${data.horasPracticas || '4'}h</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CRÉDITOS:</strong> ${currentCreditos}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>CARGA HORARIA TOTAL:</strong> ${currentHs} HORAS &nbsp;&nbsp;|&nbsp;&nbsp; <strong>HORAS:</strong> TEÓRICAS: ${currentHt}h / PRÁCTICAS: ${currentHp}h</td>
               </tr>
               <tr>
                 <td colspan="4" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>N° DE SESIONES SEMANALES:</strong> 2 SESIONES &nbsp;&nbsp; (TEÓRICAS: 1 &nbsp;|&nbsp; PRÁCTICAS: 1)</td>
@@ -2887,10 +2959,10 @@
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Nombre del docente:</strong> ${docenteName}</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>eMail:</strong> docente@unitepc.edu.bo</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>eMail:</strong> ${docenteEmail}</td>
               </tr>
               <tr>
-                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>Formación:</strong> Licenciatura en Ingeniería / Maestría en Educación Superior</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>Formación:</strong> Licenciatura en ${displayCareerName} / Maestría en Educación Superior</td>
                 <td style="border: 1px solid #000; padding: 2.5px 4px;"><strong>Teléfono:</strong> (+591) 4-4258888</td>
               </tr>
             </table>
@@ -2942,7 +3014,7 @@
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
               <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
+              <span style="font-size: 7pt; color: #475569;">${currentCodigo} - ${safe(currentAsignatura)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cronograma de Sesiones 1° a 14°)</div>
@@ -2962,7 +3034,7 @@
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
               <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
+              <span style="font-size: 7pt; color: #475569;">${currentCodigo} - ${safe(currentAsignatura)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Continuación Sesiones 15° a 28°)</div>
@@ -2982,7 +3054,7 @@
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
               <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
+              <span style="font-size: 7pt; color: #475569;">${currentCodigo} - ${safe(currentAsignatura)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cierre Sesiones 29° a 36° y Evaluaciones Finales)</div>
@@ -3069,8 +3141,8 @@
         docHtml += `
           <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="text-align: center; margin-bottom: 6px;">
-              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
-              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1.1; margin: 0;">UNITEPC</div>
+              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin: 2px 0 0 0; line-height: 1.2;">UNIVERSIDAD PRIVADA</div>
               <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS - PRÁCTICO (PACP)</div>
             </div>
 
@@ -3078,16 +3150,16 @@
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(data.nombre.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(currentAsignatura.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${currentCodigo}</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>ÁREA:</strong> FORMACIÓN PRÁCTICA PROFESIONAL</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>CARGA PRÁCTICA:</strong> ${data.horasPracticas || '4'} HORAS / SEMANA</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>CARGA PRÁCTICA:</strong> ${currentHp} HORAS / SEMANA</td>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>MODALIDAD:</strong> TALLER / LABORATORIO</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '3º Semestre'}</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${currentSemestre}</td>
               </tr>
               <tr>
-                <td colspan="4" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>ESCENARIO DE PRÁCTICA:</strong> Laboratorio de Computación / Gabinete Técnico Especializado &nbsp;&nbsp;|&nbsp;&nbsp; <strong>BIOSEGURIDAD:</strong> Normativa institucional UNITEPC</td>
+                <td colspan="4" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>ESCENARIO DE PRÁCTICA:</strong> Laboratorio / Gabinete Técnico Especializado &nbsp;&nbsp;|&nbsp;&nbsp; <strong>BIOSEGURIDAD:</strong> Normativa institucional UNITEPC</td>
               </tr>
             </table>
 
@@ -3095,7 +3167,7 @@
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Docente Responsable:</strong> ${docenteName}</td>
-                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Contacto Institucional:</strong> docente@unitepc.edu.bo</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Contacto Institucional:</strong> ${docenteEmail}</td>
               </tr>
               <tr>
                 <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; white-space: pre-line;"><strong>Equipamiento y Software:</strong> Servidores de laboratorio, estaciones de trabajo con IDE instalado, compiladores, conectividad y bitácoras técnicas.</td>
@@ -3190,10 +3262,10 @@
               <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000; font-size: 7.5pt;">
                 <tr>
                   <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
-                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(data.nombre)}</td>
+                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(currentAsignatura)}</td>
                 </tr>
                 <tr style="border-top: 1px solid #ccc;">
-                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> 28/08/2026 &nbsp;|&nbsp; <strong>Semestre:</strong> ${data.semestre || '3º'}</td>
+                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> 28/08/2026 &nbsp;|&nbsp; <strong>Semestre:</strong> ${currentSemestre}</td>
                   <td style="padding: 3px 6px;"><strong>Carrera:</strong> ${displayCareerName}</td>
                 </tr>
               </table>
@@ -3247,7 +3319,7 @@
           <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 4mm;">
               <div style="font-size: 15pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE TEÓRICOS POR SESIÓN (PCT)</div>
-              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${safe(data.nombre)} (Docente: ${docenteName})</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${currentCodigo} • ${safe(currentAsignatura)} (Docente: ${docenteName})</div>
             </div>
             ${teoricoCardsHtml}
           </div>
@@ -3310,7 +3382,7 @@
               <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000; font-size: 7.5pt;">
                 <tr>
                   <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
-                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(data.nombre)}</td>
+                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(currentAsignatura)}</td>
                 </tr>
                 <tr style="border-top: 1px solid #ccc;">
                   <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Ambiente / Lab:</strong> ${safe(p.ambiente || 'Laboratorio de Computación')}</td>
@@ -3364,7 +3436,7 @@
           <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 4mm;">
               <div style="font-size: 15pt; font-weight: 900; color: #0d9488;">UNITEPC • PLANES DE CLASE PRÁCTICOS POR SESIÓN (PCP)</div>
-              <div style="font-size: 9pt; font-weight: bold; color: #581c87;">${displayCode} • ${safe(data.nombre)} (Docente: ${docenteName})</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #581c87;">${currentCodigo} • ${safe(currentAsignatura)} (Docente: ${docenteName})</div>
             </div>
             ${practicoCardsHtml}
           </div>

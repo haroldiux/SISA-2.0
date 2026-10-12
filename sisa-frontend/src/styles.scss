@@ -293,7 +293,7 @@ textarea {
     margin: 0;
   }
 
-  html, body {
+  html, body, app-root {
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Times New Roman', Times, serif !important;
@@ -302,47 +302,36 @@ textarea {
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
+    display: block !important;
   }
 
-  /* Strictly hide all application shell elements */
+  /* Strictly hide all application shell elements and modals */
+  #sp-shell,
+  .sp-shell,
   #view-login,
   #view-change-password,
-  .sp-shell > aside,
-  #global-sidebar,
-  .sp-topbar,
+  #modal-container,
+  #modal-register-user,
+  #toast-container,
   header,
   aside,
-  .no-print,
-  #toast-container,
-  #modal-container,
-  .view-tab-btn,
-  #theme-toggle-btn,
-  .top-prototype-bar,
-  #view-dashboard,
-  #view1,
-  #view2,
-  #view3,
-  #view4,
-  #view5,
-  #view6 {
+  main,
+  .no-print {
     display: none !important;
-  }
-
-  main, #main-canvas {
-    display: block !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    background: transparent !important;
-    width: 100% !important;
   }
 
   #print-official-folder-container {
     display: block !important;
     visibility: visible !important;
+    position: static !important;
     width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #ffffff !important;
   }
 
   .print-page {
@@ -350,11 +339,15 @@ textarea {
     page-break-after: always !important;
     break-after: page !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
     position: relative !important;
     overflow: visible !important;
+    margin: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
   }
 
   .print-page:last-child {
