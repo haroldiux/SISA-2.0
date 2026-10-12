@@ -1745,7 +1745,7 @@
                 <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
                   <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Teórico Validado
                 </span>
-                <button type="button" onclick="window.exportExactFile('planes_xlsx')" class="px-3 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                <button type="button" onclick="window.exportExactFile('planes_teorico_xlsx')" class="px-3 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
                 </button>
               </div>
@@ -1787,7 +1787,7 @@
                 <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
                   <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Práctico Validado
                 </span>
-                <button type="button" onclick="window.exportExactFile('planes_xlsx')" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                <button type="button" onclick="window.exportExactFile('planes_prac_xlsx')" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
                 </button>
               </div>
@@ -1960,34 +1960,37 @@
       const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
       const sep = careerParam ? '&' : '?';
 
+      const data = (typeof materiasData !== 'undefined' && (materiasData[activeMateriaKey] || Object.values(materiasData)[0])) ? (materiasData[activeMateriaKey] || Object.values(materiasData)[0]) : {};
+      const courseCode = (data.codigo || (window.currentMateria && window.currentMateria.codigo) || asigId).toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+
       if (type === 'docx' || type === 'programa_docx') {
         const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
-        window.downloadAuthenticatedFile(url, `Programa_Analitico_${asigId}.docx`);
+        window.downloadAuthenticatedFile(url, `Programa_Analitico_${courseCode}.docx`);
       } else if (type === 'pac_gral_xlsx') {
         const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=GRAL`;
-        window.downloadAuthenticatedFile(url, `PAC_General_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `PAC_General_${courseCode}.xlsx`);
       } else if (type === 'pac_prac_xlsx') {
         const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=PRACTICO`;
-        window.downloadAuthenticatedFile(url, `PAC_Practico_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `PAC_Practico_${courseCode}.xlsx`);
       } else if (type === 'pac_cronograma_xlsx' || type === 'pac_xlsx') {
         const pacType = window.activePacType || 'GRAL';
         const label = (pacType === 'PRACTICO') ? 'PAC_Practico' : 'PAC_General';
         const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=${encodeURIComponent(pacType)}`;
-        window.downloadAuthenticatedFile(url, `${label}_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `${label}_${courseCode}.xlsx`);
       } else if (type === 'planes_teorico_xlsx') {
         const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=TEORICO`;
-        window.downloadAuthenticatedFile(url, `Plan_Clases_Teorico_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Teorico_${courseCode}.xlsx`);
       } else if (type === 'planes_prac_xlsx') {
         const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=PRACTICO`;
-        window.downloadAuthenticatedFile(url, `Plan_Clases_Practico_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Practico_${courseCode}.xlsx`);
       } else if (type === 'planes_xlsx') {
         const planType = window.activePlanType || 'TEORICO';
         const label = (planType === 'PRACTICO') ? 'Plan_Clases_Practico' : 'Plan_Clases_Teorico';
         const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=${encodeURIComponent(planType)}`;
-        window.downloadAuthenticatedFile(url, `${label}_${asigId}.xlsx`);
+        window.downloadAuthenticatedFile(url, `${label}_${courseCode}.xlsx`);
       } else {
         const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
-        window.downloadAuthenticatedFile(url, `Documento_${asigId}.docx`);
+        window.downloadAuthenticatedFile(url, `Documento_${courseCode}.docx`);
       }
     };
 
@@ -3470,34 +3473,9 @@
 
 
     window.triggerAutoCapture = function() {
-      const modalBody = `
-        <div class="space-y-4 text-xs">
-          <p class="text-slate-700 dark:text-slate-300">Selecciona qué archivo deseas procesar para poblar automáticamente todas sus secciones:</p>
-          <div class="grid grid-cols-3 gap-3">
-            <div onclick="window.switchDocMainTab('tab-analitico'); window.closeModal(); window.showToast('✓ Programa Analítico .docx capturado');" class="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 hover:border-blue-500 cursor-pointer text-center space-y-2 transition-all">
-              <i data-lucide="file-text" class="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400"></i>
-              <div class="font-bold text-slate-900 dark:text-white">Programa Analítico (.docx)</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Unidades 1-4, Bibliografía APA y Complementaria</div>
-            </div>
-            <div onclick="window.switchDocMainTab('tab-pac-matrix'); window.closeModal(); window.showToast('✓ PAC .xlsx y Cronograma capturados');" class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 hover:border-emerald-500 cursor-pointer text-center space-y-2 transition-all">
-              <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto text-emerald-600 dark:text-emerald-400"></i>
-              <div class="font-bold text-slate-900 dark:text-white">PAC + Cronograma (.xlsx)</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Estructura Oficial y Matriz de 20 Semanas</div>
-            </div>
-
-            <div onclick="window.switchDocMainTab('tab-cronograma-planes'); window.closeModal(); window.showToast('✓ Planes de Clase .xlsx capturados');" class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 hover:border-purple-500 cursor-pointer text-center space-y-2 transition-all">
-              <i data-lucide="calendar-range" class="w-8 h-8 mx-auto text-purple-600 dark:text-purple-400"></i>
-              <div class="font-bold text-slate-900 dark:text-white">Planes de Clase (.xlsx)</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Saberes, Estrategias, Rúbricas y Minutaje</div>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('modal-title').innerText = 'Subir y Extraer Datos de los Documentos Base';
-      document.getElementById('modal-body').innerHTML = modalBody;
-      document.getElementById('modal-footer').classList.remove('hidden');
-      document.getElementById('modal-container').classList.remove('hidden');
-      if (window.lucide) window.lucide.createIcons();
+      if (typeof window.showOfficialUploadModal === 'function') {
+        window.showOfficialUploadModal();
+      }
     };
 
     // ── DYNAMIC PLANES DE CLASE ENGINE (TAB 4) ───────────────────────────
@@ -5258,8 +5236,8 @@ window.exportPlanesOfficial = async function() {
   window.exportExactFile(planType === 'PRACTICO' ? 'planes_prac_xlsx' : 'planes_teorico_xlsx');
 };
 
-// Override triggerAutoCapture modal with real actions and dual modalities
-window.triggerAutoCapture = function() {
+// Real actions and dual modalities for official file uploads
+window.showOfficialUploadModal = function() {
   const modalBody = `
     <div class="space-y-4 text-xs">
       <p class="text-slate-700 dark:text-slate-300">Seleccioná el documento base oficial que deseas importar:</p>
@@ -5368,6 +5346,7 @@ window.triggerAutoCapture = function() {
   document.getElementById('modal-container').classList.remove('hidden');
   if (window.lucide) window.lucide.createIcons();
 };
+window.triggerAutoCapture = window.showOfficialUploadModal;
 
 // Global interceptor for all "Guardar" buttons
 
