@@ -1922,33 +1922,72 @@
     };
 
 
+    window.downloadAuthenticatedFile = async function(url, defaultFilename) {
+      try {
+        const authHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
+        const token = (typeof window.getAuthToken === 'function') ? window.getAuthToken() : '';
+        const fullUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
+
+        window.showToast('📥 Descargando documento oficial: ' + defaultFilename + '...');
+        const resp = await fetch(fullUrl, { headers: authHeaders });
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        let filename = defaultFilename;
+        const disposition = resp.headers.get('Content-Disposition');
+        if (disposition && disposition.includes('filename=')) {
+          const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+          if (match && match[1]) filename = match[1].trim();
+        }
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+        window.showToast(`✅ Descarga completada: ${filename}`);
+      } catch (err) {
+        window.showToast(`❌ Error al descargar archivo: ${err.message}`);
+      }
+    };
+
     window.exportExactFile = function(type) {
       const asigId = activeAsignacionId || 1;
       const careerCode = window.currentSelectedCareerCode || '';
       const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
+      const sep = careerParam ? '&' : '?';
 
       if (type === 'docx' || type === 'programa_docx') {
-        window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
-        window.location.href = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
+        const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
+        window.downloadAuthenticatedFile(url, `Programa_Analitico_${asigId}.docx`);
+      } else if (type === 'pac_gral_xlsx') {
+        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=GRAL`;
+        window.downloadAuthenticatedFile(url, `PAC_General_${asigId}.xlsx`);
+      } else if (type === 'pac_prac_xlsx') {
+        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=PRACTICO`;
+        window.downloadAuthenticatedFile(url, `PAC_Practico_${asigId}.xlsx`);
       } else if (type === 'pac_cronograma_xlsx' || type === 'pac_xlsx') {
         const pacType = window.activePacType || 'GRAL';
-        const sep = careerParam ? '&' : '?';
-        const label = (pacType === 'PRACTICO') ? 'PAC Práctico (.xlsx)' : 'PAC General + Cronograma (.xlsx)';
-        window.showToast(`📥 Generando y descargando ${label}...`);
-        window.location.href = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=${encodeURIComponent(pacType)}`;
+        const label = (pacType === 'PRACTICO') ? 'PAC_Practico' : 'PAC_General';
+        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=${encodeURIComponent(pacType)}`;
+        window.downloadAuthenticatedFile(url, `${label}_${asigId}.xlsx`);
+      } else if (type === 'planes_teorico_xlsx') {
+        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=TEORICO`;
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Teorico_${asigId}.xlsx`);
+      } else if (type === 'planes_prac_xlsx') {
+        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=PRACTICO`;
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Practico_${asigId}.xlsx`);
       } else if (type === 'planes_xlsx') {
-        const planType = window.activePlanType || 'TEORICO_PRACTICO';
-        const sep = careerParam ? '&' : '?';
-        window.showToast('📥 Generando y descargando Planes de Clase (.xlsx)...');
-        window.location.href = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=${encodeURIComponent(planType)}`;
+        const planType = window.activePlanType || 'TEORICO';
+        const label = (planType === 'PRACTICO') ? 'Plan_Clases_Practico' : 'Plan_Clases_Teorico';
+        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=${encodeURIComponent(planType)}`;
+        window.downloadAuthenticatedFile(url, `${label}_${asigId}.xlsx`);
       } else {
-        const files = {
-          'docx': '1. Programa Analitico (.docx)',
-          'pac_cronograma_xlsx': '2 y 3. PAC + Cronograma (.xlsx)',
-          'planes_xlsx': '4. PLAN DE CLASES (.xlsx)'
-        };
-        const fname = files[type] || 'documento';
-        window.showToast('📥 Exportando en formato oficial: ' + fname);
+        const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
+        window.downloadAuthenticatedFile(url, `Documento_${asigId}.docx`);
       }
     };
 
@@ -2014,6 +2053,8 @@
       const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
       const rawCareers = data.carrerasCodes || ['CARSIS'];
       const resolvedCareers = data.carrerasResolved || [{ name: 'Ingeniería de Sistemas', tag: 'ING. SISTEMAS' }];
+      const hasTeo = !data.components || !data.components.requiredPac || data.components.requiredPac.includes('GRAL') || (data.horasTeoricas > 0);
+      const hasPrac = (data.components && data.components.requiredPac && data.components.requiredPac.includes('PRACTICO')) || (data.horasPracticas > 0);
 
       let careerOptionsHtml = '';
       if (rawCareers.length > 1) {
@@ -2039,69 +2080,108 @@
           </div>
         `;
       } else {
-        const singleCode = typeof window.resolveOfficialCourseCode === 'function' ? window.resolveOfficialCourseCode(data.nombre, rawCareers) : data.codigo;
         careerOptionsHtml = `
           <input type="hidden" id="print-career-selector" value="${rawCareers[0] || 'CARSIS'}">
         `;
       }
 
+      let documentsListHtml = `
+        <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+          <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-blue-600" data-section="pa" checked onchange="window.updateMasterPrintCheckbox()">
+          <div>
+            <span class="font-bold text-slate-900 dark:text-white block">📋 Programa Analítico Oficial (.docx)</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Normado a 2 hojas con tabla técnica institucional, 4 unidades temáticas y bibliografía APA.</span>
+          </div>
+        </label>
+      `;
+
+      if (hasTeo) {
+        documentsListHtml += `
+          <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+            <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-emerald-600" data-section="pac_gral" checked onchange="window.updateMasterPrintCheckbox()">
+            <div>
+              <span class="font-bold text-slate-900 dark:text-white block">📊 PAC General / Teórico (.xlsx)</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Puntos 1 al 6, Matriz 7 de 20 Semanas de Aula, Metodología, Sistema de Evaluación y Normativa.</span>
+            </div>
+          </label>
+        `;
+      }
+
+      if (hasPrac) {
+        documentsListHtml += `
+          <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+            <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-teal-600" data-section="pac_prac" checked onchange="window.updateMasterPrintCheckbox()">
+            <div>
+              <span class="font-bold text-slate-900 dark:text-white block">🔬 PAC Práctico (.xlsx)</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Identificación de laboratorio, bioseguridad institucional y Cronograma Semestral de Prácticas Oficial.</span>
+            </div>
+          </label>
+        `;
+      }
+
+      if (hasTeo) {
+        documentsListHtml += `
+          <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+            <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-purple-600" data-section="plan_teorico" checked onchange="window.updateMasterPrintCheckbox()">
+            <div>
+              <span class="font-bold text-slate-900 dark:text-white block">📝 Planes de Clase Teóricos (PCT - .xlsx)</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Fichas didácticas de cátedra con los 5 momentos oficiales (Motivación, Exploración, Contacto, Aplicación y Cierre).</span>
+            </div>
+          </label>
+        `;
+      }
+
+      if (hasPrac) {
+        documentsListHtml += `
+          <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+            <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-indigo-600" data-section="plan_prac" checked onchange="window.updateMasterPrintCheckbox()">
+            <div>
+              <span class="font-bold text-slate-900 dark:text-white block">🧪 Planes de Clase Prácticos (PCP - .xlsx)</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Fichas de laboratorio con las 4 fases didácticas (Preparatoria, Guiada, Autónoma y Cierre) y bioseguridad.</span>
+            </div>
+          </label>
+        `;
+      }
+
       const modalBody = `
         <div class="space-y-4 text-xs">
-          <p class="text-slate-700 dark:text-slate-300">Seleccioná los documentos que deseas imprimir o exportar a PDF:</p>
+          <p class="text-slate-700 dark:text-slate-300">Seleccioná los documentos oficiales que deseas incluir en la carpeta para previsualizar, imprimir o descargar directamente en PDF:</p>
           
           ${careerOptionsHtml}
 
           <div class="space-y-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
             <label class="flex items-center gap-3 cursor-pointer select-none pb-2.5 border-b border-slate-200 dark:border-slate-700">
               <input type="checkbox" id="chk-print-all" checked onchange="window.toggleAllPrintCheckboxes(this.checked)" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500">
-              <span class="font-bold text-slate-900 dark:text-white text-sm">📁 Imprimir Toda la Carpeta Completa</span>
+              <span class="font-bold text-slate-900 dark:text-white text-sm">📁 Incluir Toda la Carpeta Completa (Portada, Índice, MVP, Horarios y Documentos)</span>
             </label>
 
-            <div class="space-y-2 pt-1 text-slate-700 dark:text-slate-300">
-              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="pa" checked onchange="window.updateMasterPrintCheckbox()">
-                <div>
-                  <span class="font-bold text-slate-900 dark:text-white block">📋 Programa Analítico</span>
-                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial normado a 2 columnas con tabla técnica, 4 unidades y bibliografía APA.</span>
-                </div>
-              </label>
-
-              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="pac_cronograma" checked onchange="window.updateMasterPrintCheckbox()">
-                <div>
-                  <span class="font-bold text-slate-900 dark:text-white block">📊 PAC con el Cronograma</span>
-                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Mismo formato que el Excel / PDF base para el PAC (Identificación, Matriz 20 Semanas, Metodología, Evaluación, Normativa y Bibliografía).</span>
-                </div>
-              </label>
-
-              <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
-                <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-brand-600" data-section="plan_clase" checked onchange="window.updateMasterPrintCheckbox()">
-                <div>
-                  <span class="font-bold text-slate-900 dark:text-white block">📝 Plan de Clase</span>
-                  <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial con las fichas de sesión didáctica (Inicio, Desarrollo y Cierre).</span>
-                </div>
-              </label>
+            <div class="space-y-1.5 pt-1 text-slate-700 dark:text-slate-300">
+              ${documentsListHtml}
             </div>
           </div>
           
           <div class="flex justify-between items-center pt-2">
             <span class="text-[11px] text-slate-500 dark:text-slate-400">Formato oficial normado según el modelo educativo UNITEPC.</span>
             <div class="flex gap-2">
-              <button onclick="window.closeModal()" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+              <button onclick="window.closeModal()" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancelar</button>
               <button onclick="window.previewOfficialDocument()" class="px-3 py-2 rounded-lg border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors cursor-pointer">
                 <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                👁️ Vista Previa en Pantalla
+                👁️ Vista Previa
+              </button>
+              <button onclick="window.downloadOfficialFolderPdf()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                📥 Descargar PDF (.pdf)
               </button>
               <button onclick="window.executeSelectedPrint()" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                🖨️ Generar PDF / Imprimir
+                🖨️ Imprimir
               </button>
             </div>
           </div>
         </div>
       `;
 
-      document.getElementById('modal-title').innerText = 'Carpeta Pedagógica Docente Oficial UNITEPC (Formato de Impresión)';
+      document.getElementById('modal-title').innerText = 'Carpeta Pedagógica Docente Oficial UNITEPC (Impresión y PDF)';
       document.getElementById('modal-body').innerHTML = modalBody;
       document.getElementById('modal-footer').classList.add('hidden');
       document.getElementById('modal-container').classList.remove('hidden');
@@ -2130,9 +2210,12 @@
           <div class="flex items-center justify-between p-2.5 bg-slate-800 text-white rounded-xl text-xs">
             <span class="font-bold flex items-center gap-2"><i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i> Vista Previa Digital - Carpeta Oficial UNITEPC (Hojas Tamaño Carta)</span>
             <div class="flex gap-2">
-              <button onclick="window.openPdfPrintModal()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg text-xs transition-colors">Volver a Opciones</button>
-              <button onclick="window.executeSelectedPrint()" class="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir / Guardar en PDF
+              <button onclick="window.openPdfPrintModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer">Volver a Opciones</button>
+              <button onclick="window.downloadOfficialFolderPdf()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> 📥 Descargar PDF (.pdf)
+              </button>
+              <button onclick="window.executeSelectedPrint()" class="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> 🖨️ Imprimir
               </button>
             </div>
           </div>
@@ -2160,6 +2243,72 @@
       if (master) master.checked = all.every(c => c.checked);
     };
 
+    window.downloadOfficialFolderPdf = function() {
+      const selectedSections = [];
+      const masterChecked = document.getElementById('chk-print-all')?.checked;
+      if (masterChecked) {
+        selectedSections.push('portada', 'indice', 'mvp', 'horarios');
+      }
+      document.querySelectorAll('.chk-print-sec:checked').forEach(c => {
+        selectedSections.push(c.getAttribute('data-section'));
+      });
+
+      if (selectedSections.length === 0) {
+        window.showToast('⚠️ Por favor selecciona al menos una sección para descargar en PDF');
+        return;
+      }
+
+      const careerSelector = document.getElementById('print-career-selector');
+      const selectedCareerCode = careerSelector ? careerSelector.value : 'ALL';
+      const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+      const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
+      const cleanCode = (data.codigo || 'UNITEPC').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `Carpeta_Docente_UNITEPC_${cleanCode}_2026.pdf`;
+
+      window.showToast('⏳ Procesando y generando archivo PDF oficial...');
+
+      const docHtml = window.buildOfficialFolderHtml(selectedSections, selectedCareerCode);
+
+      const renderDiv = document.createElement('div');
+      renderDiv.id = 'official-pdf-render-wrapper';
+      renderDiv.style.position = 'fixed';
+      renderDiv.style.left = '-9999px';
+      renderDiv.style.top = '0';
+      renderDiv.style.width = '210mm';
+      renderDiv.style.background = '#ffffff';
+      renderDiv.style.color = '#000000';
+      renderDiv.style.boxSizing = 'border-box';
+      renderDiv.style.zIndex = '-999';
+      renderDiv.innerHTML = docHtml;
+      document.body.appendChild(renderDiv);
+
+      if (typeof html2pdf !== 'undefined') {
+        const opt = {
+          margin:       [6, 6, 6, 6],
+          filename:     filename,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+          jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' },
+          pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(renderDiv).save().then(() => {
+          if (document.body.contains(renderDiv)) document.body.removeChild(renderDiv);
+          window.closeModal();
+          window.showToast('✅ Archivo PDF descargado correctamente: ' + filename);
+        }).catch(err => {
+          console.error('Error html2pdf:', err);
+          if (document.body.contains(renderDiv)) document.body.removeChild(renderDiv);
+          window.showToast('⚠️ No se pudo generar el archivo descargable. Abriendo diálogo de impresión...');
+          window.executeSelectedPrint();
+        });
+      } else {
+        if (document.body.contains(renderDiv)) document.body.removeChild(renderDiv);
+        window.showToast('⚠️ Motor de PDF no detectado. Abriendo diálogo de impresión...');
+        window.executeSelectedPrint();
+      }
+    };
+
     window.buildOfficialFolderHtml = function(selectedSections, selectedCareerCode) {
       const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
       const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
@@ -2175,9 +2324,18 @@
       const displayCode = selectedCareerCode === 'ALL' ? data.codigo : officialSingleCode;
       const displayCareerName = selectedCareerCode === 'ALL' ? data.carrera : careerMeta.carrera;
 
+      const safe = (val, fb = '') => {
+        if (val === null || val === undefined || val === '') return fb;
+        return String(val)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      };
+
       let docHtml = '';
 
-      // 1. PORTADA
+      // 1. PORTADA OFICIAL
       if (selectedSections.includes('portada')) {
         docHtml += `
           <div class="print-page" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 250mm; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 25mm 20mm 15mm 20mm; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
@@ -2210,7 +2368,7 @@
         `;
       }
 
-      // 2. ÍNDICE
+      // 2. ÍNDICE OFICIAL
       if (selectedSections.includes('indice')) {
         docHtml += `
           <div class="print-page" style="padding: 15mm 15mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
@@ -2220,7 +2378,7 @@
             </div>
 
             <div style="background: #6b21a8; color: white; padding: 8px 15px; font-size: 15pt; font-weight: bold; margin-bottom: 12px;">
-              ÍNDICE
+              ÍNDICE DE LA CARPETA DOCENTE
             </div>
 
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11pt;">
@@ -2273,19 +2431,19 @@
               </thead>
               <tbody>
                 <tr>
-                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Programa analítico</td>
+                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Programa analítico normado</td>
                   <td style="text-align: center; padding: 9px; border-bottom: 1px solid #e2e8f0;"><div style="background: #dcfce7; color: #064e3b; font-weight: bold; padding: 4px 8px; border-radius: 4px;">PA</div></td>
                 </tr>
                 <tr>
-                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Programa de asignatura por competencias</td>
-                  <td style="text-align: center; padding: 9px; border-bottom: 1px solid #e2e8f0;"><div style="background: #dcfce7; color: #064e3b; font-weight: bold; padding: 4px 8px; border-radius: 4px;">PAC</div></td>
+                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Programa de asignatura por competencias (General / Práctico)</td>
+                  <td style="text-align: center; padding: 9px; border-bottom: 1px solid #e2e8f0;"><div style="background: #dcfce7; color: #064e3b; font-weight: bold; padding: 4px 8px; border-radius: 4px;">PAC / PACP</div></td>
                 </tr>
                 <tr>
-                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Cronograma teórico-práctico</td>
+                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Cronograma de Clases y Prácticas de Laboratorio</td>
                   <td style="text-align: center; padding: 9px; border-bottom: 1px solid #e2e8f0;"><div style="background: #dcfce7; color: #064e3b; font-weight: bold; padding: 4px 8px; border-radius: 4px;">CT-P</div></td>
                 </tr>
                 <tr>
-                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Plan de clase Teórico-Práctico (según corresponda)</td>
+                  <td style="padding: 9px 12px; border-bottom: 1px solid #e2e8f0;">Planes de Clase Teórico-Práctico (PCT / PCP)</td>
                   <td style="text-align: center; padding: 9px; border-bottom: 1px solid #e2e8f0;"><div style="background: #dcfce7; color: #064e3b; font-weight: bold; padding: 4px 8px; border-radius: 4px;">PCT-PCP</div></td>
                 </tr>
               </tbody>
@@ -2307,8 +2465,8 @@
               <div style="background: #6b21a8; color: white; text-align: center; padding: 6px 10px; font-size: 13pt; font-weight: bold; letter-spacing: 1px;">
                 MISIÓN
               </div>
-              <div style="border: 2px solid #6b21a8; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6;">
-                ${careerMeta.mision}
+              <div style="border: 2px solid #6b21a8; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6; white-space: pre-line;">
+                ${safe(careerMeta.mision)}
               </div>
             </div>
 
@@ -2316,8 +2474,8 @@
               <div style="background: #0d9488; color: white; text-align: center; padding: 6px 10px; font-size: 13pt; font-weight: bold; letter-spacing: 1px;">
                 VISIÓN
               </div>
-              <div style="border: 2px solid #0d9488; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6;">
-                ${careerMeta.vision}
+              <div style="border: 2px solid #0d9488; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6; white-space: pre-line;">
+                ${safe(careerMeta.vision)}
               </div>
             </div>
 
@@ -2325,8 +2483,8 @@
               <div style="background: #6b21a8; color: white; text-align: center; padding: 6px 10px; font-size: 13pt; font-weight: bold; letter-spacing: 1px;">
                 PERFIL PROFESIONAL
               </div>
-              <div style="border: 2px solid #6b21a8; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6;">
-                ${careerMeta.perfil}
+              <div style="border: 2px solid #6b21a8; padding: 12px 16px; font-size: 10pt; text-align: justify; line-height: 1.6; white-space: pre-line;">
+                ${safe(careerMeta.perfil)}
               </div>
             </div>
           </div>
@@ -2338,12 +2496,12 @@
         let scheduleRowsHtml = '';
         if (data.teoList && data.teoList.length > 0) {
           data.teoList.forEach(t => {
-            scheduleRowsHtml += `<tr><td style="text-align: left; padding: 6px 0;">Teoría (${t.code}) - ${t.classroom} (${t.campus})</td><td style="text-align: right; font-weight: bold;">Martes 08:15 - 11:15</td></tr>`;
+            scheduleRowsHtml += `<tr><td style="text-align: left; padding: 6px 0;">Teoría (${safe(t.code)}) - ${safe(t.classroom)} (${safe(t.campus)})</td><td style="text-align: right; font-weight: bold;">Martes 08:15 - 11:15</td></tr>`;
           });
         }
         if (data.pracList && data.pracList.length > 0) {
           data.pracList.forEach(p => {
-            scheduleRowsHtml += `<tr><td style="text-align: left; padding: 6px 0;">Práctica (${p.code}) - ${p.classroom} (${p.campus})</td><td style="text-align: right; font-weight: bold;">Viernes 11:15 - 12:45</td></tr>`;
+            scheduleRowsHtml += `<tr><td style="text-align: left; padding: 6px 0;">Práctica (${safe(p.code)}) - ${safe(p.classroom)} (${safe(p.campus)})</td><td style="text-align: right; font-weight: bold;">Viernes 11:15 - 12:45</td></tr>`;
           });
         }
         if (!scheduleRowsHtml) {
@@ -2381,13 +2539,13 @@
 
             <div>
               <div style="background: #0d9488; color: white; text-align: center; padding: 7px 10px; font-size: 13.5pt; font-weight: bold; letter-spacing: 1px;">
-                FECHAS DE EXAMENES
+                FECHAS DE EXÁMENES OFICIALES
               </div>
               <div style="border: 2px solid #0d9488; padding: 18px 25px; font-size: 10.5pt; text-align: center; line-height: 1.8;">
                 <table style="width: 90%; margin: 0 auto; border-collapse: collapse;">
                   <thead>
                     <tr style="font-weight: bold; font-size: 11pt; border-bottom: 1.5px solid #0d9488;">
-                      <th style="padding: 6px 0; text-align: left;">PARCIAL</th>
+                      <th style="padding: 6px 0; text-align: left;">PARCIAL / INSTANCIA</th>
                       <th style="padding: 6px 0; text-align: right;">FECHA</th>
                     </tr>
                   </thead>
@@ -2416,7 +2574,7 @@
         `;
       }
 
-      // 5. PROGRAMA ANALÍTICO (PA) - Exact format from PROGRAMACIÓN III.docx (Matching media_1787956275188.png)
+      // 5. PROGRAMA ANALÍTICO (PA) - Formato Normado de 2 Hojas
       if (selectedSections.includes('pa')) {
         const headerComponent = `
           <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #00b4d8; padding-bottom: 5px; margin-bottom: 18px; font-family: 'Times New Roman', Times, serif; width: 100%;">
@@ -2434,13 +2592,13 @@
           </div>
         `;
 
-        // PÁGINA 1: Header, Tabla Oficial (N° HOJAS: 2), Unidad I (Temas 1 al 4) y Unidad II (Temas 5 y 6)
+        // PÁGINA 1
         docHtml += `
           <div class="print-page" style="padding: 20mm 22mm 20mm 28mm; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.25; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
 
             <div style="text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 14px; letter-spacing: 0.5px;">
-              PROGRAMA ANALÍTICO: ${data.nombre.toUpperCase()}
+              PROGRAMA ANALÍTICO: ${safe(data.nombre.toUpperCase())}
             </div>
 
             <table style="width: 100%; border: 1.5px solid #000; border-collapse: collapse; text-align: center; font-size: 8.5pt; margin-bottom: 18px;">
@@ -2463,7 +2621,7 @@
                 <tr>
                   <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${displayCode}</td>
                   <td style="border: 1px solid #000; padding: 4px;">${data.semestre || '3º'}</td>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${data.nombre}</td>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">${safe(data.nombre)}</td>
                   <td style="border: 1px solid #000; padding: 4px;">${data.creditos || '8'}</td>
                   <td style="border: 1px solid #000; padding: 4px;">${data.horasTeoricas || '2'}</td>
                   <td style="border: 1px solid #000; padding: 4px;">${data.horasPracticas || '4'}</td>
@@ -2473,61 +2631,57 @@
               </tbody>
             </table>
 
-            <!-- UNIDAD DE APRENDIZAJE I -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
               UNIDAD DE APRENDIZAJE I.- PROGRAMACIÓN ORIENTADA A OBJETOS.
             </div>
-
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 1. CONCEPTOS FUNDAMENTALES DE LA PROGRAMACIÓN ORIENTADA A OBJETOS
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
               Introducción a la programación orientada a objetos. Clases y objetos. Estructuras de la POO.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 2. HERENCIA Y POLIMORFISMO
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
-              Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
+              Creación de clases basadas en otras clases existentes. Reutilización de código. Respuestas de objetos de distintas clases a una misma interfaz de manera única.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 3. ABSTRACCIÓN Y ENCAPSULAMIENTO
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
-              Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
+              Agrupar datos y funciones relacionadas en un solo objeto. Control de acceso, seguridad y factibilidad en el mantenimiento del software.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 4. MANEJO DE EXCEPCIONES
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
               Manejo de errores y excepciones. Try-catch y lanzamiento de excepciones. Buenas prácticas de manejo de errores.
             </div>
 
-            <!-- UNIDAD DE APRENDIZAJE II -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
               UNIDAD DE APRENDIZAJE II.- INTERFAZ DE USUARIO CON WINDOWS FORM.
             </div>
-
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 5. INTRODUCCIÓN A WINDOWS FORMS
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
               Introducción a la creación de interfaces de usuario con Windows Forms. Diseño de ventanas y formularios. Uso de controles y elementos gráficos básicos.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 6. MANEJO DE EVENTOS
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; white-space: pre-line;">
               Eventos en Windows Forms. Asociación de eventos con métodos. Implementación de respuestas a eventos de usuario.
             </div>
           </div>
         `;
 
-        // PÁGINA 2: Header, Tema 7, Unidad III (Temas 8 al 10), Unidad V (Temas 11 y 12), Bibliografía Oficial y Complementaria
+        // PÁGINA 2
         docHtml += `
           <div class="print-page" style="padding: 20mm 22mm 20mm 28mm; font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.25; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             ${headerComponent}
@@ -2535,56 +2689,51 @@
             <div style="font-weight: bold; font-size: 11pt; margin-top: 4px; margin-bottom: 2px; text-align: left;">
               TEMA Nº 7. DISEÑO DE INTERFACES GRÁFICAS
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px;">
-              Diseño avanzado de interfaces de usuario. Personalización de controles y formularios, Diseño de menús y barras de herramientas.
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
+              Diseño avanzado de interfaces de usuario. Personalización de controles y formularios. Diseño de menús y barras de herramientas.
             </div>
 
-            <!-- UNIDAD DE APRENDIZAJE III -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
               UNIDAD DE APRENDIZAJE III.- DESARROLLO DE APLICACIONES SIMPLES
             </div>
-
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 8. DISEÑO DE PROGRAMAS
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
               Análisis de requerimientos. Diseño de algoritmos. Estructuras de datos e interfaces de usuario. Diagramas de flujo y pseudocódigo.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 9. DESARROLLO DE APLICACIONES
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
               Creación de aplicaciones simples. Interfaz de usuario básica. Pruebas y depuración.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 10. GESTIÓN DE PROYECTOS Y CONTROL DE VERSIONES
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 14px; white-space: pre-line;">
               Colaboración en equipos de desarrollo. Manejo de metodologías de desarrollo.
             </div>
 
-            <!-- UNIDAD DE APRENDIZAJE V -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 8px; text-align: left;">
               UNIDAD DE APRENDIZAJE V.- PRÁCTICA Y PROYECTO FINAL
             </div>
-
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 11. PRÁCTICA EN PROYECTOS REALES
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 12px; white-space: pre-line;">
               Desarrollo de proyecto. Aplicación de los conocimientos adquiridos.
             </div>
 
             <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2px; text-align: left;">
               TEMA Nº 12. PROYECTO FINAL
             </div>
-            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 16px;">
+            <div style="font-size: 11pt; line-height: 1.25; text-align: left; margin-bottom: 16px; white-space: pre-line;">
               Definición y desarrollo de un proyecto completo. Documentación y presentación del proyecto.
             </div>
 
-            <!-- BIBLIOGRAFÍA OFICIAL -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 14px; margin-bottom: 6px; text-align: left;">
               BIBLIOGRAFÍA OFICIAL
             </div>
@@ -2593,7 +2742,6 @@
               <span>Deitel, P. J., & Deitel, H. M. (2019). <em>Visual C# How to Program</em> (6th ed.). Pearson.</span>
             </div>
 
-            <!-- BIBLIOGRAFÍA COMPLEMENTARIA -->
             <div style="font-weight: bold; font-size: 11pt; margin-top: 12px; margin-bottom: 6px; text-align: left;">
               BIBLIOGRAFÍA COMPLEMENTARIA
             </div>
@@ -2605,9 +2753,10 @@
         `;
       }
 
-      // 6. PAC CON CRONOGRAMA - Exact format of PAC TALLER DE IDIOMAS.xlsx (Puntos 1 al 6 + Matriz 7 + Puntos 8 a 14)
-      if (selectedSections.includes('pac_cronograma') || selectedSections.includes('pac') || selectedSections.includes('cronograma')) {
-        const savedPac = localStorage.getItem('sisa_saved_pac_' + mKey);
+      // 6. PAC GENERAL / TEÓRICO (Puntos 1 al 6 + Matriz 7 de 20 Semanas + Puntos 8 a 14)
+      const shouldRenderPacGral = selectedSections.includes('pac_gral') || selectedSections.includes('pac_teorico') || (selectedSections.includes('pac_cronograma') && (!selectedSections.includes('pac_prac') || window.activeCronogramaType !== 'PRACTICO'));
+      if (shouldRenderPacGral) {
+        const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
         let matriz7 = [];
         if (savedPac) {
           try { matriz7 = JSON.parse(savedPac).matriz7 || []; } catch(e) {}
@@ -2673,12 +2822,12 @@
               <tr style="background: ${rowBg};">
                 <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">${semNum}°</td>
                 <td style="border: 1px solid #000; padding: 2px; text-align: center; font-weight: bold;">${sesNum}°</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;">${temaText}</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;">${saberCText}</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;">${saberPText}</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;">${saberAText}</td>
-                <td style="border: 1px solid #000; padding: 2px 4px;">${critText}</td>
-                <td style="border: 1px solid #000; padding: 2px 4px; text-align: center;">${instText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; white-space: pre-line; word-break: break-word;">${temaText}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; white-space: pre-line; word-break: break-word;">${safe(saberCText)}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; white-space: pre-line; word-break: break-word;">${safe(saberPText)}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; white-space: pre-line; word-break: break-word;">${safe(saberAText)}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; white-space: pre-line; word-break: break-word;">${safe(critText)}</td>
+                <td style="border: 1px solid #000; padding: 2px 4px; text-align: center; white-space: pre-line; word-break: break-word;">${safe(instText)}</td>
               </tr>
             `;
           }
@@ -2700,21 +2849,20 @@
           </thead>
         `;
 
-        // PAGE 1: PUNTOS 1 AL 6 DEL EXCEL BASE (Identificación, Docente, Justificación, Propósito, Competencias, Elementos)
+        // PAGE 1: PUNTOS 1 AL 6
         docHtml += `
           <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="text-align: center; margin-bottom: 6px;">
               <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
               <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
-              <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</div>
+              <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL / TEÓRICO)</div>
             </div>
 
-            <!-- 1. IDENTIFICACIÓN -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">1.- Identificación de la Asignatura</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
-                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${data.nombre.toUpperCase()} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(data.nombre.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>ÁREA DE DESEMPEÑO:</strong> FORMACIÓN PROFESIONAL</td>
@@ -2732,7 +2880,6 @@
               </tr>
             </table>
 
-            <!-- 2. DOCENTE -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">2.- Docente Responsable de la Asignatura</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
@@ -2745,45 +2892,41 @@
               </tr>
             </table>
 
-            <!-- 3. JUSTIFICACIÓN -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">3.- Justificación de la Asignatura</div>
-            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt;">
-              ${data.caracterizacion || 'La asignatura es de primordial relevancia en la malla curricular institucional por cuanto desarrolla competencias profesionales indispensables para la formulación, diseño y construcción de soluciones tecnológicas estructuradas. Proporciona al estudiante fundamentos sólidos, metodologías activas y destrezas prácticas alineadas a los requerimientos socioproductivos y estándares de la industria.'}
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt; white-space: pre-line;">
+              ${safe(data.caracterizacion || 'La asignatura es de primordial relevancia en la malla curricular institucional por cuanto desarrolla competencias profesionales indispensables para la formulación, diseño y construcción de soluciones tecnológicas estructuradas. Proporciona al estudiante fundamentos sólidos, metodologías activas y destrezas prácticas alineadas a los requerimientos socioproductivos y estándares de la industria.')}
             </div>
 
-            <!-- 4. PROPÓSITO GENERAL -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">4.- Propósito General de la Unidad de Formación</div>
-            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt;">
-              ${data.macroCompetencia || 'Formar profesionales competentes en el análisis, diseño e implementación de sistemas mediante el uso riguroso de principios computacionales, patrones de diseño y trabajo colaborativo, con alto sentido de ética, innovación y responsabilidad social.'}
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt; white-space: pre-line;">
+              ${safe(data.macroCompetencia || 'Formar profesionales competentes en el análisis, diseño e implementación de sistemas mediante el uso riguroso de principios computacionales, patrones de diseño y trabajo colaborativo, con alto sentido de ética, innovación y responsabilidad social.')}
             </div>
 
-            <!-- 5. COMPETENCIAS -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">5.- Competencias</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
               <tr>
                 <td style="border: 1px solid #000; padding: 3px 5px; width: 30%; background: #f8fafc; font-weight: bold;">Competencia Global Específica:</td>
-                <td style="border: 1px solid #000; padding: 3px 5px;">${data.macroCompetencia || 'Desarrolla sistemas modulares, escalables y mantenibles aplicando estándares de ingeniería de software.'}</td>
+                <td style="border: 1px solid #000; padding: 3px 5px; white-space: pre-line;">${safe(data.macroCompetencia || 'Desarrolla sistemas modulares, escalables y mantenibles aplicando estándares de ingeniería de software.')}</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 3px 5px; width: 30%; background: #f8fafc; font-weight: bold;">Unidad de Competencia Específica:</td>
-                <td style="border: 1px solid #000; padding: 3px 5px;">MANEJA ESTRUCTURAS, PATRONES Y LENGUAJES DE PROGRAMACIÓN PARA LA CONSTRUCCIÓN DE SOFTWARE DE ALTA CALIDAD Y DISPONIBILIDAD.</td>
+                <td style="border: 1px solid #000; padding: 3px 5px; white-space: pre-line;">MANEJA ESTRUCTURAS, PATRONES Y LENGUAJES DE PROGRAMACIÓN PARA LA CONSTRUCCIÓN DE SOFTWARE DE ALTA CALIDAD Y DISPONIBILIDAD.</td>
               </tr>
             </table>
 
-            <!-- 6. ELEMENTOS DE COMPETENCIA -->
             <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">6.- Elementos de Competencia</div>
             <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt;">
               <tr>
                 <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 1:</td>
-                <td style="border: 1px solid #000; padding: 3px 5px;">Analiza y modela la arquitectura de entidades y objetos, aplicando principios de encapsulamiento, herencia y polimorfismo con rigor técnico y buenas prácticas.</td>
+                <td style="border: 1px solid #000; padding: 3px 5px; white-space: pre-line;">Analiza y modela la arquitectura de entidades y objetos, aplicando principios de encapsulamiento, herencia y polimorfismo con rigor técnico y buenas prácticas.</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 2:</td>
-                <td style="border: 1px solid #000; padding: 3px 5px;">Diseña interfaces interactivas y gestiona eventos del sistema, asegurando la comunicación reactiva entre componentes y la experiencia de usuario.</td>
+                <td style="border: 1px solid #000; padding: 3px 5px; white-space: pre-line;">Diseña interfaces interactivas y gestiona eventos del sistema, asegurando la comunicación reactiva entre componentes y la experiencia de usuario.</td>
               </tr>
               <tr>
                 <td style="border: 1px solid #000; padding: 3px 5px; width: 25%; background: #f8fafc; font-weight: bold;">Elemento de competencia 3:</td>
-                <td style="border: 1px solid #000; padding: 3px 5px;">Desarrolla e integra proyectos funcionales completos, aplicando control de versiones, pruebas de software y documentación técnica normalizada.</td>
+                <td style="border: 1px solid #000; padding: 3px 5px; white-space: pre-line;">Desarrolla e integra proyectos funcionales completos, aplicando control de versiones, pruebas de software y documentación técnica normalizada.</td>
               </tr>
             </table>
 
@@ -2791,12 +2934,12 @@
           </div>
         `;
 
-        // PAGE 2: PUNTO 7 - Cronograma Sesiones 1 a 14
+        // PAGE 2: Sesiones 1 a 14
         docHtml += `
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
-              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cronograma de Sesiones 1° a 14°)</div>
@@ -2811,12 +2954,12 @@
           </div>
         `;
 
-        // PAGE 3: PUNTO 7 - Cronograma Sesiones 15 a 28
+        // PAGE 3: Sesiones 15 a 28
         docHtml += `
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
-              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Continuación Sesiones 15° a 28°)</div>
@@ -2831,12 +2974,12 @@
           </div>
         `;
 
-        // PAGE 4: PUNTO 7 (Sesiones 29 a 36) + PUNTOS 8, 9, 12, 14
+        // PAGE 4: Sesiones 29 a 36 + Puntos 8, 9, 12, 14
         docHtml += `
           <div class="print-page" style="padding: 10mm 12mm 8mm 12mm; font-family: 'Times New Roman', Times, serif; font-size: 7pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 6px;">
-              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC)</span>
-              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${data.nombre} (${displayCareerName})</span>
+              <span style="font-weight: bold; font-size: 7.5pt;">UNITEPC • PROGRAMA DE ASIGNATURA POR COMPETENCIAS (PAC GENERAL)</span>
+              <span style="font-size: 7pt; color: #475569;">${displayCode} - ${safe(data.nombre)} (${displayCareerName})</span>
             </div>
 
             <div style="font-weight: bold; font-size: 7.5pt; margin-bottom: 4px;">7.- Estructura de Unidad de Aprendizaje (Cierre Sesiones 29° a 36° y Evaluaciones Finales)</div>
@@ -2848,27 +2991,23 @@
               </tbody>
             </table>
 
-            <!-- 8. METODOLOGÍA -->
-            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3; white-space: pre-line;">
               <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">8. Metodología General de la Asignatura</div>
               <div>De acuerdo con el modelo educativo basado en competencias de la UNITEPC la metodología es de enfoque constructivista y socioformativo (ABP, Método de Casos, Talleres de Laboratorio, Aula Invertida mediados por plataforma SEA).</div>
               <div style="margin-top: 1px;"><strong>En el Aula:</strong> Clases participativas, debates y construcción conceptual. &nbsp;|&nbsp; <strong>Laboratorios:</strong> Desarrollo experimental, resolución de casos y simulaciones prácticas aplicadas.</div>
             </div>
 
-            <!-- 9. SISTEMA DE EVALUACIÓN -->
-            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3; white-space: pre-line;">
               <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">9. Sistema de Evaluación</div>
               <div>El proceso evaluador es continuo e integral: a) <em>Evaluación diagnóstica:</em> recuperación de conocimientos previos. b) <em>Evaluación formativa:</em> retroalimentación en talleres y laboratorios mediante rúbricas. c) <em>Evaluación sumativa:</em> <strong>1° Parcial (30%)</strong>, <strong>2° Parcial (30%)</strong> y <strong>Examen Final Integrador (40%)</strong>.</div>
             </div>
 
-            <!-- 12. CRITERIOS Y NORMATIVA -->
-            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3;">
+            <div style="border: 1px solid #000; padding: 3px 5px; margin-bottom: 4px; text-align: justify; line-height: 1.3; white-space: pre-line;">
               <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">12.- Criterios y Normativa de la Asignatura</div>
               <div>Los estudiantes deberán cumplir el reglamento institucional: asistencia mínima obligatoria del 80% para tener derecho a evaluación final, 10 minutos de tolerancia al ingreso, respeto mutuo, probidad académica y convivencia armónica en el aula y laboratorios.</div>
             </div>
 
-            <!-- 14. BIBLIOGRAFÍA OFICIAL -->
-            <div style="border: 1px solid #000; padding: 3px 5px; text-align: justify; line-height: 1.3;">
+            <div style="border: 1px solid #000; padding: 3px 5px; text-align: justify; line-height: 1.3; white-space: pre-line;">
               <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">14.- Bibliografía oficial</div>
               <div><strong>Específica:</strong> Joyanes Aguilar, L. (2021). <em>Fundamentos de Programación: Algoritmos, Estructuras de Datos y Objetos</em> (6ª ed.). McGraw-Hill. &nbsp;|&nbsp; García Llinás, L. F. (2022). <em>Todo sobre Patrones de Diseño</em>. Ediciones de la U.</div>
               <div style="margin-top: 1px;"><strong>Complementaria:</strong> Sznajdleder, P. (2021). <em>Programación Orientada a Objetos y Estructuras de Datos</em>. Alfaomega. &nbsp;|&nbsp; García, A. M. (2024). <em>Ingeniería de Software</em>. Marcombo.</div>
@@ -2879,26 +3018,147 @@
         `;
       }
 
-      // 8. PLANES DE CLASE (PCT-PCP) - Exact format of PLAN DE CLASES TALLER DE IDIOMAS.xlsx
-      if (selectedSections.includes('plan_clase')) {
-        const savedPlanes = localStorage.getItem('sisa_saved_planes_' + mKey);
-        let planesList = [];
-        if (savedPlanes) {
-          try { planesList = JSON.parse(savedPlanes); } catch(e) {}
+      // 7. PAC PRÁCTICO (Identificación de Laboratorio + Cronograma Semestral de Prácticas de 7 Columnas + Bioseguridad)
+      const shouldRenderPacPrac = selectedSections.includes('pac_prac') || selectedSections.includes('pac_practico') || (selectedSections.includes('pac_cronograma') && window.activeCronogramaType === 'PRACTICO');
+      if (shouldRenderPacPrac) {
+        let cronPracticas = [];
+        const savedCron = localStorage.getItem('sisa_saved_cron_prac_' + mKey);
+        if (savedCron) {
+          try { cronPracticas = JSON.parse(savedCron); } catch(e) {}
         }
-        if (!planesList || planesList.length === 0) {
-          planesList = [
+        if (!cronPracticas || cronPracticas.length === 0) {
+          if (window.activePacPracData && (window.activePacPracData.matriz7 || window.activePacPracData.pacPracticas)) {
+            cronPracticas = window.activePacPracData.matriz7 || window.activePacPracData.pacPracticas || [];
+          }
+        }
+        if (!cronPracticas || cronPracticas.length === 0) {
+          cronPracticas = [
+            { semana: 1, nroSesion: 1, unidadTematica: 'Configuración de Entorno de Desarrollo y Normas de Trabajo', contenidoEspecifico: 'Instalación y validación de herramientas, entornos de prueba y políticas de bioseguridad en el laboratorio.', saberProcedimental: 'Prepara el espacio de trabajo cumpliendo con los estándares normativos de seguridad.', instrumentoEvaluacion: 'Lista de Cotejo', evidenciaAprendizaje: 'Bitácora y entorno validado' },
+            { semana: 2, nroSesion: 2, unidadTematica: 'Modelado Orientado a Objetos y Encapsulamiento', contenidoEspecifico: 'Implementación práctica de clases, interfaces, métodos accesores y validación de tipos en IDE.', saberProcedimental: 'Codifica entidades modulares con robustez estructural y documentación clara.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Código fuente y pruebas unitarias' },
+            { semana: 3, nroSesion: 3, unidadTematica: 'Herencia, Composición y Polimorfismo Técnico', contenidoEspecifico: 'Desarrollo de jerarquías de clases y resolución de casos reales mediante interfaces desacopladas.', saberProcedimental: 'Aplica abstracción y reutilización modular en el entorno de desarrollo.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Proyecto en repositorio y ejecutable' },
+            { semana: 4, nroSesion: 4, unidadTematica: 'Construcción de Interfaces Gráficas y Eventos Reactivos', contenidoEspecifico: 'Diseño de formularios, enlace de eventos de usuario y control de excepciones en tiempo de ejecución.', saberProcedimental: 'Desarrolla interfaces interactivas funcionales con retroalimentación inmediata.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Formularios validados y reporte de pruebas' }
+          ];
+        }
+
+        let pracRowsHtml = '';
+        cronPracticas.forEach((p, idx) => {
+          const sem = p.semana || (idx + 1);
+          const ses = p.nroSesion || p.numero || (idx + 1);
+          const titulo = p.unidadTematica || p.titulo || `Práctica ${idx + 1}`;
+          const actividad = p.contenidoEspecifico || p.actividad || 'Desarrollo guiado en laboratorio con instrumentación técnica.';
+          const desemp = p.saberProcedimental || p.desempeno || 'Aplica protocolos de trabajo técnico y resolución experimental.';
+          const inst = p.instrumentoEvaluacion || p.instrumento || 'Rúbrica de Práctica';
+          const evid = p.evidenciaAprendizaje || p.evidencias || 'Informe de Laboratorio evaluado';
+
+          pracRowsHtml += `
+            <tr>
+              <td style="border: 1px solid #000; padding: 3px 2px; text-align: center; font-weight: bold;">${sem}</td>
+              <td style="border: 1px solid #000; padding: 3px 2px; text-align: center; font-weight: bold;">${ses}</td>
+              <td style="border: 1px solid #000; padding: 3px 4px; font-weight: bold; white-space: pre-line; word-break: break-word;">${safe(titulo)}</td>
+              <td style="border: 1px solid #000; padding: 3px 4px; white-space: pre-line; word-break: break-word;">${safe(actividad)}</td>
+              <td style="border: 1px solid #000; padding: 3px 4px; white-space: pre-line; word-break: break-word;">${safe(desemp)}</td>
+              <td style="border: 1px solid #000; padding: 3px 2px; text-align: center; white-space: pre-line; word-break: break-word;">${safe(inst)}</td>
+              <td style="border: 1px solid #000; padding: 3px 4px; white-space: pre-line; word-break: break-word;">${safe(evid)}</td>
+            </tr>
+          `;
+        });
+
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
+            <div style="text-align: center; margin-bottom: 6px;">
+              <div style="font-size: 13pt; font-weight: 900; color: #581c87; font-family: Arial, sans-serif; line-height: 1;">UNITEPC</div>
+              <div style="font-size: 5.5pt; font-weight: bold; color: #0d9488; letter-spacing: 0.5px; margin-top: 1px;">UNIVERSIDAD PRIVADA</div>
+              <div style="font-size: 9.5pt; font-weight: bold; margin-top: 3px; text-transform: uppercase;">PROGRAMA DE ASIGNATURA POR COMPETENCIAS - PRÁCTICO (PACP)</div>
+            </div>
+
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">1.- Identificación del Componente Práctico</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
+              <tr>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>CARRERA:</strong> ${displayCareerName.toUpperCase()}</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>ASIGNATURA:</strong> ${safe(data.nombre.toUpperCase())} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>CÓDIGO:</strong> ${displayCode}</td>
+              </tr>
+              <tr>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>ÁREA:</strong> FORMACIÓN PRÁCTICA PROFESIONAL</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>CARGA PRÁCTICA:</strong> ${data.horasPracticas || '4'} HORAS / SEMANA</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>MODALIDAD:</strong> TALLER / LABORATORIO</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 25%;"><strong>SEMESTRE:</strong> ${data.semestre || '3º Semestre'}</td>
+              </tr>
+              <tr>
+                <td colspan="4" style="border: 1px solid #000; padding: 2.5px 4px;"><strong>ESCENARIO DE PRÁCTICA:</strong> Laboratorio de Computación / Gabinete Técnico Especializado &nbsp;&nbsp;|&nbsp;&nbsp; <strong>BIOSEGURIDAD:</strong> Normativa institucional UNITEPC</td>
+              </tr>
+            </table>
+
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">2.- Docente de Prácticas y Escenario Académico</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 6px;">
+              <tr>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Docente Responsable:</strong> ${docenteName}</td>
+                <td style="border: 1px solid #000; padding: 2.5px 4px; width: 50%;"><strong>Contacto Institucional:</strong> docente@unitepc.edu.bo</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="border: 1px solid #000; padding: 2.5px 4px; white-space: pre-line;"><strong>Equipamiento y Software:</strong> Servidores de laboratorio, estaciones de trabajo con IDE instalado, compiladores, conectividad y bitácoras técnicas.</td>
+              </tr>
+            </table>
+
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">3.- Justificación y Propósito del Saber Procedimental</div>
+            <div style="border: 1px solid #000; padding: 4px 6px; margin-bottom: 6px; text-align: justify; line-height: 1.35; font-size: 6.8pt; white-space: pre-line;">
+              La práctica formativa permite afianzar destrezas procedimentales y habilidades operativas críticas a través de la experimentación controlada, el modelado guiado y la validación en laboratorio. Proporciona al futuro profesional la capacidad resolutiva para afrontar desafíos técnicos con disciplina de ingeniería y responsabilidad social.
+            </div>
+
+            <div style="font-weight: bold; font-size: 8pt; margin-bottom: 2px;">8.- Cronograma Semestral de la Práctica (Sección 8 del PAC Práctico)</div>
+            <table style="width: 100%; border: 1px solid #000; border-collapse: collapse; font-size: 6.5pt; margin-bottom: 6px;">
+              <thead>
+                <tr style="background: #f1f5f9; text-align: center; font-weight: bold;">
+                  <th style="border: 1px solid #000; padding: 3px 2px; width: 5%;">SEM</th>
+                  <th style="border: 1px solid #000; padding: 3px 2px; width: 5%;">SES</th>
+                  <th style="border: 1px solid #000; padding: 3px 4px; width: 22%;">NOMBRE DE LA PRÁCTICA</th>
+                  <th style="border: 1px solid #000; padding: 3px 4px; width: 26%;">ACTIVIDADES DE LA PRÁCTICA</th>
+                  <th style="border: 1px solid #000; padding: 3px 4px; width: 22%;">DESEMPEÑO PROCEDIMENTAL</th>
+                  <th style="border: 1px solid #000; padding: 3px 2px; width: 10%;">INSTRUMENTO</th>
+                  <th style="border: 1px solid #000; padding: 3px 4px; width: 10%;">EVIDENCIA</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pracRowsHtml}
+              </tbody>
+            </table>
+
+            <div style="border: 1px solid #000; padding: 3px 5px; text-align: justify; line-height: 1.3; font-size: 6.8pt; white-space: pre-line;">
+              <div style="font-weight: bold; font-size: 7.2pt; margin-bottom: 1px;">Normas de Bioseguridad y Evaluación en Laboratorio</div>
+              <div>Es obligatorio el uso de credencial, respeto a las normas de seguridad del laboratorio, prohibición de alimentos, respaldo continuo en repositorios y entrega oportuna del informe de práctica en la plataforma SEA. La evaluación práctica equivale al 100% de la ponderación procedimental del período académico.</div>
+            </div>
+
+            <div style="text-align: center; font-size: 8pt; margin-top: 5px;">PACP - 1</div>
+          </div>
+        `;
+      }
+
+      // 8. PLANES DE CLASE TEÓRICOS (PCT)
+      const shouldRenderPlanesTeoricos = selectedSections.includes('plan_teorico') || (selectedSections.includes('plan_clase') && !selectedSections.includes('plan_prac'));
+      if (shouldRenderPlanesTeoricos) {
+        let teoricoList = [];
+        const savedTeorico = localStorage.getItem('sisa_saved_planes_teorico_' + mKey) || localStorage.getItem('sisa_saved_planes_' + mKey);
+        if (savedTeorico) {
+          try { teoricoList = JSON.parse(savedTeorico); } catch(e) {}
+        }
+        if (!teoricoList || teoricoList.length === 0) {
+          if (window.activePlanesTeoricoList && window.activePlanesTeoricoList.length > 0) {
+            teoricoList = window.activePlanesTeoricoList;
+          } else if (typeof activePlanesList !== 'undefined' && activePlanesList && activePlanesList.length > 0) {
+            teoricoList = activePlanesList.filter(p => p.planType !== 'PRACTICO');
+          }
+        }
+        if (!teoricoList || teoricoList.length === 0) {
+          teoricoList = [
             {
+              sesionId: 1,
               tema: 'Arquitectura de Software y Modelado de Datos',
-              objetivo: 'Produce soluciones oracionales y arquitectónicas complejas aplicando patrones de diseño bajo el marco normativo y metodologías activas.',
-              logrosEsperados: '1. Reconoce la importancia del modelado formal.\n2. Adapta componentes según contextos y requerimientos.\n3. Integra saberes en propuestas de desarrollo profesional.',
-              indicadoresLogro: '1. Analiza el impacto de la arquitectura en sistemas distribuidos.\n2. Identifica variaciones de diseño en simulaciones reales.\n3. Sustenta la pertinencia técnica del proyecto.',
+              objetivo: 'Produce soluciones arquitectónicas complejas aplicando patrones de diseño bajo el marco normativo y metodologías activas.',
               saberConceptual: '- Fundamentos y patrones arquitectónicos\n- Estándares de calidad y documentación técnica',
-              saberProcedimental: '- Implementación guiada en laboratorio\n- Configuración de entornos y pruebas unitarias',
+              saberProcedimental: '- Implementación guiada en aula y laboratorio\n- Configuración de entornos y pruebas unitarias',
               saberActitudinal: '- Rigor técnico y responsabilidad ética\n- Trabajo colaborativo y compromiso profesional',
               estrategiaMetodologica: '- Aprendizaje Basado en Proyectos (ABP)\n- Talleres guiados y seminario de análisis',
               estrategiaAprendizaje: '- Mapeo de requerimientos y casos prácticos\n- Redacción técnica y defensa de proyecto',
-              recursosEnsenanza: '- Plataforma SEA, IDE, Proyector y Guías de laboratorio',
+              recursosEnsenanza: '- Plataforma SEA, IDE, Proyector y Guías de cátedra',
               evalFormativaActividad: 'Defensa de avance y discusión guiada',
               evalFormativaInstrumento: 'Rúbrica socioformativa',
               evalFormativaEvidencia: 'Repositorio de código y reporte técnico',
@@ -2915,69 +3175,65 @@
           ];
         }
 
-        let planesCardsHtml = '';
-        planesList.slice(0, 3).forEach((p, idx) => {
-          planesCardsHtml += `
-            <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt;">
-              <div style="background: #f1f5f9; border-bottom: 1.5px solid #000; padding: 4px 8px; text-align: center;">
+        let teoricoCardsHtml = '';
+        teoricoList.forEach((p, idx) => {
+          teoricoCardsHtml += `
+            <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt; background: #fff;">
+              <div style="background: #f8fafc; border-bottom: 1.5px solid #000; padding: 4px 8px; text-align: center;">
                 <div style="font-weight: bold; font-size: 10pt; color: #581c87;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC</div>
-                <div style="font-weight: bold; font-size: 9pt;">PLAN DE CLASE (PCT / PCP) - SESIÓN #${idx + 1}</div>
+                <div style="font-weight: bold; font-size: 9pt; color: #000;">PLAN DE CLASE TEÓRICO (PCT) - SESIÓN #${p.sesionId || (idx + 1)}</div>
               </div>
 
-              <!-- Identificación -->
-              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000;">
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000; font-size: 7.5pt;">
                 <tr>
                   <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
-                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${data.nombre}</td>
+                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(data.nombre)}</td>
                 </tr>
                 <tr style="border-top: 1px solid #ccc;">
-                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> 28/08/2026</td>
+                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> 28/08/2026 &nbsp;|&nbsp; <strong>Semestre:</strong> ${data.semestre || '3º'}</td>
                   <td style="padding: 3px 6px;"><strong>Carrera:</strong> ${displayCareerName}</td>
                 </tr>
               </table>
 
-              <!-- Unidad y Competencias -->
-              <div style="padding: 4px 6px; border-bottom: 1px solid #ccc; background: #fafafa;">
-                <p style="margin: 2px 0;"><strong>Unidad ${idx + 1}:</strong> LENGUAJE Y ESTRUCTURAS CURRICULARES</p>
-                <p style="margin: 2px 0;"><strong>TEMA ${idx + 1}:</strong> ${p.tema || 'Desarrollo Curricular y Habilidades Aplicadas'}</p>
-                <p style="margin: 2px 0;"><strong>Resultados de Aprendizaje:</strong> ${p.objetivo || 'Aplica el marco normativo y formativo vigente.'}</p>
+              <div style="padding: 4px 6px; border-bottom: 1px solid #ccc; background: #fafafa; font-size: 7.5pt;">
+                <p style="margin: 2px 0;"><strong>UNIDAD:</strong> ${safe(p.unidadTitulo || `Unidad ${idx + 1}`)}</p>
+                <p style="margin: 2px 0;"><strong>TEMA ESPECÍFICO:</strong> ${safe(p.tema || p.contenidoTema || 'Contenido Programático Oficial')}</p>
+                <p style="margin: 2px 0; white-space: pre-line;"><strong>Resultados de Aprendizaje:</strong> ${safe(p.objetivo || p.objetivoSesion || 'Aplica los principios y fundamentos normados de la disciplina.')}</p>
               </div>
 
-              <!-- Saberes -->
-              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #ccc; font-size: 7.5pt;">
-                <tr style="background: #e0f2fe; font-weight: bold;">
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #ccc; font-size: 7.2pt;">
+                <tr style="background: #e0f2fe; font-weight: bold; text-align: center;">
                   <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 33%;">SABER CONCEPTUAL</th>
                   <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 34%;">SABER PROCEDIMENTAL</th>
                   <th style="border: 1px solid #cbd5e1; padding: 2px 4px; width: 33%;">SABER ACTITUDINAL</th>
                 </tr>
                 <tr>
-                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberConceptual || '- Conceptos fundamentales\n- Estructuras'}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberProcedimental || '- Resolución guiada\n- Aplicación'}</td>
-                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line;">${p.saberActitudinal || '- Responsabilidad y ética\n- Rigor'}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line; word-break: break-word;">${safe(p.saberConceptual || p.saberesConceptual || '- Conceptos fundamentales\n- Definiciones y principios')}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line; word-break: break-word;">${safe(p.saberProcedimental || p.saberesProcedimental || '- Resolución guiada\n- Aplicación práctica')}</td>
+                  <td style="border: 1px solid #cbd5e1; padding: 3px 4px; vertical-align: top; white-space: pre-line; word-break: break-word;">${safe(p.saberActitudinal || p.saberesActitudinal || '- Responsabilidad y ética\n- Rigor metodológico')}</td>
                 </tr>
               </table>
 
-              <!-- Secuencia Didáctica -->
-              <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 7.2pt;">
                 <tr style="background: #6b21a8; color: white; font-weight: bold;">
-                  <th style="padding: 3px 6px; text-align: left; width: 22%;">SECUENCIA DIDÁCTICA</th>
+                  <th style="padding: 3px 6px; text-align: left; width: 22%;">SECUENCIA DIDÁCTICA (5 MOMENTOS)</th>
                   <th style="padding: 3px 6px; text-align: left; width: 66%;">ACTIVIDAD DETALLADA</th>
                   <th style="padding: 3px 6px; text-align: center; width: 12%;">DURACIÓN</th>
                 </tr>
                 <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 3px 6px; font-weight: bold; color: #0284c7; vertical-align: top;">INTRODUCCIÓN</td>
-                  <td style="padding: 3px 6px;">${p.inicioActividad || p.inicioEstrategia || 'Activación: Análisis de casos reales y preguntas disparadoras.'}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.inicioDuracion || '30 min'}</td>
+                  <td style="padding: 3px 6px; font-weight: bold; color: #0284c7; vertical-align: top;">1. INTRODUCCIÓN / ACTIVACIÓN</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.inicioActividad || p.momento1Motivacion || 'Activación de conocimientos previos y presentación de objetivos.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.inicioDuracion || '30 min')}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 3px 6px; font-weight: bold; color: #059669; vertical-align: top;">DESARROLLO (Cuerpo)</td>
-                  <td style="padding: 3px 6px;">${p.desarrolloActividad || p.desarrolloEstrategia || 'Desarrollo guiado en aula/laboratorio, resolución de casos y trabajo en equipo.'}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.desarrolloDuracion || '180 min'}</td>
+                  <td style="padding: 3px 6px; font-weight: bold; color: #059669; vertical-align: top;">2. DESARROLLO (Cuerpo Teórico)</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.desarrolloActividad || p.momento3Contacto || 'Exposición dialogada de conceptos, análisis guiado de casos y ejercicios.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.desarrolloDuracion || '180 min')}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 3px 6px; font-weight: bold; color: #d97706; vertical-align: top;">CONCLUSIÓN O CIERRE</td>
-                  <td style="padding: 3px 6px;">${p.cierreActividad || p.cierreEstrategia || 'Presentación de resultados ante el auditorio, evaluación formativa mediante rúbrica y retroalimentación.'}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${p.cierreDuracion || '60 min'}</td>
+                  <td style="padding: 3px 6px; font-weight: bold; color: #d97706; vertical-align: top;">3. CIERRE Y EVALUACIÓN</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.cierreActividad || p.momento5Evaluacion || 'Síntesis de aprendizajes, evaluación formativa mediante rúbrica y retroalimentación.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.cierreDuracion || '60 min')}</td>
                 </tr>
               </table>
             </div>
@@ -2987,10 +3243,127 @@
         docHtml += `
           <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
             <div style="text-align: center; margin-bottom: 4mm;">
-              <div style="font-size: 16pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE POR SESIÓN (PCT / PCP)</div>
-              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${data.nombre} (Docente: ${docenteName})</div>
+              <div style="font-size: 15pt; font-weight: 900; color: #581c87;">UNITEPC • PLANES DE CLASE TEÓRICOS POR SESIÓN (PCT)</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #0d9488;">${displayCode} • ${safe(data.nombre)} (Docente: ${docenteName})</div>
             </div>
-            ${planesCardsHtml}
+            ${teoricoCardsHtml}
+          </div>
+        `;
+      }
+
+      // 9. PLANES DE CLASE PRÁCTICOS (PCP)
+      const shouldRenderPlanesPracticos = selectedSections.includes('plan_prac') || (selectedSections.includes('plan_clase') && (window.activePlanType === 'PRACTICO' || selectedSections.includes('pac_prac')));
+      if (shouldRenderPlanesPracticos) {
+        let practicoList = [];
+        const savedPrac = localStorage.getItem('sisa_saved_planes_prac_' + mKey);
+        if (savedPrac) {
+          try { practicoList = JSON.parse(savedPrac); } catch(e) {}
+        }
+        if (!practicoList || practicoList.length === 0) {
+          if (window.activePlanesPracticoList && window.activePlanesPracticoList.length > 0) {
+            practicoList = window.activePlanesPracticoList;
+          } else if (typeof activePlanesList !== 'undefined' && activePlanesList && activePlanesList.length > 0) {
+            practicoList = activePlanesList.filter(p => p.planType === 'PRACTICO');
+          }
+        }
+        if (!practicoList || practicoList.length === 0) {
+          practicoList = [
+            {
+              sesionId: 1,
+              nombreHoja: 'Práctica 1',
+              contenidoTema: 'Configuración de Entorno Experimental y Bioseguridad',
+              unidadTitulo: 'Unidad de Práctica 1',
+              elementoCompetencia: 'Aplica protocolos de trabajo seguro y alista el instrumental técnico.',
+              objetivoSesion: 'Preparar y validar el entorno de laboratorio conforme a normas institucionales.',
+              comision: 'PL-01',
+              ambiente: 'Laboratorio de Computación Asignado',
+              numEstudiantes: 25,
+              equipamiento: 'Estaciones de trabajo con IDE instalado y bitácoras.',
+              planType: 'PRACTICO',
+              fase1Prep: 'Revisión de conceptos previos, comprobación de equipos y lineamientos de seguridad.',
+              fase1PrepDur: 20,
+              fase2Guiada: 'Demostración paso a paso del protocolo por el docente.',
+              fase2GuiadaDur: 40,
+              fase3Autonoma: 'Desarrollo independiente del protocolo y captura de evidencias por los estudiantes.',
+              fase3AutonomaDur: 50,
+              fase4Cierre: 'Análisis de resultados, conclusiones técnicas y registro en bitácora.',
+              fase4CierreDur: 25,
+              criteriosEvaluacion: 'Correcta implementación y estabilidad funcional.',
+              instrumentoEvaluacion: 'Rúbrica de Práctica',
+              evidenciasEvaluacion: 'Informe de laboratorio y código verificado'
+            }
+          ];
+        }
+
+        let practicoCardsHtml = '';
+        practicoList.forEach((p, idx) => {
+          practicoCardsHtml += `
+            <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt; background: #fff;">
+              <div style="background: #f0fdfa; border-bottom: 1.5px solid #000; padding: 4px 8px; text-align: center;">
+                <div style="font-weight: bold; font-size: 10pt; color: #0d9488;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC</div>
+                <div style="font-weight: bold; font-size: 9pt; color: #000;">PLAN DE CLASE PRÁCTICO (PCP) - SESIÓN #${p.sesionId || (idx + 1)}</div>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000; font-size: 7.5pt;">
+                <tr>
+                  <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
+                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(data.nombre)}</td>
+                </tr>
+                <tr style="border-top: 1px solid #ccc;">
+                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Ambiente / Lab:</strong> ${safe(p.ambiente || 'Laboratorio de Computación')}</td>
+                  <td style="padding: 3px 6px;"><strong>Comisión / Estudiantes:</strong> ${safe(p.comision || 'PL-01')} (${safe(p.numEstudiantes || 25)} estudiantes)</td>
+                </tr>
+              </table>
+
+              <div style="padding: 4px 6px; border-bottom: 1px solid #ccc; background: #fafafa; font-size: 7.5pt;">
+                <p style="margin: 2px 0;"><strong>PRÁCTICA:</strong> ${safe(p.contenidoTema || p.tema || `Práctica ${idx + 1}`)}</p>
+                <p style="margin: 2px 0; white-space: pre-line;"><strong>Objetivo de la Práctica:</strong> ${safe(p.objetivoSesion || p.objetivo || 'Desarrolla habilidades procedimentales mediante experimentación guiada.')}</p>
+                <p style="margin: 2px 0; white-space: pre-line;"><strong>Equipamiento y Bioseguridad:</strong> ${safe(p.equipamiento || 'Equipos de computación, manual de normas y bitácoras institucionales.')}</p>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; font-size: 7.2pt;">
+                <tr style="background: #0d9488; color: white; font-weight: bold;">
+                  <th style="padding: 3px 6px; text-align: left; width: 25%;">FASE DE LA PRÁCTICA (4 FASES)</th>
+                  <th style="padding: 3px 6px; text-align: left; width: 63%;">DESCRIPCIÓN DE LA ACTIVIDAD EXPERIMENTAL</th>
+                  <th style="padding: 3px 6px; text-align: center; width: 12%;">DURACIÓN</th>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 3px 6px; font-weight: bold; color: #0284c7; vertical-align: top;">FASE 1: PREPARATORIA</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase1Prep || 'Verificación de equipos, directrices de seguridad y objetivos de la práctica.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase1PrepDur || 20)} min</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 3px 6px; font-weight: bold; color: #0d9488; vertical-align: top;">FASE 2: DEMOSTRACIÓN GUIADA</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase2Guiada || 'Explicación técnica paso a paso del protocolo experimental por el docente.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase2GuiadaDur || 40)} min</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 3px 6px; font-weight: bold; color: #7c3aed; vertical-align: top;">FASE 3: EJECUCIÓN AUTÓNOMA</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase3Autonoma || 'Desarrollo independiente del protocolo por los equipos y captura de resultados.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase3AutonomaDur || 50)} min</td>
+                </tr>
+                <tr>
+                  <td style="padding: 3px 6px; font-weight: bold; color: #b45309; vertical-align: top;">FASE 4: CONCLUSIÓN Y CIERRE</td>
+                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase4Cierre || 'Análisis de resultados, conclusiones técnicas y registro en bitácora evaluada.')}</td>
+                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase4CierreDur || 25)} min</td>
+                </tr>
+              </table>
+
+              <div style="padding: 3px 6px; border-top: 1px solid #ccc; background: #f8fafc; font-size: 7.2pt; display: flex; justify-content: space-between;">
+                <span><strong>Instrumento de Evaluación:</strong> ${safe(p.instrumentoEvaluacion || 'Rúbrica de Práctica')}</span>
+                <span><strong>Evidencia Entregable:</strong> ${safe(p.evidenciasEvaluacion || 'Informe de Laboratorio')}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="text-align: center; margin-bottom: 4mm;">
+              <div style="font-size: 15pt; font-weight: 900; color: #0d9488;">UNITEPC • PLANES DE CLASE PRÁCTICOS POR SESIÓN (PCP)</div>
+              <div style="font-size: 9pt; font-weight: bold; color: #581c87;">${displayCode} • ${safe(data.nombre)} (Docente: ${docenteName})</div>
+            </div>
+            ${practicoCardsHtml}
           </div>
         `;
       }
@@ -4741,8 +5114,8 @@ window.extractCurrentCronogramaFromDom = function() {
 };
 
 // 3. Real Excel Import for PAC (General vs Práctico)
-window.importPacExcel = function(goToCronograma) {
-  const currentPacType = window.activePacType || 'GRAL';
+window.importPacExcel = function(goToCronograma, forcedType) {
+  const currentPacType = forcedType || window.activePacType || 'GRAL';
   const docLabel = (currentPacType === 'PRACTICO') ? 'PAC Práctico' : 'PAC General';
   window.triggerFileUpload('.xlsx', async (file) => {
     window.showToast(`⏳ Subiendo y procesando ${docLabel} Excel: ${file.name}...`);
@@ -4807,13 +5180,10 @@ window.importPacExcel = function(goToCronograma) {
   });
 };
 
-
-
-
 // 4. Real Excel Import for Planes de Clase
-window.importPlanesExcel = function() {
+window.importPlanesExcel = function(forcedType) {
   window.triggerFileUpload('.xlsx', async (file) => {
-    const currentType = window.activePlanType || 'TEORICO';
+    const currentType = forcedType || window.activePlanType || 'TEORICO';
     const typeLabel = (currentType === 'PRACTICO') ? 'Práctico' : 'Teórico';
     window.showToast(`⏳ Subiendo y procesando Planes de Clase (${typeLabel}): ${file.name}...`);
     const formData = new FormData();
@@ -4875,60 +5245,124 @@ window.triggerPlanesUpload = function() { window.importPlanesExcel(); };
 
 // 5. Real Export Endpoints
 window.exportDocxOfficial = async function() {
-  const asigId = activeAsignacionId || 1;
-  const careerCode = window.currentSelectedCareerCode || '';
-  const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
-  window.showToast('📥 Generando y descargando Programa Analítico (.docx)...');
-  window.location.href = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
+  window.exportExactFile('programa_docx');
 };
 
 window.exportPacOfficial = async function() {
-  const asigId = activeAsignacionId || 1;
-  const careerCode = window.currentSelectedCareerCode || '';
   const pacType = window.activePacType || 'GRAL';
-  const typeLabel = (pacType === 'PRACTICO') ? 'Práctico' : 'General';
-  const pacParam = `pacType=${encodeURIComponent(pacType)}`;
-  const careerParam = (careerCode && careerCode !== 'ALL') ? `&careerCode=${encodeURIComponent(careerCode)}` : '';
-  window.showToast(`📥 Generando y descargando PAC (${typeLabel}) + Cronograma (.xlsx)...`);
-  window.location.href = `/api/v1/office/export/pac/${asigId}?${pacParam}${careerParam}`;
+  window.exportExactFile(pacType === 'PRACTICO' ? 'pac_prac_xlsx' : 'pac_gral_xlsx');
 };
 
 window.exportPlanesOfficial = async function() {
-  const asigId = activeAsignacionId || 1;
-  const careerCode = window.currentSelectedCareerCode || '';
   const planType = window.activePlanType || 'TEORICO';
-  const typeLabel = (planType === 'PRACTICO') ? 'Práctico' : 'Teórico';
-  const planParam = `planType=${encodeURIComponent(planType)}`;
-  const careerParam = (careerCode && careerCode !== 'ALL') ? `&careerCode=${encodeURIComponent(careerCode)}` : '';
-  window.showToast(`📥 Generando y descargando Plan de Clases (${typeLabel}) (.xlsx)...`);
-  window.location.href = `/api/v1/office/export/plan-clase/${asigId}?${planParam}${careerParam}`;
+  window.exportExactFile(planType === 'PRACTICO' ? 'planes_prac_xlsx' : 'planes_teorico_xlsx');
 };
 
-// Override triggerAutoCapture modal with real actions
+// Override triggerAutoCapture modal with real actions and dual modalities
 window.triggerAutoCapture = function() {
   const modalBody = `
     <div class="space-y-4 text-xs">
-      <p class="text-slate-700 dark:text-slate-300">Selecciona el documento base que deseas importar para extraer su información:</p>
-      <div class="grid grid-cols-3 gap-3">
-        <div onclick="window.closeModal(); window.switchDocMainTab('tab-analitico'); window.importProgramaDocx();" class="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 hover:border-blue-500 cursor-pointer text-center space-y-2 transition-all">
-          <i data-lucide="file-text" class="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400"></i>
-          <div class="font-bold text-slate-900 dark:text-white">Programa Analítico (.docx)</div>
-          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae Unidades y Bibliografía APA</div>
+      <p class="text-slate-700 dark:text-slate-300">Seleccioná el documento base oficial que deseas importar:</p>
+
+      <!-- 1. PROGRAMA ANALÍTICO -->
+      <div class="p-3.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 shadow-sm">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="font-bold text-slate-900 dark:text-white text-xs">1. Programa Analítico (.docx)</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Extrae Unidades de Aprendizaje, temas y bibliografía oficial APA</div>
+          </div>
         </div>
-        <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.importPacExcel();" class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 hover:border-emerald-500 cursor-pointer text-center space-y-2 transition-all">
-          <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto text-emerald-600 dark:text-emerald-400"></i>
-          <div class="font-bold text-slate-900 dark:text-white">PAC + Cronograma (.xlsx)</div>
-          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae las 42+ sesiones a la matriz</div>
+        <button onclick="window.closeModal(); window.switchDocMainTab('tab-analitico'); window.importProgramaDocx();" class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-sm">
+          <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir .docx
+        </button>
+      </div>
+
+      <!-- 2. PAC -->
+      <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+            <span class="font-bold text-slate-900 dark:text-white text-xs">2. PAC - Plan de Aprendizaje Curricular (.xlsx)</span>
+          </div>
+          <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">Modalidades Oficiales</span>
         </div>
-        <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-planes'); window.importPlanesExcel();" class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 hover:border-purple-500 cursor-pointer text-center space-y-2 transition-all">
-          <i data-lucide="calendar-range" class="w-8 h-8 mx-auto text-purple-600 dark:text-purple-400"></i>
-          <div class="font-bold text-slate-900 dark:text-white">Planes de Clase (.xlsx)</div>
-          <div class="text-[10px] text-slate-500 dark:text-slate-400">Extrae momentos didácticos y tiempos</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.switchActivePacType('GRAL'); window.importPacExcel(false, 'GRAL');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">PAC General / Teórico</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 GRAL.xlsx (Matriz 20 semanas)</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.switchActivePacType('PRACTICO'); window.importPacExcel(false, 'PRACTICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">PAC Práctico / Laboratorio</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 PRACTICO.xlsx (Talleres y bio)</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. CRONOGRAMA SEMESTRAL -->
+      <div class="p-3.5 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-950/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i>
+            <span class="font-bold text-slate-900 dark:text-white text-xs">3. Cronograma Semestral (.xlsx)</span>
+          </div>
+          <span class="text-[10px] text-teal-700 dark:text-teal-300 font-bold bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full">Semanas & Prácticas</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-semanas'); window.switchActiveCronogramaType('GRAL'); window.importPacExcel(true, 'GRAL');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Cronograma Teórico</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">20 Semanas / 9 Columnas de aula</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
+          </div>
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-semanas'); window.switchActiveCronogramaType('PRACTICO'); window.importPacExcel(true, 'PRACTICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Cronograma de Prácticas</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Laboratorio / 7 Columnas institucionales</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. PLANES DE CLASE -->
+      <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="calendar-range" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
+            <span class="font-bold text-slate-900 dark:text-white text-xs">4. Planes de Clase (.xlsx)</span>
+          </div>
+          <span class="text-[10px] text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full">Fichas Didácticas</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-planes'); window.switchActivePlanType('TEORICO'); window.importPlanesExcel('TEORICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-purple-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Plan de Clases Teórico</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PLAN DE CLASES TEÓRICO.xlsx (Momentos didácticos)</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-purple-600"></i>
+          </div>
+          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-planes'); window.switchActivePlanType('PRACTICO'); window.importPlanesExcel('PRACTICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
+            <div>
+              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Plan de Clases Práctico</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PLAN DE CLASES PRÁCTICO.xlsx (4 Fases laboratorio)</div>
+            </div>
+            <i data-lucide="upload" class="w-4 h-4 text-indigo-600"></i>
+          </div>
         </div>
       </div>
     </div>
   `;
-  document.getElementById('modal-title').innerText = 'Subir y Extraer Datos de los Documentos Base';
+  document.getElementById('modal-title').innerText = 'Subir y Extraer Datos de los Documentos Base Oficiales';
   document.getElementById('modal-body').innerHTML = modalBody;
   document.getElementById('modal-footer').classList.add('hidden');
   document.getElementById('modal-container').classList.remove('hidden');

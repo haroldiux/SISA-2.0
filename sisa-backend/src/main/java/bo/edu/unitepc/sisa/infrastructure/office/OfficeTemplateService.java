@@ -61,12 +61,8 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportPacXlsx(Pac pac, Long carreraId, String pacType) throws Exception {
-        String effectiveType = (pacType != null && !pacType.isBlank())
-                ? pacType
-                : (pac.getPacType() != null ? pac.getPacType() : "GRAL");
-        String templateName = "PRACTICO".equalsIgnoreCase(effectiveType)
-                ? "template_pac_practico.xlsx"
-                : "template_pac_gral.xlsx";
+        boolean isPractico = "PRACTICO".equalsIgnoreCase(pacType) || "PRACTICO".equalsIgnoreCase(pac.getPacType());
+        String templateName = isPractico ? "template_pac_practico.xlsx" : "template_pac_gral.xlsx";
 
         String resolvedTemplate = templateName;
         try {
@@ -82,9 +78,14 @@ public class OfficeTemplateService {
                 throw new IllegalStateException("Sheet 0 not found in PAC template");
             }
 
-            // Fill header information
             AsignacionDocente asig = pac.getAsignacion();
             String carreraNombre = "";
+            String asigNombre = "";
+            String codigoAsig = "";
+            String docenteNombre = "";
+            String gestionCod = "";
+            String semestre = "";
+
             if (carreraId != null) {
                 carreraNombre = this.carreraRepository.findById(carreraId)
                         .map(Carrera::getNombre)
@@ -94,40 +95,77 @@ public class OfficeTemplateService {
             }
 
             if (asig != null) {
-                this._setCellText(sheet, 5, 2, carreraNombre);
-                this._setCellText(sheet, 6, 2, asig.getAsignatura() != null ? asig.getAsignatura().getNombre() : "");
-                this._setCellText(sheet, 7, 2, asig.getDocente() != null ? asig.getDocente().getNombreCompleto() : "");
-                this._setCellText(sheet, 8, 2, asig.getGestion() != null ? asig.getGestion().getCodigo() : "");
+                if (carreraNombre.isEmpty() && asig.getCarrera() != null) carreraNombre = asig.getCarrera().getNombre();
+                if (asig.getAsignatura() != null) {
+                    asigNombre = asig.getAsignatura().getNombre();
+                    codigoAsig = asig.getAsignatura().getCodigo();
+                }
+                if (asig.getDocente() != null) docenteNombre = asig.getDocente().getNombreCompleto();
+                if (asig.getGestion() != null) gestionCod = asig.getGestion().getCodigo();
+                if (asig.getAsignatura() != null && asig.getAsignatura().getSemestre() != null) semestre = asig.getAsignatura().getSemestre() + "° Semestre";
             }
 
-            int numSesiones = pac.getSesiones() != null ? pac.getSesiones().size() : 0;
-            int startRow = 15;
-            if (numSesiones > 10) {
-                DynamicRowShifter.shiftAndCloneRows(sheet, startRow + 10, numSesiones - 10, startRow);
-            }
+            String justificacion = pac.getSeccionesIdentificacion() != null && pac.getSeccionesIdentificacion().get("justificacion") != null ? pac.getSeccionesIdentificacion().get("justificacion").toString() : null;
+            String propositoGeneral = pac.getSeccionesIdentificacion() != null && pac.getSeccionesIdentificacion().get("propositoGeneral") != null ? pac.getSeccionesIdentificacion().get("propositoGeneral").toString() : null;
+            String competenciaGlobal = pac.getSeccionesIdentificacion() != null && pac.getSeccionesIdentificacion().get("competenciaGlobal") != null ? pac.getSeccionesIdentificacion().get("competenciaGlobal").toString() : null;
+            String unidadCompetencia = pac.getSeccionesIdentificacion() != null && pac.getSeccionesIdentificacion().get("unidadCompetencia") != null ? pac.getSeccionesIdentificacion().get("unidadCompetencia").toString() : null;
 
-            // Populate sessions
-            int rIdx = startRow;
-            if (pac.getSesiones() != null) {
-                for (SesionMatriz7 ses : pac.getSesiones()) {
-                    Row row = sheet.getRow(rIdx);
-                    if (row == null) {
-                        row = sheet.createRow(rIdx);
+            if (isPractico) {
+                // Official PAC Práctico Coordinates
+                if (!carreraNombre.isEmpty()) this._setCellText(sheet, 11, 3, carreraNombre);
+                if (!asigNombre.isEmpty()) this._setCellText(sheet, 12, 3, asigNombre);
+                if (!codigoAsig.isEmpty()) this._setCellText(sheet, 12, 7, codigoAsig);
+                if (!semestre.isEmpty()) this._setCellText(sheet, 13, 7, semestre);
+                if (!docenteNombre.isEmpty()) this._setCellText(sheet, 19, 3, docenteNombre);
+                if (justificacion != null) this._setCellText(sheet, 23, 1, justificacion);
+                if (propositoGeneral != null) this._setCellText(sheet, 27, 1, propositoGeneral);
+                if (competenciaGlobal != null) this._setCellText(sheet, 32, 3, competenciaGlobal);
+                if (unidadCompetencia != null) this._setCellText(sheet, 33, 3, unidadCompetencia);
+
+                // Practice Schedule Table (Starts at row 90, 0-indexed)
+                if (pac.getSesiones() != null && !pac.getSesiones().isEmpty()) {
+                    int rIdx = 90;
+                    for (SesionMatriz7 ses : pac.getSesiones()) {
+                        Row row = sheet.getRow(rIdx);
+                        if (row == null) row = sheet.createRow(rIdx);
+                        if (ses.getSemana() != null) this._setCellValue(row, 1, ses.getSemana());
+                        if (ses.getNroSesion() != null) this._setCellValue(row, 2, ses.getNroSesion());
+                        if (ses.getUnidadTematica() != null) this._setCellValue(row, 3, ses.getUnidadTematica());
+                        if (ses.getContenidoEspecifico() != null) this._setCellValue(row, 4, ses.getContenidoEspecifico());
+                        if (ses.getSaberProcedimental() != null) this._setCellValue(row, 5, ses.getSaberProcedimental());
+                        if (ses.getInstrumentoEvaluacion() != null) this._setCellValue(row, 6, ses.getInstrumentoEvaluacion().name());
+                        if (ses.getEvidenciaAprendizaje() != null) this._setCellValue(row, 7, ses.getEvidenciaAprendizaje());
+                        rIdx++;
                     }
-                    this._setCellValue(row, 1, ses.getSemana());
-                    this._setCellValue(row, 2, ses.getNroSesion());
-                    this._setCellValue(row, 3, ses.getFechaProgramada() != null ? ses.getFechaProgramada().toString() : "");
-                    this._setCellValue(row, 4, ses.getTipoSesion() != null ? ses.getTipoSesion().name() : "");
-                    this._setCellValue(row, 5, ses.getUnidadTematica());
-                    this._setCellValue(row, 6, ses.getContenidoEspecifico());
-                    this._setCellValue(row, 7, ses.getSaberConceptual());
-                    this._setCellValue(row, 8, ses.getSaberProcedimental());
-                    this._setCellValue(row, 9, ses.getSaberActitudinal());
-                    this._setCellValue(row, 10, ses.getCriterioDesempeno());
-                    this._setCellValue(row, 11, ses.getEvidenciaAprendizaje());
-                    this._setCellValue(row, 12, ses.getInstrumentoEvaluacion() != null ? ses.getInstrumentoEvaluacion().name() : "");
-                    this._setCellValue(row, 13, ses.getHitoEvaluativo() != null ? ses.getHitoEvaluativo().name() : "");
-                    rIdx++;
+                }
+            } else {
+                // Official PAC General (Teórico) Coordinates
+                if (!carreraNombre.isEmpty()) this._setCellText(sheet, 11, 3, carreraNombre);
+                if (!asigNombre.isEmpty()) this._setCellText(sheet, 12, 3, asigNombre);
+                if (!codigoAsig.isEmpty()) this._setCellText(sheet, 12, 7, codigoAsig);
+                if (!semestre.isEmpty()) this._setCellText(sheet, 14, 7, semestre);
+                if (!docenteNombre.isEmpty()) this._setCellText(sheet, 21, 3, docenteNombre);
+                if (justificacion != null) this._setCellText(sheet, 25, 1, justificacion);
+                if (propositoGeneral != null) this._setCellText(sheet, 29, 1, propositoGeneral);
+                if (competenciaGlobal != null) this._setCellText(sheet, 34, 3, competenciaGlobal);
+                if (unidadCompetencia != null) this._setCellText(sheet, 35, 3, unidadCompetencia);
+
+                // Matriz 7 General (Starts at row 54, 0-indexed)
+                if (pac.getSesiones() != null && !pac.getSesiones().isEmpty()) {
+                    int rIdx = 54;
+                    for (SesionMatriz7 ses : pac.getSesiones()) {
+                        Row row = sheet.getRow(rIdx);
+                        if (row == null) row = sheet.createRow(rIdx);
+                        if (ses.getSemana() != null) this._setCellValue(row, 1, ses.getSemana());
+                        if (ses.getNroSesion() != null) this._setCellValue(row, 2, ses.getNroSesion() + "°");
+                        if (ses.getContenidoEspecifico() != null) this._setCellValue(row, 4, ses.getContenidoEspecifico());
+                        if (ses.getSaberConceptual() != null) this._setCellValue(row, 5, ses.getSaberConceptual());
+                        if (ses.getSaberProcedimental() != null) this._setCellValue(row, 6, ses.getSaberProcedimental());
+                        if (ses.getSaberActitudinal() != null) this._setCellValue(row, 7, ses.getSaberActitudinal());
+                        if (ses.getCriterioDesempeno() != null) this._setCellValue(row, 8, ses.getCriterioDesempeno());
+                        if (ses.getEvidenciaAprendizaje() != null) this._setCellValue(row, 9, ses.getEvidenciaAprendizaje());
+                        rIdx++;
+                    }
                 }
             }
 
@@ -140,12 +178,8 @@ public class OfficeTemplateService {
     }
 
     public byte[] exportPlanClasesXlsx(PlanDeClase plan, String planType) throws Exception {
-        String templateName = "template_plan_teorico_practico.xlsx";
-        if ("PRACTICO".equalsIgnoreCase(planType)) {
-            templateName = "template_plan_practico.xlsx";
-        } else if ("TEORICO".equalsIgnoreCase(planType)) {
-            templateName = "template_plan_teorico.xlsx";
-        }
+        boolean isPractico = "PRACTICO".equalsIgnoreCase(planType);
+        String templateName = isPractico ? "template_plan_practico.xlsx" : "template_plan_teorico.xlsx";
 
         String resolvedTemplate = templateName;
         try {
@@ -159,22 +193,56 @@ public class OfficeTemplateService {
 
             XSSFSheet sheet = cloner.getSheetAt(0);
             if (sheet != null) {
-                this._setCellText(sheet, 5, 2, plan.getObjetivoSesion() != null ? plan.getObjetivoSesion() : "");
-                this._setCellText(sheet, 6, 2, "Duración Total: " + plan.getDuracionTotalMin() + " min");
+                if (isPractico) {
+                    // PLAN DE CLASES PRÁCTICO
+                    if (plan.getObjetivoSesion() != null) this._setCellText(sheet, 24, 3, plan.getObjetivoSesion());
+                    this._setCellText(sheet, 19, 6, (plan.getDuracionTotalMin() != null ? plan.getDuracionTotalMin() : 90) + " min");
 
-                int r = 10;
-                if (plan.getMomentos() != null) {
-                    for (MomentoPedagogico m : plan.getMomentos()) {
-                        Row row = sheet.getRow(r);
-                        if (row == null) {
-                            row = sheet.createRow(r);
+                    // 4 Fases Metodológicas
+                    if (plan.getMomentos() != null) {
+                        for (MomentoPedagogico m : plan.getMomentos()) {
+                            if (m.getTipoMomento() != null) {
+                                String tipo = m.getTipoMomento().name().toUpperCase();
+                                int r = -1;
+                                if (tipo.contains("PREP") || tipo.contains("INICIO")) r = 33;
+                                else if (tipo.contains("GUIADA")) r = 34;
+                                else if (tipo.contains("AUTONOMA")) r = 35;
+                                else if (tipo.contains("CIERRE")) r = 36;
+                                if (r != -1) {
+                                    Row row = sheet.getRow(r);
+                                    if (row == null) row = sheet.createRow(r);
+                                    if (m.getActividadesDocente() != null) this._setCellValue(row, 5, m.getActividadesDocente());
+                                    if (m.getActividadesEstudiante() != null) this._setCellValue(row, 7, m.getActividadesEstudiante());
+                                }
+                            }
                         }
-                        this._setCellValue(row, 1, m.getTipoMomento() != null ? m.getTipoMomento().name() : "");
-                        this._setCellValue(row, 2, m.getDuracionMin());
-                        this._setCellValue(row, 3, m.getActividadesDocente());
-                        this._setCellValue(row, 4, m.getActividadesEstudiante());
-                        this._setCellValue(row, 5, m.getIndicadorEvaluacion());
-                        r++;
+                    }
+                } else {
+                    if (plan.getObjetivoSesion() != null) this._setCellText(sheet, 20, 3, plan.getObjetivoSesion());
+                    if (plan.getSesion() != null) {
+                        if (plan.getSesion().getSaberConceptual() != null) this._setCellText(sheet, 23, 3, plan.getSesion().getSaberConceptual());
+                        if (plan.getSesion().getSaberActitudinal() != null) this._setCellText(sheet, 24, 3, plan.getSesion().getSaberActitudinal());
+                    }
+
+                    // Secuencia Didáctica (5 momentos en filas 37 a 41)
+                    if (plan.getMomentos() != null) {
+                        for (MomentoPedagogico m : plan.getMomentos()) {
+                            if (m.getTipoMomento() != null) {
+                                String tipo = m.getTipoMomento().name().toUpperCase();
+                                int r = -1;
+                                if (tipo.contains("INICIO") || tipo.contains("INTRO")) r = 37;
+                                else if (tipo.contains("RESULTADO") || tipo.contains("LOGRO")) r = 38;
+                                else if (tipo.contains("CONTENIDO")) r = 39;
+                                else if (tipo.contains("CUERPO") || tipo.contains("DESARROLLO")) r = 40;
+                                else if (tipo.contains("CIERRE") || tipo.contains("CONCLUSION")) r = 41;
+                                if (r != -1) {
+                                    Row row = sheet.getRow(r);
+                                    if (row == null) row = sheet.createRow(r);
+                                    if (m.getActividadesDocente() != null) this._setCellValue(row, 2, m.getActividadesDocente());
+                                    if (m.getDuracionMin() != null) this._setCellValue(row, 7, m.getDuracionMin() + " min");
+                                }
+                            }
+                        }
                     }
                 }
             }

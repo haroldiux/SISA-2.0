@@ -349,14 +349,12 @@ textarea {
     display: block !important;
     page-break-after: always !important;
     break-after: page !important;
-    min-height: 279mm !important;
-    max-height: 279mm !important;
-    height: 279mm !important;
+    page-break-inside: avoid !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   .print-page:last-child {
@@ -372,6 +370,10 @@ textarea {
   table, th, td, div {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  th, td {
+    border-color: #000000 !important;
   }
 }
 
