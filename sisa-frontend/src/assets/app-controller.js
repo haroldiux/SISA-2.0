@@ -27,18 +27,26 @@
     // Automatic storage purge to eliminate prior mock caches
     (function purgeLegacyMockStorage() {
       try {
-        const PURGE_FLAG = 'sisa_purged_mock_v262';
-        if (!localStorage.getItem(PURGE_FLAG)) {
-          const keysToRemove = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k && (k.startsWith('sisa_saved_') || k.startsWith('sisa_active_materia_key'))) {
-              keysToRemove.push(k);
+        const mockKeywords = ['Configuración de Entorno Experimental', 'Laboratorio de Computación / Simulación Técnica', 'Modelado Orientado a Objetos', 'Configuración de Entorno de Desarrollo'];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_'))) {
+            const val = localStorage.getItem(k);
+            if (val && mockKeywords.some(w => val.includes(w))) {
+              localStorage.removeItem(k);
             }
           }
-          keysToRemove.forEach(k => localStorage.removeItem(k));
+        }
+        const PURGE_FLAG = 'sisa_purged_mock_v263';
+        if (!localStorage.getItem(PURGE_FLAG)) {
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_'))) {
+              localStorage.removeItem(k);
+            }
+          }
           localStorage.setItem(PURGE_FLAG, 'true');
-          console.log('🧹 SISA Storage Purge: Cleared legacy mock cache (' + keysToRemove.length + ' keys).');
+          console.log('🧹 SISA Storage Purge: Cleared legacy mock practical cache.');
         }
       } catch (err) {
         console.warn('Could not run storage purge:', err);
@@ -871,6 +879,9 @@
         if (savedPrac) {
           try { prac = JSON.parse(savedPrac); } catch(e) {}
         }
+        if (prac && (prac.pracEscenario === 'Laboratorio de Computación / Simulación Técnica' || (prac.pacPracticas && Array.isArray(prac.pacPracticas) && prac.pacPracticas.some(p => p.titulo && p.titulo.includes('Configuración de Entorno'))))) {
+          prac = null;
+        }
         if (!prac) {
           prac = {
             carrera: defData.carrera || '',
@@ -878,25 +889,22 @@
             codigoAsignatura: officialCode,
             semestre: defData.semestre || '',
             creditos: defData.creditos || '',
-            horasTeoricasPracticas: (defData.horasPracticas ? defData.horasPracticas + 'P (Laboratorio / Simulación)' : '4P'),
-            sesionesSemanales: '1 a 2 Sesiones Prácticas',
+            horasTeoricasPracticas: (defData.horasPracticas ? defData.horasPracticas + 'P (Laboratorio / Simulación)' : ''),
+            sesionesSemanales: '',
             justificacion: '',
             propositoGeneral: '',
             competenciaGlobal: defData.macroCompetencia || '',
             unidadCompetencia: '',
-            pracEscenario: 'Laboratorio de Computación / Simulación Técnica',
-            pracBioseguridad: 'Normativa institucional de seguridad, orden, cuidado de equipos y registro de bitácora.',
-            pracEquipamiento: 'PCs con entorno de desarrollo, servidores locales y conectividad institucional.',
-            pracFase1Prep: 'Presentación de objetivos, revisión de conceptos previos y lineamientos de la práctica.',
-            pracFase2Guiada: 'Demostración paso a paso del procedimiento experimental/técnico por el docente.',
-            pracFase3Autonoma: 'Desarrollo independiente del protocolo por los equipos de estudiantes y captura de evidencias.',
-            pracFase4Cierre: 'Análisis de resultados, discusión de casos de prueba y conclusiones técnicas.',
-            pracEvalCriterios: 'Correcta implementación de requerimientos, estabilidad de ejecución y sustentación técnica.',
-            pracEvalInstrumentos: 'Rúbrica de laboratorio y lista de cotejo de evidencias.',
-            pacPracticas: [
-              { numero: 1, titulo: 'Práctica 1: Configuración de Entorno Experimental y Normas de Trabajo', escenario: 'Laboratorio Asignado', duracion: '2', desempeno: 'Fases 1 y 2: Preparación y reconocimiento del entorno', instrumento: 'Lista de Cotejo' },
-              { numero: 2, titulo: 'Práctica 2: Implementación Técnica y Verificación de Resultados', escenario: 'Laboratorio Asignado', duracion: '2', desempeno: 'Fases 2 y 3: Ejecución autónoma y pruebas', instrumento: 'Rúbrica de Práctica' }
-            ]
+            pracEscenario: '',
+            pracBioseguridad: '',
+            pracEquipamiento: '',
+            pracFase1Prep: '',
+            pracFase2Guiada: '',
+            pracFase3Autonoma: '',
+            pracFase4Cierre: '',
+            pracEvalCriterios: '',
+            pracEvalInstrumentos: '',
+            pacPracticas: []
           };
         }
         window.activePacPracData = prac;
@@ -1335,33 +1343,11 @@
         if (savedPrac) {
           try { prac = JSON.parse(savedPrac); } catch(e) {}
         }
-        if (!prac || !Array.isArray(prac) || prac.length === 0) {
-          const defData = materiasData[mKey] || {};
-          prac = [
-            {
-              sesionId: 1,
-              nombreHoja: 'Práctica 1',
-              contenidoTema: 'Configuración de Entorno Experimental y Bioseguridad',
-              unidadTitulo: 'Unidad de Práctica 1',
-              elementoCompetencia: 'Aplica protocolos de trabajo seguro y alista el instrumental técnico.',
-              objetivoSesion: 'Preparar y validar el entorno de laboratorio conforme a normas institucionales.',
-              comision: 'PL-01',
-              ambiente: 'Laboratorio Asignado',
-              numEstudiantes: 25,
-              nivelBloom: 'Aplicación',
-              equipamiento: 'Equipos y guías de trabajo institucional.',
-              planType: 'PRACTICO',
-              fase1Prep: 'Revisión de conceptos previos y verificación de instrumental.',
-              fase1PrepDur: 20,
-              fase2Guiada: 'Demostración paso a paso del procedimiento por el docente.',
-              fase2GuiadaDur: 40,
-              fase3Autonoma: 'Desarrollo autónomo del protocolo y captura de evidencias por los estudiantes.',
-              fase3AutonomaDur: 50,
-              fase4Cierre: 'Análisis de resultados, conclusiones y registro de bitácora.',
-              fase4CierreDur: 25,
-              referenciasBibliograficas: []
-            }
-          ];
+        if (prac && Array.isArray(prac) && prac.some(p => p.contenidoTema && p.contenidoTema.includes('Configuración de Entorno Experimental'))) {
+          prac = [];
+        }
+        if (!prac || !Array.isArray(prac)) {
+          prac = [];
         }
         window.activePlanesPracticoList = prac;
         activePlanesList = prac;
@@ -3107,15 +3093,19 @@
           }
         }
         if (!cronPracticas || cronPracticas.length === 0) {
-          cronPracticas = [
-            { semana: 1, nroSesion: 1, unidadTematica: 'Configuración de Entorno de Desarrollo y Normas de Trabajo', contenidoEspecifico: 'Instalación y validación de herramientas, entornos de prueba y políticas de bioseguridad en el laboratorio.', saberProcedimental: 'Prepara el espacio de trabajo cumpliendo con los estándares normativos de seguridad.', instrumentoEvaluacion: 'Lista de Cotejo', evidenciaAprendizaje: 'Bitácora y entorno validado' },
-            { semana: 2, nroSesion: 2, unidadTematica: 'Modelado Orientado a Objetos y Encapsulamiento', contenidoEspecifico: 'Implementación práctica de clases, interfaces, métodos accesores y validación de tipos en IDE.', saberProcedimental: 'Codifica entidades modulares con robustez estructural y documentación clara.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Código fuente y pruebas unitarias' },
-            { semana: 3, nroSesion: 3, unidadTematica: 'Herencia, Composición y Polimorfismo Técnico', contenidoEspecifico: 'Desarrollo de jerarquías de clases y resolución de casos reales mediante interfaces desacopladas.', saberProcedimental: 'Aplica abstracción y reutilización modular en el entorno de desarrollo.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Proyecto en repositorio y ejecutable' },
-            { semana: 4, nroSesion: 4, unidadTematica: 'Construcción de Interfaces Gráficas y Eventos Reactivos', contenidoEspecifico: 'Diseño de formularios, enlace de eventos de usuario y control de excepciones en tiempo de ejecución.', saberProcedimental: 'Desarrolla interfaces interactivas funcionales con retroalimentación inmediata.', instrumentoEvaluacion: 'Rúbrica de Práctica', evidenciaAprendizaje: 'Formularios validados y reporte de pruebas' }
-          ];
+          cronPracticas = [];
         }
 
         let pracRowsHtml = '';
+        if (cronPracticas.length === 0) {
+          pracRowsHtml = `
+            <tr>
+              <td colspan="7" style="border: 1px solid #000; padding: 10px; text-align: center; font-style: italic; color: #64748b;">
+                Sin prácticas registradas en el PAC Práctico
+              </td>
+            </tr>
+          `;
+        } else {
         cronPracticas.forEach((p, idx) => {
           const sem = p.semana || (idx + 1);
           const ses = p.nroSesion || p.numero || (idx + 1);
@@ -3137,6 +3127,7 @@
             </tr>
           `;
         });
+        }
 
         docHtml += `
           <div class="print-page" style="padding: 10mm 15mm 8mm 15mm; font-family: 'Times New Roman', Times, serif; font-size: 7.5pt; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; width: 100%;">
@@ -3334,6 +3325,9 @@
         if (savedPrac) {
           try { practicoList = JSON.parse(savedPrac); } catch(e) {}
         }
+        if (practicoList && Array.isArray(practicoList) && practicoList.some(p => p.contenidoTema && p.contenidoTema.includes('Configuración de Entorno Experimental'))) {
+          practicoList = [];
+        }
         if (!practicoList || practicoList.length === 0) {
           if (window.activePlanesPracticoList && window.activePlanesPracticoList.length > 0) {
             practicoList = window.activePlanesPracticoList;
@@ -3341,36 +3335,14 @@
             practicoList = activePlanesList.filter(p => p.planType === 'PRACTICO');
           }
         }
-        if (!practicoList || practicoList.length === 0) {
-          practicoList = [
-            {
-              sesionId: 1,
-              nombreHoja: 'Práctica 1',
-              contenidoTema: 'Configuración de Entorno Experimental y Bioseguridad',
-              unidadTitulo: 'Unidad de Práctica 1',
-              elementoCompetencia: 'Aplica protocolos de trabajo seguro y alista el instrumental técnico.',
-              objetivoSesion: 'Preparar y validar el entorno de laboratorio conforme a normas institucionales.',
-              comision: 'PL-01',
-              ambiente: 'Laboratorio de Computación Asignado',
-              numEstudiantes: 25,
-              equipamiento: 'Estaciones de trabajo con IDE instalado y bitácoras.',
-              planType: 'PRACTICO',
-              fase1Prep: 'Revisión de conceptos previos, comprobación de equipos y lineamientos de seguridad.',
-              fase1PrepDur: 20,
-              fase2Guiada: 'Demostración paso a paso del protocolo por el docente.',
-              fase2GuiadaDur: 40,
-              fase3Autonoma: 'Desarrollo independiente del protocolo y captura de evidencias por los estudiantes.',
-              fase3AutonomaDur: 50,
-              fase4Cierre: 'Análisis de resultados, conclusiones técnicas y registro en bitácora.',
-              fase4CierreDur: 25,
-              criteriosEvaluacion: 'Correcta implementación y estabilidad funcional.',
-              instrumentoEvaluacion: 'Rúbrica de Práctica',
-              evidenciasEvaluacion: 'Informe de laboratorio y código verificado'
-            }
-          ];
+        if (!practicoList || !Array.isArray(practicoList)) {
+          practicoList = [];
         }
 
         let practicoCardsHtml = '';
+        if (practicoList.length === 0) {
+          practicoCardsHtml = '<div style="padding: 16px; text-align: center; color: #64748b; font-style: italic; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 6mm;">Sin planes de clase prácticos registrados en esta asignatura.</div>';
+        } else {
         practicoList.forEach((p, idx) => {
           practicoCardsHtml += `
             <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt; background: #fff;">
@@ -3431,6 +3403,7 @@
             </div>
           `;
         });
+        }
 
         docHtml += `
           <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
@@ -3734,12 +3707,19 @@
           'plan-sec-intro-dur', 'plan-sec-resultados', 'plan-sec-resultados-dur',
           'plan-sec-contenidos', 'plan-sec-contenidos-dur', 'plan-sec-desarrollo',
           'plan-sec-desarrollo-dur', 'plan-sec-cierre', 'plan-sec-cierre-dur',
-          'plan-obs-input'
+          'plan-obs-input',
+          'plan-grupo-input', 'plan-prac-ambiente', 'plan-prac-estudiantes',
+          'plan-prac-bloom', 'plan-prac-equipos',
+          'plan-sec-fase1', 'plan-sec-fase1-dur', 'plan-sec-fase2', 'plan-sec-fase2-dur',
+          'plan-sec-fase3', 'plan-sec-fase3-dur', 'plan-sec-fase4', 'plan-sec-fase4-dur'
         ];
         planFields.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
+        if (typeof window.updateSecuenciaPracticaTotals === 'function') {
+          window.updateSecuenciaPracticaTotals();
+        }
         return;
       }
       const p = activePlanesList[sheetIndex] || activePlanesList[0];
