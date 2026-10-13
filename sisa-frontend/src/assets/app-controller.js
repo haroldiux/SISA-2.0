@@ -1233,7 +1233,7 @@
         if (docTitle) docTitle.innerText = 'Documento 3: Cronograma Semestral de la Práctica (Sección 8 del PAC Práctico):';
         if (docSubtitle) docSubtitle.innerText = 'Planificación oficial de actividades prácticas, escenarios, bioseguridad y evidencias.';
         if (btnVaciar) btnVaciar.innerText = 'Vaciar Cronograma Práctico';
-        if (btnImport) btnImport.innerText = 'Importar Cronograma Práctico (.xlsx)';
+        if (btnImport) btnImport.innerText = 'Cargar desde PAC Práctico (.xlsx)';
         if (btnExport) btnExport.innerText = 'Exportar PAC Práctico (.xlsx)';
         window.renderCronogramaPracticoTable();
       } else {
@@ -1242,7 +1242,7 @@
         if (docTitle) docTitle.innerText = 'Documento 3: Cronograma de 20 Semanas (Sección 7 del PAC):';
         if (docSubtitle) docSubtitle.innerText = 'Matriz curricular editable de 20 semanas y sesiones extraídas del PAC.';
         if (btnVaciar) btnVaciar.innerText = 'Vaciar Cronograma Teórico';
-        if (btnImport) btnImport.innerText = 'Importar Cronograma Teórico (.xlsx)';
+        if (btnImport) btnImport.innerText = 'Cargar desde PAC General (.xlsx)';
         if (btnExport) btnExport.innerText = 'Exportar PAC + Cronograma (.xlsx)';
       }
 
@@ -5330,66 +5330,40 @@ window.showOfficialUploadModal = function() {
         </button>
       </div>
 
-      <!-- 2. PAC -->
+      <!-- 2. PAC CON CRONOGRAMA INTEGRADO -->
       <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 space-y-2">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
-            <span class="font-bold text-slate-900 dark:text-white text-xs">2. PAC - Plan de Aprendizaje Curricular (.xlsx)</span>
+            <span class="font-bold text-slate-900 dark:text-white text-xs">2. PAC con Cronograma Integrado (.xlsx)</span>
           </div>
-          <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">Modalidades Oficiales</span>
+          <span class="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">Incluye Cronograma</span>
         </div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">Al importar el PAC se extrae automáticamente la planificación curricular junto con su respectivo cronograma semestral:</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
           <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.switchActivePacType('GRAL'); window.importPacExcel(false, 'GRAL');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
             <div>
               <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">PAC General / Teórico</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 GRAL.xlsx (Matriz 20 semanas)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 GRAL.xlsx (Incluye Cronograma 20 semanas)</div>
             </div>
             <i data-lucide="upload" class="w-4 h-4 text-emerald-600"></i>
           </div>
           <div onclick="window.closeModal(); window.switchDocMainTab('tab-pac-matrix'); window.switchActivePacType('PRACTICO'); window.importPacExcel(false, 'PRACTICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
             <div>
               <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">PAC Práctico / Laboratorio</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 PRACTICO.xlsx (Talleres y bio)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">PAC-2026 PRACTICO.xlsx (Incluye Cronograma de Prácticas)</div>
             </div>
             <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
           </div>
         </div>
       </div>
 
-      <!-- 3. CRONOGRAMA SEMESTRAL -->
-      <div class="p-3.5 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-950/40 space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i data-lucide="calendar" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i>
-            <span class="font-bold text-slate-900 dark:text-white text-xs">3. Cronograma Semestral (.xlsx)</span>
-          </div>
-          <span class="text-[10px] text-teal-700 dark:text-teal-300 font-bold bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full">Semanas & Prácticas</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-semanas'); window.switchActiveCronogramaType('GRAL'); window.importPacExcel(true, 'GRAL');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
-            <div>
-              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Cronograma Teórico</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">20 Semanas / 9 Columnas de aula</div>
-            </div>
-            <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
-          </div>
-          <div onclick="window.closeModal(); window.switchDocMainTab('tab-cronograma-semanas'); window.switchActiveCronogramaType('PRACTICO'); window.importPacExcel(true, 'PRACTICO');" class="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-500 cursor-pointer transition-all flex items-center justify-between shadow-sm">
-            <div>
-              <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">Cronograma de Prácticas</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Laboratorio / 7 Columnas institucionales</div>
-            </div>
-            <i data-lucide="upload" class="w-4 h-4 text-teal-600"></i>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. PLANES DE CLASE -->
+      <!-- 3. PLANES DE CLASE -->
       <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/60 dark:bg-purple-950/40 space-y-2">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i data-lucide="calendar-range" class="w-4 h-4 text-purple-600 dark:text-purple-400"></i>
-            <span class="font-bold text-slate-900 dark:text-white text-xs">4. Planes de Clase (.xlsx)</span>
+            <span class="font-bold text-slate-900 dark:text-white text-xs">3. Planes de Clase (.xlsx)</span>
           </div>
           <span class="text-[10px] text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full">Fichas Didácticas</span>
         </div>
