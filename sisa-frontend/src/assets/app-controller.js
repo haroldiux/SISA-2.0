@@ -214,6 +214,16 @@
         window.loadAdminUsers();
       }
 
+      // 5. Contextual Carpeta Docente Sidebar Menu (Only visible inside a folder / view1)
+      const carpetaContext = document.getElementById('global-sidebar-carpeta-context');
+      if (carpetaContext) {
+        if (viewId === 'view1') {
+          carpetaContext.classList.remove('hidden');
+        } else {
+          carpetaContext.classList.add('hidden');
+        }
+      }
+
       if (window.lucide) window.lucide.createIcons();
     };
 
@@ -226,12 +236,12 @@
       const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
       
       if (isCollapsed) {
-        sidebar.classList.remove('w-60');
+        sidebar.classList.remove('w-60', 'w-64');
         sidebar.classList.add('w-20');
         if (icon) icon.setAttribute('data-lucide', 'chevrons-right');
       } else {
         sidebar.classList.remove('w-20');
-        sidebar.classList.add('w-60');
+        sidebar.classList.add('w-64');
         if (icon) icon.setAttribute('data-lucide', 'chevrons-left');
       }
 
@@ -247,7 +257,7 @@
         const icon = document.getElementById('sidebar-collapse-icon');
         if (sidebar) {
           sidebar.classList.add('sidebar-collapsed', 'w-20');
-          sidebar.classList.remove('w-60');
+          sidebar.classList.remove('w-60', 'w-64');
         }
         if (icon) icon.setAttribute('data-lucide', 'chevrons-right');
       }
