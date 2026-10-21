@@ -6,6 +6,8 @@ import bo.edu.unitepc.sisa.api.request.ScuPacRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPacReviewRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPlanClaseRequest;
 import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
+import bo.edu.unitepc.sisa.service.command.ScuBatchReviewPacCmd;
+import bo.edu.unitepc.sisa.service.command.ScuExportAsistenciaXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPacXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPlanClasesXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportProgramaDocxCmd;
@@ -64,6 +66,8 @@ class SecurityEndpointAccessTest {
     @MockBean
     private ScuReviewPacCmd reviewPacCmd;
     @MockBean
+    private ScuBatchReviewPacCmd batchReviewPacCmd;
+    @MockBean
     private ScuSubmitPacCmd submitPacCmd;
     @MockBean
     private ScuSaveProgramaAnaliticoCmd saveProgramaCmd;
@@ -81,6 +85,8 @@ class SecurityEndpointAccessTest {
     private ScuExportPlanClasesXlsxCmd exportPlanClasesCmd;
     @MockBean
     private ScuExportProgramaDocxCmd exportProgramaCmd;
+    @MockBean
+    private ScuExportAsistenciaXlsxCmd exportAsistenciaCmd;
     @MockBean
     private bo.edu.unitepc.sisa.infrastructure.office.PacExcelParser pacExcelParser;
     @MockBean
@@ -148,6 +154,18 @@ class SecurityEndpointAccessTest {
         assertTrue(preAuthorize.value().contains("ROLE_DIR_ACADEMICA"));
         assertTrue(preAuthorize.value().contains("ROLE_VICERRECTOR_SEDE"));
         assertTrue(preAuthorize.value().contains("ROLE_VICERRECTOR_NACIONAL"));
+        assertTrue(preAuthorize.value().contains("ROLE_ADMIN"));
+    }
+
+    @Test
+    @DisplayName("Asistencia export includes DOCENTE, DIR_CARRERA, and ADMIN")
+    void shouldAuthorizeDocenteDirCarreraAndAdminToExportAsistencia() throws Exception {
+        PreAuthorize preAuthorize = ScuOfficeController.class.getMethod(
+                "exportAsistencia", String.class, String.class, String.class).getAnnotation(PreAuthorize.class);
+
+        assertTrue(preAuthorize != null);
+        assertTrue(preAuthorize.value().contains("ROLE_DOCENTE"));
+        assertTrue(preAuthorize.value().contains("ROLE_DIR_CARRERA"));
         assertTrue(preAuthorize.value().contains("ROLE_ADMIN"));
     }
 

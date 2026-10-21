@@ -251,4 +251,63 @@ public class ScuAsistenciaCommandsTest {
         assertEquals(93.75, vargas.porcentajeAsistencia());
         assertTrue(vargas.cumpleNormativa80Pct());
     }
+
+    @Test
+    @DisplayName("Should generate valid institutional XLSX workbook for attendance export")
+    void shouldExportAttendanceXlsx() throws Exception {
+        String materiaCodigo = "SIS-213";
+        String gestionCodigo = "2-2026";
+
+        List<AsistenciaSesion> mockSesiones = new ArrayList<>();
+        AsistenciaSesion s1 = new AsistenciaSesion();
+        s1.setId(1L);
+        s1.setMateriaCodigo(materiaCodigo);
+        s1.setMateriaNombre("Programación III");
+        s1.setGestionCodigo(gestionCodigo);
+        s1.setFecha(LocalDate.of(2026, 8, 10));
+        s1.setTipoClase("TEORICA");
+        s1.setComision("TA-01");
+        s1.setTema("Introducción a la Arquitectura");
+        s1.setRegistradoPor("Ing. Carlos Alberto Morales Siles");
+        mockSesiones.add(s1);
+
+        List<AsistenciaEstudiante> mockMarks = new ArrayList<>();
+        AsistenciaEstudiante ae1 = new AsistenciaEstudiante();
+        ae1.setId(10L);
+        ae1.setSesion(s1);
+        ae1.setEstudianteCodigo("SIS-2024-001");
+        ae1.setEstudianteNombre("Mamani Flores Kevin");
+        ae1.setCarreraCodigo("CARSIS");
+        ae1.setCarreraNombre("Ingeniería de Sistemas");
+        ae1.setEstado(EstadoAsistencia.PRESENTE);
+        mockMarks.add(ae1);
+
+        AsistenciaEstudiante ae2 = new AsistenciaEstudiante();
+        ae2.setId(11L);
+        ae2.setSesion(s1);
+        ae2.setEstudianteCodigo("TEL-2024-015");
+        ae2.setEstudianteNombre("Condori Quispe Marisol");
+        ae2.setCarreraCodigo("CARELE");
+        ae2.setCarreraNombre("Ingeniería de Telecomunicaciones");
+        ae2.setEstado(EstadoAsistencia.LICENCIA);
+        mockMarks.add(ae2);
+
+        when(this.sesionRepository.findByMateriaCodigoAndGestionCodigoOrderByFechaDesc(materiaCodigo, gestionCodigo))
+                .thenReturn(mockSesiones);
+        when(this.estudianteRepository.findByMateriaAndGestion(materiaCodigo, gestionCodigo))
+                .thenReturn(mockMarks);
+
+        bo.edu.unitepc.sisa.service.command.ScuExportAsistenciaXlsxCmd exportCmd =
+                new bo.edu.unitepc.sisa.service.command.ScuExportAsistenciaXlsxCmd(this.sesionRepository, this.estudianteRepository);
+        byte[] bytes = exportCmd.execute(materiaCodigo, gestionCodigo, "Ing. Carlos Alberto Morales Siles");
+
+        assertNotNull(bytes);
+        assertTrue(bytes.length > 0);
+
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(bytes))) {
+            org.apache.poi.ss.usermodel.Sheet sheet = wb.getSheet("Asistencia Oficial");
+            assertNotNull(sheet);
+            assertEquals("UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC", sheet.getRow(0).getCell(0).getStringCellValue());
+        }
+    }
 }

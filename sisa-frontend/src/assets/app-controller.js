@@ -293,6 +293,7 @@
         if (tabId === 'tab-pac-matrix') ringColor = 'ring-emerald-500/20';
         else if (tabId === 'tab-cronograma-semanas') ringColor = 'ring-amber-500/20';
         else if (tabId === 'tab-cronograma-planes') ringColor = 'ring-purple-500/20';
+        else if (tabId === 'tab-asistencia') ringColor = 'ring-teal-500/20';
 
         activeBtn.className = 'doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md border border-slate-300/80 dark:border-slate-700 font-bold scale-[1.02] ring-2 ' + ringColor;
       }
@@ -303,7 +304,7 @@
       });
       const activeSidebarTab = document.getElementById('sidebar-' + tabId);
       if (activeSidebarTab) {
-        activeSidebarTab.className = 'sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/80 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700/60 font-bold text-xs text-left cursor-pointer transition-all';
+        activeSidebarTab.className = 'sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-teal-100 dark:bg-teal-950/80 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700/60 font-bold text-xs text-left cursor-pointer transition-all';
       }
 
       // Update contextual clear button label
@@ -313,6 +314,7 @@
         else if (tabId === 'tab-pac-matrix') clearLabel.innerText = 'Vaciar PAC';
         else if (tabId === 'tab-cronograma-semanas') clearLabel.innerText = 'Vaciar Cronograma';
         else if (tabId === 'tab-cronograma-planes') clearLabel.innerText = 'Vaciar Planes de Clase';
+        else if (tabId === 'tab-asistencia') clearLabel.innerText = 'Reiniciar Asistencia de Sesión';
         else clearLabel.innerText = 'Vaciar Pestaña';
       }
 
@@ -325,6 +327,12 @@
           if (typeof window.renderAnaliticoBibliografia === 'function') {
             window.renderAnaliticoBibliografia();
           }
+        }
+      }
+
+      if (tabId === 'tab-asistencia') {
+        if (typeof window.loadAttendanceForCurrentSelection === 'function') {
+          window.loadAttendanceForCurrentSelection();
         }
       }
 
@@ -556,6 +564,10 @@
         window.vaciarPacYCronograma();
       } else if (activeTabId === 'tab-cronograma-planes') {
         window.vaciarPlanesClase();
+      } else if (activeTabId === 'tab-asistencia') {
+        if (typeof window.resetCurrentAttendanceSession === 'function') {
+          window.resetCurrentAttendanceSession();
+        }
       } else {
         window.showToast('ℹ️ Selecciona una pestaña para vaciar.');
       }
@@ -1924,6 +1936,11 @@
         window.renderMateriaSchedulesDetail(data);
       }
 
+      // If Attendance tab is currently active, refresh attendance roster and session
+      if (activeTabId === 'tab-asistencia' && typeof window.loadAttendanceForCurrentSelection === 'function') {
+        window.loadAttendanceForCurrentSelection();
+      }
+
       // Auto-resize textareas to fit content
       setTimeout(() => {
         if (typeof window.autoResizeAllTextareas === 'function') {
@@ -2320,6 +2337,17 @@
           </label>
         `;
       }
+
+      // TAB 5: Nómina y Registro de Asistencia
+      documentsListHtml += `
+        <label class="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-700/50 transition-all">
+          <input type="checkbox" class="chk-print-sec w-4 h-4 mt-0.5 rounded text-teal-600" data-section="asistencia" checked onchange="window.updateMasterPrintCheckbox()">
+          <div>
+            <span class="font-bold text-slate-900 dark:text-white block">📋 Nómina Oficial y Registro de Asistencia (.xlsx)</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Listado de estudiantes segregado por carrera, estado de asistencia y cumplimiento de la Regla del 80%.</span>
+          </div>
+        </label>
+      `;
 
       const modalBody = `
         <div class="space-y-4 text-xs">
@@ -3601,6 +3629,96 @@
               <div style="font-size: 9pt; font-weight: bold; color: #581c87;">${currentCodigo} • ${safe(currentAsignatura)} (Docente: ${docenteName})</div>
             </div>
             ${practicoCardsHtml}
+          </div>
+        `;
+      }
+
+      // ── TAB 5: NÓMINA OFICIAL Y CONTROL DE ASISTENCIA (80% RULE) ─────────────
+      if (selectedSections.includes('asistencia')) {
+        let printRowsHtml = '';
+        let pSeq = 1;
+
+        const printStudents = (activeRosterStudents && activeRosterStudents.length > 0)
+          ? activeRosterStudents
+          : [];
+
+        const printByCareer = new Map();
+        printStudents.forEach(s => {
+          const cKey = s.carreraCodigo || 'CARSIS';
+          if (!printByCareer.has(cKey)) {
+            printByCareer.set(cKey, { code: cKey, name: s.carreraNombre || 'Ingeniería de Sistemas', list: [] });
+          }
+          printByCareer.get(cKey).list.push(s);
+        });
+
+        printByCareer.forEach((pCohort, pCareerCode) => {
+          printRowsHtml += `
+            <tr style="background: #f1f5f9; font-weight: bold; border-top: 2px solid #0f766e; border-bottom: 2px solid #0f766e;">
+              <td colspan="6" style="padding: 4px 8px; font-size: 8.5pt; text-transform: uppercase; color: #0f766e;">
+                CARRERA: ${pCohort.name} (${pCareerCode}) • ${pCohort.list.length} ESTUDIANTES MATRICULADOS
+              </td>
+            </tr>
+          `;
+
+          pCohort.list.forEach(s => {
+            const rec = (currentAttendanceSession && currentAttendanceSession.estudiantes && currentAttendanceSession.estudiantes[s.code])
+              ? currentAttendanceSession.estudiantes[s.code]
+              : { estado: 'PRESENTE', observacion: '' };
+            const cum = cumulativeAttendanceMetrics[s.code];
+            const pctVal = cum ? `${cum.porcentajeAsistencia}%` : '100%';
+            const cumpleVal = (!cum || cum.cumpleNormativa80Pct) ? 'HABILITADO' : 'INHABILITADO';
+            const cumpleColor = (!cum || cum.cumpleNormativa80Pct) ? '#047857' : '#b91c1c';
+
+            printRowsHtml += `
+              <tr style="border-bottom: 1px solid #e2e8f0; font-size: 8pt;">
+                <td style="padding: 3px 6px; text-align: center; color: #64748b;">${pSeq++}</td>
+                <td style="padding: 3px 6px; text-align: center; font-family: monospace; font-weight: bold;">${s.code}</td>
+                <td style="padding: 3px 8px; font-weight: 500;">${s.fullName}</td>
+                <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${s.carreraCodigo}</td>
+                <td style="padding: 3px 6px; text-align: center; font-weight: bold; color: ${rec.estado === 'PRESENTE' ? '#047857' : (rec.estado === 'FALTA' ? '#b91c1c' : '#d97706')};">${rec.estado}</td>
+                <td style="padding: 3px 6px; text-align: center; font-weight: bold; color: ${cumpleColor};">${pctVal} (${cumpleVal})</td>
+              </tr>
+            `;
+          });
+        });
+
+        docHtml += `
+          <div class="print-page" style="padding: 10mm 10mm; font-family: Arial, Helvetica, sans-serif; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px;">
+            <div style="text-align: center; margin-bottom: 4mm; border-bottom: 2px solid #0f766e; padding-bottom: 3mm;">
+              <div style="font-size: 15pt; font-weight: 900; color: #1e3a8a;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC</div>
+              <div style="font-size: 10pt; font-weight: bold; color: #0f766e; text-transform: uppercase;">REGISTRO OFICIAL DE ASISTENCIA Y CONTROL DE CUMPLIMIENTO (REGLA 80%)</div>
+              <div style="font-size: 8.5pt; color: #334155; margin-top: 1mm;">
+                ${currentCodigo} • ${safe(currentAsignatura)} | Docente: ${docenteName} | Gestión: II-2026 | Total Inscritos: ${printStudents.length}
+              </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 6mm;">
+              <thead>
+                <tr style="background: #0f766e; color: #fff; font-size: 8.5pt; text-transform: uppercase;">
+                  <th style="padding: 4px 6px; width: 30px; text-align: center;">Nº</th>
+                  <th style="padding: 4px 6px; width: 90px; text-align: center;">Código</th>
+                  <th style="padding: 4px 8px; text-align: left;">Estudiante (Apellidos y Nombres)</th>
+                  <th style="padding: 4px 6px; width: 60px; text-align: center;">Carrera</th>
+                  <th style="padding: 4px 6px; width: 90px; text-align: center;">Estado Sesión</th>
+                  <th style="padding: 4px 6px; width: 140px; text-align: center;">Normativa 80%</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${printRowsHtml}
+              </tbody>
+            </table>
+
+            <!-- Endorsement Signature Block -->
+            <div style="display: flex; justify-content: space-around; margin-top: 12mm; page-break-inside: avoid;">
+              <div style="text-align: center; width: 40%; border-top: 1px solid #000; padding-top: 4px; font-size: 8.5pt;">
+                <strong>${docenteName}</strong><br>
+                <span>Docente Titular de Asignatura</span>
+              </div>
+              <div style="text-align: center; width: 40%; border-top: 1px solid #000; padding-top: 4px; font-size: 8.5pt;">
+                <strong>Lic. Mariana Rios Vargas</strong><br>
+                <span>Director / Jefe de Carrera</span>
+              </div>
+            </div>
           </div>
         `;
       }
@@ -5669,6 +5787,14 @@ document.addEventListener('change', (e) => {
         sidebarText.innerText = 'Sync';
       }
     }
+
+    // 3. Tab 5 Attendance Badge sync
+    const attBadge = document.getElementById('asistencia-sync-badge');
+    if (attBadge && typeof window.updateAttendanceSyncBadge === 'function') {
+      if (status === 'offline') {
+        window.updateAttendanceSyncBadge('offline');
+      }
+    }
   };
 
   window.toggleSeaGatewaySimulation = function() {
@@ -5685,13 +5811,16 @@ document.addEventListener('change', (e) => {
     fetch('/api/v1/catalogo-academico/status')
       .then(res => res.json())
       .then(data => {
-        if (data && data.status) {
-          window.updateSeaGatewayStatus(data.status);
+        const s = (data && data.status) ? data.status : 'offline';
+        window.updateSeaGatewayStatus(s);
+        if (s === 'offline' && typeof window.updateAttendanceSyncBadge === 'function') {
+          window.updateAttendanceSyncBadge('offline');
         }
       })
       .catch(() => {
-        if (!navigator.onLine) {
-          window.updateSeaGatewayStatus('offline');
+        window.updateSeaGatewayStatus('offline');
+        if (typeof window.updateAttendanceSyncBadge === 'function') {
+          window.updateAttendanceSyncBadge('offline');
         }
       });
   };
@@ -10990,9 +11119,1183 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODULE: TAB 5 - STUDENT ROSTER & ATTENDANCE TRACKING (GentleAI SDD change 12)
+  // ═══════════════════════════════════════════════════════════════════════════
+  let currentAttendanceSession = {
+    fecha: new Date().toISOString().split('T')[0],
+    tipoClase: 'TEORICA',
+    comision: 'TA-01',
+    tema: '',
+    observaciones: '',
+    estudiantes: {} // studentCode -> { estado: 'PRESENTE'|'FALTA'|'ATRASO'|'LICENCIA', observacion: string, name: string, careerCode: string, careerName: string }
+  };
+  let activeAttendanceCareerFilter = 'ALL';
+  let activeRosterStudents = [];
+  let cumulativeAttendanceMetrics = {}; // studentCode -> AsistenciaEstudianteResumenDto
+
+  const BOLIVIAN_PATERNAL_SURNAMES = [
+    'Mamani', 'Condori', 'Quispe', 'Flores', 'Rodriguez',
+    'Choque', 'Vargas', 'Mendoza', 'Torrico', 'Fernandez',
+    'Lopez', 'Gutierrez', 'Morales', 'Rojas', 'Colque',
+    'Huanca', 'Alarcon', 'Villarroel', 'Claros', 'Camacho'
+  ];
+
+  const BOLIVIAN_MATERNAL_SURNAMES = [
+    'Perez', 'Cruz', 'Sanchez', 'Gomez', 'Chavez',
+    'Rios', 'Mercado', 'Soliz', 'Claure', 'Pinto',
+    'Beltran', 'Miranda', 'Guzman', 'Aguilar', 'Ortiz',
+    'Suarez', 'Arteaga', 'Arnez', 'Ledezma', 'Zurita'
+  ];
+
+  const BOLIVIAN_FIRST_NAMES = [
+    'Kevin', 'Marisol', 'Alejandro', 'Daniela', 'Rodrigo',
+    'Valeria', 'Brandon', 'Camila', 'Alvaro', 'Gabriela',
+    'Jhonatan', 'Andrea', 'Cristian', 'Paola', 'Sebastian',
+    'Natalia', 'Mauricio', 'Luciana', 'Diego', 'Sofia',
+    'Carlos', 'Romina', 'Fernando', 'Noelia', 'Marcelo'
+  ];
+
+  window.generateBolivianMockRoster = function(mKey, data) {
+    const careers = (data && data.carrerasResolved && data.carrerasResolved.length > 0)
+      ? data.carrerasResolved
+      : [
+          { code: 'CARSIS', name: 'Ingeniería de Sistemas', tag: 'ING. SISTEMAS' },
+          { code: 'CARELE', name: 'Ingeniería de Telecomunicaciones', tag: 'ING. TELECOM' }
+        ];
+
+    let hash = 0;
+    const cleanKey = String(mKey || 'SIS-213');
+    for (let i = 0; i < cleanKey.length; i++) {
+      hash = ((hash << 5) - hash) + cleanKey.charCodeAt(i);
+      hash |= 0;
+    }
+    const count = 28;
+    const students = [];
+
+    for (let i = 0; i < count; i++) {
+      const pIdx = Math.abs((hash * 17 + i * 13)) % BOLIVIAN_PATERNAL_SURNAMES.length;
+      const mIdx = Math.abs((hash * 23 + i * 7)) % BOLIVIAN_MATERNAL_SURNAMES.length;
+      const nIdx = Math.abs((hash * 31 + i * 19)) % BOLIVIAN_FIRST_NAMES.length;
+
+      const pName = BOLIVIAN_PATERNAL_SURNAMES[pIdx];
+      const mName = BOLIVIAN_MATERNAL_SURNAMES[mIdx];
+      const fName = BOLIVIAN_FIRST_NAMES[nIdx];
+      const fullName = `${pName} ${mName} ${fName}`;
+
+      const career = careers[i % careers.length];
+      const carPrefix = (career.code || 'CARSIS').replace('CAR', '').substring(0, 3).toUpperCase() || 'SIS';
+      const year = (i % 3 === 0) ? '2023' : (i % 2 === 0 ? '2024' : '2025');
+      const seq = String(i + 1).padStart(3, '0');
+      const studentCode = `${carPrefix}-${year}-${seq}`;
+
+      students.push({
+        id: `seed-${studentCode}`,
+        code: studentCode,
+        studentCode: studentCode,
+        firstName: fName,
+        firstLastName: pName,
+        secondLastName: mName,
+        fullName: fullName,
+        carreraCodigo: career.code || 'CARSIS',
+        carreraNombre: career.name || 'Ingeniería de Sistemas',
+        carreraTag: career.tag || career.name || 'ING. SISTEMAS'
+      });
+    }
+
+    students.sort((a, b) => a.fullName.localeCompare(b.fullName));
+    return students;
+  };
+
+  window.retrySeaGatewayConnection = function() {
+    window.showToast('🔄 Comprobando estado de conexión con SEA Gateway...');
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    window.loadSubjectRoster(mKey);
+  };
+
+  window.loadSubjectRoster = async function(mKey) {
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    const storageKey = 'sisa_roster_' + mKey;
+
+    // First: Check Gateway Health directly from SISA backend status
+    let gatewayOnline = false;
+    try {
+      const statusRes = await fetch('/api/v1/catalogo-academico/status');
+      if (statusRes.ok) {
+        const sData = await statusRes.json();
+        gatewayOnline = (sData.status === 'online');
+      }
+    } catch (e) {
+      gatewayOnline = false;
+    }
+
+    // Tier 1: Check localStorage cached roster (0ms instant render)
+    let cached = null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0 && !parsed.some(s => s.isMock || (s.code && String(s.code).startsWith('SIS-2024-')))) {
+          cached = parsed;
+        } else {
+          localStorage.removeItem(storageKey);
+        }
+      }
+    } catch (e) {}
+
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      activeRosterStudents = cached;
+      window.renderAttendanceCareerFilters();
+      window.renderAttendanceRoster(activeRosterStudents);
+      window.updateAttendanceSyncBadge(gatewayOnline ? 'cached' : 'offline_cached');
+      return;
+    }
+
+    // Tier 2: Live SEA Gateway fetch if course has groups and gateway is online
+    const groups = data.groups || [];
+    let fetchedStudents = [];
+
+    if (gatewayOnline && groups.length > 0) {
+      try {
+        const token = localStorage.getItem('scu_access_token');
+        const authHeaders = {};
+        if (token && token !== 'demo_token') authHeaders['Authorization'] = 'Bearer ' + token;
+
+        const fetchPromises = groups.map(async (g) => {
+          const gId = g.id || g.groupId;
+          if (!gId) return [];
+          try {
+            const res = await fetch(`/api/v1/catalogo-academico/students/byGroup?groupId=${encodeURIComponent(gId)}`, {
+              headers: authHeaders
+            });
+            if (res.ok) {
+              const list = await res.json();
+              if (Array.isArray(list) && list.length > 0) {
+                return list.map(item => {
+                  const fn = `${item.firstLastName || ''} ${item.secondLastName || ''} ${item.firstName || ''}`.trim() || item.code;
+                  return {
+                    id: item.id || item.code,
+                    code: item.code,
+                    studentCode: item.code,
+                    firstName: item.firstName,
+                    firstLastName: item.firstLastName,
+                    secondLastName: item.secondLastName,
+                    fullName: fn,
+                    carreraCodigo: g.careerCode || (data.carrerasCodes && data.carrerasCodes[0]) || 'CARSIS',
+                    carreraNombre: g.careerName || (data.carrerasResolved && data.carrerasResolved[0]?.name) || 'Ingeniería de Sistemas',
+                    carreraTag: g.careerTag || 'ING. SISTEMAS'
+                  };
+                });
+              }
+            }
+          } catch (err) {
+            console.warn('Error fetching group students:', gId, err);
+          }
+          return [];
+        });
+
+        const results = await Promise.all(fetchPromises);
+        fetchedStudents = results.flat();
+      } catch (err) {
+        console.warn('Gateway ingestion error:', err);
+      }
+    }
+
+    if (fetchedStudents.length > 0) {
+      const map = new Map();
+      fetchedStudents.forEach(s => map.set(s.code, s));
+      activeRosterStudents = Array.from(map.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
+      localStorage.setItem(storageKey, JSON.stringify(activeRosterStudents));
+      window.renderAttendanceCareerFilters();
+      window.renderAttendanceRoster(activeRosterStudents);
+      window.updateAttendanceSyncBadge('online');
+      return;
+    }
+
+    // Tier 3: If no students obtained, render truthful empty reason
+    activeRosterStudents = [];
+    window.renderAttendanceCareerFilters();
+    window.renderAttendanceRoster(activeRosterStudents, gatewayOnline ? 'empty' : 'offline');
+    window.updateAttendanceSyncBadge(gatewayOnline ? 'online_empty' : 'offline');
+  };
+
+  window.updateAttendanceSyncBadge = function(mode) {
+    const badge = document.getElementById('asistencia-sync-badge');
+    if (!badge) return;
+
+    if (mode === 'online') {
+      badge.className = 'px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-300 dark:border-teal-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span><span id="asistencia-sync-text">En línea (SEA Gateway)</span>';
+    } else if (mode === 'cached') {
+      badge.className = 'px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span><span id="asistencia-sync-text">Caché local sincronizado</span>';
+    } else if (mode === 'offline_cached') {
+      badge.className = 'px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span><span id="asistencia-sync-text">SEA Desconectado (Caché local)</span>';
+    } else if (mode === 'online_empty') {
+      badge.className = 'px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span><span id="asistencia-sync-text">SEA en línea (0 inscritos)</span>';
+    } else {
+      badge.className = 'px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all';
+      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span><span id="asistencia-sync-text">🔴 Desconectado (SEA Gateway)</span><i data-lucide="refresh-cw" class="w-3 h-3 ml-1"></i>';
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.renderAttendanceCareerFilters = function() {
+    const container = document.getElementById('asistencia-career-filters');
+    if (!container) return;
+
+    const distinctCareers = new Map();
+    activeRosterStudents.forEach(s => {
+      const cCode = s.carreraCodigo || 'CARSIS';
+      const cName = s.carreraNombre || 'Ingeniería de Sistemas';
+      if (!distinctCareers.has(cCode)) {
+        distinctCareers.set(cCode, { code: cCode, name: cName, count: 0 });
+      }
+      distinctCareers.get(cCode).count++;
+    });
+
+    let html = `
+      <button type="button" onclick="window.filterAttendanceByCareer('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${activeAttendanceCareerFilter === 'ALL' ? 'bg-teal-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}">
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+        <span>Todas las Carreras (Consolidado: ${activeRosterStudents.length})</span>
+      </button>
+    `;
+
+    distinctCareers.forEach((c) => {
+      const isActive = activeAttendanceCareerFilter === c.code;
+      const isTelecom = c.code.includes('ELE') || c.name.toLowerCase().includes('telecom');
+      const activeClass = isTelecom ? 'bg-purple-600 text-white shadow-xs' : 'bg-indigo-600 text-white shadow-xs';
+      const inactiveClass = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+
+      html += `
+        <button type="button" onclick="window.filterAttendanceByCareer('${c.code}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isActive ? activeClass : inactiveClass}">
+          <span class="w-2 h-2 rounded-full ${isTelecom ? 'bg-purple-300' : 'bg-indigo-300'}"></span>
+          <span>${c.name} (${c.count})</span>
+        </button>
+      `;
+    });
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.filterAttendanceByCareer = function(careerCode) {
+    activeAttendanceCareerFilter = careerCode;
+    window.renderAttendanceCareerFilters();
+    window.renderAttendanceRoster(activeRosterStudents);
+    window.updateAttendanceLiveKPIs();
+  };
+
+  window.renderAttendanceRoster = function(students, emptyReason = 'empty') {
+    const container = document.getElementById('asistencia-roster-container');
+    if (!container) return;
+
+    if (!students || students.length === 0) {
+      if (emptyReason === 'offline') {
+        container.innerHTML = `
+          <div class="p-10 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-3 border border-rose-200 dark:border-rose-800">
+              <i data-lucide="wifi-off" class="w-6 h-6"></i>
+            </div>
+            <p class="font-bold text-sm text-slate-800 dark:text-slate-200">SEA Gateway Fuera de Línea</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              El servidor central del SEA (<code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-[11px] text-rose-600 dark:text-rose-400 font-mono">gw-dev.unitepc.solutions</code>) no está respondiendo (<strong class="text-rose-600 dark:text-rose-400">HTTP 504 Gateway Timeout</strong>). Por esa razón no se pueden descargar tus 6 estudiantes matriculados en este momento.
+            </p>
+            <div class="mt-4 flex items-center justify-center gap-3">
+              <button type="button" onclick="window.retrySeaGatewayConnection()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer transition-all shadow-xs flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Reintentar Conexión con SEA</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="p-12 text-center text-slate-400 dark:text-slate-500">
+            <i data-lucide="users" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+            <p class="font-bold text-sm text-slate-700 dark:text-slate-300">No hay estudiantes matriculados registrados en el SEA</p>
+            <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">El sistema se sincroniza directamente con el SEA Gateway oficial. Al no haber estudiantes inscritos o si el servicio está pendiente de sincronización, la nómina permanece vacía para garantizar integridad académica.</p>
+          </div>
+        `;
+      }
+      if (window.lucide) window.lucide.createIcons();
+      window.updateAttendanceLiveKPIs();
+      return;
+    }
+
+    const displayStudents = (activeAttendanceCareerFilter === 'ALL')
+      ? students
+      : students.filter(s => s.carreraCodigo === activeAttendanceCareerFilter);
+
+    displayStudents.forEach(s => {
+      if (!currentAttendanceSession.estudiantes[s.code]) {
+        currentAttendanceSession.estudiantes[s.code] = {
+          estado: 'PRESENTE',
+          observacion: '',
+          name: s.fullName,
+          careerCode: s.carreraCodigo,
+          careerName: s.carreraNombre
+        };
+      }
+    });
+
+    const byCareer = new Map();
+    displayStudents.forEach(s => {
+      const cKey = s.carreraCodigo || 'CARSIS';
+      if (!byCareer.has(cKey)) {
+        byCareer.set(cKey, {
+          code: cKey,
+          name: s.carreraNombre || 'Ingeniería de Sistemas',
+          students: []
+        });
+      }
+      byCareer.get(cKey).students.push(s);
+    });
+
+    let html = `
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold uppercase text-[11px] border-b border-slate-200 dark:border-slate-700">
+              <th class="py-3 px-3 w-10 text-center">Nº</th>
+              <th class="py-3 px-3 w-28 text-center">Código</th>
+              <th class="py-3 px-4">Estudiante (Apellidos y Nombres)</th>
+              <th class="py-3 px-3 w-28 text-center">Carrera</th>
+              <th class="py-3 px-4 text-center w-64">Marcación de Asistencia</th>
+              <th class="py-3 px-4">Observaciones / Justificación</th>
+              <th class="py-3 px-3 w-36 text-center">Regla 80% (Semestre)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    `;
+
+    let globalIdx = 1;
+
+    byCareer.forEach((cohort, careerCode) => {
+      const isTelecom = careerCode.includes('ELE') || cohort.name.toLowerCase().includes('telecom');
+      const bannerTheme = isTelecom
+        ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800/80 text-purple-900 dark:text-purple-200'
+        : 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/80 text-indigo-900 dark:text-indigo-200';
+      const badgeTheme = isTelecom
+        ? 'bg-purple-600 text-white'
+        : 'bg-indigo-600 text-white';
+
+      html += `
+        <!-- Career Cohort Header Banner -->
+        <tr class="${bannerTheme} font-bold border-y-2 border-slate-200 dark:border-slate-700">
+          <td colspan="7" class="py-2.5 px-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider ${badgeTheme}">${careerCode}</span>
+                <span class="text-xs uppercase tracking-wide">Carrera: Licenciatura en ${cohort.name}</span>
+              </div>
+              <div id="cohort-summary-${careerCode}" class="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                <span>${cohort.students.length} estudiantes matriculados</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      cohort.students.forEach(s => {
+        const rec = currentAttendanceSession.estudiantes[s.code] || { estado: 'PRESENTE', observacion: '' };
+        const estado = rec.estado || 'PRESENTE';
+        const obs = rec.observacion || '';
+
+        const cum = cumulativeAttendanceMetrics[s.code];
+        let cumBadgeHtml = `
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1">
+            <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Regular
+          </span>
+        `;
+        if (cum && cum.cumpleNormativa80Pct === false) {
+          cumBadgeHtml = `
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 animate-pulse flex items-center justify-center gap-1" title="Asistencia acumulada: ${cum.porcentajeAsistencia}% (< 80%)">
+              <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-600"></i> En Riesgo (${cum.porcentajeAsistencia}%)
+            </span>
+          `;
+        }
+
+        html += `
+          <tr id="row-student-${s.code}" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+            <td class="py-2.5 px-3 text-center font-bold text-slate-400 text-xs">${globalIdx++}</td>
+            <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">${s.code}</td>
+            <td class="py-2.5 px-4 font-semibold text-slate-900 dark:text-white text-xs">${s.fullName}</td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isTelecom ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'}">${careerCode}</span>
+            </td>
+            <td class="py-2 px-4 text-center">
+              <div class="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-2xs">
+                <button type="button" onclick="window.setStudentAttendanceStatus('${s.code}', 'PRESENTE')" id="btn-att-${s.code}-PRESENTE" class="w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer ${estado === 'PRESENTE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/60'}" title="P - Presente (1.0)">P</button>
+                <button type="button" onclick="window.setStudentAttendanceStatus('${s.code}', 'FALTA')" id="btn-att-${s.code}-FALTA" class="w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer ${estado === 'FALTA' ? 'bg-rose-600 text-white shadow-xs' : 'text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60'}" title="F - Falta Injustificada (0.0)">F</button>
+                <button type="button" onclick="window.setStudentAttendanceStatus('${s.code}', 'ATRASO')" id="btn-att-${s.code}-ATRASO" class="w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer ${estado === 'ATRASO' ? 'bg-amber-500 text-white shadow-xs' : 'text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/60'}" title="A - Atraso (0.5)">A</button>
+                <button type="button" onclick="window.setStudentAttendanceStatus('${s.code}', 'LICENCIA')" id="btn-att-${s.code}-LICENCIA" class="w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer ${estado === 'LICENCIA' ? 'bg-sky-600 text-white shadow-xs' : 'text-sky-700 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-950/60'}" title="L - Licencia Justificada (1.0)">L</button>
+              </div>
+            </td>
+            <td class="py-2 px-4">
+              <input type="text" id="obs-${s.code}" value="${(estado === 'ATRASO' || estado === 'LICENCIA') ? obs : ''}" ${(estado === 'ATRASO' || estado === 'LICENCIA') ? '' : 'disabled'} placeholder="${estado === 'ATRASO' ? 'Motivo de atraso / hora...' : (estado === 'LICENCIA' ? 'Nro. justificación / permiso...' : '—')}" class="w-full px-2.5 py-1 text-xs rounded border ${(estado === 'ATRASO' || estado === 'LICENCIA') ? 'border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500' : 'border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed'} outline-none transition-all" oninput="window.setStudentAttendanceObs('${s.code}', this.value)">
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              ${cumBadgeHtml}
+            </td>
+          </tr>
+        `;
+      });
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+    window.updateAttendanceLiveKPIs();
+  };
+
+  window.setStudentAttendanceStatus = function(studentCode, status) {
+    if (!currentAttendanceSession.estudiantes[studentCode]) {
+      currentAttendanceSession.estudiantes[studentCode] = { estado: status, observacion: '' };
+    } else {
+      currentAttendanceSession.estudiantes[studentCode].estado = status;
+    }
+
+    const states = ['PRESENTE', 'FALTA', 'ATRASO', 'LICENCIA'];
+    states.forEach(st => {
+      const btn = document.getElementById(`btn-att-${studentCode}-${st}`);
+      if (!btn) return;
+      if (st === status) {
+        if (st === 'PRESENTE') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer bg-emerald-600 text-white shadow-xs';
+        else if (st === 'FALTA') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer bg-rose-600 text-white shadow-xs';
+        else if (st === 'ATRASO') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer bg-amber-500 text-white shadow-xs';
+        else if (st === 'LICENCIA') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer bg-sky-600 text-white shadow-xs';
+      } else {
+        if (st === 'PRESENTE') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/60';
+        else if (st === 'FALTA') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60';
+        else if (st === 'ATRASO') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/60';
+        else if (st === 'LICENCIA') btn.className = 'w-7 h-7 rounded-md flex items-center justify-center transition-all cursor-pointer text-sky-700 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-950/60';
+      }
+    });
+
+    // Enable or disable observation input based on status (only active for ATRASO or LICENCIA)
+    const obsInput = document.getElementById(`obs-${studentCode}`);
+    if (obsInput) {
+      if (status === 'ATRASO' || status === 'LICENCIA') {
+        obsInput.disabled = false;
+        obsInput.placeholder = (status === 'ATRASO') ? 'Motivo de atraso / hora...' : 'Nro. justificación / permiso...';
+        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500 outline-none transition-all';
+        obsInput.focus();
+      } else {
+        obsInput.disabled = true;
+        obsInput.value = '';
+        obsInput.placeholder = '—';
+        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed outline-none transition-all';
+        if (currentAttendanceSession.estudiantes[studentCode]) {
+          currentAttendanceSession.estudiantes[studentCode].observacion = '';
+        }
+      }
+    }
+
+    window.updateAttendanceLiveKPIs();
+  };
+
+  window.setStudentAttendanceObs = function(studentCode, obs) {
+    if (!currentAttendanceSession.estudiantes[studentCode]) {
+      currentAttendanceSession.estudiantes[studentCode] = { estado: 'PRESENTE', observacion: obs };
+    } else {
+      currentAttendanceSession.estudiantes[studentCode].observacion = obs;
+    }
+  };
+
+  window.markAllStudentsPresent = function() {
+    const displayStudents = (activeAttendanceCareerFilter === 'ALL')
+      ? activeRosterStudents
+      : activeRosterStudents.filter(s => s.carreraCodigo === activeAttendanceCareerFilter);
+
+    displayStudents.forEach(s => {
+      window.setStudentAttendanceStatus(s.code, 'PRESENTE');
+      const obsInput = document.getElementById(`obs-${s.code}`);
+      if (obsInput) {
+        obsInput.disabled = true;
+        obsInput.value = '';
+        obsInput.placeholder = '—';
+        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed outline-none transition-all';
+      }
+    });
+
+    window.showToast('✓ Se marcaron todos los estudiantes visibles como Presentes (P)');
+  };
+
+  window.updateAttendanceLiveKPIs = function() {
+    let total = 0;
+    let pCount = 0;
+    let fCount = 0;
+    let aCount = 0;
+    let lCount = 0;
+
+    const careerCounts = {};
+
+    activeRosterStudents.forEach(s => {
+      const cCode = s.carreraCodigo || 'CARSIS';
+      if (!careerCounts[cCode]) {
+        careerCounts[cCode] = { total: 0, p: 0, f: 0, a: 0, l: 0 };
+      }
+      careerCounts[cCode].total++;
+
+      const rec = currentAttendanceSession.estudiantes[s.code];
+      const st = rec ? rec.estado : 'PRESENTE';
+
+      total++;
+      if (st === 'PRESENTE') { pCount++; careerCounts[cCode].p++; }
+      else if (st === 'FALTA') { fCount++; careerCounts[cCode].f++; }
+      else if (st === 'ATRASO') { aCount++; careerCounts[cCode].a++; }
+      else if (st === 'LICENCIA') { lCount++; careerCounts[cCode].l++; }
+    });
+
+    const weightedPoints = pCount + (0.5 * aCount) + lCount;
+    const pct = (total > 0) ? Math.round((weightedPoints / total) * 1000) / 10 : 0.0;
+    const cumple80 = (total > 0) ? (pct >= 80.0) : false;
+
+    const kTotal = document.getElementById('asistencia-kpi-total');
+    const kP = document.getElementById('asistencia-kpi-presentes');
+    const kF = document.getElementById('asistencia-kpi-faltas');
+    const kA = document.getElementById('asistencia-kpi-atrasos');
+    const kL = document.getElementById('asistencia-kpi-licencias');
+    const kPct = document.getElementById('asistencia-kpi-porcentaje');
+    const kBadge = document.getElementById('asistencia-kpi-cumplimiento-badge');
+    const kLabel = document.getElementById('asistencia-kpi-estado-label');
+
+    if (kTotal) kTotal.innerText = total;
+    if (kP) kP.innerText = pCount;
+    if (kF) kF.innerText = fCount;
+    if (kA) kA.innerText = aCount;
+    if (kL) kL.innerText = lCount;
+    if (kPct) kPct.innerText = total > 0 ? `${pct}%` : '—';
+
+    if (kBadge && kLabel) {
+      if (total === 0) {
+        kBadge.className = 'px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-300 dark:border-slate-700';
+        kBadge.innerText = '—';
+        kLabel.className = 'text-[10px] text-slate-500 font-medium';
+        kLabel.innerText = 'Sin nómina registrada';
+      } else if (cumple80) {
+        kBadge.className = 'px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300';
+        kBadge.innerText = '>= 80%';
+        kLabel.className = 'text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold';
+        kLabel.innerText = 'Cumple Normativa (>=80%)';
+      } else {
+        kBadge.className = 'px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 animate-pulse';
+        kBadge.innerText = '< 80%';
+        kLabel.className = 'text-[10px] text-rose-700 dark:text-rose-400 font-bold';
+        kLabel.innerText = `Alerta: Asistencia < 80% (${pct}%)`;
+      }
+    }
+
+    Object.keys(careerCounts).forEach(cCode => {
+      const el = document.getElementById(`cohort-summary-${cCode}`);
+      if (el) {
+        const c = careerCounts[cCode];
+        const cPoints = c.p + (0.5 * c.a) + c.l;
+        const cPct = c.total > 0 ? Math.round((cPoints / c.total) * 1000) / 10 : 100.0;
+        el.innerHTML = `<span>${c.total} estudiantes • P: <strong class="text-emerald-600">${c.p}</strong> | F: <strong class="text-rose-600">${c.f}</strong> | A: <strong class="text-amber-600">${c.a}</strong> | L: <strong class="text-sky-600">${c.l}</strong> • Cumplimiento: <strong class="${cPct >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${cPct}%</strong></span>`;
+      }
+    });
+  };
+
+  window.saveAttendanceSession = async function() {
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    const fecha = document.getElementById('asistencia-fecha-input')?.value || new Date().toISOString().split('T')[0];
+    const tipoClase = currentAttendanceSession.tipoClase || 'TEORICA';
+    const comision = document.getElementById('asistencia-comision-select')?.value || 'TA-01';
+    const tema = document.getElementById('asistencia-tema-input')?.value || '';
+
+    const btn = document.getElementById('btn-guardar-asistencia');
+    const btnText = document.getElementById('btn-guardar-asistencia-text');
+    if (btn && btnText) {
+      btn.disabled = true;
+      btnText.innerText = 'Guardando...';
+    }
+
+    const estudiantesPayload = activeRosterStudents.map(s => {
+      const rec = currentAttendanceSession.estudiantes[s.code] || { estado: 'PRESENTE', observacion: '' };
+      return {
+        estudianteCodigo: s.code,
+        estudianteNombre: s.fullName,
+        carreraCodigo: s.carreraCodigo || 'CARSIS',
+        carreraNombre: s.carreraNombre || 'Ingeniería de Sistemas',
+        estado: rec.estado || 'PRESENTE',
+        observacion: rec.observacion || ''
+      };
+    });
+
+    const payload = {
+      materiaCodigo: data.codigo || mKey,
+      materiaNombre: data.nombre || mKey,
+      gestionCodigo: '2-2026',
+      fecha: fecha,
+      tipoClase: tipoClase,
+      comision: comision,
+      tema: tema,
+      observaciones: `Sesión ${tipoClase} - Comisión ${comision}`,
+      estudiantes: estudiantesPayload
+    };
+
+    const cacheKey = `sisa_attendance_${mKey}_${fecha}_${tipoClase}_${comision}`;
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(payload));
+    } catch (e) {}
+
+    try {
+      const token = localStorage.getItem('scu_access_token');
+      const authHeaders = { 'Content-Type': 'application/json' };
+      if (token && token !== 'demo_token') authHeaders['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch('/api/v1/asistencias/sesion', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        window.showToast('✓ Asistencia guardada correctamente en el sistema institucional');
+        window.loadAttendanceHistory();
+        window.loadAttendanceResumen(data.codigo || mKey);
+      } else {
+        window.showToast('⚠️ Asistencia guardada en el navegador (Pendiente de sincronización)');
+      }
+    } catch (err) {
+      window.showToast('⚠️ Conexión no disponible. Asistencia guardada localmente en el navegador');
+    } finally {
+      if (btn && btnText) {
+        btn.disabled = false;
+        btnText.innerText = '💾 Guardar Asistencia';
+      }
+    }
+  };
+
+  window.loadAttendanceForDate = async function() {
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    const fecha = document.getElementById('asistencia-fecha-input')?.value || new Date().toISOString().split('T')[0];
+    const tipoClase = currentAttendanceSession.tipoClase || 'TEORICA';
+    const comision = document.getElementById('asistencia-comision-select')?.value || 'TA-01';
+
+    const cacheKey = `sisa_attendance_${mKey}_${fecha}_${tipoClase}_${comision}`;
+    let cached = null;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) cached = JSON.parse(raw);
+    } catch (e) {}
+
+    if (cached && cached.estudiantes) {
+      if (cached.tema && document.getElementById('asistencia-tema-input')) {
+        document.getElementById('asistencia-tema-input').value = cached.tema;
+      }
+      cached.estudiantes.forEach(e => {
+        currentAttendanceSession.estudiantes[e.estudianteCodigo] = {
+          estado: e.estado,
+          observacion: e.observacion || ''
+        };
+      });
+      window.renderAttendanceRoster(activeRosterStudents);
+    }
+
+    try {
+      const token = localStorage.getItem('scu_access_token');
+      const authHeaders = {};
+      if (token && token !== 'demo_token') authHeaders['Authorization'] = 'Bearer ' + token;
+
+      const url = `/api/v1/asistencias/sesion?materiaCodigo=${encodeURIComponent(data.codigo || mKey)}&fecha=${fecha}&tipoClase=${tipoClase}&comision=${comision}`;
+      const res = await fetch(url, { headers: authHeaders });
+
+      if (res.ok) {
+        const json = await res.json();
+        const ses = json.data || json;
+        if (ses && ses.estudiantes) {
+          if (ses.tema && document.getElementById('asistencia-tema-input')) {
+            document.getElementById('asistencia-tema-input').value = ses.tema;
+          }
+          ses.estudiantes.forEach(e => {
+            currentAttendanceSession.estudiantes[e.estudianteCodigo] = {
+              estado: e.estado,
+              observacion: e.observacion || ''
+            };
+          });
+          window.renderAttendanceRoster(activeRosterStudents);
+        }
+      }
+    } catch (err) {}
+  };
+
+  window.loadAttendanceResumen = async function(materiaCodigo) {
+    try {
+      const token = localStorage.getItem('scu_access_token');
+      const authHeaders = {};
+      if (token && token !== 'demo_token') authHeaders['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch(`/api/v1/asistencias/resumen/${encodeURIComponent(materiaCodigo)}?gestionCodigo=2-2026`, {
+        headers: authHeaders
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const summary = json.data || json;
+        if (summary && summary.estudiantesResumen) {
+          cumulativeAttendanceMetrics = {};
+          summary.estudiantesResumen.forEach(er => {
+            cumulativeAttendanceMetrics[er.estudianteCodigo] = er;
+          });
+          window.renderAttendanceRoster(activeRosterStudents);
+        }
+      }
+    } catch (e) {}
+  };
+
+  window.loadAttendanceHistory = async function() {
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    const listContainer = document.getElementById('asistencia-historial-list');
+    const countBadge = document.getElementById('asistencia-historial-count');
+    if (!listContainer) return;
+
+    try {
+      const token = localStorage.getItem('scu_access_token');
+      const authHeaders = {};
+      if (token && token !== 'demo_token') authHeaders['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch(`/api/v1/asistencias/sesiones/${encodeURIComponent(data.codigo || mKey)}?gestionCodigo=2-2026`, {
+        headers: authHeaders
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const sesiones = (json.data || json) || [];
+
+        if (countBadge) countBadge.innerText = `${sesiones.length} sesiones`;
+
+        if (sesiones.length === 0) {
+          listContainer.innerHTML = '<p class="text-xs text-slate-500 py-3 text-center">No hay sesiones pasadas registradas en el semestre.</p>';
+          return;
+        }
+
+        let html = '';
+        sesiones.forEach(s => {
+          const dateStr = s.fecha ? s.fecha.split('-').reverse().join('/') : 'Sin fecha';
+          const isTeorica = (s.tipoClase === 'TEORICA');
+          html += `
+            <div onclick="window.selectHistoricalSession('${s.fecha}', '${s.tipoClase}', '${s.comision}', '${(s.tema || '').replace(/'/g, "\\'")}')" class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center justify-between flex-wrap gap-2 shadow-2xs">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-lg ${isTeorica ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'} flex items-center justify-center font-bold text-xs flex-shrink-0">
+                  <i data-lucide="${isTeorica ? 'book-open' : 'flask-conical'}" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <strong class="text-xs text-slate-900 dark:text-white">${dateStr}</strong>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isTeorica ? 'bg-teal-100 text-teal-800' : 'bg-purple-100 text-purple-800'}">${s.tipoClase}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${s.comision}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 truncate max-w-[340px]">${s.tema || 'Sin tema especificado'}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-teal-600 dark:text-teal-400">Ver / Editar</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+              </div>
+            </div>
+          `;
+        });
+
+        listContainer.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+      }
+    } catch (e) {
+      listContainer.innerHTML = '<p class="text-xs text-slate-500 py-3 text-center">Historial no disponible temporalmente.</p>';
+    }
+  };
+
+  let courseOfficialSessions = [];
+
+  window.buildCourseSessionsFromSea = function(data, mKeyParam) {
+    const sessions = [];
+    const mKey = mKeyParam || (data && data.key) || activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const dayMap = {
+      'LU': { name: 'Lunes', offset: 0 },
+      'MA': { name: 'Martes', offset: 1 },
+      'MI': { name: 'Miércoles', offset: 2 },
+      'JU': { name: 'Jueves', offset: 3 },
+      'VI': { name: 'Viernes', offset: 4 },
+      'SA': { name: 'Sábado', offset: 5 }
+    };
+
+    let slots = [];
+    const groups = (data && data.groups) || [];
+    if (groups.length > 0) {
+      groups.forEach(g => {
+        const cTypeRaw = (g.classType || 'TA').toUpperCase();
+        const isTeo = cTypeRaw.startsWith('T') || cTypeRaw.includes('TEO');
+        const cType = isTeo ? 'TEORICA' : 'PRACTICA';
+        const comName = g.name || (isTeo ? 'TA-01' : 'PL-01');
+        const sList = g.schedules || [];
+        if (sList.length > 0) {
+          sList.forEach(s => {
+            const d = (s.day || 'LU').toUpperCase();
+            slots.push({
+              dayCode: d,
+              dayInfo: dayMap[d] || { name: 'Lunes', offset: 0 },
+              startTime: s.startTime || '08:00',
+              endTime: s.endTime || '10:15',
+              classroom: s.classroom || g.classroom || (isTeo ? 'Aula 204' : 'Laboratorio 3'),
+              tipoClase: cType,
+              comision: comName
+            });
+          });
+        } else {
+          const d = isTeo ? 'LU' : 'VI';
+          slots.push({
+            dayCode: d,
+            dayInfo: dayMap[d] || { name: 'Lunes', offset: 0 },
+            startTime: isTeo ? '08:00' : '14:00',
+            endTime: isTeo ? '10:15' : '16:15',
+            classroom: isTeo ? 'Aula 204' : 'Laboratorio 3',
+            tipoClase: cType,
+            comision: comName
+          });
+        }
+      });
+    }
+
+    if (slots.length === 0) {
+      const gs = (data && data.groupedSchedules) || [];
+      if (gs.length > 0) {
+        gs.forEach(s => {
+          const d = (s.day || 'LU').toUpperCase();
+          const grpName = (s.groups && s.groups[0]) || 'TA-01';
+          const isTeo = grpName.startsWith('T') || grpName.includes('TA');
+          slots.push({
+            dayCode: d,
+            dayInfo: dayMap[d] || { name: 'Lunes', offset: 0 },
+            startTime: s.start || '08:00',
+            endTime: s.end || '10:15',
+            classroom: s.classroom || (isTeo ? 'Aula 204' : 'Laboratorio 3'),
+            tipoClase: isTeo ? 'TEORICA' : 'PRACTICA',
+            comision: grpName
+          });
+        });
+      } else {
+        slots.push({
+          dayCode: 'LU',
+          dayInfo: dayMap['LU'],
+          startTime: '08:00',
+          endTime: '10:15',
+          classroom: 'Aula 204',
+          tipoClase: 'TEORICA',
+          comision: 'TA-01'
+        });
+        slots.push({
+          dayCode: 'MI',
+          dayInfo: dayMap['MI'],
+          startTime: '08:00',
+          endTime: '10:15',
+          classroom: 'Aula 204',
+          tipoClase: 'TEORICA',
+          comision: 'TA-01'
+        });
+      }
+    }
+
+    const uniqueSlotsMap = new Map();
+    slots.forEach(s => {
+      const k = `${s.dayCode}_${s.startTime}_${s.endTime}_${s.comision}`;
+      if (!uniqueSlotsMap.has(k)) {
+        uniqueSlotsMap.set(k, s);
+      }
+    });
+    slots = Array.from(uniqueSlotsMap.values());
+    slots.sort((a, b) => (a.dayInfo.offset - b.dayInfo.offset) || a.startTime.localeCompare(b.startTime));
+
+    // Retrieve real Cronograma (Matriz 7) strictly from user data or DOM
+    let matriz7 = [];
+    const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
+    if (savedPac) {
+      try {
+        const parsed = JSON.parse(savedPac);
+        if (parsed && Array.isArray(parsed.matriz7) && parsed.matriz7.length > 0) {
+          matriz7 = parsed.matriz7;
+        }
+      } catch (e) {}
+    }
+    if (matriz7.length === 0 && window.activePacGralData && Array.isArray(window.activePacGralData.matriz7) && window.activePacGralData.matriz7.length > 0) {
+      matriz7 = window.activePacGralData.matriz7;
+    }
+    if (matriz7.length === 0 && typeof window.extractCurrentCronogramaFromDom === 'function') {
+      const live = window.extractCurrentCronogramaFromDom();
+      if (live && live.length > 0) matriz7 = live;
+    }
+
+    const baseMonday = new Date(2026, 7, 3); // August 3, 2026
+    const totalWeeks = 20;
+    let sessionNumber = 1;
+
+    for (let w = 1; w <= totalWeeks; w++) {
+      const weekMonday = new Date(baseMonday);
+      weekMonday.setDate(baseMonday.getDate() + (w - 1) * 7);
+
+      slots.forEach(slot => {
+        const sessionDate = new Date(weekMonday);
+        sessionDate.setDate(weekMonday.getDate() + slot.dayInfo.offset);
+
+        const yyyy = sessionDate.getFullYear();
+        const mm = String(sessionDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(sessionDate.getDate()).padStart(2, '0');
+        const isoDate = `${yyyy}-${mm}-${dd}`;
+        const formattedDate = `${dd}/${mm}/${yyyy}`;
+
+        // Strictly resolve topic from real cronograma (Matriz 7)
+        let topicText = '';
+        if (matriz7.length > 0) {
+          const cronMatch = matriz7.find(r => {
+            const rSes = r.nroSesion || r.sesion;
+            const rSem = r.semana || r.sem;
+            if (rSes && Number(rSes) === sessionNumber) return true;
+            if (!rSes && rSem && Number(rSem) === w) return true;
+            return false;
+          });
+          if (cronMatch) {
+            const spec = (cronMatch.contenidoEspecifico || cronMatch.tema || '').trim();
+            const unit = (cronMatch.unidadTematica || '').trim();
+            if (spec && unit && !spec.toLowerCase().includes(unit.toLowerCase())) {
+              topicText = `${unit} - ${spec}`;
+            } else {
+              topicText = spec || unit;
+            }
+          }
+        }
+
+        sessions.push({
+          number: sessionNumber++,
+          week: w,
+          fecha: isoDate,
+          dateFormatted: formattedDate,
+          dayName: slot.dayInfo.name,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          tipoClase: slot.tipoClase,
+          comision: slot.comision,
+          classroom: slot.classroom,
+          tema: topicText,
+          key: `${isoDate}_${slot.tipoClase}_${slot.comision}`
+        });
+      });
+    }
+
+    return sessions;
+  };
+
+  window.initCourseAttendanceSessions = function(mKey) {
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    courseOfficialSessions = window.buildCourseSessionsFromSea(data, mKey);
+
+    const select = document.getElementById('asistencia-sesion-select');
+    if (!select) return;
+
+    const todayIso = new Date().toISOString().split('T')[0];
+
+    // Find if today is an exact scheduled class day
+    let selectedSession = courseOfficialSessions.find(s => s.fecha === todayIso);
+
+    // If today is not a class day, find the closest past session, or first upcoming
+    if (!selectedSession) {
+      const pastSessions = courseOfficialSessions.filter(s => s.fecha <= todayIso);
+      if (pastSessions.length > 0) {
+        selectedSession = pastSessions[pastSessions.length - 1]; // closest past session
+      } else {
+        selectedSession = courseOfficialSessions[0]; // first session
+      }
+    }
+
+    select.innerHTML = courseOfficialSessions.map(s => {
+      const isToday = (s.fecha === todayIso);
+      const isSelected = (selectedSession && s.key === selectedSession.key);
+      const todayTag = isToday ? ' • ⭐ HOY' : '';
+      const typeLabel = s.tipoClase === 'TEORICA' ? 'Teórica' : 'Práctica';
+      return `
+        <option value="${s.key}" ${isSelected ? 'selected' : ''}>
+          Sesión ${s.number}: ${s.dayName} ${s.dateFormatted} • ${s.startTime}-${s.endTime} • ${s.comision} (${typeLabel}) - ${s.classroom}${todayTag}
+        </option>
+      `;
+    }).join('');
+
+    if (selectedSession) {
+      window.applySelectedSession(selectedSession);
+    }
+  };
+
+  window.onAttendanceSessionSelect = function(sessionKey) {
+    const ses = courseOfficialSessions.find(s => s.key === sessionKey);
+    if (!ses) return;
+    window.applySelectedSession(ses);
+  };
+
+  window.applySelectedSession = function(ses) {
+    currentAttendanceSession.fecha = ses.fecha;
+    currentAttendanceSession.tipoClase = ses.tipoClase;
+    currentAttendanceSession.comision = ses.comision;
+    currentAttendanceSession.tema = ses.tema;
+
+    // Synchronize hidden elements for backward-compat
+    if (document.getElementById('asistencia-fecha-input')) {
+      document.getElementById('asistencia-fecha-input').value = ses.fecha;
+    }
+    if (document.getElementById('asistencia-comision-select')) {
+      document.getElementById('asistencia-comision-select').value = ses.comision;
+    }
+
+    // Update metadata badges
+    const badgeTipo = document.getElementById('badge-sesion-tipo-text');
+    const badgeTipoWrap = document.getElementById('badge-sesion-tipo');
+    const badgeHorario = document.getElementById('badge-sesion-horario-text');
+    const badgeAula = document.getElementById('badge-sesion-aula-text');
+
+    if (badgeTipo) {
+      badgeTipo.innerText = `${ses.tipoClase === 'TEORICA' ? 'Teórica' : 'Práctica / Lab'} (${ses.comision})`;
+    }
+    if (badgeTipoWrap) {
+      badgeTipoWrap.className = ses.tipoClase === 'TEORICA'
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1';
+    }
+    if (badgeHorario) {
+      badgeHorario.innerText = `${ses.dayName} ${ses.startTime} - ${ses.endTime}`;
+    }
+    if (badgeAula) {
+      badgeAula.innerText = ses.classroom;
+    }
+
+    // Pre-fill topic
+    const topicInput = document.getElementById('asistencia-tema-input');
+    if (topicInput) {
+      topicInput.value = ses.tema;
+    }
+
+    // Load marks for this session from backend or cache
+    window.loadAttendanceForDate();
+  };
+
+  window.selectHistoricalSession = function(fecha, tipoClase, comision, tema) {
+    const key = `${fecha}_${tipoClase}_${comision}`;
+    const ses = courseOfficialSessions.find(s => s.key === key || (s.fecha === fecha && s.tipoClase === tipoClase)) || {
+      fecha: fecha,
+      tipoClase: tipoClase,
+      comision: comision,
+      tema: tema || '',
+      dayName: 'Sesión Registrada',
+      startTime: '',
+      endTime: '',
+      classroom: ''
+    };
+
+    const select = document.getElementById('asistencia-sesion-select');
+    if (select && courseOfficialSessions.some(s => s.key === key)) {
+      select.value = key;
+    }
+    window.applySelectedSession(ses);
+    window.showToast(`Cargada sesión del ${fecha} (${tipoClase})`);
+  };
+
+  window.toggleAttendanceHistoryAccordion = function() {
+    const content = document.getElementById('asistencia-historial-content');
+    const chevron = document.getElementById('asistencia-historial-chevron');
+    if (!content) return;
+    const isHidden = content.classList.contains('hidden');
+    if (isHidden) {
+      content.classList.remove('hidden');
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+      window.loadAttendanceHistory();
+    } else {
+      content.classList.add('hidden');
+      if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+  };
+
+  window.setAttendanceClassType = function(tipo, reload = true) {
+    currentAttendanceSession.tipoClase = tipo;
+    if (reload) {
+      window.loadAttendanceForDate();
+    }
+  };
+
+  window.onAttendanceParamChange = function() {
+    window.loadAttendanceForDate();
+  };
+
+  window.onAttendanceTopicInput = function(val) {
+    currentAttendanceSession.tema = val;
+  };
+
+  window.resetCurrentAttendanceSession = function() {
+    if (!confirm('¿Deseas reiniciar la asistencia de la sesión actual?')) return;
+    activeRosterStudents.forEach(s => {
+      currentAttendanceSession.estudiantes[s.code] = { estado: 'PRESENTE', observacion: '' };
+    });
+    if (document.getElementById('asistencia-tema-input')) {
+      document.getElementById('asistencia-tema-input').value = '';
+    }
+    currentAttendanceSession.tema = '';
+    window.renderAttendanceRoster(activeRosterStudents);
+    window.showToast('Asistencia de la sesión reiniciada.');
+  };
+
+  window.exportAttendanceExcel = function() {
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+    const materiaCodigo = data.codigo || mKey;
+    const gestionCodigo = '2-2026';
+
+    window.showToast('📊 Generando reporte oficial de Asistencia en Excel...');
+
+    const url = `/api/v1/office/export/asistencia?materiaCodigo=${encodeURIComponent(materiaCodigo)}&gestionCodigo=${encodeURIComponent(gestionCodigo)}`;
+    const token = localStorage.getItem('scu_access_token');
+    const headers = {};
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    fetch(url, { headers })
+      .then(response => {
+        if (!response.ok) throw new Error('Error en el servidor al exportar Excel');
+        return response.blob();
+      })
+      .then(blob => {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `Asistencia_${materiaCodigo.replace(/[^a-zA-Z0-9_-]/g, '_')}_${gestionCodigo}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+        window.showToast('✓ Archivo Excel descargado exitosamente');
+      })
+      .catch(err => {
+        console.error(err);
+        window.showToast('⚠️ No se pudo generar el archivo Excel de Asistencia');
+      });
+  };
+
+  window.loadAttendanceForCurrentSelection = function() {
+    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+    const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
+
+    window.loadSubjectRoster(mKey);
+    window.initCourseAttendanceSessions(mKey);
+    window.loadAttendanceResumen(data.codigo || mKey);
+    window.loadAttendanceHistory();
+  };
+
   // Initial check on load
   setTimeout(() => {
-    window.updateSeaGatewayStatus('online');
+    window.checkSeaGatewayHealth();
     window.loadDocentesFromApi();
     window.checkInitialAuth();
   }, 150);

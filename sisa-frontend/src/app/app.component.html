@@ -504,6 +504,11 @@
               <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0"></i>
               <span class="truncate">4. Planes de Clase (.xlsx)</span>
             </button>
+
+            <button onclick="window.switchDocMainTab('tab-asistencia')" id="sidebar-tab-asistencia" class="sidebar-tab-nav w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] font-medium text-xs text-left cursor-pointer transition-all">
+              <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0"></i>
+              <span class="truncate">5. Lista y Asistencia</span>
+            </button>
           </div>
 
           <!-- Direct Export Center -->
@@ -526,6 +531,9 @@
             </button>
             <button onclick="window.exportExactFile('planes_prac_xlsx')" class="w-full text-left py-1 text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="layers" class="w-3 h-3 flex-shrink-0"></i> <span class="truncate">5. Planes de Clase Prácticos (.xlsx)</span>
+            </button>
+            <button onclick="window.exportAttendanceExcel()" class="w-full text-left py-1 text-teal-600 dark:text-teal-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 flex-shrink-0"></i> <span class="truncate">6. Asistencia Oficial (.xlsx)</span>
             </button>
             <button onclick="window.openPdfPrintModal()" class="w-full text-left py-1.5 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-[var(--sp-border)] truncate cursor-pointer">
               <i data-lucide="printer" class="w-3.5 h-3.5 flex-shrink-0"></i> <span class="truncate">📄 Imprimir / Descargar PDF</span>
@@ -1356,6 +1364,15 @@
                     </span>
                     <span class="whitespace-nowrap">4. Planes de Clase</span>
                     <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-600 text-white shadow-xs">.xlsx</span>
+                  </button>
+
+                  <!-- TAB 5: LISTA Y ASISTENCIA -->
+                  <button onclick="window.switchDocMainTab('tab-asistencia')" data-doc-main-tab="tab-asistencia" id="btn-tab-asistencia" class="doc-main-tab-btn px-4 py-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all duration-200 bg-transparent hover:bg-white/60 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border border-transparent">
+                    <span class="w-6 h-6 rounded-lg bg-teal-100 dark:bg-teal-950/90 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs shadow-xs">
+                      <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span class="whitespace-nowrap">5. Lista y Asistencia</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-600 text-white shadow-xs">Nómina Oficial</span>
                   </button>
 
                 </div>
@@ -2358,6 +2375,194 @@
                     </div>
                   </div>
 
+                </div>
+
+              </div>
+
+              <!-- ================================================================= -->
+              <!-- TAB 5: LISTA DE ESTUDIANTES Y CONTROL DE ASISTENCIA (NÓMINA OFICIAL) -->
+              <!-- ================================================================= -->
+              <div id="tab-asistencia" class="doc-tab-panel p-6 space-y-6 hidden">
+
+                <!-- Tab Top Action Bar: Institutional Status, Quick Mark & Actions -->
+                <div class="p-4 bg-teal-50/70 dark:bg-teal-950/30 rounded-xl border border-teal-200 dark:border-teal-900/60 flex items-center justify-between text-xs text-teal-900 dark:text-teal-200 no-print flex-wrap gap-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/80 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-sm shadow-xs flex-shrink-0">
+                      <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <strong class="text-sm font-bold text-teal-950 dark:text-teal-100">Documento 5: Lista Oficial y Control de Asistencia Semestral</strong>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-600 text-white shadow-2xs">Nómina Oficial UNITEPC</span>
+                      </div>
+                      <div class="text-[11px] text-teal-800/90 dark:text-teal-300">
+                        Registro oficial de asistencia por sesión con cálculo automático de cumplimiento de la Regla del 80% (UNITEPC) y segregación por carrera.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <!-- Data Source Synchronization Indicator Badge -->
+                    <div id="asistencia-sync-badge" onclick="window.retrySeaGatewayConnection()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all">
+                      <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                      <span id="asistencia-sync-text">Comprobando SEA Gateway...</span>
+                    </div>
+
+                    <!-- Direct Action Buttons -->
+                    <button type="button" id="btn-marcar-todos-presentes" onclick="window.markAllStudentsPresent()" class="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Marcar a todos los estudiantes de la nómina como presentes">
+                      <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>⚡ Marcar Todos Presentes</span>
+                    </button>
+
+                    <button type="button" id="btn-guardar-asistencia" onclick="window.saveAttendanceSession()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Guardar asistencia de la sesión actual en el sistema institucional">
+                      <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                      <span id="btn-guardar-asistencia-text">💾 Guardar Asistencia</span>
+                    </button>
+
+                    <button type="button" id="btn-exportar-asistencia-xlsx" onclick="window.exportAttendanceExcel()" class="px-3.5 py-1.5 bg-white text-teal-700 border border-teal-300 dark:border-teal-700 dark:bg-slate-800 dark:text-teal-300 font-bold rounded-lg text-xs hover:bg-teal-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Exportar Registro de Asistencia Oficial a Excel (.xlsx)">
+                      <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-teal-600"></i>
+                      <span>📊 Exportar Excel</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Session Parameters Toolbar -->
+                <!-- Session Parameters Toolbar (Smart SEA Schedule Integration) -->
+                <div id="asistencia-toolbar" class="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center gap-3.5 text-xs no-print">
+                  <!-- Smart Session Selector (Direct from SEA Schedule) -->
+                  <div class="flex-1 min-w-[340px] flex items-center gap-2">
+                    <label for="asistencia-sesion-select" class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
+                      <i data-lucide="calendar-clock" class="w-4 h-4 text-teal-600"></i> Sesión Oficial SEA:
+                    </label>
+                    <select id="asistencia-sesion-select" class="w-full px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 text-slate-900 dark:text-white font-bold text-xs focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer" onchange="window.onAttendanceSessionSelect(this.value)">
+                      <option value="">Cargando sesiones según horario SEA...</option>
+                    </select>
+                  </div>
+
+                  <!-- Session Metadata Badges (Auto-recognized from SEA, read-only) -->
+                  <div id="asistencia-sesion-meta-badges" class="flex items-center gap-1.5 flex-wrap">
+                    <span id="badge-sesion-tipo" class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                      <i data-lucide="layers" class="w-3 h-3"></i> <span id="badge-sesion-tipo-text">Teórica (TA-01)</span>
+                    </span>
+                    <span id="badge-sesion-horario" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                      <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i> <span id="badge-sesion-horario-text">08:00 - 10:15</span>
+                    </span>
+                    <span id="badge-sesion-aula" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                      <i data-lucide="map-pin" class="w-3 h-3 text-amber-600"></i> <span id="badge-sesion-aula-text">Aula 204</span>
+                    </span>
+                  </div>
+
+                  <!-- Session Topic Input (Pre-filled from Cronograma) -->
+                  <div class="flex-1 min-w-[260px] flex items-center gap-2">
+                    <label for="asistencia-tema-input" class="font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap flex items-center gap-1.5">
+                      <i data-lucide="book-open" class="w-4 h-4 text-teal-600"></i> Tema / Contenido:
+                    </label>
+                    <input type="text" id="asistencia-tema-input" placeholder="Tema o contenido pedagógico desarrollado en la sesión..." class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 outline-none" oninput="window.onAttendanceTopicInput(this.value)">
+                  </div>
+
+                  <!-- Hidden backward-compatibility elements for scripts -->
+                  <input type="hidden" id="asistencia-fecha-input">
+                  <input type="hidden" id="asistencia-comision-select">
+                </div>
+
+                <!-- Real-Time KPI Ribbon Container -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 no-print">
+                  <!-- Card 1: Total Inscritos -->
+                  <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">Total Inscritos</span>
+                      <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-slate-900 dark:text-white" id="asistencia-kpi-total">0</div>
+                    <div class="text-[10px] text-slate-500">Nómina oficial asignada</div>
+                  </div>
+
+                  <!-- Card 2: Presentes (P) -->
+                  <div class="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">Presentes (P)</span>
+                      <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-300" id="asistencia-kpi-presentes">0</div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400">Puntaje: 1.0 (Puntual)</div>
+                  </div>
+
+                  <!-- Card 3: Faltas (F) -->
+                  <div class="p-3.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-rose-700 dark:text-rose-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">Faltas (F)</span>
+                      <i data-lucide="user-x" class="w-4 h-4"></i>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-rose-700 dark:text-rose-300" id="asistencia-kpi-faltas">0</div>
+                    <div class="text-[10px] text-rose-600 dark:text-rose-400">Inasistencia injustificada</div>
+                  </div>
+
+                  <!-- Card 4: Atrasos (A) -->
+                  <div class="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-amber-700 dark:text-amber-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">Atrasos (A)</span>
+                      <i data-lucide="clock" class="w-4 h-4"></i>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-amber-700 dark:text-amber-300" id="asistencia-kpi-atrasos">0</div>
+                    <div class="text-[10px] text-amber-600 dark:text-amber-400">Puntaje: 0.5 (Mitad ponderada)</div>
+                  </div>
+
+                  <!-- Card 5: Licencias (L) -->
+                  <div class="p-3.5 rounded-xl bg-sky-50/60 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-sky-700 dark:text-sky-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">Licencias (L)</span>
+                      <i data-lucide="file-text" class="w-4 h-4"></i>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-sky-700 dark:text-sky-300" id="asistencia-kpi-licencias">0</div>
+                    <div class="text-[10px] text-sky-600 dark:text-sky-400">Permiso justificado institucional</div>
+                  </div>
+
+                  <!-- Card 6: % Asistencia & 80% Rule Badge -->
+                  <div class="p-3.5 rounded-xl bg-teal-50/60 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 flex flex-col justify-between shadow-2xs">
+                    <div class="flex items-center justify-between text-teal-700 dark:text-teal-400">
+                      <span class="text-[11px] font-bold uppercase tracking-wider">% Asistencia</span>
+                      <span id="asistencia-kpi-cumplimiento-badge" class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">>= 80%</span>
+                    </div>
+                    <div class="mt-2 text-2xl font-black text-teal-800 dark:text-teal-200" id="asistencia-kpi-porcentaje">100%</div>
+                    <div class="text-[10px] text-teal-700 dark:text-teal-300 font-semibold" id="asistencia-kpi-estado-label">Cumple Normativa (>=80%)</div>
+                  </div>
+                </div>
+
+                <!-- Career Cohort Filters Bar -->
+                <div class="space-y-2 no-print">
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                    <span class="flex items-center gap-1.5">
+                      <i data-lucide="filter" class="w-3.5 h-3.5 text-teal-600"></i> Filtro de Cohortes por Carrera:
+                    </span>
+                    <span class="text-[11px] text-slate-400 font-normal">
+                      En asignaturas comunes, las carreras se segregan automáticamente por código y nómina
+                    </span>
+                  </div>
+                  <div id="asistencia-career-filters" class="flex items-center gap-2 flex-wrap">
+                    <!-- Populated dynamically by window.renderAttendanceCareerFilters() -->
+                  </div>
+                </div>
+
+                <!-- Student Roster Table Container -->
+                <div id="asistencia-roster-container" class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs bg-white dark:bg-slate-900">
+                  <!-- Populated dynamically by window.renderAttendanceRoster() -->
+                </div>
+
+                <!-- Historical Sessions Accordion -->
+                <div id="asistencia-historial-accordion" class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden no-print">
+                  <button type="button" onclick="window.toggleAttendanceHistoryAccordion()" class="w-full px-5 py-3.5 flex items-center justify-between bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2.5">
+                      <i data-lucide="history" class="w-4 h-4 text-teal-600 dark:text-teal-400"></i>
+                      <span class="font-bold text-xs text-slate-800 dark:text-slate-200">Historial de Sesiones Registradas en el Semestre</span>
+                      <span id="asistencia-historial-count" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">0 sesiones</span>
+                    </div>
+                    <i id="asistencia-historial-chevron" data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
+                  </button>
+                  <div id="asistencia-historial-content" class="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2 hidden">
+                    <div id="asistencia-historial-list" class="space-y-2">
+                      <!-- Populated dynamically by window.loadAttendanceHistory() -->
+                    </div>
+                  </div>
                 </div>
 
               </div>

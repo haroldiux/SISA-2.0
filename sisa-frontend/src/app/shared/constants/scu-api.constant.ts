@@ -43,6 +43,7 @@ export const SCU_API = {
     EXPORT_PAC: '/api/v1/office/export/pac',
     EXPORT_PLAN: '/api/v1/office/export/plan-clase',
     EXPORT_PROGRAMA: '/api/v1/office/export/programa-analitico',
+    EXPORT_ASISTENCIA: '/api/v1/office/export/asistencia',
     IMPORT_PAC: '/api/v1/office/import/pac',
     IMPORT_PLAN: '/api/v1/office/import/plan-clase',
     IMPORT_PROGRAMA: '/api/v1/office/import/programa-analitico'

@@ -12,6 +12,7 @@ import bo.edu.unitepc.sisa.exception.ScuException;
 import bo.edu.unitepc.sisa.infrastructure.office.PacExcelParser;
 import bo.edu.unitepc.sisa.infrastructure.office.PlanesClaseExcelParser;
 import bo.edu.unitepc.sisa.infrastructure.office.ProgramaAnaliticoDocxParser;
+import bo.edu.unitepc.sisa.service.command.ScuExportAsistenciaXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPacXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPlanClasesXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportProgramaDocxCmd;
@@ -43,6 +44,7 @@ public class ScuOfficeController {
     private final ScuExportPacXlsxCmd exportPacCmd;
     private final ScuExportPlanClasesXlsxCmd exportPlanClasesCmd;
     private final ScuExportProgramaDocxCmd exportProgramaCmd;
+    private final ScuExportAsistenciaXlsxCmd exportAsistenciaCmd;
     private final PacExcelParser pacExcelParser;
     private final PlanesClaseExcelParser planesClaseParser;
     private final ProgramaAnaliticoDocxParser programaParser;
@@ -52,6 +54,7 @@ public class ScuOfficeController {
             ScuExportPacXlsxCmd exportPacCmd,
             ScuExportPlanClasesXlsxCmd exportPlanClasesCmd,
             ScuExportProgramaDocxCmd exportProgramaCmd,
+            ScuExportAsistenciaXlsxCmd exportAsistenciaCmd,
             PacExcelParser pacExcelParser,
             PlanesClaseExcelParser planesClaseParser,
             ProgramaAnaliticoDocxParser programaParser,
@@ -59,6 +62,7 @@ public class ScuOfficeController {
         this.exportPacCmd = exportPacCmd;
         this.exportPlanClasesCmd = exportPlanClasesCmd;
         this.exportProgramaCmd = exportProgramaCmd;
+        this.exportAsistenciaCmd = exportAsistenciaCmd;
         this.pacExcelParser = pacExcelParser;
         this.planesClaseParser = planesClaseParser;
         this.programaParser = programaParser;
@@ -258,6 +262,26 @@ public class ScuOfficeController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"Programa_Analitico_" + safeCode + ".docx\"")
+                .contentType(mediaType)
+                .body(content);
+    }
+
+    @GetMapping({"/export/asistencia", "/asistencia/export"})
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_DIR_CARRERA', 'ROLE_ADMIN')")
+    public ResponseEntity<byte[]> exportAsistencia(
+            @RequestParam("materiaCodigo") String materiaCodigo,
+            @RequestParam(value = "gestionCodigo", defaultValue = "2-2026") String gestionCodigo,
+            @RequestParam(value = "docente", required = false) String docente) {
+
+        byte[] content = this.exportAsistenciaCmd.execute(materiaCodigo, gestionCodigo, docente);
+        String safeCode = materiaCodigo.replaceAll("[^a-zA-Z0-9_-]", "_");
+        String safeGestion = gestionCodigo.replaceAll("[^a-zA-Z0-9_-]", "_");
+        String filename = "Asistencia_" + safeCode + "_" + safeGestion + ".xlsx";
+
+        MediaType mediaType = MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(mediaType)
                 .body(content);
     }
