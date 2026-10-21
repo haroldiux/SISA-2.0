@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 1: Crear estructura de carpetas
-description: Rules and guidelines for PASO 1: Crear estructura de carpetas in the frontend project.
+name: frontend-init-project-01-folder-structure
+description: "Rules and guidelines for PASO 1: Crear estructura de carpetas in the frontend project."
 ---
 
 # PASO 1: Crear estructura de carpetas

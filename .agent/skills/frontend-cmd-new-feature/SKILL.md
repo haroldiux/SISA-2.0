@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Cmd: /project:new-feature
+name: frontend-cmd-new-feature
 description: Scaffolding instructions and command reference for /project:new-feature in the frontend project.
 ---
 

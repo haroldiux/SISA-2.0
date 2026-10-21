@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 2: Archivos de configuración raíz
-description: Rules and guidelines for PASO 2: Archivos de configuración raíz in the frontend project.
+name: frontend-init-project-02-root-config
+description: "Rules and guidelines for PASO 2: Archivos de configuración raíz in the frontend project."
 ---
 
 # PASO 2: Archivos de configuración raíz

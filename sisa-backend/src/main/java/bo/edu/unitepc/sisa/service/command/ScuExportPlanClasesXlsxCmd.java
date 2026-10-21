@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 /**
  * Command for exporting official Plan de Clases to formatted XLSX workbook stream.
  *
@@ -29,27 +31,39 @@ public class ScuExportPlanClasesXlsxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long sesionId) {
-        return execute(sesionId, null, null);
+        return execute(sesionId, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public byte[] execute(Long sesionId, Long carreraId, String planType) {
-        PlanDeClase plan = this.planRepository.findById(sesionId)
-                .or(() -> this.planRepository.findBySesionId(sesionId))
-                .orElseGet(() -> {
-                    PlanDeClase stub = new PlanDeClase();
-                    stub.setObjetivoSesion("Desarrollo de competencias y resolución práctica de problemas.");
-                    stub.setDuracionTotalMin(90);
-                    SesionMatriz7 ses = new SesionMatriz7();
-                    ses.setSaberConceptual("Conceptos y fundamentos de la unidad temática.");
-                    ses.setSaberProcedimental("Aplicación guiada y resolución de ejercicios.");
-                    ses.setSaberActitudinal("Responsabilidad, ética profesional y rigor metodológico.");
-                    stub.setSesion(ses);
-                    return stub;
-                });
+        return execute(sesionId, carreraId, planType, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long sesionId, Long carreraId, String planType, Map<String, String> meta) {
+        PlanDeClase plan = null;
+        if (sesionId != null && sesionId > 0) {
+            plan = this.planRepository.findById(sesionId)
+                    .or(() -> this.planRepository.findBySesionId(sesionId))
+                    .orElse(null);
+        }
+
+        if (plan == null) {
+            plan = new PlanDeClase();
+            plan.setDuracionTotalMin(90);
+        }
 
         try {
-            return this.officeTemplateService.exportPlanClasesXlsx(plan, planType);
+            return this.officeTemplateService.exportPlanClasesXlsx(plan, planType, meta);
+        } catch (Exception e) {
+            throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del Plan de Clase: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] executeFromModel(PlanDeClase plan, Long carreraId, String planType, Map<String, String> meta) {
+        try {
+            return this.officeTemplateService.exportPlanClasesXlsx(plan, planType, meta);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del Plan de Clase: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }

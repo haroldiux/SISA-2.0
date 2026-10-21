@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 4: Módulo Public (login)
-description: Rules and guidelines for PASO 4: Módulo Public (login) in the frontend project.
+name: frontend-init-project-04-module-public
+description: "Rules and guidelines for PASO 4: Módulo Public (login) in the frontend project."
 ---
 
 # PASO 4: Módulo Public (login)

@@ -1,10 +1,13 @@
 package bo.edu.unitepc.sisa.api.controller;
 
+import bo.edu.unitepc.sisa.api.request.ScuBibliografiaDto;
 import bo.edu.unitepc.sisa.api.request.ScuPacRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPlanClaseRequest;
 import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
+import bo.edu.unitepc.sisa.api.request.ScuUnidadAprendizajeDto;
 import bo.edu.unitepc.sisa.builder.ResourceBuilder;
 import bo.edu.unitepc.sisa.builder.ResourcesBuilder;
+import bo.edu.unitepc.sisa.domain.model.*;
 import bo.edu.unitepc.sisa.exception.ScuException;
 import bo.edu.unitepc.sisa.infrastructure.office.PacExcelParser;
 import bo.edu.unitepc.sisa.infrastructure.office.PlanesClaseExcelParser;
@@ -22,6 +25,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,13 +65,69 @@ public class ScuOfficeController {
         this.parserFactory = parserFactory;
     }
 
-    @GetMapping({"/export/pac/{id}", "/pac/{id}/export"})
+    @RequestMapping(value = {"/export/pac", "/export/pac/{id}", "/pac/{id}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> exportPac(
-            @PathVariable Long id,
+            @PathVariable(required = false) Long id,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
-            @RequestParam(value = "pacType", required = false) String pacType) {
-        byte[] content = this.exportPacCmd.execute(id, carreraId, pacType);
-        String filename = ("PRACTICO".equalsIgnoreCase(pacType)) ? "PAC_Practico_" + id + ".xlsx" : "PAC_General_" + id + ".xlsx";
+            @RequestParam(value = "pacType", required = false) String pacType,
+            @RequestParam(value = "codigo", required = false) String codigo,
+            @RequestParam(value = "asignatura", required = false) String asignatura,
+            @RequestParam(value = "docente", required = false) String docente,
+            @RequestParam(value = "carrera", required = false) String carrera,
+            @RequestParam(value = "semestre", required = false) String semestre,
+            @RequestBody(required = false) Map<String, Object> body) {
+
+        Map<String, String> meta = new HashMap<>();
+        if (codigo != null && !codigo.isBlank()) meta.put("codigo", codigo.trim());
+        if (asignatura != null && !asignatura.isBlank()) meta.put("asignatura", asignatura.trim());
+        if (docente != null && !docente.isBlank()) meta.put("docente", docente.trim());
+        if (carrera != null && !carrera.isBlank()) meta.put("carrera", carrera.trim());
+        if (semestre != null && !semestre.isBlank()) meta.put("semestre", semestre.trim());
+
+        byte[] content;
+        if (body != null && !body.isEmpty()) {
+            if (body.get("codigo") != null && !meta.containsKey("codigo")) meta.put("codigo", body.get("codigo").toString().trim());
+            if (body.get("asignatura") != null && !meta.containsKey("asignatura")) meta.put("asignatura", body.get("asignatura").toString().trim());
+            if (body.get("docente") != null && !meta.containsKey("docente")) meta.put("docente", body.get("docente").toString().trim());
+            if (body.get("carrera") != null && !meta.containsKey("carrera")) meta.put("carrera", body.get("carrera").toString().trim());
+            if (body.get("semestre") != null && !meta.containsKey("semestre")) meta.put("semestre", body.get("semestre").toString().trim());
+            if (body.get("pacType") != null && pacType == null) pacType = body.get("pacType").toString();
+
+            Pac pacModel = new Pac();
+            pacModel.setPacType(pacType != null ? pacType : "GRAL");
+            if (body.get("seccionesIdentificacion") instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> sec = (Map<String, Object>) body.get("seccionesIdentificacion");
+                pacModel.setSeccionesIdentificacion(sec);
+            }
+            if (body.get("sesiones") instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> sesList = (List<Map<String, Object>>) body.get("sesiones");
+                for (Map<String, Object> sm : sesList) {
+                    SesionMatriz7 ses = new SesionMatriz7();
+                    if (sm.get("semana") != null) {
+                        try { ses.setSemana(Integer.parseInt(sm.get("semana").toString())); } catch (Exception ignored) {}
+                    }
+                    if (sm.get("nroSesion") != null) {
+                        try { ses.setNroSesion(Integer.parseInt(sm.get("nroSesion").toString().replace("°", "").trim())); } catch (Exception ignored) {}
+                    }
+                    if (sm.get("unidadTematica") != null) ses.setUnidadTematica(sm.get("unidadTematica").toString());
+                    if (sm.get("contenidoEspecifico") != null) ses.setContenidoEspecifico(sm.get("contenidoEspecifico").toString());
+                    if (sm.get("saberConceptual") != null) ses.setSaberConceptual(sm.get("saberConceptual").toString());
+                    if (sm.get("saberProcedimental") != null) ses.setSaberProcedimental(sm.get("saberProcedimental").toString());
+                    if (sm.get("saberActitudinal") != null) ses.setSaberActitudinal(sm.get("saberActitudinal").toString());
+                    if (sm.get("criterioDesempeno") != null) ses.setCriterioDesempeno(sm.get("criterioDesempeno").toString());
+                    if (sm.get("evidenciaAprendizaje") != null) ses.setEvidenciaAprendizaje(sm.get("evidenciaAprendizaje").toString());
+                    pacModel.getSesiones().add(ses);
+                }
+            }
+            content = this.exportPacCmd.executeFromModel(pacModel, carreraId, pacType, meta);
+        } else {
+            content = this.exportPacCmd.execute(id != null ? id : 0L, carreraId, pacType, meta);
+        }
+
+        String safeCode = meta.getOrDefault("codigo", (id != null ? String.valueOf(id) : "DOC")).replaceAll("[^a-zA-Z0-9_-]", "_");
+        String filename = ("PRACTICO".equalsIgnoreCase(pacType)) ? "PAC_Practico_" + safeCode + ".xlsx" : "PAC_General_" + safeCode + ".xlsx";
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         return ResponseEntity.ok()
@@ -76,17 +136,48 @@ public class ScuOfficeController {
                 .body(content);
     }
 
-    @GetMapping({"/export/plan-clase/{sesionId}", "/plan-clase/{sesionId}/export"})
+    @RequestMapping(value = {"/export/plan-clase", "/export/plan-clase/{sesionId}", "/plan-clase/{sesionId}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> exportPlanClases(
-            @PathVariable Long sesionId,
+            @PathVariable(required = false) Long sesionId,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
-            @RequestParam(value = "planType", required = false) String planType) {
-        byte[] content = this.exportPlanClasesCmd.execute(sesionId, carreraId, planType);
+            @RequestParam(value = "planType", required = false) String planType,
+            @RequestParam(value = "codigo", required = false) String codigo,
+            @RequestParam(value = "asignatura", required = false) String asignatura,
+            @RequestParam(value = "docente", required = false) String docente,
+            @RequestParam(value = "carrera", required = false) String carrera,
+            @RequestParam(value = "semestre", required = false) String semestre,
+            @RequestBody(required = false) Map<String, Object> body) {
+
+        Map<String, String> meta = new HashMap<>();
+        if (codigo != null && !codigo.isBlank()) meta.put("codigo", codigo.trim());
+        if (asignatura != null && !asignatura.isBlank()) meta.put("asignatura", asignatura.trim());
+        if (docente != null && !docente.isBlank()) meta.put("docente", docente.trim());
+        if (carrera != null && !carrera.isBlank()) meta.put("carrera", carrera.trim());
+        if (semestre != null && !semestre.isBlank()) meta.put("semestre", semestre.trim());
+
+        byte[] content;
+        if (body != null && !body.isEmpty()) {
+            if (body.get("codigo") != null && !meta.containsKey("codigo")) meta.put("codigo", body.get("codigo").toString().trim());
+            if (body.get("asignatura") != null && !meta.containsKey("asignatura")) meta.put("asignatura", body.get("asignatura").toString().trim());
+            if (body.get("docente") != null && !meta.containsKey("docente")) meta.put("docente", body.get("docente").toString().trim());
+            if (body.get("carrera") != null && !meta.containsKey("carrera")) meta.put("carrera", body.get("carrera").toString().trim());
+            if (body.get("semestre") != null && !meta.containsKey("semestre")) meta.put("semestre", body.get("semestre").toString().trim());
+            if (body.get("planType") != null && planType == null) planType = body.get("planType").toString();
+
+            PlanDeClase planModel = new PlanDeClase();
+            if (body.get("objetivoSesion") != null) planModel.setObjetivoSesion(body.get("objetivoSesion").toString());
+            if (body.get("duracionTotalMin") != null) {
+                try { planModel.setDuracionTotalMin(Integer.parseInt(body.get("duracionTotalMin").toString())); } catch (Exception ignored) {}
+            }
+            content = this.exportPlanClasesCmd.executeFromModel(planModel, carreraId, planType, meta);
+        } else {
+            content = this.exportPlanClasesCmd.execute(sesionId != null ? sesionId : 0L, carreraId, planType, meta);
+        }
+
+        String safeCode = meta.getOrDefault("codigo", (sesionId != null ? String.valueOf(sesionId) : "DOC")).replaceAll("[^a-zA-Z0-9_-]", "_");
         String filename = ("PRACTICO".equalsIgnoreCase(planType))
-                ? "Plan_Clase_Practico_Sesion_" + sesionId + ".xlsx"
-                : ("TEORICO".equalsIgnoreCase(planType)
-                ? "Plan_Clase_Teorico_Sesion_" + sesionId + ".xlsx"
-                : "Plan_Clase_Sesion_" + sesionId + ".xlsx");
+                ? "Plan_Clase_Practico_" + safeCode + ".xlsx"
+                : "Plan_Clase_Teorico_" + safeCode + ".xlsx";
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         return ResponseEntity.ok()
@@ -96,16 +187,77 @@ public class ScuOfficeController {
                 .body(content);
     }
 
-    @GetMapping({"/export/programa-analitico/{asignacionId}", "/programa-analitico/{asignacionId}/export"})
+    @RequestMapping(value = {"/export/programa-analitico", "/export/programa-analitico/{asignacionId}", "/programa-analitico/{asignacionId}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> exportProgramaDocx(
-            @PathVariable Long asignacionId,
-            @RequestParam(value = "carreraId", required = false) Long carreraId) {
-        byte[] content = this.exportProgramaCmd.execute(asignacionId, carreraId);
+            @PathVariable(required = false) Long asignacionId,
+            @RequestParam(value = "carreraId", required = false) Long carreraId,
+            @RequestParam(value = "codigo", required = false) String codigo,
+            @RequestParam(value = "asignatura", required = false) String asignatura,
+            @RequestParam(value = "docente", required = false) String docente,
+            @RequestParam(value = "carrera", required = false) String carrera,
+            @RequestParam(value = "semestre", required = false) String semestre,
+            @RequestParam(value = "creditos", required = false) String creditos,
+            @RequestParam(value = "horasTeoricas", required = false) String horasTeoricas,
+            @RequestParam(value = "horasPracticas", required = false) String horasPracticas,
+            @RequestBody(required = false) ScuProgramaAnaliticoRequest request) {
+
+        Map<String, String> meta = new HashMap<>();
+        if (codigo != null && !codigo.isBlank()) meta.put("codigo", codigo.trim());
+        if (asignatura != null && !asignatura.isBlank()) meta.put("asignatura", asignatura.trim());
+        if (docente != null && !docente.isBlank()) meta.put("docente", docente.trim());
+        if (carrera != null && !carrera.isBlank()) meta.put("carrera", carrera.trim());
+        if (semestre != null && !semestre.isBlank()) meta.put("semestre", semestre.trim());
+        if (creditos != null && !creditos.isBlank()) meta.put("creditos", creditos.trim());
+        if (horasTeoricas != null && !horasTeoricas.isBlank()) meta.put("horasTeoricas", horasTeoricas.trim());
+        if (horasPracticas != null && !horasPracticas.isBlank()) meta.put("horasPracticas", horasPracticas.trim());
+
+        byte[] content;
+        if (request != null) {
+            if (request.getCodigoAsignatura() != null && !meta.containsKey("codigo")) meta.put("codigo", request.getCodigoAsignatura().trim());
+            if (request.getNombreAsignatura() != null && !meta.containsKey("asignatura")) meta.put("asignatura", request.getNombreAsignatura().trim());
+            if (request.getSemestre() != null && !meta.containsKey("semestre")) meta.put("semestre", request.getSemestre().trim());
+            if (request.getCreditos() != null && !meta.containsKey("creditos")) meta.put("creditos", String.valueOf(request.getCreditos()));
+            if (request.getHorasTeoricas() != null && !meta.containsKey("horasTeoricas")) meta.put("horasTeoricas", String.valueOf(request.getHorasTeoricas()));
+            if (request.getHorasPracticas() != null && !meta.containsKey("horasPracticas")) meta.put("horasPracticas", String.valueOf(request.getHorasPracticas()));
+
+            ProgramaAnalitico p = new ProgramaAnalitico();
+            p.setCaracterizacion(request.getCaracterizacion());
+            p.setMacroCompetencia(request.getMacroCompetencia());
+            p.setSistemaEvaluacion(request.getSistemaEvaluacion());
+            if (request.getUnidades() != null) {
+                for (ScuUnidadAprendizajeDto uDto : request.getUnidades()) {
+                    UnidadAprendizaje u = new UnidadAprendizaje();
+                    u.setNumeroUnidad(uDto.getNumeroUnidad());
+                    u.setTitulo(uDto.getTitulo());
+                    u.setSaberesConceptuales(uDto.getSaberesConceptuales());
+                    u.setSaberesProcedimentales(uDto.getSaberesProcedimentales());
+                    u.setSaberesActitudinales(uDto.getSaberesActitudinales());
+                    u.setCriteriosDesempeno(uDto.getCriteriosDesempeno());
+                    p.getUnidades().add(u);
+                }
+            }
+            if (request.getBibliografia() != null) {
+                for (ScuBibliografiaDto bDto : request.getBibliografia()) {
+                    Bibliografia b = new Bibliografia();
+                    b.setTipo(bDto.getTipo());
+                    b.setCitaApa(bDto.getCitaApa());
+                    b.setAutor(bDto.getAutor());
+                    b.setAnio(bDto.getAnio());
+                    b.setTitulo(bDto.getTitulo());
+                    p.getBibliografia().add(b);
+                }
+            }
+            content = this.exportProgramaCmd.executeFromModel(p, carreraId, meta);
+        } else {
+            content = this.exportProgramaCmd.execute(asignacionId != null ? asignacionId : 0L, carreraId, meta);
+        }
+
+        String safeCode = meta.getOrDefault("codigo", (asignacionId != null ? String.valueOf(asignacionId) : "DOC")).replaceAll("[^a-zA-Z0-9_-]", "_");
         MediaType mediaType = MediaType.parseMediaType(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"Programa_Analitico_" + asignacionId + ".docx\"")
+                        "attachment; filename=\"Programa_Analitico_" + safeCode + ".docx\"")
                 .contentType(mediaType)
                 .body(content);
     }

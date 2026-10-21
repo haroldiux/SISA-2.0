@@ -9,6 +9,7 @@ import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
 import bo.edu.unitepc.sisa.service.command.ScuExportPacXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportPlanClasesXlsxCmd;
 import bo.edu.unitepc.sisa.service.command.ScuExportProgramaDocxCmd;
+import bo.edu.unitepc.sisa.service.command.ScuGetPacByCarreraCmd;
 import bo.edu.unitepc.sisa.service.command.ScuGetPacCmd;
 import bo.edu.unitepc.sisa.service.command.ScuGetPlanClaseCmd;
 import bo.edu.unitepc.sisa.service.command.ScuGetProgramaAnaliticoCmd;
@@ -59,6 +60,8 @@ class SecurityEndpointAccessTest {
     @MockBean
     private ScuGetPacCmd getPacCmd;
     @MockBean
+    private ScuGetPacByCarreraCmd getPacByCarreraCmd;
+    @MockBean
     private ScuReviewPacCmd reviewPacCmd;
     @MockBean
     private ScuSubmitPacCmd submitPacCmd;
@@ -93,8 +96,8 @@ class SecurityEndpointAccessTest {
         for (String path : Arrays.asList(
                 "/api/v1/planificaciones/pac/1",
                 "/api/v1/system/planning/pac/1",
-                "/api/v1/office/export/pac/1",
-                "/api/v1/system/office/export/pac/1")) {
+                "/api/v1/planificaciones/pac/by-carrera/2",
+                "/api/v1/system/planning/pac/by-carrera/2")) {
             this.mockMvc.perform(get(path)).andExpect(status().isForbidden());
         }
     }
@@ -127,6 +130,20 @@ class SecurityEndpointAccessTest {
         PreAuthorize preAuthorize = ScuPlanningController.class.getMethod(
                 "reviewPac", Long.class, ScuPacReviewRequest.class).getAnnotation(PreAuthorize.class);
 
+        assertTrue(preAuthorize.value().contains("ROLE_DIR_CARRERA"));
+        assertTrue(preAuthorize.value().contains("ROLE_DIR_ACADEMICA"));
+        assertTrue(preAuthorize.value().contains("ROLE_VICERRECTOR_SEDE"));
+        assertTrue(preAuthorize.value().contains("ROLE_VICERRECTOR_NACIONAL"));
+        assertTrue(preAuthorize.value().contains("ROLE_ADMIN"));
+    }
+
+    @Test
+    @DisplayName("PAC by-carrera includes all director roles and ADMIN")
+    void shouldAuthorizeDirectorsAndAdminToGetPacByCarrera() throws Exception {
+        PreAuthorize preAuthorize = ScuPlanningController.class.getMethod(
+                "getPacByCarrera", String.class, Long.class).getAnnotation(PreAuthorize.class);
+
+        assertTrue(preAuthorize != null);
         assertTrue(preAuthorize.value().contains("ROLE_DIR_CARRERA"));
         assertTrue(preAuthorize.value().contains("ROLE_DIR_ACADEMICA"));
         assertTrue(preAuthorize.value().contains("ROLE_VICERRECTOR_SEDE"));

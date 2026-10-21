@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 6: Archivos de Environment
-description: Rules and guidelines for PASO 6: Archivos de Environment in the frontend project.
+name: frontend-init-project-06-environments
+description: "Rules and guidelines for PASO 6: Archivos de Environment in the frontend project."
 ---
 
 # PASO 6: Archivos de Environment

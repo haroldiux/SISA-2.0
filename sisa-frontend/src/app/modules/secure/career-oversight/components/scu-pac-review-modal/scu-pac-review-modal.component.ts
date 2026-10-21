@@ -22,6 +22,14 @@ export class ScuPacReviewModalComponent implements OnInit, OnDestroy {
   public observaciones: string = '';
   public isProcessing: boolean = false;
 
+  public get charCount(): number {
+    return this.observaciones ? this.observaciones.trim().length : 0;
+  }
+
+  public get isObserveValid(): boolean {
+    return this.charCount >= 10;
+  }
+
   constructor(private readonly _reviewCmd: ScuPacReviewCmd) {}
 
   public ngOnInit(): void {
@@ -38,7 +46,7 @@ export class ScuPacReviewModalComponent implements OnInit, OnDestroy {
   }
 
   public onObserve(): void {
-    if (!this.pac || !this.observaciones.trim()) return;
+    if (!this.pac || !this.isObserveValid) return;
     this._submitDecision('OBSERVADO');
   }
 

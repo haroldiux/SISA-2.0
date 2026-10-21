@@ -1,10 +1,12 @@
 package bo.edu.unitepc.sisa.api.controller;
 
+import bo.edu.unitepc.sisa.api.request.ScuPacBatchReviewRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPacRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPacReviewRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPlanClaseRequest;
 import bo.edu.unitepc.sisa.api.request.ScuPlanningSubmitRequest;
 import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
+import bo.edu.unitepc.sisa.api.response.ScuPacBatchReviewResponse;
 import bo.edu.unitepc.sisa.api.response.ScuPacResponse;
 import bo.edu.unitepc.sisa.api.response.ScuPlanClaseResponse;
 import bo.edu.unitepc.sisa.api.response.ScuProgramaAnaliticoResponse;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,7 +32,9 @@ public class ScuPlanningController {
 
     private final ScuSavePacCmd savePacCmd;
     private final ScuGetPacCmd getPacCmd;
+    private final ScuGetPacByCarreraCmd getPacByCarreraCmd;
     private final ScuReviewPacCmd reviewPacCmd;
+    private final ScuBatchReviewPacCmd batchReviewPacCmd;
     private final ScuSubmitPacCmd submitPacCmd;
     private final ScuSaveProgramaAnaliticoCmd saveProgramaCmd;
     private final ScuGetProgramaAnaliticoCmd getProgramaCmd;
@@ -40,7 +45,9 @@ public class ScuPlanningController {
     public ScuPlanningController(
             ScuSavePacCmd savePacCmd,
             ScuGetPacCmd getPacCmd,
+            ScuGetPacByCarreraCmd getPacByCarreraCmd,
             ScuReviewPacCmd reviewPacCmd,
+            ScuBatchReviewPacCmd batchReviewPacCmd,
             ScuSubmitPacCmd submitPacCmd,
             ScuSaveProgramaAnaliticoCmd saveProgramaCmd,
             ScuGetProgramaAnaliticoCmd getProgramaCmd,
@@ -49,7 +56,9 @@ public class ScuPlanningController {
             ScuListDocenteAsignacionesCmd listDocenteAsignacionesCmd) {
         this.savePacCmd = savePacCmd;
         this.getPacCmd = getPacCmd;
+        this.getPacByCarreraCmd = getPacByCarreraCmd;
         this.reviewPacCmd = reviewPacCmd;
+        this.batchReviewPacCmd = batchReviewPacCmd;
         this.submitPacCmd = submitPacCmd;
         this.saveProgramaCmd = saveProgramaCmd;
         this.getProgramaCmd = getProgramaCmd;
@@ -125,6 +134,20 @@ public class ScuPlanningController {
         );
     }
 
+    @GetMapping("/pac/by-carrera/{carreraId}")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', " +
+            "'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
+    public ResponseEntity<Map<String, Object>> getPacByCarrera(
+            @PathVariable String carreraId,
+            @RequestParam(required = false) Long gestionId) {
+        List<ScuPacResponse> responses = this.getPacByCarreraCmd.execute(carreraId, gestionId);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(responses)
+                        .message("Planificaciones de la carrera obtenidas exitosamente")
+                        .build()
+        );
+    }
+
     @PostMapping("/pac/{id}/review")
     @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', " +
             "'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
@@ -135,6 +158,18 @@ public class ScuPlanningController {
         return ResponseEntity.ok(
                 ResourceBuilder.of(response)
                         .message("Revisión de PAC registrada exitosamente")
+                        .build()
+        );
+    }
+
+    @PostMapping("/pac/batch-review")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_ADMIN')")
+    public ResponseEntity<Map<String, Object>> batchReviewPac(
+            @Valid @RequestBody ScuPacBatchReviewRequest request) {
+        ScuPacBatchReviewResponse response = this.batchReviewPacCmd.execute(request);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(response)
+                        .message("Certificación en bloque ejecutada exitosamente")
                         .build()
         );
     }

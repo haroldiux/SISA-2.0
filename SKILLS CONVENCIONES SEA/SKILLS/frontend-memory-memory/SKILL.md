@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Memory: Prefixes
+name: frontend-memory-memory
 description: Rules and guidelines for Prefixes in the frontend project.
 ---
 

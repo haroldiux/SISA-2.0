@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Code-conventions: TypeScript Conventions
+name: frontend-code-conventions-typescript
 description: Rules and guidelines for TypeScript Conventions in the frontend project.
 ---
 

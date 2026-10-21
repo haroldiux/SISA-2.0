@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Architecture: Builder Pattern
+name: frontend-architecture-builder-pattern
 description: Rules and guidelines for Builder Pattern in the frontend project.
 ---
 

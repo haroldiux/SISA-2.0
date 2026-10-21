@@ -153,6 +153,7 @@
           <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-1.5 flex-wrap">
             <span class="text-[10px] text-slate-400">Acceso rápido demo:</span>
             <button type="button" onclick="window.fillDemoLogin('admin', 'Unitepc2026!')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 cursor-pointer">Admin</button>
+            <button type="button" onclick="window.fillDemoLogin('dir.carrera.sis', 'Unitepc2026!')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 cursor-pointer">Dir. Carrera</button>
             <button type="button" onclick="window.fillDemoLogin('9465510', '9465510')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer">Docente (9465510)</button>
             <button type="button" onclick="window.fillDemoLogin('3065087', '3065087')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 cursor-pointer">Docente (3065087)</button>
           </div>
@@ -422,7 +423,7 @@
           </button>
 
           <!-- 2. Carpeta Docente (Docente, Dir Carrera, Admin) -->
-          <button onclick="window.switchView('view1')" id="nav-item-view1" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
+          <button onclick="window.switchView('view1')" id="nav-item-view1" data-roles="ROLE_DOCENTE,ROLE_ADMIN" class="global-nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-[var(--sp-ink-2)] hover:bg-[var(--sp-surface-hover)] transition-all">
             <i data-lucide="folder-kanban" class="w-4 h-4 flex-shrink-0"></i>
             <span class="sidebar-item-label truncate">Carpeta Docente</span>
           </button>
@@ -594,19 +595,6 @@
             <i data-lucide="chevron-down" class="w-3 h-3 opacity-60"></i>
           </div>
 
-          <!-- Docente API Selector (SEA Gateway Ingestion - Admin & Director view only) -->
-          <div id="topbar-docente-selector-wrap" data-roles="ROLE_ADMIN,ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" class="hidden md:flex items-center gap-2 bg-[var(--sp-surface-2)] px-2.5 py-1 rounded-xl border border-[var(--sp-border)]">
-            <i data-lucide="user-check" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
-            <label for="docente-api-selector" class="sr-only">Docente API</label>
-            <select id="docente-api-selector" (change)="onDocenteSelectorChange($event)" class="bg-transparent border-none text-xs text-[var(--sp-ink)] font-medium focus:outline-none cursor-pointer pr-1">
-              <optgroup label="DOCENTES OFICIALES SEA - SEDE COCHABAMBA">
-                <option value="3065087" selected>ROSMERY LUIZAGA SALINAS (3065087)</option>
-                <option value="6600808">WALTER JOSE CAZAS CASTRO (6600808)</option>
-                <option value="4421998">MARTIN XAVIER SANCHEZ FLORES (4421998)</option>
-                <option value="7906983">RUBEN SERGIO VELASQUEZ ADRIAZOLA (7906983)</option>
-              </optgroup>
-            </select>
-          </div>
 
           <!-- Theme Switcher Button -->
           <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="p-2 rounded-xl border border-[var(--sp-border)] text-[var(--sp-ink-3)] hover:text-[var(--sp-ink)] hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer" title="Alternar tema claro/oscuro">
@@ -1046,7 +1034,7 @@
                   <span class="text-[10px] uppercase font-bold text-[var(--sp-ink-3)]">Módulos habilitados</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                  <button onclick="window.switchView('view1')" data-roles="ROLE_DOCENTE,ROLE_DIR_CARRERA,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
+                  <button onclick="window.switchView('view1')" data-roles="ROLE_DOCENTE,ROLE_ADMIN" class="p-4 rounded-xl bg-[var(--sp-surface-2)] hover:bg-[var(--sp-purple-soft)] border border-[var(--sp-border)] hover:border-[var(--sp-purple)]/30 text-left transition-all group cursor-pointer">
                     <i data-lucide="folder-kanban" class="w-5 h-5 text-[var(--sp-purple)] mb-2"></i>
                     <div class="text-xs font-bold text-[var(--sp-ink)] group-hover:text-[var(--sp-purple-dark)]">Carpeta Docente</div>
                     <div class="text-[10px] text-[var(--sp-ink-3)] mt-0.5">Planificación y 4 documentos</div>
@@ -1157,6 +1145,23 @@
           <!-- SUBSECTION: MIS ASIGNATURAS & LOS 4 TABS -->
           <div id="doc-sec-asignaturas" class="doc-sec-content space-y-6">
             
+            <!-- CONTEXTUAL RETURN BAR WHEN AUDITING FROM CAREER DIRECTION -->
+            <div id="director-supervision-return-bar" class="hidden no-print p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-between shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="p-1.5 rounded-lg bg-[#4f39f6] text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <span class="text-xs font-black text-indigo-950 dark:text-indigo-200">Modo Auditoría de Dirección de Carrera</span>
+                  <span id="director-supervision-return-course" class="text-[11px] text-indigo-700 dark:text-indigo-300 ml-1.5 font-bold"></span>
+                </div>
+              </div>
+              <button type="button" onclick="window.returnToSupervisionFromTeacher()" class="px-3.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-700 text-[#4f39f6] dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                <span>Volver a Plan de Estudios (Supervisión)</span>
+              </button>
+            </div>
+
             <!-- TEACHER'S SUBJECTS SELECTOR CARDS (no-print) -->
             <div class="space-y-2 no-print">
               <div class="flex items-center justify-between">
@@ -1238,6 +1243,75 @@
 
               <div id="schedules-breakdown-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-3.5 border-t border-slate-100 dark:border-slate-800 mt-3 hidden">
                 <!-- Dynamically populated by window.renderMateriaSchedulesDetail -->
+              </div>
+            </div>
+
+            <!-- TEACHER OBSERVATION & VISA CERTIFICATION BANNER (PHASE 4) -->
+            <div id="teacher-observation-banner" class="hidden no-print transition-all duration-300">
+              <!-- Observation Alert Card (Active when course status is OBSERVADO) -->
+              <div id="teacher-obs-alert-card" class="bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 rounded-xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                  <div class="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex-shrink-0 mt-0.5">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100 uppercase tracking-wider">
+                        Dictamen Pedagógico: OBSERVADO
+                      </span>
+                      <span id="teacher-obs-reviewer" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Lic. Mariana Rios Vargas - Director de Carrera
+                      </span>
+                      <span class="text-slate-400">•</span>
+                      <span id="teacher-obs-date" class="text-[11px] text-slate-500 dark:text-slate-400">
+                        14/10/2026, 10:30
+                      </span>
+                    </div>
+                    <p id="teacher-obs-text" class="text-xs font-medium text-amber-950 dark:text-amber-200 leading-relaxed">
+                      Las matrices de evaluación del hito 2 deben ajustarse a la normativa de 20 semanas y se debe actualizar la bibliografía básica en formato APA 7.
+                    </p>
+                    <p class="text-[11px] text-amber-800 dark:text-amber-400 font-semibold pt-0.5 flex items-center gap-1">
+                      <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                      Por favor ajuste los contenidos observados y reenvíe la planificación para su visado institucional.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0 self-end md:self-center">
+                  <button type="button" onclick="window.resubmitTeacherPac()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition-all cursor-pointer">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span>Reenviar a Revisión</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Visa Certification Seal Card (Active when course status is APROBADO) -->
+              <div id="teacher-visa-seal-card" class="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/80 rounded-xl p-3.5 shadow-sm flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                  <div class="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 uppercase tracking-wider">
+                        Planificación Aprobada & Visada
+                      </span>
+                      <span id="teacher-visa-reviewer" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Lic. Mariana Rios Vargas - Director de Carrera
+                      </span>
+                      <span class="text-slate-400">•</span>
+                      <span id="teacher-visa-date" class="text-[11px] text-slate-500 dark:text-slate-400">
+                        Certificación Oficial • Gestión II-2026
+                      </span>
+                    </div>
+                    <p class="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5">
+                      Esta asignatura cuenta con el visado pedagógico institucional oficial registrado para el período lectivo.
+                    </p>
+                  </div>
+                </div>
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/40 border border-emerald-300/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-xs">
+                  <i data-lucide="award" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+                  <span>Sello Digital Oficial UNITEPC</span>
+                </div>
               </div>
             </div>
 
@@ -2299,169 +2373,287 @@
     <!-- ========================================================================= -->
     <!-- VIEW 2: [DIRECCIÓN DE CARRERA] SUPERVISIÓN & APROBACIÓN POR SEMESTRE       -->
     <!-- ========================================================================= -->
-    <div id="view2" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
+    <div id="view2" class="frame-view w-full min-h-[920px] bg-[#F8FAFC] dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Main Area -->
       <div class="flex-1 flex flex-col h-full overflow-hidden">
+        
+        <!-- Header: Matches Top Institutional App Bar -->
         <header class="h-[68px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0 transition-colors">
           <div class="flex items-center gap-3">
-            <h2 class="text-base font-bold font-display text-slate-900 dark:text-white">Supervisión y Aprobación Curricular por Semestre</h2>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60">Ing. de Sistemas</span>
-          </div>
-          <div class="flex items-center gap-4">
-            <div class="px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 text-purple-800 dark:text-purple-300 text-xs font-bold">
-              GESTIÓN: II-2026 (Activa)
+            <div class="h-9 w-9 rounded-xl bg-[#EEF2FF] dark:bg-indigo-950/60 text-[#4f39f6] flex items-center justify-center">
+              <i data-lucide="check-square" class="w-5 h-5"></i>
             </div>
-            <button onclick="window.showToast('✓ Todo el semestre 3º ha sido formalmente aprobado')" class="px-4 py-2 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 flex items-center gap-2 transition-colors cursor-pointer">
+            <div>
+              <h2 class="text-base font-black font-display text-slate-900 dark:text-white leading-tight">Sistema de Planificación Curricular</h2>
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">GESTIÓN INTEGRAL DEL PROCESO DE PLANIFICACIONES ACADÉMICAS</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="window.showToast('Parámetros de vista sincronizados')" class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer">
+              <i data-lucide="sliders" class="w-3.5 h-3.5 text-[#4f39f6]"></i>
+              <span>Parametrizar vista</span>
+            </button>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#4f39f6]"></i>
+              <span>GESTIÓN: II-2026 (Activa)</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+            </div>
+            <button onclick="window.openBatchEndorsementModal(window.__ACTIVE_SEMESTER_NUM__ || 3)" class="bg-[#4f39f6] hover:bg-[#432dd7] text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-2 shadow-xs transition-colors cursor-pointer">
               <i data-lucide="check-check" class="w-4 h-4"></i>
-              Aprobar Todo el Semestre
+              <span>Aprobar Todo el Semestre</span>
             </button>
           </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6 custom-scrollbar bg-[#F8FAFC] dark:bg-[#0B0F19]">
           
-          <!-- Filter Tabs Toolbar -->
-          <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-            <div class="flex items-center gap-2">
-              <button class="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm">Todos (48)</button>
-              <button class="px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold">Completados (38)</button>
-              <button class="px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold">Pendientes (7)</button>
-              <button class="px-3 py-1.5 rounded-lg text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 text-xs font-semibold flex items-center gap-1 border border-amber-200 dark:border-amber-800/60">
-                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-                Con Observaciones (3)
-              </button>
+          <!-- Page Header (Identical to Evaluaciones) -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <div class="h-8 w-8 rounded-lg bg-[#EEF2FF] dark:bg-indigo-950/60 text-[#4f39f6] flex items-center justify-center">
+                  <i data-lucide="book-open" class="w-4 h-4"></i>
+                </div>
+                <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white font-display">Plan de Estudios</h2>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Vista general del plan de estudios por semestre y supervisión de planificación académica / PAC.</p>
             </div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">
-              Cumplimiento General: <strong class="text-emerald-600 dark:text-emerald-400 font-bold">87.5%</strong>
+
+            <div class="flex items-center gap-2">
+              <button onclick="window.descargarMallaCurricular()" class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-[#4f39f6] border border-slate-200 dark:border-slate-700 font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-2 shadow-2xs transition-colors cursor-pointer">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Descargar Malla</span>
+              </button>
             </div>
           </div>
 
-          <!-- Semester Accordions -->
-          <div class="space-y-4">
+          <!-- Filtros Superiores (Identical to Evaluaciones Grid) -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
             
-            <!-- 1° Semestre -->
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-              <div class="flex items-center gap-3">
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white">1º SEMESTRE (6 Asignaturas)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              
+              <!-- Selector de Gestión (Default II-2026) -->
+              <div>
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                  <i data-lucide="calendar" class="w-3 h-3 text-[#4f39f6]"></i> Gestión Académica
+                </label>
+                <select id="supervision-gestion-select" onchange="window.onSupervisionGestionChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                  <option value="II-2026" selected>II-2026 (Gestión Activa)</option>
+                  <option value="I-2026">I-2026 (Anterior)</option>
+                  <option value="II-2025">II-2025 (Histórico)</option>
+                </select>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">100% Cumplimiento</span>
-                <span class="text-xs px-2.5 py-1 rounded-md bg-emerald-600 text-white font-bold">APROBADO</span>
+
+              <!-- Sede Académica -->
+              <div>
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                  <i data-lucide="building-2" class="w-3 h-3 text-[#4f39f6]"></i> Sede Académica
+                </label>
+                <select id="supervision-sede-select" onchange="window.onSupervisionSedeChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                  <option value="CBA" selected>COCHABAMBA (CBA)</option>
+                  <option value="LPZ">LA PAZ (LPZ)</option>
+                  <option value="EAL">EL ALTO (EAL)</option>
+                  <option value="CBJ">COBIJA (CBJ)</option>
+                </select>
               </div>
+
+              <!-- Carrera (lg:col-span-2) -->
+              <div class="lg:col-span-2">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                  <i data-lucide="graduation-cap" class="w-3 h-3 text-[#4f39f6]"></i> Carrera
+                </label>
+                <select id="supervision-career-select" onchange="window.onSupervisionCareerChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                  <option value="CARSIS" selected>LICENCIATURA EN INGENIERÍA DE SISTEMAS (CARSIS)</option>
+                  <option value="CARELE">INGENIERÍA ELECTRÓNICA (CARELE)</option>
+                  <option value="CARSON">INGENIERÍA DE SONIDO (CARSON)</option>
+                  <option value="CARMED">MEDICINA (CARMED)</option>
+                  <option value="CARDER">DERECHO (CARDER)</option>
+                  <option value="CARODO">ODONTOLOGÍA (CARODO)</option>
+                  <option value="CARVET">MEDICINA VETERINARIA (CARVET)</option>
+                </select>
+              </div>
+
+              <!-- Búsqueda -->
+              <div>
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                  <i data-lucide="search" class="w-3 h-3 text-[#4f39f6]"></i> Búsqueda
+                </label>
+                <div class="relative">
+                  <input id="supervision-search-input" oninput="window.filterSupervisionBySearch(this.value)" type="text" placeholder="Buscar plan de estudios..." class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#4f39f6]">
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none"></i>
+                </div>
+              </div>
+
             </div>
 
-            <!-- 2° Semestre -->
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-              <div class="flex items-center gap-3">
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white">2º SEMESTRE (6 Asignaturas)</h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">100% Cumplimiento</span>
-                <span class="text-xs px-2.5 py-1 rounded-md bg-emerald-600 text-white font-bold">APROBADO</span>
-              </div>
-            </div>
-
-            <!-- EXPANDED: 3° SEMESTRE -->
-            <div class="bg-white dark:bg-slate-900 rounded-xl border-2 border-brand-500 shadow-md overflow-hidden transition-colors">
-              <div class="bg-purple-50/70 dark:bg-slate-800 p-4 border-b border-purple-100 dark:border-slate-700 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <i data-lucide="chevron-down" class="w-5 h-5 text-brand-600 dark:text-brand-400"></i>
-                  <h3 class="text-sm font-bold text-purple-900 dark:text-purple-200">3º SEMESTRE (6 Asignaturas - 83% Cumplimiento)</h3>
+            <!-- Fila Inferior de Filtros: Plan Curricular, Toggle y Tabs de Seguimiento -->
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              
+              <!-- Selector Plan Curricular, Ocultar sin asignar y Tipo de Grupo -->
+              <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-extrabold uppercase text-slate-400">Plan Curricular:</span>
+                  <select class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none">
+                    <option value="todos" selected>Todos los Planes</option>
+                    <option value="2022">Plan 2022</option>
+                    <option value="2018">Plan 2018</option>
+                  </select>
+                  <span class="text-[10px] text-slate-400">SEA no informó planes curriculares</span>
                 </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-xs text-brand-600 dark:text-brand-400 font-semibold">5 de 6 validadas</span>
-                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">EN REVISIÓN</span>
+
+                <!-- Toggle Ocultar sin asignar -->
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                  <input type="checkbox" id="supervision-filter-hide-unassigned" onchange="window.filterSupervisionUnassigned(this.checked)" class="rounded text-amber-500 focus:ring-amber-500 h-4 w-4">
+                  <span class="text-slate-500 dark:text-slate-400 font-medium">Ocultar sin asignar</span>
+                </label>
+
+                <!-- Filtro de tipo de grupo -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[10px] font-extrabold uppercase text-slate-400 whitespace-nowrap">Tipo de grupo:</span>
+                  <div class="flex flex-wrap items-center gap-1.5" role="group">
+                    <button type="button" id="supervision-btn-grp-all" onclick="window.filterSupervisionGroupType('todos')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                      Todos los grupos
+                    </button>
+                    <button type="button" id="supervision-btn-grp-ta" onclick="window.filterSupervisionGroupType('teorico')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer">
+                      Teóricos (TA)
+                    </button>
+                    <button type="button" id="supervision-btn-grp-tp" onclick="window.filterSupervisionGroupType('practico')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                      Prácticos
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Table Inside Accordion -->
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 uppercase text-[10px]">
-                  <tr>
-                    <th class="py-3 px-4">Asignatura</th>
-                    <th class="py-3 px-4">Docente Titular</th>
-                    <th class="py-3 px-4">Documentos Cargados</th>
-                    <th class="py-3 px-4 text-center">Estado</th>
-                    <th class="py-3 px-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  <!-- Row 1: SIS-213 Aprobado -->
-                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td class="py-3 px-4">
-                      <div class="font-bold text-slate-900 dark:text-white">SIS-213 Programación III</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">4 Hrs/Semana • Presencial</div>
-                    </td>
-                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">Ing. Marcos Rojas</td>
-                    <td class="py-3 px-4">
-                      <div class="flex items-center gap-1.5">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Analítico: OK</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">PAC: OK</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Planes: OK</span>
-                      </div>
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                      <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">APROBADO</span>
-                    </td>
-                    <td class="py-3 px-4 text-right space-x-2">
-                      <button onclick="window.switchView('view1');" class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer">Ver Carpeta</button>
-                      <button onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-2.5 py-1 rounded bg-slate-800 dark:bg-slate-700 text-white font-medium hover:bg-slate-900 cursor-pointer">Descargar</button>
-                    </td>
-                  </tr>
+              <!-- Tabs de Seguimiento de Planificación (Pills interactivas adaptadas de Seguimiento de Examen) -->
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mr-1">Seguimiento de Documentación:</span>
+                
+                <button type="button" id="supervision-tab-todos" onclick="window.setSupervisionActiveTab('TODOS')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer">
+                  <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                  <span>Dossier Completo</span>
+                </button>
 
-                  <!-- Row 2: SIS-214 Observado -->
-                  <tr class="hover:bg-amber-50/40 dark:hover:bg-amber-950/20 bg-amber-50/10 dark:bg-amber-950/10">
-                    <td class="py-3 px-4">
-                      <div class="font-bold text-slate-900 dark:text-white">SIS-214 Base de Datos I</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">4 Hrs/Semana • Presencial</div>
-                    </td>
-                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">Lic. Sandra Morales</td>
-                    <td class="py-3 px-4">
-                      <div class="flex items-center gap-1.5">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">Analítico: OK</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">PAC: Pendiente</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/60">Planes: Falta</span>
-                      </div>
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                      <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/60">OBSERVADO</span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                      <button onclick="window.showToast('📧 Notificación formal enviada a Lic. Sandra Morales')" class="px-3 py-1 rounded bg-amber-600 text-white font-bold hover:bg-amber-700 flex items-center gap-1 ml-auto cursor-pointer">
-                        <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
-                        Notificar Docente
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                <button type="button" id="supervision-tab-analitico" onclick="window.setSupervisionActiveTab('ANALITICO')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                  <span>Prog. Analítico</span>
+                </button>
 
-              <!-- Accordion Footer -->
-              <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <div class="text-xs text-slate-500 dark:text-slate-400">
-                  Al completar todas las materias podrás emitir la resolución curricular de carrera.
-                </div>
-                <button onclick="window.showToast('✓ Planificación del 3º semestre aprobada por Dirección')" class="px-4 py-2 rounded-lg bg-brand-600 text-white font-bold text-xs shadow-sm hover:bg-brand-700 transition-colors cursor-pointer">
-                  Aprobar y Finalizar Planificación del Semestre
+                <button type="button" id="supervision-tab-pac" onclick="window.setSupervisionActiveTab('PAC')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                  <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+                  <span>PAC Teórico</span>
+                </button>
+
+                <button type="button" id="supervision-tab-practico" onclick="window.setSupervisionActiveTab('PRACTICO')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>
+                  <span>PAC Práctico / Talleres</span>
+                </button>
+
+                <button type="button" id="supervision-tab-clases" onclick="window.setSupervisionActiveTab('CLASES')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                  <span>Planes de Clase</span>
                 </button>
               </div>
+
             </div>
 
-            <!-- 4° Semestre -->
-            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-              <div class="flex items-center gap-3">
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white">4º SEMESTRE (6 Asignaturas)</h3>
+          </div>
+
+          <!-- Tarjetas de Métricas y Supervisión Curricular (Interactiva con Filtrado Directo) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Métricas de Supervisión Curricular">
+            
+            <!-- Card 1: Por Auditar / En Revisión -->
+            <div id="card-supervision-kpi-pending" onclick="window.filterSupervisionTable('EN_REVISION')"
+                 class="group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs hover:border-amber-400 hover:-translate-y-0.5 transition-all duration-200 select-none">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Por Auditar</p>
+                  <div class="mt-1 flex items-baseline gap-2">
+                    <span id="supervision-count-pending" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white font-mono">0</span>
+                    <span class="text-[10px] font-bold text-amber-600 uppercase">En Revisión</span>
+                  </div>
+                </div>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 transition-colors">
+                  <i data-lucide="clock" class="w-4 h-4"></i>
+                </span>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700">50% Cumplimiento</span>
-                <span class="text-xs px-2.5 py-1 rounded-md bg-amber-500 text-white font-bold">EN REVISIÓN</span>
+              <div class="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[11px]">
+                <span class="text-slate-400 text-[10px]">Expedientes en trámite</span>
+                <span class="text-[10px] font-bold text-amber-600 group-hover:underline flex items-center gap-0.5">Filtrar <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
               </div>
             </div>
 
+            <!-- Card 2: Con Observaciones (Devueltos al Docente) -->
+            <div id="card-supervision-kpi-observed" onclick="window.filterSupervisionTable('OBSERVADO')"
+                 class="group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs hover:border-rose-400 hover:-translate-y-0.5 transition-all duration-200 select-none">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Con Observaciones</p>
+                  <div class="mt-1 flex items-baseline gap-2">
+                    <span id="supervision-count-observed" class="text-2xl font-black tracking-tight text-rose-600 font-mono">0</span>
+                    <span class="text-[10px] font-bold text-rose-600 uppercase">Ajuste Docente</span>
+                  </div>
+                </div>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 transition-colors">
+                  <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[11px]">
+                <span class="text-slate-400 text-[10px]">Devueltos para corrección</span>
+                <span class="text-[10px] font-bold text-rose-600 group-hover:underline flex items-center gap-0.5">Seguimiento <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+              </div>
+            </div>
+
+            <!-- Card 3: Aprobadas / Certificadas -->
+            <div id="card-supervision-kpi-approved" onclick="window.filterSupervisionTable('APROBADO')"
+                 class="group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs hover:border-emerald-400 hover:-translate-y-0.5 transition-all duration-200 select-none">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Planificaciones</p>
+                  <div class="mt-1 flex items-baseline gap-2">
+                    <span id="supervision-count-approved" class="text-2xl font-black tracking-tight text-emerald-600 font-mono">0</span>
+                    <span class="text-[10px] font-bold text-emerald-600 uppercase">Aprobadas</span>
+                  </div>
+                </div>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 transition-colors">
+                  <i data-lucide="check-check" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[11px]">
+                <span class="text-slate-400 text-[10px]">Con dictamen oficial</span>
+                <span class="text-[10px] font-bold text-emerald-600 group-hover:underline flex items-center gap-0.5">Filtrar <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+              </div>
+            </div>
+
+            <!-- Card 4: Malla Curricular Total & Cumplimiento -->
+            <div id="card-supervision-kpi-all" onclick="window.filterSupervisionTable('ALL')"
+                 class="group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl border border-[#4f39f6]/30 dark:border-indigo-800 bg-white dark:bg-slate-900 p-4 shadow-2xs hover:border-[#4f39f6] hover:-translate-y-0.5 transition-all duration-200 select-none">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Malla Curricular Total</p>
+                  <div class="mt-1 flex items-baseline gap-2">
+                    <span id="supervision-count-all" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white font-mono">50</span>
+                    <span id="supervision-compliance-pct" class="text-xs font-black text-[#4f39f6] bg-[#4f39f6]/10 px-2 py-0.5 rounded-full font-mono">100%</span>
+                  </div>
+                </div>
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] dark:bg-indigo-950/60 text-[#4f39f6] transition-colors">
+                  <i data-lucide="layers" class="w-4 h-4"></i>
+                </span>
+              </div>
+              <div class="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400 text-[10px] font-medium"><strong id="supervision-count-assigned" class="text-slate-700 dark:text-slate-300">50</strong> asignadas · <strong id="supervision-count-vacant" class="text-amber-500">0</strong> vacantes</span>
+                <span class="text-[10px] font-bold text-[#4f39f6] group-hover:underline flex items-center gap-0.5">Ver Todo <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Dynamic Semester Accordions Container -->
+          <div id="supervision-semesters-container" class="space-y-4">
+            <div class="flex items-center justify-center p-12 text-slate-400 gap-3">
+              <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-[#4f39f6]"></i>
+              <span class="text-sm font-medium">Cargando malla curricular y oferta académica...</span>
+            </div>
           </div>
 
         </div>
@@ -3065,6 +3257,475 @@
 
 <!-- Official PDF / Print Container for UNITEPC Folders (Top-level container outside shell to allow unconstrained multi-page pagination) -->
 <div id="print-official-folder-container" class="hidden"></div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: AUDITORÍA DE EXPEDIENTE CURRICULAR OFICIAL (DIRECCIÓN DE CARRERA)   -->
+<!-- ========================================================================= -->
+<div id="modal-pac-review" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto custom-scrollbar">
+    
+    <!-- Modal Header -->
+    <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div>
+        <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#4f39f6]">
+          DIRECCIÓN DE CARRERA • AUDITORÍA DE EXPEDIENTE CURRICULAR OFICIAL
+        </div>
+        <h3 id="modal-pac-review-title" class="text-base font-bold text-slate-900 dark:text-white font-display mt-0.5">
+          Auditoría de Expediente Curricular
+        </h3>
+        <p id="modal-pac-review-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Dictamen y Visa Oficial: Programa Analítico, PAC Teórico, PAC Práctico y Planes de Clase
+        </p>
+      </div>
+      <button type="button" onclick="window.closePacReviewModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Cerrar modal">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Course Metadata Card -->
+    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="modal-pac-review-code" class="px-2 py-0.5 rounded-md bg-[#4f39f6]/10 text-[#4f39f6] font-mono font-bold text-xs">SIS-213</span>
+          <span id="modal-pac-review-name" class="font-bold text-xs text-slate-900 dark:text-white">Programación III</span>
+        </div>
+        <span id="modal-pac-review-semester" class="text-[11px] font-semibold text-[#4f39f6]">3º Semestre</span>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+        <div>Docente: <strong id="modal-pac-review-teacher" class="text-slate-900 dark:text-white">Lic. Carlos Mendoza</strong> <span id="modal-pac-review-ci" class="text-[10px] text-slate-400 font-mono">(CI: 4859201)</span></div>
+        <div id="modal-pac-review-schedule" class="text-[11px] text-slate-500 dark:text-slate-400">Mañana • Aula 302</div>
+      </div>
+      <div class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Componente Curricular:</span>
+        <span id="modal-pac-review-practical-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+          🔬 Asignatura Teórico-Práctica (Requiere PAC Práctico y Guías)
+        </span>
+      </div>
+    </div>
+
+    <!-- Document Tabs Navigation -->
+    <div class="border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Inspección de Documentos del Expediente:</span>
+        <span class="text-[10px] font-bold text-slate-500">4 Documentos Oficiales UNITEPC</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2" role="tablist">
+        <button type="button" id="btn-modal-tab-analitico" onclick="window.switchModalReviewTab('analitico')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+          <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+          <span>1. Prog. Analítico</span>
+        </button>
+        <button type="button" id="btn-modal-tab-pacteorico" onclick="window.switchModalReviewTab('pacteorico')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5">
+          <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+          <span>2. PAC Teórico (Matriz 7)</span>
+        </button>
+        <button type="button" id="btn-modal-tab-pacpractico" onclick="window.switchModalReviewTab('pacpractico')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5">
+          <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>
+          <span>3. PAC Práctico</span>
+        </button>
+        <button type="button" id="btn-modal-tab-planes" onclick="window.switchModalReviewTab('planes')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          <span>4. Planes de Clase (40)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel 1: Programa Analítico -->
+    <div id="panel-modal-analitico" class="space-y-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-6 w-6 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">📑</div>
+          <span class="font-bold text-xs text-slate-900 dark:text-white">Programa Analítico Oficial de la Asignatura</span>
+        </div>
+        <span id="modal-status-analitico" class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+          APROBADO
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Macrocompetencia Institucional</strong>
+            <span class="text-slate-500 text-[10px]">Formulada bajo el modelo por competencias UNITEPC</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">4 Unidades de Aprendizaje</strong>
+            <span class="text-slate-500 text-[10px]">Saberes conceptuales, procedimentales y actitudinales</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Sistema de Evaluación</strong>
+            <span class="text-slate-500 text-[10px]">Ponderación continua, parciales e hito final</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Bibliografía APA 7ma Edición</strong>
+            <span class="text-slate-500 text-[10px]">Textos básicos y complementarios normalizados</span>
+          </div>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end">
+        <button type="button" onclick="window.jumpToDocFromModal('tab-analitico')" class="text-xs font-bold text-[#4f39f6] hover:underline flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Inspeccionar Programa Analítico en Carpeta Docente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel 2: PAC Teórico (Matriz 7) -->
+    <div id="panel-modal-pacteorico" class="space-y-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hidden">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-6 w-6 rounded-md bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">📘</div>
+          <span class="font-bold text-xs text-slate-900 dark:text-white">PAC Teórico • Matriz Pedagógica de 7 Columnas</span>
+        </div>
+        <span id="modal-status-pacteorico" class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+          APROBADO
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">20 Semanas Planificadas</strong>
+            <span class="text-slate-500 text-[10px]">Calendario semestral académico oficial completo</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">7 Columnas Didácticas</strong>
+            <span class="text-slate-500 text-[10px]">Semana, Fechas, Unidad, Saberes, Estrategias, Recursos y Criterios</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Criterios de Evaluación y Evidencias</strong>
+            <span class="text-slate-500 text-[10px]">Instrumentos de evaluación formativa y sumativa</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Articulación con Hitos Evaluativos</strong>
+            <span class="text-slate-500 text-[10px]">1er Parcial (Sem 7), 2do Parcial (Sem 14), Final (Sem 20)</span>
+          </div>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end">
+        <button type="button" onclick="window.jumpToDocFromModal('tab-pac-matrix')" class="text-xs font-bold text-[#4f39f6] hover:underline flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Inspeccionar PAC Teórico en Carpeta Docente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel 3: PAC Práctico / Talleres -->
+    <div id="panel-modal-pacpractico" class="space-y-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hidden">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-6 w-6 rounded-md bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">🔬</div>
+          <span class="font-bold text-xs text-slate-900 dark:text-white">PAC Práctico • Guías de Laboratorio y Talleres</span>
+        </div>
+        <span id="modal-status-pacpractico" class="px-2 py-0.5 rounded text-[10px] font-black bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300">
+          12 GUÍAS REGISTRADAS
+        </span>
+      </div>
+      <div id="modal-pacpractico-content">
+        <!-- Rendered dynamically depending on practical or theoretical -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">12 Protocolos y Guías de Laboratorio</strong>
+              <span class="text-slate-500 text-[10px]">Guías estructuradas con objetivos y actividades prácticas</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Recursos y Requerimientos Técnicos</strong>
+              <span class="text-slate-500 text-[10px]">Equipos, software especializado y normas de seguridad</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end">
+        <button type="button" onclick="window.jumpToDocFromModal('tab-pac-matrix')" class="text-xs font-bold text-[#4f39f6] hover:underline flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Inspeccionar Guías Prácticas en Carpeta Docente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel 4: Planes de Clase (40 Sesiones) -->
+    <div id="panel-modal-planes" class="space-y-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hidden">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-6 w-6 rounded-md bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">📅</div>
+          <span class="font-bold text-xs text-slate-900 dark:text-white">Planes de Clase • Microplanificación Didáctica (40 Sesiones)</span>
+        </div>
+        <span id="modal-status-planes" class="px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
+          40/40 COMPLETADOS (100%)
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+          <span class="text-[10px] font-extrabold uppercase text-indigo-500 block">Momento Inicial (15 min)</span>
+          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Motivación e indagación previa</span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+          <span class="text-[10px] font-extrabold uppercase text-blue-500 block">Momento Desarrollo (60 min)</span>
+          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Construcción y resolución activa</span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+          <span class="text-[10px] font-extrabold uppercase text-teal-500 block">Momento Cierre (15 min)</span>
+          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Metacognición y síntesis formativa</span>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-between items-center">
+        <span id="modal-planes-count" class="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
+          Avance: 40 de 40 Sesiones microplanificadas
+        </span>
+        <button type="button" onclick="window.jumpToDocFromModal('tab-cronograma-planes')" class="text-xs font-bold text-[#4f39f6] hover:underline flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>Inspeccionar Planes de Clase en Carpeta Docente</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Dictamen Selection -->
+    <div class="space-y-2">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Dictamen Curricular de Dirección</div>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btn-decision-approve" type="button" onclick="window.setPacReviewDecision('APROBADO')" class="p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <i data-lucide="check-circle" class="w-4 h-4"></i> APROBADO (Visa Institucional Completa)
+        </button>
+        <button id="btn-decision-observe" type="button" onclick="window.setPacReviewDecision('OBSERVADO')" class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i> OBSERVADO (Solicitar Correcciones)
+        </button>
+      </div>
+    </div>
+
+    <!-- Documentos Observados Checklist (Visible when OBSERVADO is selected) -->
+    <div id="modal-pac-obs-docs-section" class="space-y-2 hidden p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+        Marcar los Documentos con Observaciones a Subsanar:
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+          <input type="checkbox" id="cb-obs-analitico" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📑 Programa Analítico</span>
+        </label>
+        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+          <input type="checkbox" id="cb-obs-pacteorico" checked class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📘 PAC Teórico (Matriz 7)</span>
+        </label>
+        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+          <input type="checkbox" id="cb-obs-pacpractico" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">🔬 PAC Práctico / Talleres</span>
+        </label>
+        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+          <input type="checkbox" id="cb-obs-planes" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📅 Planes de Clase (40)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Feedback Textarea with Character Counter -->
+    <div class="space-y-1.5">
+      <div class="flex items-center justify-between">
+        <label for="modal-pac-obs-input" class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          Observaciones y Retroalimentación Pedagógica <span id="modal-pac-obs-required" class="text-rose-500 hidden">*</span>
+        </label>
+        <span id="modal-pac-char-counter" class="text-[11px] font-mono text-slate-400">0 / 10 mín.</span>
+      </div>
+      <textarea id="modal-pac-obs-input" rows="3" oninput="window.handlePacReviewCharCount(this.value)" placeholder="Ingrese los fundamentos pedagógicos del dictamen para el expediente docente..." class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4f39f6]"></textarea>
+      <p id="modal-pac-validation-hint" class="text-[11px] text-slate-500 dark:text-slate-400">
+        Opcional para dictamen favorable. Obligatorio (mínimo 10 caracteres) para observaciones.
+      </p>
+    </div>
+
+    <!-- Digital Signature Footer -->
+    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+        <span>Firmado por: <strong class="text-slate-700 dark:text-slate-300">Lic. Mariana Rios Vargas</strong> (Dir. de Carrera)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="window.closePacReviewModal()" type="button" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button id="modal-pac-submit-btn" onclick="window.submitPacReviewModal()" type="button" class="px-5 py-2 rounded-xl bg-[#4f39f6] hover:bg-[#432dd7] text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer">
+          <i data-lucide="award" class="w-4 h-4"></i> Emitir Dictamen Oficial
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: NOTA COLABORATIVA INTER-CARRERAS (DIRECCIÓN DE CARRERA NO-LÍDER)   -->
+<!-- ========================================================================= -->
+<div id="modal-collaborative-note" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+    <!-- Header -->
+    <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div>
+        <div class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+          COOPERACIÓN CURRICULAR • MATERIA COMÚN
+        </div>
+        <h3 id="modal-collab-title" class="text-base font-bold text-slate-900 dark:text-white font-display mt-0.5">
+          Nota Colaborativa de Asignatura
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Sugerencia pedagógica inter-carreras para la Dirección de Carrera Líder
+        </p>
+      </div>
+      <button type="button" onclick="window.closeCollaborativeNoteModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Cerrar modal">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Governance Notice -->
+    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="modal-collab-code" class="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 font-mono font-bold text-xs">SIS-101</span>
+          <span id="modal-collab-name" class="font-bold text-xs text-slate-900 dark:text-white">Asignatura</span>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+          ⚡ No Líder
+        </span>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400">
+        <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 text-indigo-500"></i>
+        Esta asignatura es administrada oficialmente por otra Dirección de Carrera. Como director participante, sus observaciones serán registradas como <strong>sugerencia colaborativa</strong> sin alterar el visado oficial del PAC.
+      </p>
+    </div>
+
+    <!-- Note Input -->
+    <div class="space-y-2">
+      <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+        Sugerencia o Retroalimentación Pedagógica:
+      </label>
+      <textarea id="modal-collab-note-input" rows="4" placeholder="Escriba su recomendación curricular, necesidades específicas de su carrera o sugerencias pedagógicas para la cátedra líder..." class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+    </div>
+
+    <!-- Footer -->
+    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div class="text-[11px] text-slate-500 dark:text-slate-400">
+        Registrado por: <strong class="text-slate-700 dark:text-slate-300">Lic. Mariana Rios Vargas</strong> (Dir. de Carrera)
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="window.closeCollaborativeNoteModal()" type="button" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button onclick="window.submitCollaborativeNote()" type="button" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span>Enviar Sugerencia</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: CERTIFICACIÓN Y VISADO EN LOTE POR SEMESTRE (DIRECCIÓN DE CARRERA)  -->
+<!-- ========================================================================= -->
+<div id="modal-batch-endorsement" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+    
+    <!-- Modal Header -->
+    <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div>
+        <div class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+          DIRECCIÓN DE CARRERA • CERTIFICACIÓN EN LOTE
+        </div>
+        <h3 id="modal-batch-sem-title" class="text-base font-bold text-slate-900 dark:text-white font-display mt-0.5">
+          3º Semestre - Gestión II-2026
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Aprobación y Visado Digital Institucional de Planificaciones Curriculares (PAC)
+        </p>
+      </div>
+      <button type="button" onclick="window.closeBatchEndorsementModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Cerrar modal">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Summary Notice Card -->
+    <div class="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-check" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+          <span class="font-bold text-xs text-emerald-950 dark:text-emerald-200">Asignaturas a Certificar</span>
+        </div>
+        <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-200 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200">
+          <span id="modal-batch-count">0</span> asignaturas
+        </span>
+      </div>
+      <p class="text-[11px] text-emerald-800 dark:text-emerald-300">
+        Esta acción emitirá el visado pedagógico institucional para todas las asignaturas pendientes del semestre, asignando su firma digital y actualizando el avance al 100%.
+      </p>
+    </div>
+
+    <!-- Affected Courses List -->
+    <div class="space-y-1.5">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+        Detalle de Asignaturas Seleccionadas:
+      </div>
+      <div id="modal-batch-courses-list" class="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 custom-scrollbar text-xs">
+        <!-- Dynamic list of courses -->
+      </div>
+    </div>
+
+    <!-- Mandatory Acknowledgment Checkbox -->
+    <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+      <label class="flex items-start gap-2.5 cursor-pointer">
+        <input
+          type="checkbox"
+          id="modal-batch-acknowledge-cb"
+          onchange="window.handleBatchAcknowledgeToggle(this.checked)"
+          class="w-4 h-4 mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600 dark:bg-slate-900">
+        <span class="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+          Confirmo haber auditado el cumplimiento pedagógico de las asignaturas del semestre y emito el visado en lote con plena validez institucional.
+        </span>
+      </label>
+    </div>
+
+    <!-- Digital Signature Footer -->
+    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+        <span>Firmado por: <strong class="text-slate-700 dark:text-slate-300">Lic. Mariana Rios Vargas</strong></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="window.closeBatchEndorsementModal()" type="button" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button
+          id="modal-batch-submit-btn"
+          onclick="window.submitBatchEndorsement()"
+          disabled
+          type="button"
+          class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="check-check" class="w-4 h-4"></i>
+          <span>Certificar Semestre</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
 
   <!-- Complete Interactive Scripts -->
   

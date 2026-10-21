@@ -43,3 +43,20 @@ export interface ScuPacModel {
   creadoEn?: string;
   actualizadoEn?: string;
 }
+
+export interface ScuPacBatchReviewRequest {
+  carreraId?: string | number;
+  gestionId?: number;
+  semestre?: number;
+  pacIds?: number[];
+  observaciones?: string;
+}
+
+export interface ScuPacBatchReviewResponse {
+  totalReviewed: number;
+  approvedIds: number[];
+  carreraId?: string | number;
+  semestre?: number;
+  revisadoPor: string;
+  revisadoEn: string;
+}

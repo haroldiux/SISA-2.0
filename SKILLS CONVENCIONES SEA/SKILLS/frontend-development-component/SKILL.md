@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development: Component Development
+name: frontend-development-component
 description: Rules and guidelines for Component Development in the frontend project.
 ---
 

@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 /**
  * Command for exporting official Programa Analitico to formatted Word DOCX document stream.
  *
@@ -28,23 +30,41 @@ public class ScuExportProgramaDocxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long asignacionId) {
-        return execute(asignacionId, null);
+        return execute(asignacionId, null, null);
     }
 
     @Transactional(readOnly = true)
     public byte[] execute(Long asignacionId, Long carreraId) {
-        ProgramaAnalitico programa = this.programaRepository.findByAsignacionId(asignacionId)
-                .or(() -> this.programaRepository.findById(asignacionId))
-                .orElseGet(() -> {
-                    ProgramaAnalitico stub = new ProgramaAnalitico();
-                    stub.setCaracterizacion("La asignatura proporciona los fundamentos teóricos y metodológicos institucionales.");
-                    stub.setMacroCompetencia("Desarrolla habilidades profesionales aplicando estándares normativos y éticos.");
-                    stub.setSistemaEvaluacion("Evaluación continua, formativa y sumativa conforme a reglamento.");
-                    return stub;
-                });
+        return execute(asignacionId, carreraId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long asignacionId, Long carreraId, Map<String, String> meta) {
+        ProgramaAnalitico programa = null;
+        if (asignacionId != null && asignacionId > 0) {
+            programa = this.programaRepository.findByAsignacionId(asignacionId)
+                    .or(() -> this.programaRepository.findById(asignacionId))
+                    .orElse(null);
+        }
+
+        if (programa == null) {
+            programa = new ProgramaAnalitico();
+            programa.setCaracterizacion("");
+            programa.setMacroCompetencia("");
+            programa.setSistemaEvaluacion("");
+        }
 
         try {
-            return this.officeTemplateService.exportProgramaDocx(programa, carreraId);
+            return this.officeTemplateService.exportProgramaDocx(programa, carreraId, meta);
+        } catch (Exception e) {
+            throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Word del Programa Analítico: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] executeFromModel(ProgramaAnalitico programa, Long carreraId, Map<String, String> meta) {
+        try {
+            return this.officeTemplateService.exportProgramaDocx(programa, carreraId, meta);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Word del Programa Analítico: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }

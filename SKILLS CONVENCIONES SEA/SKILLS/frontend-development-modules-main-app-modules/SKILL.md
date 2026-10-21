@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development-modules: Main App Modules Development
+name: frontend-development-modules-main-app-modules
 description: Rules and guidelines for Main App Modules Development in the frontend project.
 ---
 

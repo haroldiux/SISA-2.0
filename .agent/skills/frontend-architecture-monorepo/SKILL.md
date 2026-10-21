@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Architecture: Monorepo Angular
+name: frontend-architecture-monorepo
 description: Rules and guidelines for Monorepo Angular in the frontend project.
 ---
 

@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Cmd: /init-project:monorepo
+name: frontend-cmd-init-project
 description: Scaffolding instructions and command reference for /init-project:monorepo in the frontend project.
 ---
 

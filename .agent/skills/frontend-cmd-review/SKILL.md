@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Cmd: /project:review
+name: frontend-cmd-review
 description: Scaffolding instructions and command reference for /project:review in the frontend project.
 ---
 

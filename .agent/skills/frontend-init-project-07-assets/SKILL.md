@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 7: Assets — i18n y estilos globales
-description: Rules and guidelines for PASO 7: Assets — i18n y estilos globales in the frontend project.
+name: frontend-init-project-07-assets
+description: "Rules and guidelines for PASO 7: Assets — i18n y estilos globales in the frontend project."
 ---
 
 # PASO 7: Assets — i18n y estilos globales

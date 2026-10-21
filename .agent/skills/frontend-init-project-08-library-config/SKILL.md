@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 8: Configuración de la librería
-description: Rules and guidelines for PASO 8: Configuración de la librería in the frontend project.
+name: frontend-init-project-08-library-config
+description: "Rules and guidelines for PASO 8: Configuración de la librería in the frontend project."
 ---
 
 # PASO 8: Configuración de la librería

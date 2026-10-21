@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - State: NGXS State Management
+name: frontend-state-ngxs-pattern
 description: Rules and guidelines for NGXS State Management in the frontend project.
 ---
 

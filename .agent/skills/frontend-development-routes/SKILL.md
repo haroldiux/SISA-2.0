@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development: Routes Development
+name: frontend-development-routes
 description: Rules and guidelines for Routes Development in the frontend project.
 ---
 

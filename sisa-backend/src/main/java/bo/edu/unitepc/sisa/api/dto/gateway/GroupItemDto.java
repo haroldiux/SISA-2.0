@@ -48,10 +48,16 @@ public record GroupItemDto(
         Integer enrolledStudentsCount,
 
         @JsonAlias({"schedules"})
-        java.util.List<ScheduleSlotDto> schedules
+        java.util.List<ScheduleSlotDto> schedules,
+
+        @JsonAlias({"groupLinkId"})
+        String groupLinkId,
+
+        @JsonAlias({"isLead"})
+        Boolean isLead
 ) {
     public GroupItemDto(String id, String name, String classType, String teacherName, String teacherCi, String classroom, String schedule, String campus, Integer enrolledStudentsCount) {
-        this(id, name, classType, teacherName, teacherCi, classroom, schedule, campus, null, null, null, enrolledStudentsCount, java.util.Collections.emptyList());
+        this(id, name, classType, teacherName, teacherCi, classroom, schedule, campus, null, null, null, enrolledStudentsCount, java.util.Collections.emptyList(), null, null);
     }
 
     public GroupItemDto {

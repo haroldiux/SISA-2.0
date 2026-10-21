@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 10: Módulo Welcome de la librería
-description: Rules and guidelines for PASO 10: Módulo Welcome de la librería in the frontend project.
+name: frontend-init-project-10-library-welcome
+description: "Rules and guidelines for PASO 10: Módulo Welcome de la librería in the frontend project."
 ---
 
 # PASO 10: Módulo Welcome de la librería

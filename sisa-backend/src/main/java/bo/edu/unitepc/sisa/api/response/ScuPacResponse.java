@@ -27,6 +27,12 @@ import java.util.Map;
 public class ScuPacResponse {
     private Long id;
     private Long asignacionId;
+    private String codigoAsignatura;
+    private String nombreAsignatura;
+    private Long docenteId;
+    private String docenteNombre;
+    private String docenteCi;
+    private Integer semestre;
     private EstadoPlanificacion estado;
     @Builder.Default
     private Map<String, Object> seccionesIdentificacion = new HashMap<>();
@@ -40,6 +46,7 @@ public class ScuPacResponse {
     private Long revisadoPorId;
     private String revisadoPorNombre;
     private OffsetDateTime revisadoEn;
+    private Integer matriz7Count;
     @Builder.Default
     private List<ScuSesionMatriz7Dto> matriz7 = new ArrayList<>();
     private OffsetDateTime creadoEn;

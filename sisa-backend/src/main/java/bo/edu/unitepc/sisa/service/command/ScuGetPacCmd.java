@@ -62,9 +62,19 @@ public class ScuGetPacCmd {
                         .build())
                 .collect(Collectors.toList());
 
+        var asig = p.getAsignacion();
+        var materia = asig != null ? asig.getAsignatura() : null;
+        var docente = asig != null ? asig.getDocente() : null;
+
         return ScuPacResponse.builder()
                 .id(p.getId())
-                .asignacionId(p.getAsignacion().getId())
+                .asignacionId(asig != null ? asig.getId() : null)
+                .codigoAsignatura(materia != null ? materia.getCodigo() : null)
+                .nombreAsignatura(materia != null ? materia.getNombre() : null)
+                .semestre(materia != null ? materia.getSemestre() : null)
+                .docenteId(docente != null ? docente.getId() : null)
+                .docenteNombre(docente != null ? docente.getNombreCompleto() : null)
+                .docenteCi(docente != null ? docente.getCi() : null)
                 .estado(p.getEstado())
                 .seccionesIdentificacion(p.getSeccionesIdentificacion())
                 .estrategiasMetodologicas(p.getEstrategiasMetodologicas())
@@ -74,6 +84,7 @@ public class ScuGetPacCmd {
                 .revisadoPorId(p.getRevisadoPor() != null ? p.getRevisadoPor().getId() : null)
                 .revisadoPorNombre(p.getRevisadoPor() != null ? p.getRevisadoPor().getNombreCompleto() : null)
                 .revisadoEn(p.getRevisadoEn())
+                .matriz7Count(p.getSesiones() != null ? p.getSesiones().size() : 0)
                 .matriz7(sDtos)
                 .creadoEn(p.getCreadoEn())
                 .actualizadoEn(p.getActualizadoEn())

@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Deployment: Library Packaging & Deployment
+name: frontend-deployment-library-packaging
 description: Rules and guidelines for Library Packaging & Deployment in the frontend project.
 ---
 

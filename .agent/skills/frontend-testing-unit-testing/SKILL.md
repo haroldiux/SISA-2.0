@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Testing: Unit Testing
+name: frontend-testing-unit-testing
 description: Rules and guidelines for Unit Testing in the frontend project.
 ---
 

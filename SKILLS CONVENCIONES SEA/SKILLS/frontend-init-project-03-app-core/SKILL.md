@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 3: Core de la aplicación principal
-description: Rules and guidelines for PASO 3: Core de la aplicación principal in the frontend project.
+name: frontend-init-project-03-app-core
+description: "Rules and guidelines for PASO 3: Core de la aplicación principal in the frontend project."
 ---
 
 # PASO 3: Core de la aplicación principal

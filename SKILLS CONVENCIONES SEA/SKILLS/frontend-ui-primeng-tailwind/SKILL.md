@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Ui: PrimeNG + TailwindCSS PrimeUI
+name: frontend-ui-primeng-tailwind
 description: Rules and guidelines for PrimeNG + TailwindCSS PrimeUI in the frontend project.
 ---
 

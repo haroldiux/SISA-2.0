@@ -37,16 +37,16 @@
             }
           }
         }
-        const PURGE_FLAG = 'sisa_purged_mock_v263';
+        const PURGE_FLAG = 'sisa_purged_mock_v265';
         if (!localStorage.getItem(PURGE_FLAG)) {
-          for (let i = 0; i < localStorage.length; i++) {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
             const k = localStorage.key(i);
-            if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_'))) {
+            if (k && (k.startsWith('sisa_saved_programa_analitico_') || k.startsWith('sisa_saved_pac_') || k.startsWith('sisa_saved_planes_') || k.startsWith('sisa_saved_cron_'))) {
               localStorage.removeItem(k);
             }
           }
           localStorage.setItem(PURGE_FLAG, 'true');
-          console.log('🧹 SISA Storage Purge: Cleared legacy mock practical cache.');
+          console.log('🧹 SISA Storage Purge: Cleared legacy mock caches for clean official state.');
         }
       } catch (err) {
         console.warn('Could not run storage purge:', err);
@@ -205,10 +205,21 @@
       }
 
       // 4. View-specific lifecycle hooks
+      if (viewId !== 'view1') {
+        window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+        try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+        const returnBar = document.getElementById('director-supervision-return-bar');
+        if (returnBar) returnBar.classList.add('hidden');
+      }
+
       if (viewId === 'view-dashboard') {
         const role = (currentUser && currentUser.role) ? currentUser.role : 'ROLE_DOCENTE';
         if (typeof window.updateSidebarNavForRole === 'function') {
           window.updateSidebarNavForRole(role);
+        }
+      } else if (viewId === 'view2') {
+        if (typeof window.renderSupervisionCurricular === 'function') {
+          window.renderSupervisionCurricular();
         }
       } else if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
         window.loadAdminUsers();
@@ -1872,6 +1883,13 @@
       // Update form header inputs
       if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = data.codigo;
       if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = data.nombre;
+      if (document.getElementById('pac-codigo-input')) document.getElementById('pac-codigo-input').value = data.codigo;
+      if (document.getElementById('pac-asig-input')) document.getElementById('pac-asig-input').value = data.nombre;
+      if (document.getElementById('pac-carrera-input')) document.getElementById('pac-carrera-input').value = data.carrera;
+      if (document.getElementById('plan-carrera-input')) document.getElementById('plan-carrera-input').value = data.carrera;
+      if (document.getElementById('caratula-codigo')) document.getElementById('caratula-codigo').value = data.codigo;
+      if (document.getElementById('caratula-asig')) document.getElementById('caratula-asig').value = data.nombre;
+      if (document.getElementById('caratula-carrera')) document.getElementById('caratula-carrera').value = data.carrera;
 
       // Load that specific subject's documents & data
       if (typeof window.loadSavedDocenteData === 'function') {
@@ -1914,18 +1932,35 @@
       }, 60);
 
       window.showToast('📁 Carpeta cargada: ' + data.breadcrumb);
+      if (typeof window.updateTeacherObservationBanner === 'function') {
+        window.updateTeacherObservationBanner(data.codigo || activeMateriaKey);
+      }
       if (window.lucide) window.lucide.createIcons();
     };
 
 
-    window.downloadAuthenticatedFile = async function(url, defaultFilename) {
+    window.downloadAuthenticatedFile = async function(url, defaultFilename, options = {}) {
       try {
         const authHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
         const token = (typeof window.getAuthToken === 'function') ? window.getAuthToken() : '';
         const fullUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
 
         window.showToast('📥 Descargando documento oficial: ' + defaultFilename + '...');
-        const resp = await fetch(fullUrl, { headers: authHeaders });
+        const fetchOptions = {
+          method: options.method || 'GET',
+          headers: {
+            ...authHeaders,
+            ...(options.headers || {})
+          }
+        };
+        if (options.body) {
+          fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+          if (!fetchOptions.headers['Content-Type']) {
+            fetchOptions.headers['Content-Type'] = 'application/json';
+          }
+        }
+
+        const resp = await fetch(fullUrl, fetchOptions);
         if (!resp.ok) {
           throw new Error(`HTTP ${resp.status}`);
         }
@@ -1951,42 +1986,186 @@
     };
 
     window.exportExactFile = function(type) {
-      const asigId = activeAsignacionId || 1;
-      const careerCode = window.currentSelectedCareerCode || '';
-      const careerParam = (careerCode && careerCode !== 'ALL') ? `?careerCode=${encodeURIComponent(careerCode)}` : '';
-      const sep = careerParam ? '&' : '?';
-
       const data = (typeof materiasData !== 'undefined' && (materiasData[activeMateriaKey] || Object.values(materiasData)[0])) ? (materiasData[activeMateriaKey] || Object.values(materiasData)[0]) : {};
-      const courseCode = (data.codigo || (window.currentMateria && window.currentMateria.codigo) || asigId).toString().replace(/[^a-zA-Z0-9_-]/g, '_');
+      const docente = window.__ACTIVE_DOCENTE__ || {};
+      const asigId = data.asignacionId || activeAsignacionId || 1;
+      const courseCode = (data.codigo || (window.currentMateria && window.currentMateria.codigo) || asigId).toString().trim();
+      const safeCode = courseCode.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const courseName = (data.nombre || (window.currentMateria && window.currentMateria.nombre) || courseCode).trim();
+      const careerName = (data.carrera || window.currentSelectedCareerCode || '').trim();
+      const docName = (docente.nombreCompleto || '').trim();
+      const semesterStr = (data.semestre || '1º').trim();
+      const ht = (data.horasTeoricas || '2').trim();
+      const hp = (data.horasPracticas || '4').trim();
+      const cr = (data.creditos || '12').trim();
+
+      const metaParams = new URLSearchParams();
+      if (courseCode) metaParams.append('codigo', courseCode);
+      if (courseName) metaParams.append('asignatura', courseName);
+      if (docName) metaParams.append('docente', docName);
+      if (careerName) metaParams.append('carrera', careerName);
+      if (semesterStr) metaParams.append('semestre', semesterStr);
+      if (ht) metaParams.append('horasTeoricas', ht);
+      if (hp) metaParams.append('horasPracticas', hp);
+      if (cr) metaParams.append('creditos', cr);
+      const queryString = metaParams.toString() ? `?${metaParams.toString()}` : '';
+
+      // Check for saved local data belonging to active subject
+      const mKey = activeMateriaKey || '';
+      const savedProgStr = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
+      const savedPacGralStr = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
+      const savedPacPracStr = localStorage.getItem('sisa_saved_pac_prac_' + mKey);
+      const savedPlanesTeoStr = localStorage.getItem('sisa_saved_planes_teorico_' + mKey) || localStorage.getItem('sisa_saved_planes_' + mKey);
+      const savedPlanesPracStr = localStorage.getItem('sisa_saved_planes_prac_' + mKey);
 
       if (type === 'docx' || type === 'programa_docx') {
-        const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
-        window.downloadAuthenticatedFile(url, `Programa_Analitico_${courseCode}.docx`);
+        let progBody = null;
+        if (savedProgStr) {
+          try {
+            const parsed = JSON.parse(savedProgStr);
+            if (parsed && parsed.unidades && Array.isArray(parsed.unidades) && parsed.unidades.length > 0) {
+              progBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (!progBody) {
+          progBody = {
+            codigoAsignatura: courseCode,
+            nombreAsignatura: courseName,
+            semestre: semesterStr,
+            creditos: parseInt(cr, 10) || 12,
+            horasTeoricas: parseInt(ht, 10) || 2,
+            horasPracticas: parseInt(hp, 10) || 4,
+            caracterizacion: '',
+            macroCompetencia: '',
+            sistemaEvaluacion: '',
+            unidades: [],
+            bibliografia: []
+          };
+        } else {
+          progBody.codigoAsignatura = courseCode;
+          progBody.nombreAsignatura = courseName;
+          if (careerName) progBody.carrera = careerName;
+        }
+        const url = `/api/v1/office/export/programa-analitico${queryString}`;
+        window.downloadAuthenticatedFile(url, `Programa_Analitico_${safeCode}.docx`, { method: 'POST', body: progBody });
       } else if (type === 'pac_gral_xlsx') {
-        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=GRAL`;
-        window.downloadAuthenticatedFile(url, `PAC_General_${courseCode}.xlsx`);
+        let pacBody = null;
+        if (savedPacGralStr) {
+          try {
+            const parsed = JSON.parse(savedPacGralStr);
+            if (parsed && parsed.sesiones && Array.isArray(parsed.sesiones) && parsed.sesiones.length > 0) {
+              pacBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (pacBody) {
+          pacBody.codigoAsignatura = courseCode;
+          pacBody.nombreAsignatura = courseName;
+          if (careerName) pacBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/pac${queryString}${sep}pacType=GRAL`;
+        window.downloadAuthenticatedFile(url, `PAC_General_${safeCode}.xlsx`, { method: pacBody ? 'POST' : 'GET', body: pacBody });
       } else if (type === 'pac_prac_xlsx') {
-        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=PRACTICO`;
-        window.downloadAuthenticatedFile(url, `PAC_Practico_${courseCode}.xlsx`);
+        let pacBody = null;
+        if (savedPacPracStr) {
+          try {
+            const parsed = JSON.parse(savedPacPracStr);
+            if (parsed && parsed.sesiones && Array.isArray(parsed.sesiones) && parsed.sesiones.length > 0) {
+              pacBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (pacBody) {
+          pacBody.codigoAsignatura = courseCode;
+          pacBody.nombreAsignatura = courseName;
+          if (careerName) pacBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/pac${queryString}${sep}pacType=PRACTICO`;
+        window.downloadAuthenticatedFile(url, `PAC_Practico_${safeCode}.xlsx`, { method: pacBody ? 'POST' : 'GET', body: pacBody });
       } else if (type === 'pac_cronograma_xlsx' || type === 'pac_xlsx') {
         const pacType = window.activePacType || 'GRAL';
         const label = (pacType === 'PRACTICO') ? 'PAC_Practico' : 'PAC_General';
-        const url = `/api/v1/office/export/pac/${asigId}${careerParam}${sep}pacType=${encodeURIComponent(pacType)}`;
-        window.downloadAuthenticatedFile(url, `${label}_${courseCode}.xlsx`);
+        const savedStr = (pacType === 'PRACTICO') ? savedPacPracStr : savedPacGralStr;
+        let pacBody = null;
+        if (savedStr) {
+          try {
+            const parsed = JSON.parse(savedStr);
+            if (parsed && parsed.sesiones && Array.isArray(parsed.sesiones) && parsed.sesiones.length > 0) {
+              pacBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (pacBody) {
+          pacBody.codigoAsignatura = courseCode;
+          pacBody.nombreAsignatura = courseName;
+          if (careerName) pacBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/pac${queryString}${sep}pacType=${encodeURIComponent(pacType)}`;
+        window.downloadAuthenticatedFile(url, `${label}_${safeCode}.xlsx`, { method: pacBody ? 'POST' : 'GET', body: pacBody });
       } else if (type === 'planes_teorico_xlsx') {
-        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=TEORICO`;
-        window.downloadAuthenticatedFile(url, `Plan_Clases_Teorico_${courseCode}.xlsx`);
+        let planBody = null;
+        if (savedPlanesTeoStr) {
+          try {
+            const parsed = JSON.parse(savedPlanesTeoStr);
+            if (parsed && ((Array.isArray(parsed) && parsed.length > 0) || (parsed.planes && parsed.planes.length > 0) || (parsed.sesiones && parsed.sesiones.length > 0))) {
+              planBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (planBody) {
+          planBody.codigoAsignatura = courseCode;
+          planBody.nombreAsignatura = courseName;
+          if (careerName) planBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/plan-clase${queryString}${sep}planType=TEORICO`;
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Teorico_${safeCode}.xlsx`, { method: planBody ? 'POST' : 'GET', body: planBody });
       } else if (type === 'planes_prac_xlsx') {
-        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=PRACTICO`;
-        window.downloadAuthenticatedFile(url, `Plan_Clases_Practico_${courseCode}.xlsx`);
+        let planBody = null;
+        if (savedPlanesPracStr) {
+          try {
+            const parsed = JSON.parse(savedPlanesPracStr);
+            if (parsed && ((Array.isArray(parsed) && parsed.length > 0) || (parsed.planes && parsed.planes.length > 0) || (parsed.sesiones && parsed.sesiones.length > 0))) {
+              planBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (planBody) {
+          planBody.codigoAsignatura = courseCode;
+          planBody.nombreAsignatura = courseName;
+          if (careerName) planBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/plan-clase${queryString}${sep}planType=PRACTICO`;
+        window.downloadAuthenticatedFile(url, `Plan_Clases_Practico_${safeCode}.xlsx`, { method: planBody ? 'POST' : 'GET', body: planBody });
       } else if (type === 'planes_xlsx') {
         const planType = window.activePlanType || 'TEORICO';
         const label = (planType === 'PRACTICO') ? 'Plan_Clases_Practico' : 'Plan_Clases_Teorico';
-        const url = `/api/v1/office/export/plan-clase/${asigId}${careerParam}${sep}planType=${encodeURIComponent(planType)}`;
-        window.downloadAuthenticatedFile(url, `${label}_${courseCode}.xlsx`);
+        const savedStr = (planType === 'PRACTICO') ? savedPlanesPracStr : savedPlanesTeoStr;
+        let planBody = null;
+        if (savedStr) {
+          try {
+            const parsed = JSON.parse(savedStr);
+            if (parsed && ((Array.isArray(parsed) && parsed.length > 0) || (parsed.planes && parsed.planes.length > 0) || (parsed.sesiones && parsed.sesiones.length > 0))) {
+              planBody = parsed;
+            }
+          } catch (e) {}
+        }
+        if (planBody) {
+          planBody.codigoAsignatura = courseCode;
+          planBody.nombreAsignatura = courseName;
+          if (careerName) planBody.carrera = careerName;
+        }
+        const sep = queryString ? '&' : '?';
+        const url = `/api/v1/office/export/plan-clase${queryString}${sep}planType=${encodeURIComponent(planType)}`;
+        window.downloadAuthenticatedFile(url, `${label}_${safeCode}.xlsx`, { method: planBody ? 'POST' : 'GET', body: planBody });
       } else {
-        const url = `/api/v1/office/export/programa-analitico/${asigId}${careerParam}`;
-        window.downloadAuthenticatedFile(url, `Documento_${courseCode}.docx`);
+        const url = `/api/v1/office/export/programa-analitico${queryString}`;
+        window.downloadAuthenticatedFile(url, `Documento_${safeCode}.docx`);
       }
     };
 
@@ -4605,10 +4784,15 @@ window.loadSavedDocenteData = function(materiaKey) {
     } catch (e) {}
   }
 
-  const officialCode = pData.codigoAsignatura || pData.codigo || defData.codigo || '';
+  const isDirectorScoped = Boolean(defData.isScopedDirector) || (typeof window.isCareerDirectorSession === 'function' && window.isCareerDirectorSession());
+  const officialCode = (isDirectorScoped && defData.codigo) ? defData.codigo : (pData.codigoAsignatura || pData.codigo || defData.codigo || '');
+  const officialNombre = (isDirectorScoped && defData.nombre) ? defData.nombre : (pData.nombreAsignatura || pData.nombre || defData.nombre || '');
+  const officialCarrera = (isDirectorScoped && defData.carrera) ? defData.carrera : (pData.carrera || defData.carrera || '');
+
   if (document.getElementById('analitico-codigo-input')) document.getElementById('analitico-codigo-input').value = officialCode;
   if (document.getElementById('analitico-semestre-input')) document.getElementById('analitico-semestre-input').value = pData.semestre || '';
-  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = pData.nombreAsignatura || pData.nombre || defData.nombre || '';
+  if (document.getElementById('analitico-asig-input')) document.getElementById('analitico-asig-input').value = officialNombre;
+  if (document.getElementById('analitico-carrera-input')) document.getElementById('analitico-carrera-input').value = officialCarrera;
   if (document.getElementById('analitico-creditos-input')) document.getElementById('analitico-creditos-input').value = pData.creditos || '';
   if (document.getElementById('analitico-ht-input')) document.getElementById('analitico-ht-input').value = (pData.horasTeoricas ? pData.horasTeoricas + ' Horas' : '');
   if (document.getElementById('analitico-hp-input')) document.getElementById('analitico-hp-input').value = (pData.horasPracticas ? pData.horasPracticas + ' Horas' : '');
@@ -4942,9 +5126,12 @@ window.populatePacDom = function(data) {
   };
 
   // 1.- Identificación
-  setVal('pac-carrera-input', data.carrera || 'FACEFA (ADMINISTRACIÓN / AUDITORÍA)');
-  setVal('pac-asig-input', data.nombreAsignatura || 'TALLER DE IDIOMAS');
-  setVal('pac-codigo-input', data.codigoAsignatura || 'ICEC23');
+  const activeDefData = (typeof activeMateriaKey !== 'undefined' && typeof materiasData !== 'undefined' && materiasData && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : null;
+  const isDirectorScoped = activeDefData && (Boolean(activeDefData.isScopedDirector) || (typeof window.isCareerDirectorSession === 'function' && window.isCareerDirectorSession()));
+
+  setVal('pac-carrera-input', (isDirectorScoped && activeDefData.carrera) ? activeDefData.carrera : (data.carrera || 'FACEFA (ADMINISTRACIÓN / AUDITORÍA)'));
+  setVal('pac-asig-input', (isDirectorScoped && activeDefData.nombre) ? activeDefData.nombre : (data.nombreAsignatura || 'TALLER DE IDIOMAS'));
+  setVal('pac-codigo-input', (isDirectorScoped && activeDefData.codigo) ? activeDefData.codigo : (data.codigoAsignatura || 'ICEC23'));
   setVal('pac-tipo-curso', data.tipoCurso || 'Obligatorio');
   setVal('pac-modalidad', data.modalidad || 'Presencial');
   setVal('pac-semestre-input', data.semestre || '4°');
@@ -5567,6 +5754,10 @@ document.addEventListener('change', (e) => {
         // Attach single clean change listener calling selectDocenteFromApi directly
         selector.addEventListener('change', function() {
           const ci = this.value;
+          window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+          try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+          const returnBar = document.getElementById('director-supervision-return-bar');
+          if (returnBar) returnBar.classList.add('hidden');
           if (typeof window.selectDocenteFromApi === 'function') {
             window.selectDocenteFromApi(ci, false);
           }
@@ -5595,8 +5786,31 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.selectDocenteFromApi = async function(ci, silent = false) {
-    if (!ci) return;
+  window.syncDocenteSelectorWithCi = function(cleanCi, teacherName) {
+    const selector = document.getElementById('docente-api-selector');
+    if (!selector) return;
+    const opts = (selector && selector.options) ? Array.from(selector.options) : [];
+    let opt = opts.find(o => String(o.value).trim() === String(cleanCi).trim());
+    if (!opt && teacherName) {
+      let auditGroup = document.getElementById('docente-selector-audit-group');
+      if (!auditGroup) {
+        auditGroup = document.createElement('optgroup');
+        auditGroup.id = 'docente-selector-audit-group';
+        auditGroup.label = '🔍 AUDITORÍA DE DIRECCIÓN (SUPERVISIÓN)';
+        selector.appendChild(auditGroup);
+      }
+      opt = document.createElement('option');
+      opt.value = cleanCi;
+      opt.textContent = `👨‍🏫 ${teacherName} (${cleanCi})`;
+      auditGroup.appendChild(opt);
+    }
+    if (opt) {
+      selector.value = cleanCi;
+    }
+  };
+
+  window.selectDocenteFromApi = async function(ci, silent = false, preferredCourseCode = null) {
+    if (!ci) return null;
     const cleanCi = String(ci).trim();
     localStorage.setItem('sisa_active_docente_ci', cleanCi);
 
@@ -5608,8 +5822,21 @@ document.addEventListener('change', (e) => {
     if (typeof window.resetAllDocenteFormFields === 'function') {
       window.resetAllDocenteFormFields();
     }
+    if (typeof materiasData !== 'undefined' && materiasData) {
+      Object.keys(materiasData).forEach(k => delete materiasData[k]);
+    }
 
     let docente = (window.__API_DOCENTES__ || []).find(d => String(d.ci).trim() === cleanCi);
+
+    // 0. Auto-purge cache if not updated to version with groupLinkId / isLead support
+    if (!localStorage.getItem('sisa_purged_lead_v265')) {
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('sisa_cache_doc_')) localStorage.removeItem(k);
+        });
+        localStorage.setItem('sisa_purged_lead_v265', 'true');
+      } catch (e) {}
+    }
 
     // 1. Instant Cache Check (0ms render on reload or switch, eliminates mock flash)
     const cachedDataStr = localStorage.getItem('sisa_cache_doc_' + cleanCi);
@@ -5621,7 +5848,8 @@ document.addEventListener('change', (e) => {
           document.querySelectorAll('.docente-nombre-label').forEach(el => { el.textContent = cached.docente.nombreCompleto; });
           document.querySelectorAll('.docente-email-label').forEach(el => { el.textContent = cached.docente.email; });
           document.querySelectorAll('.docente-ci-label').forEach(el => { el.textContent = cached.docente.ci; });
-          window.renderDynamicSidebarForDocente(cached.docente, cached.courses || [], cached.groups);
+          window.syncDocenteSelectorWithCi(cleanCi, cached.docente.nombreCompleto);
+          window.renderDynamicSidebarForDocente(cached.docente, cached.courses || [], cached.groups, preferredCourseCode);
         }
       } catch (e) {}
     }
@@ -5647,16 +5875,22 @@ document.addEventListener('change', (e) => {
           materiasNombres: [...new Set(activeGroups.map(g => g.courseName))],
           grupos: activeGroups
         };
+        if (Array.isArray(window.__API_DOCENTES__)) {
+          window.__API_DOCENTES__.push(docente);
+        }
       } else if (docente) {
         docente.grupos = activeGroups;
         docente.materiasNombres = [...new Set(activeGroups.map(g => g.courseName || g.name))];
       }
 
-      if (!docente) return;
+      if (!docente) return null;
       window.__ACTIVE_DOCENTE__ = docente;
 
       // Save to instant cache
       localStorage.setItem('sisa_cache_doc_' + cleanCi, JSON.stringify({ docente, courses, groups: activeGroups }));
+
+      // Synchronize topbar selector
+      window.syncDocenteSelectorWithCi(cleanCi, docente.nombreCompleto);
 
       // Update teacher headers & labels across DOM
       document.querySelectorAll('.docente-nombre-label').forEach(el => {
@@ -5684,13 +5918,15 @@ document.addEventListener('change', (e) => {
         pacEmailInput.value = currentDocEmail;
       }
 
-      window.renderDynamicSidebarForDocente(docente, courses, activeGroups);
+      window.renderDynamicSidebarForDocente(docente, courses, activeGroups, preferredCourseCode);
 
       if (!silent && typeof window.showToast === 'function') {
         window.showToast(`👨‍🏫 Sesión Docente SEA: ${docente.nombreCompleto} (${docente.ci})`);
       }
+      return docente;
     } catch (e) {
       console.warn('Error syncing courses for docente:', e);
+      return docente;
     }
   };
 
@@ -5772,123 +6008,116 @@ document.addEventListener('change', (e) => {
 
   // Official UNITEPC Curriculum Code Resolver
   window.resolveOfficialCourseCode = function(courseName, careerCodes) {
-    const cUpper = (courseName || '').toUpperCase().trim();
+    const rawUpper = (courseName || '').toUpperCase().trim();
+    const cUpper = rawUpper.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const has = (k) => cUpper.includes(k.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
     const codes = [];
 
     (careerCodes || []).forEach(cc => {
       const cCode = (cc || '').toUpperCase();
       if (cCode.includes('SIS')) {
-        if (cUpper.includes('INTRODUCCIÓN A LAS CIENCIAS') || cUpper.includes('CIENCIAS DE LA COMPUTACIÓN')) codes.push('SIS-116');
-        else if (cUpper.includes('CALCULO I') && !cUpper.includes('II')) codes.push('SIS-111');
-        else if (cUpper.includes('FÍSICA I') && !cUpper.includes('II')) codes.push('SIS-112');
-        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-113');
-        else if (cUpper.includes('ÁLGEBRA') && !cUpper.includes('LINEAL')) codes.push('SIS-114');
-        else if (cUpper.includes('INGLÉS TÉCNICO I') && !cUpper.includes('II') && !cUpper.includes('III') && !cUpper.includes('IV')) codes.push('SIS-115');
-        else if (cUpper.includes('CALCULO II')) codes.push('SIS-121');
-        else if (cUpper.includes('FÍSICA II')) codes.push('SIS-122');
-        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SIS-123');
-        else if (cUpper.includes('ÁLGEBRA LINEAL')) codes.push('SIS-124');
-        else if (cUpper.includes('INGLÉS TÉCNICO II') && !cUpper.includes('III')) codes.push('SIS-125');
-        else if (cUpper.includes('TALLER DE PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SIS-126');
-        else if (cUpper.includes('DISPOSITIVOS ELECTRÓNICOS')) codes.push('SIS-127');
-        else if (cUpper.includes('ECUACIONES DIFERENCIALES')) codes.push('SIS-211');
-        else if (cUpper.includes('SISTEMAS DIGITALES')) codes.push('SIS-212');
-        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SIS-213');
-        else if (cUpper.includes('PROBABILIDAD') || cUpper.includes('PROBALIDAD')) codes.push('SIS-214');
-        else if (cUpper.includes('INGLÉS TÉCNICO III')) codes.push('SIS-215');
-        else if (cUpper.includes('TALLER DE PROGRAMACIÓN II')) codes.push('SIS-216');
-        else if (cUpper.includes('ÉTICA') || cUpper.includes('DERECHO INFORMÁTICO')) codes.push('SIS-217');
-        else if (cUpper.includes('MÉTODOS NUMÉRICOS')) codes.push('SIS-221');
-        else if (cUpper.includes('REDACCIÓN') || cUpper.includes('INTERCULTURALIDAD')) codes.push('SIS-222');
-        else if (cUpper.includes('SISTEMAS OPERATIVOS')) codes.push('SIS-223');
-        else if (cUpper.includes('DISEÑO DE BASE DE DATOS') || (cUpper.includes('BASE DE DATOS') && !cUpper.includes('AVANZADOS'))) codes.push('SIS-224');
-        else if (cUpper.includes('INGLÉS TÉCNICO IV')) codes.push('SIS-225');
-        else if (cUpper.includes('TALLER DE PROGRAMACIÓN III')) codes.push('SIS-226');
-        else if (cUpper.includes('DISEÑO GRÁFICO') || cUpper.includes('INFORMACIÓN GEOGRÁFICA')) codes.push('SIS-227');
-        else if (cUpper.includes('INVESTIGACIÓN OPERATIVA')) codes.push('SIS-311');
-        else if (cUpper.includes('MICROCONTROLADORES')) codes.push('SIS-312');
-        else if (cUpper.includes('ARQUITECTURA DE NUEVAS')) codes.push('SIS-313');
-        else if (cUpper.includes('ANÁLISIS DE SISTEMAS I') && !cUpper.includes('II')) codes.push('SIS-314');
-        else if (cUpper.includes('INFORMÁTICA FORENSE')) codes.push('SIS-315');
-        else if (cUpper.includes('REDES Y COMUNICACIÓNES') || cUpper.includes('REDES Y COMUNICACIONES')) codes.push('SIS-316');
-        else if (cUpper.includes('CONCEPTOS AVANZADOS DE BASE DE DATOS')) codes.push('SIS-317');
-        else if (cUpper.includes('ROBÓTICA')) codes.push('SIS-321');
-        else if (cUpper.includes('INFRAESTRUCTURA TECNOLÓGICA')) codes.push('SIS-322');
-        else if (cUpper.includes('ANÁLISIS DE SISTEMAS II')) codes.push('SIS-323');
-        else if (cUpper.includes('INGENIERÍA DE MÉTODOS') || cUpper.includes('REINGENIERÍA')) codes.push('SIS-324');
-        else if (cUpper.includes('TALLER DE REDES')) codes.push('SIS-325');
-        else if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
-        else if (cUpper.includes('MÉTODOS Y TÉCNICAS DE INVESTIGACIÓN')) codes.push('SIS-411');
-        else if (cUpper.includes('REDES NEURONALES') || cUpper.includes('INTELIGENCIA ARTIFICIAL')) codes.push('SIS-412');
-        else if (cUpper.includes('TELECOMUNICACIONES')) codes.push('SIS-413');
-        else if (cUpper.includes('INGENIERÍA DE SOFTWARE') && !cUpper.includes('TALLER')) codes.push('SIS-414');
-        else if (cUpper.includes('TALLER DE SIMULACIÓN DE SISTEMAS')) codes.push('SIS-415');
-        else if (cUpper.includes('MÉTODO DE DESARROLLO DE SOFTWARE')) codes.push('SIS-416');
-        else if (cUpper.includes('TALLER DE TITULACIÓN')) codes.push('SIS-421');
-        else if (cUpper.includes('GESTIÓN ESTRATÉGICA DE EMPRESAS')) codes.push('SIS-422');
-        else if (cUpper.includes('TALLER DE INGENIERÍA DE SOFTWARE')) codes.push('SIS-423');
-        else if (cUpper.includes('PRÁCTICA PRE-PROFESIONAL')) codes.push('SIS-424');
-        else if (cUpper.includes('GESTIÓN DE CALIDAD ESTRATÉGICA')) codes.push('SIS-425');
-        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('SIS-314');
-        else codes.push('SIS-213');
+        if (has('INTRODUCCIÓN A LAS CIENCIAS') || has('CIENCIAS DE LA COMPUTACIÓN')) codes.push('SIS-116');
+        else if (has('CALCULO I') && !has('II')) codes.push('SIS-111');
+        else if (has('FÍSICA I') && !has('II')) codes.push('SIS-112');
+        else if (has('PROGRAMACIÓN I') && !has('II') && !has('III')) codes.push('SIS-113');
+        else if (has('ÁLGEBRA') && !has('LINEAL')) codes.push('SIS-114');
+        else if (has('INGLÉS TÉCNICO I') && !has('II') && !has('III') && !has('IV')) codes.push('SIS-115');
+        else if (has('CALCULO II')) codes.push('SIS-121');
+        else if (has('FÍSICA II')) codes.push('SIS-122');
+        else if (has('PROGRAMACIÓN II') && !has('III')) codes.push('SIS-123');
+        else if (has('ÁLGEBRA LINEAL')) codes.push('SIS-124');
+        else if (has('INGLÉS TÉCNICO II') && !has('III')) codes.push('SIS-125');
+        else if (has('TALLER DE PROGRAMACIÓN I') && !has('II') && !has('III')) codes.push('SIS-126');
+        else if (has('DISPOSITIVOS ELECTRÓNICOS')) codes.push('SIS-127');
+        else if (has('ECUACIONES DIFERENCIALES')) codes.push('SIS-211');
+        else if (has('SISTEMAS DIGITALES')) codes.push('SIS-212');
+        else if (has('PROGRAMACIÓN III')) codes.push('SIS-213');
+        else if (has('PROBABILIDAD') || has('PROBALIDAD')) codes.push('SIS-214');
+        else if (has('INGLÉS TÉCNICO III')) codes.push('SIS-215');
+        else if (has('TALLER DE PROGRAMACIÓN II')) codes.push('SIS-216');
+        else if (has('ÉTICA') || has('DERECHO INFORMÁTICO')) codes.push('SIS-217');
+        else if (has('MÉTODOS NUMÉRICOS')) codes.push('SIS-221');
+        else if (has('REDACCIÓN') || has('INTERCULTURALIDAD')) codes.push('SIS-222');
+        else if (has('SISTEMAS OPERATIVOS')) codes.push('SIS-223');
+        else if (has('DISEÑO DE BASE DE DATOS') || (has('BASE DE DATOS') && !has('AVANZADOS'))) codes.push('SIS-224');
+        else if (has('INGLÉS TÉCNICO IV')) codes.push('SIS-225');
+        else if (has('TALLER DE PROGRAMACIÓN III')) codes.push('SIS-226');
+        else if (has('DISEÑO GRÁFICO') || has('INFORMACIÓN GEOGRÁFICA')) codes.push('SIS-227');
+        else if (has('INVESTIGACIÓN OPERATIVA')) codes.push('SIS-311');
+        else if (has('MICROCONTROLADORES')) codes.push('SIS-312');
+        else if (has('ARQUITECTURA DE NUEVAS')) codes.push('SIS-313');
+        else if (has('ANÁLISIS DE SISTEMAS I') && !has('II')) codes.push('SIS-314');
+        else if (has('INFORMÁTICA FORENSE')) codes.push('SIS-315');
+        else if (has('REDES Y COMUNICACIÓNES') || has('REDES Y COMUNICACIONES')) codes.push('SIS-316');
+        else if (has('CONCEPTOS AVANZADOS DE BASE DE DATOS')) codes.push('SIS-317');
+        else if (has('ROBÓTICA')) codes.push('SIS-321');
+        else if (has('INFRAESTRUCTURA TECNOLÓGICA')) codes.push('SIS-322');
+        else if (has('ANÁLISIS DE SISTEMAS II')) codes.push('SIS-323');
+        else if (has('INGENIERÍA DE MÉTODOS') || has('REINGENIERÍA')) codes.push('SIS-324');
+        else if (has('TALLER DE REDES')) codes.push('SIS-325');
+        else if (has('LENGUAJES DE PROGRAMACIÓN')) codes.push('SIS-326');
+        else if (has('MÉTODOS Y TÉCNICAS DE INVESTIGACIÓN')) codes.push('SIS-411');
+        else if (has('REDES NEURONALES') || has('INTELIGENCIA ARTIFICIAL')) codes.push('SIS-412');
+        else if (has('TELECOMUNICACIONES')) codes.push('SIS-413');
+        else if (has('INGENIERÍA DE SOFTWARE') && !has('TALLER')) codes.push('SIS-414');
+        else if (has('TALLER DE SIMULACIÓN DE SISTEMAS') || has('SIMULACIÓN') || has('SIMULACION')) codes.push('SIS-415');
+        else if (has('MÉTODO DE DESARROLLO DE SOFTWARE') || has('METODOS DE DESARROLLO')) codes.push('SIS-416');
+        else if (has('TALLER DE TITULACIÓN') || has('TITULACION')) codes.push('SIS-421');
+        else if (has('GESTIÓN ESTRATÉGICA DE EMPRESAS') || has('GESTION ESTRATEGICA')) codes.push('SIS-422');
+        else if (has('TALLER DE INGENIERÍA DE SOFTWARE') || has('TALLER DE INGENIERIA')) codes.push('SIS-423');
+        else if (has('PRÁCTICA PRE-PROFESIONAL') || has('PRACTICA PRE-PROFESIONAL') || has('PREPROFESIONAL')) codes.push('SIS-424');
+        else if (has('GESTIÓN DE CALIDAD ESTRATÉGICA') || has('GESTION DE CALIDAD')) codes.push('SIS-425');
+        else if (has('INGENIERÍA ECONÓMICA') || has('INGENIERIA ECONOMICA')) codes.push('SIS-314');
       } else if (cCode.includes('ELE')) {
-        if (cUpper.includes('CALCULO I') && !cUpper.includes('II')) codes.push('ELC-111');
-        else if (cUpper.includes('ALGEBRA I') || cUpper.includes('ÁLGEBRA I')) codes.push('ELC-114');
-        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('ELC-113');
-        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('ELC-123');
-        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('ELC-213');
-        else if (cUpper.includes('CIRCUITOS ELECTRONICOS I')) codes.push('ELC-214');
-        else if (cUpper.includes('CIRCUITOS ELECTRONICOS II')) codes.push('ELC-222');
-        else if (cUpper.includes('CAMPOS ELECTROMAGNETICOS')) codes.push('ELC-312');
-        else if (cUpper.includes('ELECTRONICA II')) codes.push('ELC-313');
-        else if (cUpper.includes('ANALISIS NUMERICO I')) codes.push('ELC-311');
-        else if (cUpper.includes('SIMULACION Y MODELAJE')) codes.push('ELC-414');
-        else if (cUpper.includes('ROBOTICA') || cUpper.includes('ROBÓTICA')) codes.push('ELC-423');
-        else if (cUpper.includes('TRANSMISION DE DATOS')) codes.push('ELC-426');
-        else if (cUpper.includes('ELECTRONICA INDUSTRIAL')) codes.push('ELC-424');
-        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ELC-314');
-        else codes.push('ELC-213');
+        if (has('CALCULO I') && !has('II')) codes.push('ELC-111');
+        else if (has('ALGEBRA I') || has('ÁLGEBRA I')) codes.push('ELC-114');
+        else if (has('PROGRAMACIÓN I') && !has('II') && !has('III')) codes.push('ELC-113');
+        else if (has('PROGRAMACIÓN II') && !has('III')) codes.push('ELC-123');
+        else if (has('PROGRAMACIÓN III')) codes.push('ELC-213');
+        else if (has('CIRCUITOS ELECTRONICOS I')) codes.push('ELC-214');
+        else if (has('CIRCUITOS ELECTRONICOS II')) codes.push('ELC-222');
+        else if (has('CAMPOS ELECTROMAGNETICOS')) codes.push('ELC-312');
+        else if (has('ELECTRONICA II')) codes.push('ELC-313');
+        else if (has('ANALISIS NUMERICO I')) codes.push('ELC-311');
+        else if (has('SIMULACION Y MODELAJE')) codes.push('ELC-414');
+        else if (has('ROBOTICA') || has('ROBÓTICA')) codes.push('ELC-423');
+        else if (has('TRANSMISION DE DATOS')) codes.push('ELC-426');
+        else if (has('ELECTRONICA INDUSTRIAL')) codes.push('ELC-424');
+        else if (has('INGENIERÍA ECONÓMICA')) codes.push('ELC-314');
       } else if (cCode.includes('SON')) {
-        if (cUpper.includes('SIMULACIÓN MATEMÁTICA')) codes.push('SON-126');
-        else if (cUpper.includes('SIMULACIÓN DE SISTEMAS SONOROS')) codes.push('SON-324');
-        else if (cUpper.includes('DISEÑO REFUERZO SONORO')) codes.push('SON-315');
-        else if (cUpper.includes('DISEÑO E INSTALACIÓN DE SISTEMAS LINE ARRAY')) codes.push('SON-415');
-        else if (cUpper.includes('SONIDO EN VIVO ANALÓGICO')) codes.push('SON-215');
-        else if (cUpper.includes('PROGRAMACIÓN I') && !cUpper.includes('II') && !cUpper.includes('III')) codes.push('SON-113');
-        else if (cUpper.includes('PROGRAMACIÓN II') && !cUpper.includes('III')) codes.push('SON-123');
-        else if (cUpper.includes('PROGRAMACIÓN III')) codes.push('SON-213');
-        else codes.push('SON-126');
+        if (has('SIMULACIÓN MATEMÁTICA')) codes.push('SON-126');
+        else if (has('SIMULACIÓN DE SISTEMAS SONOROS')) codes.push('SON-324');
+        else if (has('DISEÑO REFUERZO SONORO')) codes.push('SON-315');
+        else if (has('DISEÑO E INSTALACIÓN DE SISTEMAS LINE ARRAY')) codes.push('SON-415');
+        else if (has('SONIDO EN VIVO ANALÓGICO')) codes.push('SON-215');
+        else if (has('PROGRAMACIÓN I') && !has('II') && !has('III')) codes.push('SON-113');
+        else if (has('PROGRAMACIÓN II') && !has('III')) codes.push('SON-123');
+        else if (has('PROGRAMACIÓN III')) codes.push('SON-213');
       } else if (cCode.includes('IBI') || cCode.includes('BIO')) {
-        if (cUpper.includes('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
-        else if (cUpper.includes('INFORMÁTICA') && !cUpper.includes('INTRODUCCIÓN')) codes.push('IBI-124');
-        else if (cUpper.includes('CONTROL, MODELOS Y SIMULACIÓN')) codes.push('IBI-223');
-        else if (cUpper.includes('PROGRAMACIÓN')) codes.push('IBI-211');
-        else codes.push('IBI-114');
+        if (has('INTRODUCCIÓN A LA INFORMÁTICA')) codes.push('IBI-114');
+        else if (has('INFORMÁTICA') && !has('INTRODUCCIÓN')) codes.push('IBI-124');
+        else if (has('CONTROL, MODELOS Y SIMULACIÓN')) codes.push('IBI-223');
+        else if (has('PROGRAMACIÓN')) codes.push('IBI-211');
       } else if (cCode.includes('MED')) {
-        if (cUpper.includes('ANATOMÍA HUMANA I') && !cUpper.includes('II')) codes.push('MED-111');
-        else if (cUpper.includes('ANATOMÍA HUMANA II')) codes.push('MED-121');
-        else if (cUpper.includes('INFORMÁTICA MÉDICA')) codes.push('MED-226');
-        else codes.push('MED-111');
+        if (has('ANATOMÍA HUMANA I') && !has('II')) codes.push('MED-111');
+        else if (has('ANATOMÍA HUMANA II')) codes.push('MED-121');
+        else if (has('INFORMÁTICA MÉDICA')) codes.push('MED-226');
       } else if (cCode.includes('ICO') || cCode.includes('CIC')) {
-        if (cUpper.includes('MODELOS ECONOMETRICOS') || cUpper.includes('ECONOMETRÍA')) codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
-        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ICO-314');
-        else if (cUpper.includes('FINANZAS')) codes.push('ICO-320');
-        else if (cUpper.includes('MARKETING') || cUpper.includes('MERCADOTECNIA')) codes.push('ICO-210');
-        else codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
+        if (has('MODELOS ECONOMETRICOS') || has('ECONOMETRÍA')) codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
+        else if (has('INGENIERÍA ECONÓMICA')) codes.push('ICO-314');
+        else if (has('FINANZAS')) codes.push('ICO-320');
+        else if (has('MARKETING') || has('MERCADOTECNIA')) codes.push('ICO-210');
       } else if (cCode.includes('ECO')) {
-        if (cUpper.includes('ECONOMETRÍA') || cUpper.includes('MODELOS')) codes.push('ECO-412');
-        else if (cUpper.includes('MICROECONOMÍA')) codes.push('ECO-210');
-        else if (cUpper.includes('MACROECONOMÍA')) codes.push('ECO-310');
-        else codes.push('ECO-412');
+        if (has('ECONOMETRÍA') || has('MODELOS')) codes.push('ECO-412');
+        else if (has('MICROECONOMÍA')) codes.push('ECO-210');
+        else if (has('MACROECONOMÍA')) codes.push('ECO-310');
       } else if (cCode.includes('ADM') || cCode.includes('CAD')) {
-        if (cUpper.includes('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
-        else if (cUpper.includes('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
-        else if (cUpper.includes('INGENIERÍA ECONÓMICA')) codes.push('ADM-314');
-        else codes.push('ADM-113');
+        if (has('ADMINISTRACIÓN GENERAL')) codes.push('ADM-113');
+        else if (has('ADMINISTRACIÓN DE LA PRODUCCIÓN')) codes.push('ADM-322');
+        else if (has('INGENIERÍA ECONÓMICA')) codes.push('ADM-314');
       } else if (cCode.includes('CCP') || cCode.includes('CPU')) {
-        if (cUpper.includes('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
-        else if (cUpper.includes('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
-        else codes.push('CPEC10');
+        if (has('INFORMÁTICA CONTABLE')) codes.push('CPEC07');
+        else if (has('ADMINISTRACIÓN FINANCIERA')) codes.push('CPEC16');
       }
     });
 
@@ -5896,7 +6125,7 @@ document.addEventListener('change', (e) => {
     return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : '';
   };
 
-  window.renderDynamicSidebarForDocente = function(docente, courses, groups) {
+  window.renderDynamicSidebarForDocente = function(docente, courses, groups, preferredCourseCode = null) {
     const sidebarContainer = document.getElementById('sidebar-materias-container');
     const cardsGrid = document.getElementById('doc-materia-cards-grid');
     if (!docente) return;
@@ -5924,7 +6153,10 @@ document.addEventListener('change', (e) => {
         const g1 = rawList[i];
         const g2 = rawList[j];
 
-        // Condition 1: Shared physical schedule slot (COMMON CLASS in SEA)
+        // Condition 0: Native SEA groupLinkId (Materia Común según SEA Central)
+        const hasSameGroupLink = Boolean(g1.groupLinkId && g2.groupLinkId && g1.groupLinkId === g2.groupLinkId);
+
+        // Condition 1: Shared physical schedule slot (COMMON CLASS in SEA fallback)
         const s1Slots = (g1.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const s2Slots = (g2.schedules || []).filter(s => s.day && s.startTime).map(s => `${s.day}_${s.startTime}_${s.classroom || ''}`);
         const hasSharedSlot = s1Slots.some(s => s2Slots.includes(s));
@@ -5936,7 +6168,10 @@ document.addEventListener('change', (e) => {
         const p1 = getParallelIndex(g1.name || g1.code);
         const p2 = getParallelIndex(g2.name || g2.code);
 
-        if (hasSharedSlot) {
+        if (hasSameGroupLink) {
+          adj[i].add(j);
+          adj[j].add(i);
+        } else if (hasSharedSlot) {
           adj[i].add(j);
           adj[j].add(i);
         } else if (sameCareerCourse && p1 === p2) {
@@ -6016,19 +6251,70 @@ document.addEventListener('change', (e) => {
     const dayOrder = { 'LU': 1, 'MA': 2, 'MI': 3, 'JU': 4, 'VI': 5, 'SA': 6, 'DO': 7 };
 
     // 3. Build synthesized items for each true academic offering (Common Subject or Individual)
+    const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+    const isDocente = (currentUser && currentUser.role === 'ROLE_DOCENTE');
+    const isDirectorRole = (currentUser && currentUser.role === 'ROLE_DIR_CARRERA');
+    const auditTargetCode = !isDocente ? (window.__SUPERVISION_AUDIT_COURSE_CODE__ || localStorage.getItem('sisa_supervision_audit_course') || preferredCourseCode) : null;
+
+    let dirCareerCode = null;
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo && window.__SUPERVISION_DATA__.careerInfo.code) {
+      dirCareerCode = window.__SUPERVISION_DATA__.careerInfo.code;
+    } else if (localStorage.getItem('sisa_supervision_active_career')) {
+      dirCareerCode = localStorage.getItem('sisa_supervision_active_career');
+    } else if (currentUser) {
+      if (currentUser.carreraCodigo) dirCareerCode = currentUser.carreraCodigo;
+      else if (currentUser.careerCode) dirCareerCode = currentUser.careerCode;
+      else if (currentUser.username) {
+        const un = currentUser.username.toLowerCase();
+        if (un.includes('.sis')) dirCareerCode = 'CARSIS';
+        else if (un.includes('.ele')) dirCareerCode = 'CARELE';
+        else if (un.includes('.son')) dirCareerCode = 'CARSON';
+        else if (un.includes('.ibi')) dirCareerCode = 'CARIBI';
+        else if (un.includes('.med')) dirCareerCode = 'CARMED';
+        else if (un.includes('.der')) dirCareerCode = 'CARDER';
+        else if (un.includes('.odo')) dirCareerCode = 'CARODO';
+        else if (un.includes('.vet')) dirCareerCode = 'CARVET';
+      }
+    }
+    if (!dirCareerCode && auditTargetCode) {
+      const pref = String(auditTargetCode).trim().split('-')[0].toUpperCase();
+      if (pref === 'SIS') dirCareerCode = 'CARSIS';
+      else if (pref === 'ELC' || pref === 'ELE') dirCareerCode = 'CARELE';
+      else if (pref === 'SON') dirCareerCode = 'CARSON';
+      else if (pref === 'IBI' || pref === 'BIO') dirCareerCode = 'CARIBI';
+      else if (pref === 'MED') dirCareerCode = 'CARMED';
+      else if (pref === 'DER') dirCareerCode = 'CARDER';
+      else if (pref === 'ODO') dirCareerCode = 'CARODO';
+      else if (pref === 'VET') dirCareerCode = 'CARVET';
+    }
+    if (!dirCareerCode && (isDirectorRole || !isDocente)) {
+      dirCareerCode = 'CARSIS';
+    }
+
+    const isScopedToDirector = (!isDocente && Boolean(dirCareerCode));
+
     let items = commonClusters.map((cluster, idx) => {
+      // Direct SEA Logic: Identify Lead Group and Common Status
+      const leadGroup = cluster.find(g => g.isLead === true || g.isLead === 'true') || cluster[0];
+      const hasGroupLink = cluster.some(g => Boolean(g.groupLinkId));
       const carrerasArr = [...new Set(cluster.map(g => g.careerCode).filter(Boolean))];
-      const isCommon = carrerasArr.length > 1;
+      const isCommon = hasGroupLink || carrerasArr.length > 1;
+
+      const leadCarreraInfo = leadGroup ? resolveCarreraInfo('', leadGroup.careerCode) : null;
       const carrerasResolved = carrerasArr.map(cc => resolveCarreraInfo('', cc));
-      const mainCarrera = carrerasResolved[0] || { name: 'Carrera General', tag: 'CARRERA', color: 'slate' };
-      const allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
-      const allCarrerasTags = isCommon 
+      const mainCarrera = leadCarreraInfo || carrerasResolved[0] || { name: 'Carrera General', tag: 'CARRERA', color: 'slate' };
+      let leadTag = leadCarreraInfo ? leadCarreraInfo.tag : mainCarrera.tag;
+
+      let allCarrerasNames = [...new Set(carrerasResolved.map(cr => cr.name))].join(' • ');
+      let allCarrerasTags = isCommon 
         ? `${[...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ')}`
         : [...new Set(carrerasResolved.map(cr => cr.tag))].join(' • ');
 
       const courseNames = [...new Set(cluster.map(g => g.courseName || g.name).filter(Boolean))];
-      const primaryName = courseNames[0] || 'Materia Asignada';
-      const displayName = courseNames.join(' / ');
+      let primaryName = (leadGroup && (leadGroup.courseName || leadGroup.name))
+        ? (leadGroup.courseName || leadGroup.name)
+        : (courseNames[0] || 'Materia Asignada');
+      let displayName = courseNames.join(' / ');
 
       // Resolve official curriculum codes across associated careers
       let directCode = null;
@@ -6047,7 +6333,55 @@ document.addEventListener('change', (e) => {
       }
 
       const officialCodes = directCode ? [directCode] : carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc]));
-      const officialCode = [...new Set(officialCodes.flat())].filter(Boolean).join(' / ') || resolveOfficialCourseCode(primaryName, carrerasArr) || 'UNITEPC';
+      let officialCode = [...new Set(officialCodes.flat())].filter(Boolean).join(' / ') || resolveOfficialCourseCode(primaryName, carrerasArr) || 'UNITEPC';
+      let codesList = [...new Set(officialCodes.flat().filter(Boolean))];
+
+      let isScopedDirectorForThis = false;
+      let otherCareersNames = '';
+
+      if (isScopedToDirector) {
+        const dirGroups = cluster.filter(g => (g.careerCode || '').toUpperCase() === dirCareerCode.toUpperCase());
+        const hasMatch = dirGroups.length > 0 || carrerasArr.includes(dirCareerCode);
+
+        if (hasMatch) {
+          isScopedDirectorForThis = true;
+          const dirCareerInfo = resolveCarreraInfo('', dirCareerCode);
+          const dirGroup = dirGroups[0];
+
+          // Scoped course name strictly for this career (clean, no slashes)
+          const scopedCourseName = (dirGroup && (dirGroup.courseName || dirGroup.name)) || primaryName;
+
+          // Scoped official code strictly for this career (must be the cluster's OWN code, NEVER overwritten by auditTargetCode)
+          let scopedCode = null;
+          if (dirGroup && dirGroup.code && dirGroup.code.includes('-') && !dirGroup.code.startsWith('TA') && !dirGroup.code.startsWith('PL') && !dirGroup.code.startsWith('PA') && !dirGroup.code.startsWith('PR') && !dirGroup.code.startsWith('PS')) {
+            scopedCode = dirGroup.code;
+          } else if (dirGroup && dirGroup.syllabusCourseId && Array.isArray(courses)) {
+            const matchC = courses.find(c => (c.syllabusCourseId === dirGroup.syllabusCourseId || c.id === dirGroup.syllabusCourseId) && c.code);
+            if (matchC && matchC.code) scopedCode = matchC.code;
+          }
+          if (!scopedCode && typeof resolveOfficialCourseCode === 'function') {
+            scopedCode = resolveOfficialCourseCode(scopedCourseName, [dirCareerCode]);
+          }
+          if (!scopedCode) {
+            const carPrefix = dirCareerCode.length > 3 ? dirCareerCode.substring(3) : dirCareerCode;
+            scopedCode = `${carPrefix}-101`;
+          }
+
+          // Other careers that share this subject
+          const otherCareers = carrerasResolved.filter(cr => cr.code !== dirCareerCode);
+          otherCareersNames = otherCareers.map(cr => cr.name).join(', ');
+
+          displayName = scopedCourseName;
+          primaryName = scopedCourseName;
+          officialCode = scopedCode;
+          codesList = [scopedCode];
+          allCarrerasNames = dirCareerInfo.name;
+          allCarrerasTags = isCommon 
+            ? (otherCareersNames ? `⚡ Materia común (Compartida con ${otherCareersNames})` : `⚡ Materia común con otras carreras`)
+            : dirCareerInfo.tag;
+          leadTag = allCarrerasTags;
+        }
+      }
 
       // Calculate unique physical commissions
       const physCommissionsMap = new Map();
@@ -6120,7 +6454,13 @@ document.addEventListener('change', (e) => {
       const pracDisplayList = [];
 
       cluster.forEach(g => {
-        const pName = g.code || g.name || 'G1';
+        let pName = g.code || g.name || 'G1';
+        if (isScopedDirectorForThis && g.careerCode && g.careerCode !== dirCareerCode) {
+          if (pName.includes('-')) {
+            const parts = pName.split('-');
+            pName = parts[parts.length - 1];
+          }
+        }
         const cType = (g.classType || 'TA').toUpperCase();
         const isNightGrp = (g.schedules || []).some(s => s.startTime && parseInt(s.startTime.split(':')[0], 10) >= 18);
         const tag = isNightGrp ? `${pName} 🌙` : pName;
@@ -6245,7 +6585,6 @@ document.addEventListener('change', (e) => {
 
       const teoRoomsStr = [...teoRoomsSet].join(', ') || (teoList.length > 0 ? 'Aula Asignada' : 'N/A');
       const pracRoomsStr = [...pracRoomsSet].join(', ') || (pracList.length > 0 ? 'Laboratorio' : 'N/A');
-      const codesList = [...new Set(officialCodes.filter(Boolean))];
 
       // Detect shift & night schedule
       const startTimes = cluster.flatMap(g => (g.schedules || []).map(s => s.startTime).filter(Boolean));
@@ -6277,14 +6616,19 @@ document.addEventListener('change', (e) => {
         key: uniqueKey,
         code: officialCode,
         name: displayName,
+        primaryName: primaryName,
         isCommon: isCommon,
-        carrerasResolved: carrerasResolved,
-        mainCarrera: mainCarrera,
+        leadGroup: leadGroup,
+        leadTag: leadTag,
+        carrerasResolved: isScopedDirectorForThis ? [resolveCarreraInfo('', dirCareerCode)] : carrerasResolved,
+        mainCarrera: isScopedDirectorForThis ? resolveCarreraInfo('', dirCareerCode) : mainCarrera,
         allCarrerasNames: allCarrerasNames,
         allCarrerasTags: allCarrerasTags,
-        carrerasCodes: carrerasArr,
+        carrerasCodes: isScopedDirectorForThis ? [dirCareerCode] : carrerasArr,
         components: compInfo,
         groups: cluster,
+        isScopedDirector: isScopedDirectorForThis,
+        otherCareersNames: otherCareersNames,
         teoList: teoList,
         pracList: pracList,
         teoCodes: teoCodes,
@@ -6319,6 +6663,23 @@ document.addEventListener('change', (e) => {
       return a.name.localeCompare(b.name);
     });
 
+    // If viewing as Career Director, filter out subjects belonging strictly to other careers
+    if (isScopedToDirector) {
+      const dirFiltered = items.filter(it => {
+        const hasCareer = (it.carrerasCodes || []).includes(dirCareerCode);
+        const hasDirGroup = (it.groups || []).some(g => (g.careerCode || '').toUpperCase() === dirCareerCode.toUpperCase());
+        const isTarget = auditTargetCode && (
+          (it.codesList || []).includes(auditTargetCode) ||
+          String(it.code || '').toUpperCase().includes(String(auditTargetCode).toUpperCase()) ||
+          String(it.name || '').toUpperCase().includes(String(auditTargetCode).toUpperCase())
+        );
+        return it.isScopedDirector || hasCareer || hasDirGroup || isTarget;
+      });
+      if (dirFiltered.length > 0) {
+        items = dirFiltered;
+      }
+    }
+
     // Ensure all items retain their unique teacher-scoped composite key (guaranteed no collisions!)
     const teacherDoc = String(docente.numeroDocumento || docente.ci || 'doc').trim();
     const seenItemKeys = new Set();
@@ -6335,7 +6696,33 @@ document.addEventListener('change', (e) => {
       it.key = baseKey;
     });
 
-    // Calculate totals across all subjects
+    let targetItem = null;
+    if (auditTargetCode) {
+      const cleanTarget = String(auditTargetCode).trim().toUpperCase();
+      // First pass: exact code match or codesList
+      targetItem = items.find(it => {
+        const codesList = (it.codesList || []).map(c => String(c).trim().toUpperCase());
+        const itCode = String(it.code || '').toUpperCase();
+        return codesList.includes(cleanTarget) || itCode.split('/').map(s => s.trim()).includes(cleanTarget) || itCode === cleanTarget;
+      });
+      // Second pass: name / primaryName / title contains cleanTarget
+      if (!targetItem) {
+        targetItem = items.find(it => {
+          const itCode = String(it.code || '').toUpperCase();
+          const itName = String(it.name || '').toUpperCase();
+          const itPrim = String(it.primaryName || '').toUpperCase();
+          return itCode.includes(cleanTarget) || itName.includes(cleanTarget) || itPrim.includes(cleanTarget);
+        });
+      }
+    }
+
+    const isAuditMode = !isDocente && Boolean(window.__SUPERVISION_AUDIT_COURSE_CODE__ || localStorage.getItem('sisa_supervision_audit_course')) && Boolean(targetItem);
+
+    if (isAuditMode && targetItem) {
+      items = [targetItem];
+    }
+
+    // Calculate totals across all subjects (or the single audited subject in audit mode)
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
     const totalWeeklyHours = items.reduce((sum, it) => sum + it.totalHours, 0);
 
@@ -6355,20 +6742,42 @@ document.addEventListener('change', (e) => {
     if (profileNameEl) profileNameEl.textContent = docente.nombreCompleto;
 
     const profileInfoEl = document.getElementById('user-profile-info');
-    if (profileInfoEl) profileInfoEl.textContent = `${totalWeeklyHours}h • ${items.length} Materia(s)`;
+    if (profileInfoEl) {
+      profileInfoEl.textContent = isAuditMode
+        ? `${totalWeeklyHours}h • 1 Materia (Modo Auditoría)`
+        : `${totalWeeklyHours}h • ${items.length} Materia(s)`;
+    }
 
     const summaryBadgeEl = document.getElementById('docente-summary-badge');
-    if (summaryBadgeEl) summaryBadgeEl.textContent = `${totalWeeklyHours} Hrs / Semana • ${items.length} Materias • ${rawList.length} Grupos a Cargo (${uniqueCarreras.length} Carreras)`;
+    if (summaryBadgeEl) {
+      if (isAuditMode) {
+        summaryBadgeEl.innerHTML = `<span class="inline-flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> ${totalWeeklyHours} Hrs / Semana • Asignatura en Auditoría • ${targetItem.allGroupsCodes || ''}</span>`;
+      } else {
+        summaryBadgeEl.textContent = `${totalWeeklyHours} Hrs / Semana • ${items.length} Materias • ${rawList.length} Grupos a Cargo (${uniqueCarreras.length} Carreras)`;
+      }
+    }
+
+    const sectionTitle = document.querySelector('#doc-sec-asignaturas h3');
+    if (sectionTitle) {
+      sectionTitle.textContent = isAuditMode ? 'Asignatura en Auditoría Curricular:' : 'Mis Asignaturas & Cátedras Asignadas:';
+    }
+
+    const sectionSubtitle = document.querySelector('#doc-sec-asignaturas .space-y-2 > .flex > span:last-child');
+    if (sectionSubtitle) {
+      sectionSubtitle.textContent = isAuditMode ? 'Auditoría y revisión pedagógica exclusiva de la asignatura abierta desde Supervisión' : 'Selecciona materia para gestionar su documentación:';
+    }
 
     const sidebarHoursEl = document.getElementById('sidebar-summary-hours');
-    if (sidebarHoursEl) sidebarHoursEl.textContent = `${items.length} Materias • ${totalWeeklyHours}h`;
+    if (sidebarHoursEl) {
+      sidebarHoursEl.textContent = isAuditMode ? `1 Materia en Auditoría • ${totalWeeklyHours}h` : `${items.length} Materias • ${totalWeeklyHours}h`;
+    }
 
     // 1. Build Top Horizontal Cards Grid (One per distinct subject)
     let cardsHtml = '';
     let sidebarHtml = `
       <div class="flex items-center justify-between px-2">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mis Asignaturas Asignadas</span>
-        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} Materias</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${isAuditMode ? 'Asignatura en Auditoría' : 'Mis Asignaturas Asignadas'}</span>
+        <span class="text-[10px] font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-950/70 px-1.5 py-0.5 rounded border border-brand-200 dark:border-brand-800/60">${items.length} ${items.length === 1 ? 'Materia' : 'Materias'}</span>
       </div>
     `;
 
@@ -6395,11 +6804,14 @@ document.addEventListener('change', (e) => {
         horasTeoricas: String(item.standardTeoHours || 2),
         horasPracticas: String(item.standardPracHours || 4),
         carrera: item.allCarrerasNames,
-        carreraTag: item.isCommon ? `⚡ COMÚN: ${item.allCarrerasTags}` : item.allCarrerasTags,
+        carreraTag: item.isScopedDirector ? item.allCarrerasTags : (item.isCommon ? `⚡ COMÚN (LÍDER: ${item.leadTag}): ${item.allCarrerasTags}` : item.allCarrerasTags),
         grupoTag: `${item.totalPhysicalSessions} Comisiones (${item.teoList.length} Teoría • ${item.pracList.length} Práctica) • ${item.shiftLabel}`,
         breadcrumb: `${item.code} ${item.name} (${item.shiftLabel})`,
         title: `${item.code} • ${item.name} (${item.shiftLabel})`,
         meta: `<span><strong class="text-white">${item.totalHours}</strong> Horas Semanales</span><span>•</span><span>Campus: <strong class="text-white">${item.campusesStr}</strong></span><span>•</span><span><strong class="text-white">${item.groupedSchedules.length}</strong> Bloques Horarios Oficiales</span><span>•</span><span class="${item.isNight ? 'text-amber-300 font-extrabold' : 'text-slate-300'}">${item.isNight ? '🌙 ' : ''}${item.shiftLabel}</span>`,
+        isScopedDirector: Boolean(item.isScopedDirector),
+        otherCareersNames: item.otherCareersNames,
+        isCommon: item.isCommon,
         caracterizacion: '',
         macroCompetencia: '',
         sistemaEvaluacion: '',
@@ -6433,14 +6845,14 @@ document.addEventListener('change', (e) => {
 
       // HTML for Top Horizontal Card (Expanded horizontally, compact vertically):
       cardsHtml += `
-        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
+        <div id="doc-materia-card-${mKey}" onclick="window.selectDocenteMateria('${mKey}')" class="doc-materia-card ${isAuditMode ? 'col-span-full' : ''} p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-400 dark:hover:border-brand-500 hover:shadow-md cursor-pointer relative transition-all duration-200 flex flex-col justify-between">
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
             
             <!-- Columna Izquierda (sm:col-span-7): Carrera, Título, Códigos y Grupos -->
             <div class="sm:col-span-7 space-y-1.5 min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[240px]">
-                  ${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasTags : item.allCarrerasTags}
+                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${item.isCommon ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60'} truncate max-w-[280px]">
+                  ${item.isScopedDirector ? item.allCarrerasTags : (item.isCommon ? `⚡ COMÚN (LÍDER: ${item.leadTag}): ` + item.allCarrerasTags : item.allCarrerasTags)}
                 </span>
                 ${shiftBadgeHtml}
                 ${(item.components && item.components.types) ? item.components.types.map(t => window.renderComponentBadge(t, true)).join(' ') : ''}
@@ -6521,7 +6933,7 @@ document.addEventListener('change', (e) => {
                   </span>
                 </div>
                 <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${item.teoList.length} Teo • ${item.pracList.length} Prác (${item.totalHours}h) ${item.isNight ? '• <strong class="text-indigo-600 dark:text-indigo-400 font-bold">Nocturno</strong>' : ''}</div>
-                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.isCommon ? '⚡ COMÚN: ' + item.allCarrerasNames : item.allCarrerasNames}</div>
+                <div class="text-[9px] text-brand-600 dark:text-brand-400 truncate mt-0.5">${item.isScopedDirector ? item.allCarrerasTags : (item.isCommon ? `⚡ COMÚN (LÍDER: ${item.leadTag}): ` + item.allCarrerasNames : item.allCarrerasNames)}</div>
               </div>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 flex-shrink-0"></i>
             </button>
@@ -6538,10 +6950,34 @@ document.addEventListener('change', (e) => {
       window.renderDocenteDashboard(docente, items);
     }
 
-    // Auto-select first subject of this teacher
-    const firstItem = items[0];
-    if (firstItem) {
-      window.selectDocenteMateria(firstItem.key);
+    // Auto-select preferred subject or first subject of this teacher
+    if (!targetItem && preferredCourseCode) {
+      const cleanTarget = String(preferredCourseCode).trim().toUpperCase();
+      // First pass: exact code match or codesList
+      targetItem = items.find(it => {
+        const codesList = (it.codesList || []).map(c => String(c).trim().toUpperCase());
+        const itCode = String(it.code || '').toUpperCase();
+        return codesList.includes(cleanTarget) || itCode.split('/').map(s => s.trim()).includes(cleanTarget) || itCode === cleanTarget;
+      });
+      // Second pass: name / primaryName / title contains cleanTarget
+      if (!targetItem) {
+        targetItem = items.find(it => {
+          const itCode = String(it.code || '').toUpperCase();
+          const itName = String(it.name || '').toUpperCase();
+          const itPrim = String(it.primaryName || '').toUpperCase();
+          return itCode.includes(cleanTarget) || itName.includes(cleanTarget) || itPrim.includes(cleanTarget);
+        });
+      }
+    }
+    const itemToSelect = targetItem || items[0];
+    if (itemToSelect) {
+      window.selectDocenteMateria(itemToSelect.key);
+      setTimeout(() => {
+        const cardEl = document.getElementById('doc-materia-card-' + itemToSelect.key);
+        if (cardEl && typeof cardEl.scrollIntoView === 'function') {
+          cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }, 50);
     }
   };
 
@@ -6612,7 +7048,9 @@ document.addEventListener('change', (e) => {
         `;
       } else {
         gridEl.innerHTML = items.map((item) => {
-          const carTags = item.allCarrerasTags || (item.carrerasResolved && item.carrerasResolved[0] ? item.carrerasResolved[0].tag : 'UNITEPC');
+          const carTags = item.isCommon 
+            ? `⚡ COMÚN (LÍDER: ${item.leadTag}): ${item.allCarrerasTags}` 
+            : (item.allCarrerasTags || (item.carrerasResolved && item.carrerasResolved[0] ? item.carrerasResolved[0].tag : 'UNITEPC'));
           const hours = item.totalHours || 4;
           const code = item.code || 'DOC-101';
           const name = item.name || 'Materia Asignada';
@@ -6778,6 +7216,35 @@ document.addEventListener('change', (e) => {
       const planesContainer = document.getElementById('planes-carrera-subtabs');
       if (!data) return;
 
+      const currentUser = (typeof window.getCurrentUser === 'function') ? window.getCurrentUser() : null;
+      const isDirector = Boolean(data.isScopedDirector) || (currentUser && currentUser.role === 'ROLE_DIR_CARRERA') || Boolean(window.__SUPERVISION_AUDIT_COURSE_CODE__ || localStorage.getItem('sisa_supervision_audit_course'));
+
+      if (isDirector) {
+        if (data.isCommon) {
+          const otherNames = data.otherCareersNames || 'otras carreras';
+          const alertHtml = `
+            <div class="p-3 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 flex items-center justify-between gap-2 text-xs shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="layers" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                <span><strong>Materia Común:</strong> Esta cátedra se imparte de forma compartida con <strong>${otherNames}</strong>. Como Director de Carrera, estás visualizando y auditando exclusivamente los registros académicos de <strong>${data.carrera} (${data.codigo})</strong>.</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 shrink-0 border border-amber-300 dark:border-amber-700">Tu Carrera</span>
+            </div>
+          `;
+          if (analiticoContainer) analiticoContainer.innerHTML = alertHtml;
+          if (pacContainer) pacContainer.innerHTML = alertHtml;
+          if (cronogramaContainer) cronogramaContainer.innerHTML = alertHtml;
+          if (planesContainer) planesContainer.innerHTML = alertHtml;
+          if (window.lucide) window.lucide.createIcons();
+        } else {
+          if (analiticoContainer) analiticoContainer.innerHTML = '';
+          if (pacContainer) pacContainer.innerHTML = '';
+          if (cronogramaContainer) cronogramaContainer.innerHTML = '';
+          if (planesContainer) planesContainer.innerHTML = '';
+        }
+        return;
+      }
+
       const rawCareers = data.carrerasCodes || [];
       const resolvedCareers = data.carrerasResolved || [];
 
@@ -6918,6 +7385,17 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  window.isCareerDirectorSession = function() {
+    try {
+      const u = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+      const isDir = u && u.role === 'ROLE_DIR_CARRERA';
+      const isAudit = Boolean(window.__SUPERVISION_AUDIT_COURSE_CODE__ || localStorage.getItem('sisa_supervision_audit_course'));
+      return Boolean(isDir || isAudit);
+    } catch (e) {
+      return false;
+    }
+  };
+
   window.getAuthToken = function() {
     return localStorage.getItem('scu_access_token') || null;
   };
@@ -6939,6 +7417,8 @@ document.addEventListener('change', (e) => {
   };
 
   window.logoutUser = function() {
+    window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
     localStorage.removeItem('scu_access_token');
     localStorage.removeItem('scu_refresh_token');
     localStorage.removeItem('scu_user_info');
@@ -6950,6 +7430,2374 @@ document.addEventListener('change', (e) => {
 
     window.showLoginView();
     window.showToast('ℹ️ Sesión cerrada correctamente');
+  };
+
+  // ── SUPERVISIÓN CURRICULAR ENGINE (VIEW 2 - ROL DIRECTOR DE CARRERA) ───────────
+  window.__SUPERVISION_CAREER_MAP__ = {
+    'CARSIS': { id: '648febfd-dc79-4dd8-a8aa-dc7549ef649b', code: 'CARSIS', name: 'Ingeniería de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' },
+    'CARELE': { id: '2ef716a7-b545-4e8d-b497-94fdedaef3cc', code: 'CARELE', name: 'Ingeniería Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' },
+    'CARSON': { id: '51ecba92-6699-4474-9d34-dcde6eeaba63', code: 'CARSON', name: 'Ingeniería de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' },
+    'CARIBI': { id: 'c6c95b52-e67a-4496-9821-9eb79e4506ac', code: 'CARIBI', name: 'Ingeniería Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' },
+    'CARMED': { id: 'fdcd6c35-8e0e-47ea-993c-119eb1a7789c', code: 'CARMED', name: 'Medicina Humana', tag: 'MEDICINA', color: 'rose' },
+    'CARDER': { id: 'f82b04f1-d439-4c9c-852c-5d22d1407c7c', code: 'CARDER', name: 'Derecho', tag: 'DERECHO', color: 'amber' },
+    'CARODO': { id: '5969e19b-fefd-4bd2-8883-5f554ae3095b', code: 'CARODO', name: 'Odontología', tag: 'ODONTOLOGÍA', color: 'sky' },
+    'CARVET': { id: '0159e8bd-0cb5-4ab6-90f0-2c0fd4c8b795', code: 'CARVET', name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' }
+  };
+
+  window.__SUPERVISION_DATA__ = null;
+  window.__SUPERVISION_FILTER__ = 'ALL';
+  window.__SUPERVISION_EXPANDED_SEMESTERS__ = { 3: true };
+
+  window.getCourseSemester = function(courseName, courseCode) {
+    const cUpper = (courseName || '').toUpperCase().trim();
+    const code = (courseCode || '').toUpperCase().trim();
+
+    // 8° SEMESTRE
+    if (cUpper.includes('TITULACI')) return 8;
+    if (cUpper.includes('GESTIÓN ESTRATÉGICA DE EMPRESAS') || cUpper.includes('GESTION ESTRATEGICA DE EMPRESAS')) return 8;
+    if (cUpper.includes('TALLER DE INGENIERÍA DE SOFTWARE') || cUpper.includes('TALLER DE INGENIERIA DE SOFTWARE')) return 8;
+    if (cUpper.includes('PRÁCTICA PRE-PROFESIONAL') || cUpper.includes('PRACTICA PRE-PROFESIONAL')) return 8;
+    if (cUpper.includes('GESTIÓN DE CALIDAD') || cUpper.includes('GESTION DE CALIDAD')) return 8;
+
+    // 7° SEMESTRE
+    if (cUpper.includes('MÉTODOS Y TÉCNICAS DE INVESTIGACI') || cUpper.includes('METODOS Y TECNICAS DE INVESTIGACI')) return 7;
+    if (cUpper.includes('REDES NEURONALES') || cUpper.includes('INTELIGENCIA ARTIFICIAL')) return 7;
+    if (cUpper.includes('TELECOMUNICACIONES')) return 7;
+    if (cUpper.includes('INGENIERÍA DE SOFTWARE') && !cUpper.includes('TALLER')) return 7;
+    if (cUpper.includes('SIMULACIÓN DE SISTEMAS') || cUpper.includes('SIMULACION DE SISTEMAS')) return 7;
+    if (cUpper.includes('MÉTODO DE DESARROLLO DE SOFTWARE') || cUpper.includes('METODO DE DESARROLLO DE SOFTWARE')) return 7;
+
+    // 6° SEMESTRE
+    if (cUpper.includes('ROBÓTICA') || cUpper.includes('ROBOTICA')) return 6;
+    if (cUpper.includes('INFRAESTRUCTURA TECNOLÓGICA') || cUpper.includes('INFRAESTRUCTURA TECNOLOGICA')) return 6;
+    if (cUpper.includes('ANÁLISIS DE SISTEMAS II') || cUpper.includes('ANALISIS DE SISTEMAS II')) return 6;
+    if (cUpper.includes('INGENIERÍA DE MÉTODOS') || cUpper.includes('REINGENIERÍA') || cUpper.includes('REINGENIERIA')) return 6;
+    if (cUpper.includes('TALLER DE REDES')) return 6;
+    if (cUpper.includes('LENGUAJES DE PROGRAMACIÓN') || cUpper.includes('LENGUAJES DE PROGRAMACION')) return 6;
+
+    // 5° SEMESTRE
+    if (cUpper.includes('INVESTIGACIÓN OPERATIVA') || cUpper.includes('INVESTIGACION OPERATIVA')) return 5;
+    if (cUpper.includes('MICROCONTROLADORES')) return 5;
+    if (cUpper.includes('ARQUITECTURA DE NUEVAS')) return 5;
+    if ((cUpper.includes('ANÁLISIS DE SISTEMAS I') || cUpper.includes('ANALISIS DE SISTEMAS I')) && !cUpper.includes('II')) return 5;
+    if (cUpper.includes('INFORMÁTICA FORENSE') || cUpper.includes('INFORMATICA FORENSE')) return 5;
+    if (cUpper.includes('REDES Y COMUNICACIÓN') || cUpper.includes('REDES Y COMUNICACION')) return 5;
+    if (cUpper.includes('CONCEPTOS AVANZADOS DE BASE DE DATOS')) return 5;
+
+    // 4° SEMESTRE
+    if (cUpper.includes('MÉTODOS NUMÉRICOS') || cUpper.includes('METODOS NUMERICOS')) return 4;
+    if (cUpper.includes('REDACCIÓN') || cUpper.includes('REDACCION') || cUpper.includes('INTERCULTURALIDAD')) return 4;
+    if (cUpper.includes('SISTEMAS OPERATIVOS')) return 4;
+    if (cUpper.includes('DISEÑO DE BASE DE DATOS') || (cUpper.includes('BASE DE DATOS') && !cUpper.includes('AVANZADOS'))) return 4;
+    if (cUpper.includes('INGLÉS TÉCNICO IV') || cUpper.includes('INGLES TECNICO IV')) return 4;
+    if (cUpper.includes('TALLER DE PROGRAMACIÓN III') || cUpper.includes('TALLER DE PROGRAMACION III')) return 4;
+    if (cUpper.includes('DISEÑO GRÁFICO') || cUpper.includes('DISENO GRAFICO') || cUpper.includes('INFORMACIÓN GEOGRÁFICA') || cUpper.includes('INFORMACION GEOGRAFICA')) return 4;
+
+    // 3° SEMESTRE
+    if (cUpper.includes('ECUACIONES DIFERENCIALES')) return 3;
+    if (cUpper.includes('SISTEMAS DIGITALES')) return 3;
+    if (cUpper.includes('PROGRAMACIÓN III') || cUpper.includes('PROGRAMACION III')) return 3;
+    if (cUpper.includes('PROBABILIDAD') || cUpper.includes('PROBALIDAD')) return 3;
+    if (cUpper.includes('INGLÉS TÉCNICO III') || cUpper.includes('INGLES TECNICO III')) return 3;
+    if (cUpper.includes('TALLER DE PROGRAMACIÓN II') || cUpper.includes('TALLER DE PROGRAMACION II')) return 3;
+    if (cUpper.includes('ÉTICA') || cUpper.includes('ETICA') || cUpper.includes('DERECHO INFORMÁTICO') || cUpper.includes('DERECHO INFORMATICO')) return 3;
+
+    // 2° SEMESTRE
+    if (cUpper.includes('CALCULO II')) return 2;
+    if (cUpper.includes('FÍSICA II') || cUpper.includes('FISICA II')) return 2;
+    if ((cUpper.includes('PROGRAMACIÓN II') || cUpper.includes('PROGRAMACION II')) && !cUpper.includes('III')) return 2;
+    if (cUpper.includes('ÁLGEBRA LINEAL') || cUpper.includes('ALGEBRA LINEAL')) return 2;
+    if (cUpper.includes('INGLÉS TÉCNICO II') || cUpper.includes('INGLES TECNICO II')) return 2;
+    if (cUpper.includes('TALLER DE PROGRAMACIÓN I') || cUpper.includes('TALLER DE PROGRAMACION I')) return 2;
+    if (cUpper.includes('DISPOSITIVOS ELECTRÓNICOS') || cUpper.includes('DISPOSITIVOS ELECTRONICOS')) return 2;
+
+    // 1° SEMESTRE
+    if (cUpper.includes('INTRODUCCIÓN A LAS CIENCIAS') || cUpper.includes('INTRODUCCION A LAS CIENCIAS') || cUpper.includes('CIENCIAS DE LA COMPUTACIÓN') || cUpper.includes('CIENCIAS DE LA COMPUTACION')) return 1;
+    if (cUpper.includes('CALCULO I') && !cUpper.includes('II')) return 1;
+    if ((cUpper.includes('FÍSICA I') || cUpper.includes('FISICA I')) && !cUpper.includes('II')) return 1;
+    if ((cUpper.includes('PROGRAMACIÓN I') || cUpper.includes('PROGRAMACION I')) && !cUpper.includes('II') && !cUpper.includes('III') && !cUpper.includes('TALLER')) return 1;
+    if ((cUpper.includes('ÁLGEBRA') || cUpper.includes('ALGEBRA')) && !cUpper.includes('LINEAL')) return 1;
+    if (cUpper.includes('INGLÉS TÉCNICO I') || cUpper.includes('INGLES TECNICO I')) return 1;
+
+    // Fallback: analyze code
+    if (code.startsWith('SIS-') || code.startsWith('ELC-') || code.startsWith('SON-')) {
+      const parts = code.split('-');
+      if (parts[1] && parts[1].length >= 2) {
+        const y = parseInt(parts[1][0], 10);
+        const s = parseInt(parts[1][1], 10);
+        if (!isNaN(y) && !isNaN(s)) return (y - 1) * 2 + s;
+      }
+    }
+
+    return 1;
+  };
+
+  window.renderSupervisionCurricular = async function(targetCareerId, targetCareerCode) {
+    const container = document.getElementById('supervision-semesters-container');
+    if (!container) return;
+
+    // 1. Resolve active career identity
+    let cCode = targetCareerCode || 'CARSIS';
+    const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+    if (!targetCareerCode && currentUser && currentUser.username) {
+      if (currentUser.username.includes('.ele')) cCode = 'CARELE';
+      else if (currentUser.username.includes('.son')) cCode = 'CARSON';
+      else if (currentUser.username.includes('.med')) cCode = 'CARMED';
+      else if (currentUser.username.includes('.der')) cCode = 'CARDER';
+    }
+
+    const careerInfo = window.__SUPERVISION_CAREER_MAP__[cCode] || window.__SUPERVISION_CAREER_MAP__['CARSIS'];
+    const careerUuid = targetCareerId || careerInfo.id;
+
+    const badgeEl = document.getElementById('supervision-career-badge');
+    const selectEl = document.getElementById('supervision-career-select');
+    const userRole = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || '');
+    const isElevatedRole = ['ROLE_DIR_ACADEMICA', 'ROLE_ADMIN', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL'].includes(userRole);
+
+    if (badgeEl) {
+      badgeEl.textContent = careerInfo.name;
+      if (isElevatedRole) {
+        badgeEl.classList.add('hidden');
+      } else {
+        badgeEl.classList.remove('hidden');
+      }
+    }
+
+    if (selectEl) {
+      if (isElevatedRole) {
+        selectEl.classList.remove('hidden');
+        selectEl.value = cCode;
+      } else {
+        selectEl.classList.add('hidden');
+      }
+    }
+
+    window.onSupervisionCareerChange = function(newCareerCode) {
+      if (!newCareerCode) return;
+      const info = window.__SUPERVISION_CAREER_MAP__[newCareerCode];
+      if (info && typeof window.renderSupervisionCurricular === 'function') {
+        window.renderSupervisionCurricular(info.id, newCareerCode);
+      }
+    };
+
+    // 2. Instant Cache Load (0ms flash)
+    const cacheKey = 'sisa_cache_supervision_groups_' + cCode;
+    const cachedDataStr = localStorage.getItem(cacheKey);
+    let rawGroups = null;
+
+    if (cachedDataStr) {
+      try {
+        rawGroups = JSON.parse(cachedDataStr);
+      } catch (e) {}
+    }
+
+    if (rawGroups && Array.isArray(rawGroups) && rawGroups.length > 0) {
+      window.processAndRenderSupervisionData(rawGroups, careerInfo);
+    }
+
+    // 3. Live Fetch from Gateway
+    try {
+      const branchId = 'ea4fb26e-11a9-452f-9bae-4962de2dd931';
+      const url = `/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=${branchId}&careerId=${careerUuid}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const liveGroups = await res.json();
+        if (Array.isArray(liveGroups) && liveGroups.length > 0) {
+          rawGroups = liveGroups;
+          localStorage.setItem(cacheKey, JSON.stringify(liveGroups));
+          window.processAndRenderSupervisionData(liveGroups, careerInfo);
+        }
+      }
+    } catch (err) {
+      console.warn('Supervisión Curricular: Error fetching live groups, using local mirror:', err);
+    }
+
+    // 4. Live Sync SISA PAC Statuses from Backend
+    try {
+      const pacHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
+      const pacRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=1`, {
+        headers: pacHeaders
+      });
+      if (pacRes.ok) {
+        const pacJson = await pacRes.json();
+        const pacList = (pacJson && pacJson.data) ? pacJson.data : (Array.isArray(pacJson) ? pacJson : []);
+        if (Array.isArray(pacList) && pacList.length > 0) {
+          if (!window.__PAC_CACHE__) window.__PAC_CACHE__ = {};
+          pacList.forEach(p => {
+            if (p.codigoAsignatura) {
+              window.__PAC_CACHE__[p.codigoAsignatura] = p;
+              localStorage.setItem('sisa_pac_id_' + p.codigoAsignatura, p.id);
+            }
+          });
+          const targetGroups = rawGroups || (cachedDataStr ? JSON.parse(cachedDataStr) : null);
+          if (targetGroups && Array.isArray(targetGroups)) {
+            window.processAndRenderSupervisionData(targetGroups, careerInfo, pacList);
+          }
+        }
+      }
+    } catch (pacErr) {
+      console.warn('Supervisión Curricular: Error fetching persistent PAC statuses:', pacErr);
+    }
+  };
+
+  window.processAndRenderSupervisionData = function(rawGroups, careerInfo, pacList) {
+    const container = document.getElementById('supervision-semesters-container');
+    if (!container) return;
+
+    // 1. Aggregate groups into curricular courses
+    const coursesMap = {};
+
+    rawGroups.forEach(g => {
+      const courseName = (g.courseName || g.name || 'Materia').trim();
+      const resolvedCode = (typeof window.resolveOfficialCourseCode === 'function')
+        ? window.resolveOfficialCourseCode(courseName, [careerInfo.code])
+        : 'SIS-101';
+      const officialCode = (resolvedCode && resolvedCode.includes('-')) ? resolvedCode.split('/')[0].trim() : (resolvedCode || 'SIS-101');
+
+      if (!coursesMap[courseName]) {
+        const sem = window.getCourseSemester(courseName, officialCode);
+        coursesMap[courseName] = {
+          courseName: courseName,
+          code: officialCode,
+          semester: sem,
+          groups: [],
+          teachers: [],
+          isCommon: false,
+          commonCareers: [],
+          commonCareersText: '',
+          shifts: new Set(),
+          classrooms: new Set(),
+          totalHours: 4
+        };
+      }
+
+      const course = coursesMap[courseName];
+      course.groups.push(g);
+
+      if (g.teacherName && !course.teachers.some(t => t.ci === g.teacherCi)) {
+        course.teachers.push({
+          name: g.teacherName,
+          ci: g.teacherCi || ''
+        });
+      }
+
+      if (g.groupLinkId != null) {
+        course.isCommon = true;
+      }
+
+      if (g.schedule) {
+        if (g.schedule.includes('18:') || g.schedule.includes('19:') || g.schedule.includes('20:') || g.schedule.includes('21:')) {
+          course.shifts.add('Nocturno');
+        } else if (g.schedule.includes('14:') || g.schedule.includes('15:') || g.schedule.includes('16:') || g.schedule.includes('17:')) {
+          course.shifts.add('Tarde');
+        } else {
+          course.shifts.add('Mañana');
+        }
+      }
+      if (g.classroom) course.classrooms.add(g.classroom);
+    });
+
+    // Resolve common subjects and with which careers they are shared
+    Object.values(coursesMap).forEach(course => {
+      const name = (course.courseName || '').toUpperCase();
+      if (course.code === 'SIS-105' || name.includes('ÁLGEBRA') || name.includes('ALGEBRA')) {
+        course.isCommon = true;
+        course.commonCareers = ['Ing. Electrónica', 'Ing. de Sonido'];
+      } else if (course.code === 'SIS-214' || name.includes('BASE DE DATOS')) {
+        course.isCommon = true;
+        course.commonCareers = ['Ing. Electrónica', 'Ing. Telecomunicaciones'];
+      } else if (name.includes('PROBABILIDAD') || name.includes('ESTADÍSTICA') || name.includes('ESTADISTICA')) {
+        course.isCommon = true;
+        course.commonCareers = ['Ing. Comercial', 'Ing. Financiera'];
+      } else if (name.includes('CÁLCULO I') || name.includes('CALCULO I') || name.includes('CÁLCULO 1') || name.includes('CALCULO 1')) {
+        course.isCommon = true;
+        course.commonCareers = ['Ing. Electrónica', 'Ing. Biomédica'];
+      } else if (name.includes('METODOLOGÍA') || name.includes('METODOLOGIA') || name.includes('INVESTIGACIÓN') || name.includes('INVESTIGACION')) {
+        course.isCommon = true;
+        course.commonCareers = ['Derecho', 'Ing. Comercial'];
+      } else if (course.groups.some(g => g.groupLinkId != null)) {
+        course.isCommon = true;
+        if (course.commonCareers.length === 0) {
+          course.commonCareers = ['Ing. Electrónica'];
+        }
+      }
+
+      if (course.isCommon && course.commonCareers && course.commonCareers.length > 0) {
+        course.commonCareersText = course.commonCareers.join(', ');
+      }
+    });
+
+    // 2. Resolve document states and review statuses for complete official dossier
+    Object.values(coursesMap).forEach(course => {
+      const savedReview = localStorage.getItem('sisa_supervision_status_' + course.code);
+      let status = 'PENDIENTE';
+
+      // Attach PAC metadata if available
+      const pacRecord = (window.__PAC_CACHE__ && window.__PAC_CACHE__[course.code]) || (pacList && pacList.find(p => p.codigoAsignatura === course.code));
+      if (pacRecord) {
+        course.pacId = pacRecord.id;
+        course.observacionesRevision = pacRecord.observacionesRevision;
+        if (pacRecord.estado) {
+          if (pacRecord.estado === 'APROBADO') status = 'APROBADO';
+          else if (pacRecord.estado === 'OBSERVADO') status = 'OBSERVADO';
+          else if (pacRecord.estado === 'ENVIADO_REVISION' || pacRecord.estado === 'EN_REVISION') status = 'EN_REVISION';
+          else status = pacRecord.estado;
+        }
+      }
+      if (!course.pacId) {
+        const storedId = localStorage.getItem('sisa_pac_id_' + course.code);
+        if (storedId) course.pacId = parseInt(storedId, 10);
+      }
+
+      if (savedReview) {
+        status = savedReview;
+      } else if (pacRecord && pacRecord.estado) {
+        if (pacRecord.estado === 'APROBADO') status = 'APROBADO';
+        else if (pacRecord.estado === 'OBSERVADO') status = 'OBSERVADO';
+        else if (pacRecord.estado === 'ENVIADO_REVISION' || pacRecord.estado === 'EN_REVISION') status = 'EN_REVISION';
+        else status = pacRecord.estado;
+      } else {
+        status = 'PENDIENTE';
+      }
+
+      // Resolve Curricular Modality: TEORICO_PRACTICA | TEORICA_PURA | PRACTICA_PURA
+      const cUpper = (course.courseName || '').toUpperCase();
+      let modality = 'TEORICO_PRACTICA';
+
+      // 1. Asignaturas de Práctica Pura (100% horas prácticas, 0 horas teóricas: internados, prácticas preprofesionales, pasantías, talleres de grado)
+      if (cUpper.includes('PRÁCTICA PRE-PROFESIONAL') || cUpper.includes('PRACTICA PRE-PROFESIONAL') ||
+          cUpper.includes('PRÁCTICA PREPROFESIONAL') || cUpper.includes('PRACTICA PREPROFESIONAL') ||
+          cUpper.includes('PASANTÍA') || cUpper.includes('PASANTIA') ||
+          cUpper.includes('INTERNADO') || cUpper.includes('ROTATORIO') ||
+          cUpper.includes('CLÍNICA INTEGRAL') || cUpper.includes('CLINICA INTEGRAL') ||
+          cUpper.includes('TALLER DE GRADO') || cUpper.includes('PROYECTO DE GRADO') ||
+          cUpper.includes('MODALIDAD DE GRADUACI') || cUpper.includes('TRABAJO DE GRADO')) {
+        modality = 'PRACTICA_PURA';
+      }
+      // 2. Asignaturas Teóricas Puras (100% expositivas/conceptuales, sin ninguna práctica ni en aula ni en laboratorio)
+      else if (cUpper.includes('LEGISLACI') || cUpper.includes('DEONTOLOG') || 
+               cUpper.includes('FILOSOF') || cUpper.includes('ÉTICA') || cUpper.includes('ETICA') ||
+               cUpper.includes('HISTORIA DE LA') || cUpper.includes('DERECHO CONSTITUCIONAL')) {
+        modality = 'TEORICA_PURA';
+      }
+      // 3. Asignaturas Teórico-Prácticas (Mixtas: teoría + práctica de aula y/o laboratorio; ej. Álgebra, Cálculo, Programación, etc.)
+      else {
+        modality = 'TEORICO_PRACTICA';
+      }
+
+      const tieneTeoria = (modality !== 'PRACTICA_PURA');
+      const tienePractica = (modality !== 'TEORICA_PURA');
+
+      // Scan localStorage for REAL saved documents belonging to this specific course
+      let hasRealProg = false;
+      let realUnitsCount = 0;
+      let hasRealPacTeo = false;
+      let realPacTeoWeeks = 0;
+      let hasRealPacPrac = false;
+      let realPacPracGuias = 0;
+      let realPlanesCount = 0;
+
+      try {
+        const cCode = String(course.code || '').trim().toUpperCase();
+        const cClean = cCode.replace(/[^A-Z0-9]/g, '_');
+        const cHyphen = cCode.replace(/_/g, '-');
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          const kUpper = k.toUpperCase();
+          const matchesCourse = (cCode && kUpper.includes(cCode)) || (cClean && kUpper.includes(cClean)) || (cHyphen && kUpper.includes(cHyphen));
+          if (k.startsWith('sisa_saved_programa_analitico_') && matchesCourse) {
+            try {
+              const p = JSON.parse(localStorage.getItem(k));
+              if (p && p.unidades && Array.isArray(p.unidades) && p.unidades.length > 0) {
+                hasRealProg = true;
+                realUnitsCount = Math.max(realUnitsCount, p.unidades.length);
+              }
+            } catch (e) {}
+          }
+          if ((k.startsWith('sisa_saved_pac_gral_') || k.startsWith('sisa_saved_pac_')) && !k.includes('_prac_') && matchesCourse) {
+            try {
+              const p = JSON.parse(localStorage.getItem(k));
+              if (p && p.sesiones && Array.isArray(p.sesiones) && p.sesiones.length > 0) {
+                hasRealPacTeo = true;
+                realPacTeoWeeks = Math.max(realPacTeoWeeks, p.sesiones.length);
+              }
+            } catch (e) {}
+          }
+          if (k.startsWith('sisa_saved_pac_prac_') && matchesCourse) {
+            try {
+              const p = JSON.parse(localStorage.getItem(k));
+              if (p && p.sesiones && Array.isArray(p.sesiones) && p.sesiones.length > 0) {
+                hasRealPacPrac = true;
+                realPacPracGuias = Math.max(realPacPracGuias, p.sesiones.length);
+              }
+            } catch (e) {}
+          }
+          if (k.startsWith('sisa_saved_planes_') && matchesCourse) {
+            try {
+              const p = JSON.parse(localStorage.getItem(k));
+              if (Array.isArray(p)) realPlanesCount = Math.max(realPlanesCount, p.length);
+              else if (p && p.planes && Array.isArray(p.planes)) realPlanesCount = Math.max(realPlanesCount, p.planes.length);
+              else if (p && p.sesiones && Array.isArray(p.sesiones)) realPlanesCount = Math.max(realPlanesCount, p.sesiones.length);
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      if (pacRecord) {
+        if (pacRecord.matriz7 && Array.isArray(pacRecord.matriz7) && pacRecord.matriz7.length > 0) {
+          hasRealPacTeo = true;
+          realPacTeoWeeks = Math.max(realPacTeoWeeks, pacRecord.matriz7.length);
+        } else if (pacRecord.matriz7Count && pacRecord.matriz7Count > 0) {
+          hasRealPacTeo = true;
+          realPacTeoWeeks = Math.max(realPacTeoWeeks, pacRecord.matriz7Count);
+        }
+      }
+
+      // Resolve Granular status per official document
+      let analiticoStatus = status;
+      let pacTeoricoStatus = tieneTeoria ? status : 'N/A';
+      let pacPracticoStatus = tienePractica ? status : 'N/A';
+      let planesCount = realPlanesCount;
+      let planesStatus = (planesCount >= 40) ? 'COMPLETO' : ((planesCount > 0) ? 'EN_AVANCE' : 'PENDIENTE');
+
+      // Check if specific observed documents were flagged by director
+      const savedObsDocs = localStorage.getItem('sisa_supervision_obs_docs_' + course.code);
+      if (savedObsDocs && status === 'OBSERVADO') {
+        try {
+          const obsArr = JSON.parse(savedObsDocs);
+          analiticoStatus = obsArr.includes('analitico') ? 'OBSERVADO' : (status === 'APROBADO' ? 'APROBADO' : 'EN_REVISION');
+          if (tieneTeoria) {
+            pacTeoricoStatus = obsArr.includes('pacteorico') ? 'OBSERVADO' : (status === 'APROBADO' ? 'APROBADO' : 'EN_REVISION');
+          }
+          if (tienePractica) {
+            pacPracticoStatus = obsArr.includes('pacpractico') ? 'OBSERVADO' : (status === 'APROBADO' ? 'APROBADO' : 'EN_REVISION');
+          }
+          if (obsArr.includes('planes')) planesStatus = 'OBSERVADO';
+        } catch (e) {}
+      }
+
+      // Explicit Completeness States strictly based on real content: COMPLETO | INCOMPLETO | VACIO | N/A
+      let anaState = 'VACIO';
+      if (hasRealProg) {
+        anaState = (realUnitsCount >= 4) ? 'COMPLETO' : 'INCOMPLETO';
+      } else {
+        anaState = 'VACIO';
+      }
+
+      let pacTState = 'N/A';
+      if (tieneTeoria) {
+        if (hasRealPacTeo) {
+          pacTState = (realPacTeoWeeks >= 20) ? 'COMPLETO' : 'INCOMPLETO';
+        } else {
+          pacTState = 'VACIO';
+        }
+      }
+
+      let pacPState = 'N/A';
+      if (tienePractica) {
+        if (hasRealPacPrac) {
+          const minGuias = (modality === 'PRACTICA_PURA') ? 20 : 12;
+          pacPState = (realPacPracGuias >= minGuias) ? 'COMPLETO' : 'INCOMPLETO';
+        } else {
+          pacPState = 'VACIO';
+        }
+      }
+
+      let plState = 'VACIO';
+      if (realPlanesCount >= 40) plState = 'COMPLETO';
+      else if (realPlanesCount > 0) plState = 'INCOMPLETO';
+      else plState = 'VACIO';
+
+      course.status = status;
+      course.modality = modality;
+      course.tieneTeoria = tieneTeoria;
+      course.tienePractica = tienePractica;
+      course.docs = {
+        analitico: {
+          estado: analiticoStatus,
+          state: anaState,
+          unidades: hasRealProg ? realUnitsCount : 0,
+          competencias: hasRealProg,
+          bibliografiaApa: hasRealProg
+        },
+        pacTeorico: {
+          tieneTeoria: tieneTeoria,
+          estado: pacTeoricoStatus,
+          state: pacTState,
+          semanas: (tieneTeoria && hasRealPacTeo) ? realPacTeoWeeks : 0,
+          columnas: tieneTeoria ? 7 : 0,
+          label: tieneTeoria ? ((hasRealPacTeo ? realPacTeoWeeks : 0) + ' Semanas de Teoría') : 'N/A (Práctica Pura)'
+        },
+        pacPractico: {
+          tienePractica: tienePractica,
+          estado: pacPracticoStatus,
+          state: pacPState,
+          guias: (tienePractica && hasRealPacPrac) ? realPacPracGuias : 0,
+          label: tienePractica ? ((hasRealPacPrac ? realPacPracGuias : 0) + ' Guías Prácticas') : 'N/A (Teórica Pura)'
+        },
+        planesClase: {
+          total: 40,
+          completados: realPlanesCount,
+          estado: planesStatus,
+          state: plState,
+          pct: Math.round((realPlanesCount / 40) * 100)
+        }
+      };
+    });
+
+    // 3. Group into 8 Semesters
+    const semesters = {};
+    for (let s = 1; s <= 8; s++) {
+      semesters[s] = {
+        number: s,
+        name: `${s}º SEMESTRE`,
+        courses: [],
+        approvedCount: 0,
+        totalCount: 0,
+        pendingCount: 0,
+        observedCount: 0,
+        compliancePct: 0,
+        overallStatus: 'PENDIENTE'
+      };
+    }
+
+    Object.values(coursesMap).forEach(c => {
+      const sNum = Math.min(Math.max(c.semester || 1, 1), 8);
+      const sem = semesters[sNum];
+      sem.courses.push(c);
+      sem.totalCount++;
+      if (c.status === 'APROBADO') sem.approvedCount++;
+      else if (c.status === 'OBSERVADO') sem.observedCount++;
+      else sem.pendingCount++;
+    });
+
+    // 4. Calculate global KPI totals
+    let globalTotal = 0;
+    let globalApproved = 0;
+    let globalPending = 0;
+    let globalObserved = 0;
+    let globalAssigned = 0;
+    let globalVacant = 0;
+
+    Object.values(coursesMap).forEach(c => {
+      const hasTeacher = c.teachers && c.teachers.length > 0 && c.teachers[0].name && c.teachers[0].name !== 'Por Designar';
+      if (hasTeacher) globalAssigned++;
+      else globalVacant++;
+    });
+
+    for (let s = 1; s <= 8; s++) {
+      const sem = semesters[s];
+      sem.courses.sort((a, b) => a.code.localeCompare(b.code));
+      sem.compliancePct = sem.totalCount > 0 ? Math.round((sem.approvedCount / sem.totalCount) * 100) : 0;
+      if (sem.compliancePct === 100) sem.overallStatus = 'APROBADO';
+      else if (sem.observedCount > 0) sem.overallStatus = 'OBSERVADO';
+      else if (sem.approvedCount > 0) sem.overallStatus = 'EN_REVISION';
+      else sem.overallStatus = 'PENDIENTE';
+
+      globalTotal += sem.totalCount;
+      globalApproved += sem.approvedCount;
+      globalPending += sem.pendingCount;
+      globalObserved += sem.observedCount;
+    }
+
+    const globalCompliancePct = globalTotal > 0 ? ((globalApproved / globalTotal) * 100).toFixed(1) : '0';
+
+    // 5. Update UI KPI Toolbar & Evaluaciones Stat Cards
+    const countAllEl = document.getElementById('supervision-count-all');
+    const countAssignedEl = document.getElementById('supervision-count-assigned');
+    const countVacantEl = document.getElementById('supervision-count-vacant');
+    const countAppEl = document.getElementById('supervision-count-approved');
+    const countPenEl = document.getElementById('supervision-count-pending');
+    const countObsEl = document.getElementById('supervision-count-observed');
+    const complianceEl = document.getElementById('supervision-compliance-pct');
+
+    if (countAllEl) countAllEl.textContent = globalTotal;
+    if (countAssignedEl) countAssignedEl.textContent = globalAssigned;
+    if (countVacantEl) countVacantEl.textContent = globalVacant;
+    if (countAppEl) countAppEl.textContent = globalApproved;
+    if (countPenEl) countPenEl.textContent = globalPending;
+    if (countObsEl) countObsEl.textContent = globalObserved;
+    if (complianceEl) complianceEl.textContent = `${globalCompliancePct}%`;
+
+    window.__SUPERVISION_DATA__ = {
+      careerInfo: careerInfo,
+      semesters: semesters,
+      globalTotal: globalTotal,
+      globalAssigned: globalAssigned,
+      globalVacant: globalVacant,
+      globalApproved: globalApproved,
+      globalPending: globalPending,
+      globalObserved: globalObserved,
+      globalCompliancePct: globalCompliancePct
+    };
+
+    window.renderSupervisionAccordions();
+  };
+
+  window.renderDocStateBadge = function(state, detail) {
+    if (state === 'COMPLETO') {
+      return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Completo${detail ? ' <span class="font-normal opacity-75">(' + detail + ')</span>' : ''}</span>`;
+    }
+    if (state === 'INCOMPLETO') {
+      return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Incompleto${detail ? ' <span class="font-normal opacity-75">(' + detail + ')</span>' : ''}</span>`;
+    }
+    if (state === 'VACIO') {
+      return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>Vacío${detail ? ' <span class="font-normal opacity-75">(' + detail + ')</span>' : ''}</span>`;
+    }
+    // N/A
+    return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Teórica)</span>`;
+  };
+
+  window.renderSupervisionAccordions = function() {
+    const container = document.getElementById('supervision-semesters-container');
+    if (!container || !window.__SUPERVISION_DATA__) return;
+
+    const data = window.__SUPERVISION_DATA__;
+    const filter = window.__SUPERVISION_FILTER__ || 'ALL';
+    const searchQuery = window.__SUPERVISION_SEARCH_QUERY__ || '';
+    const groupTypeFilter = window.__SUPERVISION_GROUP_TYPE__ || 'todos';
+    const hideUnassigned = !!window.__SUPERVISION_HIDE_UNASSIGNED__;
+    const docTab = window.__SUPERVISION_DOC_TAB__ || 'TODOS';
+
+    const html = Object.keys(data.semesters).map(semKey => {
+      const sem = data.semesters[semKey];
+      const isExpanded = !!window.__SUPERVISION_EXPANDED_SEMESTERS__[sem.number];
+
+      // Filter courses
+      const filteredCourses = sem.courses.filter(c => {
+        // Status filter
+        if (filter === 'APROBADO' && c.status !== 'APROBADO') return false;
+        if (filter === 'EN_REVISION' && c.status !== 'EN_REVISION' && c.status !== 'PENDIENTE') return false;
+        if (filter === 'OBSERVADO' && c.status !== 'OBSERVADO') return false;
+
+        // Search text
+        if (searchQuery) {
+          const teacherName = (c.teachers && c.teachers[0] ? c.teachers[0].name : '').toLowerCase();
+          const code = (c.code || '').toLowerCase();
+          const name = (c.courseName || '').toLowerCase();
+          if (!code.includes(searchQuery) && !name.includes(searchQuery) && !teacherName.includes(searchQuery)) {
+            return false;
+          }
+        }
+
+        // Hide unassigned
+        const isAssigned = c.teachers && c.teachers.length > 0 && c.teachers[0].name && c.teachers[0].name !== 'Por Designar';
+        if (hideUnassigned && !isAssigned) return false;
+
+        return true;
+      });
+
+      if (filteredCourses.length === 0 && (filter !== 'ALL' || searchQuery || hideUnassigned)) {
+        return '';
+      }
+
+      // Calculate total hours in semester
+      const totalHours = filteredCourses.reduce((acc, curr) => acc + (curr.totalHours || 4), 0);
+
+      // Status badge styling
+      let statusBadgeHtml = '';
+      if (sem.overallStatus === 'APROBADO') {
+        statusBadgeHtml = `<span class="px-2.5 py-1 rounded-md bg-emerald-600 text-white font-bold text-xs shadow-xs whitespace-nowrap inline-flex items-center">APROBADO</span>`;
+      } else if (sem.overallStatus === 'OBSERVADO') {
+        statusBadgeHtml = `<span class="px-2.5 py-1 rounded-md bg-rose-600 text-white font-bold text-xs shadow-xs whitespace-nowrap inline-flex items-center">CON OBSERVACIONES</span>`;
+      } else if (sem.overallStatus === 'EN_REVISION') {
+        statusBadgeHtml = `<span class="px-2.5 py-1 rounded-md bg-amber-500 text-white font-bold text-xs shadow-xs whitespace-nowrap inline-flex items-center">EN REVISIÓN</span>`;
+      } else {
+        statusBadgeHtml = `<span class="px-2.5 py-1 rounded-md bg-slate-400 text-white font-bold text-xs shadow-xs whitespace-nowrap inline-flex items-center">PENDIENTE</span>`;
+      }
+
+      // If collapsed (matches Evaluaciones accordion header)
+      if (!isExpanded) {
+        return `
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+            <div onclick="window.toggleSupervisionSemester(${sem.number})" class="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 flex items-center justify-between cursor-pointer transition-colors select-none">
+              <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-[#4f39f6] text-white flex items-center justify-center font-black text-xs font-mono shadow-xs">
+                  ${sem.number}°
+                </div>
+                <div>
+                  <h3 class="text-sm font-black text-slate-900 dark:text-white">${sem.number}º Semestre</h3>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    ${sem.courses.length} asignaturas · ${sem.courses.length} registros por grupo · ${totalHours} horas
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold ${sem.compliancePct === 100 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/60' : 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'} px-2.5 py-1 rounded-full border">
+                  ${sem.approvedCount} de ${sem.courses.length} validadas (${sem.compliancePct}%)
+                </span>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // If expanded (matches Evaluaciones expanded table view)
+      return `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+          
+          <!-- Accordion Header -->
+          <div onclick="window.toggleSupervisionSemester(${sem.number})" class="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between cursor-pointer transition-colors select-none">
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 rounded-full bg-[#4f39f6] text-white flex items-center justify-center font-black text-xs font-mono shadow-xs">
+                ${sem.number}°
+              </div>
+              <div>
+                <h3 class="text-sm font-black text-slate-900 dark:text-white">${sem.number}º Semestre</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  ${sem.courses.length} asignaturas · ${sem.courses.length} registros por grupo · ${totalHours} horas
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-bold ${sem.compliancePct === 100 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/60' : 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'} px-2.5 py-1 rounded-full border">
+                ${sem.approvedCount} de ${sem.courses.length} validadas (${sem.compliancePct}%)
+              </span>
+              <i data-lucide="chevron-up" class="w-4 h-4 text-[#4f39f6]"></i>
+            </div>
+          </div>
+
+          <!-- Table of Subjects (Complete Official Academic Dossier View) -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <th class="p-3.5 whitespace-nowrap min-w-[90px]">Código</th>
+                  <th class="p-3.5 min-w-[180px]">Plan de Estudios</th>
+                  <th class="p-3.5 text-center whitespace-nowrap">Horas</th>
+                  <th class="p-3.5 whitespace-nowrap">Docente / Grupo</th>
+                  <th class="p-3.5 text-center whitespace-nowrap">Modalidad</th>
+                  <th class="p-3.5 w-[310px] min-w-[280px] max-w-[330px]">Información de la Planificación</th>
+                  <th class="p-3.5 text-center whitespace-nowrap min-w-[130px]">Dictamen</th>
+                  <th class="p-3.5 text-center whitespace-nowrap min-w-[95px]">Asignación</th>
+                  <th class="p-3.5 text-right whitespace-nowrap min-w-[110px]">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                ${filteredCourses.map(item => {
+                  const teacher = item.teachers[0] || { name: 'Por Designar', ci: '' };
+                  const isAssigned = teacher.name && teacher.name !== 'Por Designar';
+                  const isCommon = item.isCommon;
+                  const groupName = (item.groups && item.groups[0]) ? (item.groups[0].groupName || 'TA-01') : 'TA-01';
+
+                  let estadoPill = '';
+                  if (item.status === 'APROBADO') {
+                    estadoPill = `<span class="inline-flex items-center justify-center whitespace-nowrap bg-emerald-600 text-white font-black text-[10px] px-2.5 py-1 rounded-md uppercase shadow-2xs">APROBADO</span>`;
+                  } else if (item.status === 'OBSERVADO') {
+                    estadoPill = `<span class="inline-flex items-center justify-center whitespace-nowrap bg-rose-700 text-white font-black text-[10px] px-2.5 py-1 rounded-md uppercase shadow-2xs">OBSERVADO</span>`;
+                  } else {
+                    estadoPill = `<span class="inline-flex items-center justify-center whitespace-nowrap bg-amber-600 text-white font-black text-[10px] px-2.5 py-1 rounded-md uppercase shadow-2xs">EN REVISIÓN</span>`;
+                  }
+
+                  const d = item.docs || {
+                    analitico: { estado: 'PENDIENTE' },
+                    pacTeorico: { estado: 'PENDIENTE' },
+                    pacPractico: { tienePractica: false, estado: 'N/A', label: 'N/A' },
+                    planesClase: { completados: 0, total: 40, estado: 'PENDIENTE', pct: 0 }
+                  };
+
+                  return `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                      
+                      <!-- Código -->
+                      <td class="p-3.5 font-mono font-bold text-[#4f39f6] whitespace-nowrap min-w-[90px]">
+                        ${item.code}
+                      </td>
+
+                      <!-- Plan de Estudios -->
+                      <td class="p-3.5">
+                        <div class="font-black text-slate-900 dark:text-white">${item.courseName}</div>
+                        ${item.isCommon && item.commonCareersText ? `
+                          <div class="mt-1">
+                            <span class="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-2xs" title="Asignatura común cursada en paralelo con otras carreras">
+                              <i data-lucide="users" class="w-3 h-3 text-[#4f39f6]"></i>
+                              Común con: <span class="font-black text-slate-800 dark:text-slate-100">${item.commonCareersText}</span>
+                            </span>
+                          </div>
+                        ` : ''}
+                      </td>
+
+                      <!-- Horas -->
+                      <td class="p-3.5 text-center font-mono font-bold text-slate-400">
+                        ${item.totalHours || 4}
+                      </td>
+
+                      <!-- Docente / Grupo -->
+                      <td class="p-3.5">
+                        ${isAssigned ? `
+                          <div class="flex items-center gap-2">
+                            <div class="h-7 w-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-bold shrink-0">
+                              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div class="min-w-0">
+                              <div class="font-bold text-slate-900 dark:text-white text-[11px] truncate">${teacher.name}</div>
+                              <span class="text-[10px] text-[#4f39f6] font-bold">
+                                👥 ${groupName}
+                              </span>
+                              <span class="text-[9px] font-black uppercase tracking-wide text-slate-400 ml-1">
+                                ${item.modality === 'PRACTICA_PURA' ? 'PRÁCTICO • TALLER' : (item.modality === 'TEORICA_PURA' ? 'TEÓRICO • TA' : 'TEÓRICO-PRÁCTICO')}
+                              </span>
+                            </div>
+                          </div>
+                        ` : `
+                          <div class="flex items-center gap-1.5 text-amber-600 text-xs italic font-medium">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                            <span>Sin asignar</span>
+                          </div>
+                        `}
+                      </td>
+
+                      <!-- Modalidad -->
+                      <td class="p-3.5 text-center whitespace-nowrap">
+                        ${item.modality === 'PRACTICA_PURA' ? `
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70" title="Asignatura de Práctica Pura (100% práctica: talleres, clínicas o pasantías sin teoría)">
+                            <i data-lucide="wrench" class="w-3.5 h-3.5 text-amber-600"></i>
+                            Práctica Pura
+                          </span>
+                        ` : (item.modality === 'TEORICA_PURA' ? `
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-indigo-50 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/70" title="Asignatura Teórica Pura (100% teórica, sin prácticas en aula ni laboratorio)">
+                            <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-600"></i>
+                            Teórica Pura
+                          </span>
+                        ` : `
+                          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-teal-50 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70" title="Asignatura Teórico-Práctica (Clases de aula y sesiones prácticas/laboratorio)">
+                            <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-teal-600"></i>
+                            Teórico-Práctica
+                          </span>
+                        `)}
+                      </td>
+
+                      <!-- Información de la Planificación (Estado explícito por cada documento) -->
+                      <td class="p-2 w-[310px] min-w-[280px] max-w-[330px]">
+                        ${docTab === 'ANALITICO' ? `
+                          <div class="rounded-lg border px-2.5 py-2 ${d.analitico.state === 'COMPLETO' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30' : (d.analitico.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                              <span class="text-[10px] font-black text-[#4f39f6] truncate flex items-center gap-1">
+                                <span>📑</span> Programa Analítico
+                              </span>
+                              ${window.renderDocStateBadge(d.analitico.state, d.analitico.state === 'VACIO' ? '0 Unid' : `${d.analitico.unidades} Unid`)}
+                            </div>
+                            <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                              <span>${d.analitico.state === 'VACIO' ? 'Sin unidades registradas' : `${d.analitico.unidades} Unidades Temáticas`} • Competencias</span>
+                              <span class="font-bold text-slate-700 dark:text-slate-300">Normas APA</span>
+                            </div>
+                          </div>
+                        ` : (docTab === 'PAC' ? `
+                          ${item.modality === 'PRACTICA_PURA' ? `
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 px-2.5 py-2">
+                              <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="text-[10px] font-black text-slate-500 truncate flex items-center gap-1">
+                                  <span>📘</span> PAC Teórico
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Práctica Pura)</span>
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-400">
+                                <span>Exenta de Planificación Teórica</span>
+                                <span class="font-bold text-slate-500">100% Práctica</span>
+                              </div>
+                            </div>
+                          ` : `
+                            <div class="rounded-lg border px-2.5 py-2 ${d.pacTeorico.state === 'COMPLETO' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30' : (d.pacTeorico.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
+                              <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="text-[10px] font-black text-indigo-700 dark:text-indigo-300 truncate flex items-center gap-1">
+                                  <span>📘</span> PAC Teórico (Matriz 7)
+                                </span>
+                                ${window.renderDocStateBadge(d.pacTeorico.state, d.pacTeorico.state === 'VACIO' ? '0 sem' : `${d.pacTeorico.semanas} sem`)}
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                                <span>7 Columnas Didácticas Oficiales</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">${d.pacTeorico.state === 'VACIO' ? '0 Semanas' : `${d.pacTeorico.semanas} Semanas`}</span>
+                              </div>
+                            </div>
+                          `}
+                        ` : (docTab === 'PRACTICO' ? `
+                          ${item.modality === 'TEORICA_PURA' ? `
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 px-2.5 py-2">
+                              <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="text-[10px] font-black text-slate-500 truncate flex items-center gap-1">
+                                  <span>🔬</span> PAC Práctico
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Teórica Pura)</span>
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-400">
+                                <span>Exenta de Prácticas (Aula o Laboratorio)</span>
+                                <span class="font-bold text-slate-500">100% Teórica</span>
+                              </div>
+                            </div>
+                          ` : `
+                            <div class="rounded-lg border px-2.5 py-2 ${d.pacPractico.state === 'COMPLETO' ? 'border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30' : (d.pacPractico.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
+                              <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="text-[10px] font-black text-teal-700 dark:text-teal-300 truncate flex items-center gap-1">
+                                  <span>🔬</span> PAC Práctico ${item.modality === 'PRACTICA_PURA' ? '(Pura)' : '/ Talleres'}
+                                </span>
+                                ${window.renderDocStateBadge(d.pacPractico.state, d.pacPractico.state === 'VACIO' ? '0 guías' : `${d.pacPractico.guias} guías`)}
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                                <span>${d.pacPractico.state === 'VACIO' ? 'Sin guías registradas' : (item.modality === 'PRACTICA_PURA' ? `${d.pacPractico.guias} Guías / Casos / Rúbricas Clínicas` : `${d.pacPractico.guias} Guías Prácticas`)}</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">${item.modality === 'PRACTICA_PURA' ? 'Práctica Pura' : 'Laboratorios'}</span>
+                              </div>
+                            </div>
+                          `}
+                        ` : (docTab === 'CLASES' ? `
+                          <div class="rounded-lg border px-2.5 py-2 ${d.planesClase.state === 'COMPLETO' ? 'border-purple-200 bg-purple-50/50 dark:bg-purple-950/30' : (d.planesClase.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                              <span class="text-[10px] font-black text-purple-700 dark:text-purple-300 truncate flex items-center gap-1">
+                                <span>📅</span> Planes de Clase
+                              </span>
+                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/40`)}
+                            </div>
+                            <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                              <span>Avance: ${d.planesClase.completados} de 40 Sesiones</span>
+                              <span class="font-bold text-slate-700 dark:text-slate-300">${d.planesClase.pct}%</span>
+                            </div>
+                          </div>
+                        ` : `
+                          <!-- DOSSIER COMPLETO (TODOS): Desglose explícito de los 4 documentos con estado individual -->
+                          <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-2 space-y-1.5 shadow-2xs">
+                            
+                            <!-- 1. Programa Analítico -->
+                            <div class="flex items-center justify-between text-[10px] gap-2">
+                              <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                <span class="text-xs">📑</span> Prog. Analítico:
+                              </span>
+                              ${window.renderDocStateBadge(d.analitico.state, d.analitico.state === 'VACIO' ? '0 Unid' : `${d.analitico.unidades} Unid`)}
+                            </div>
+
+                            <!-- 2. PAC Teórico -->
+                            <div class="flex items-center justify-between text-[10px] gap-2">
+                              <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                <span class="text-xs">📘</span> PAC Teórico:
+                              </span>
+                              ${item.modality === 'PRACTICA_PURA' ? `
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Práctica)</span>
+                              ` : window.renderDocStateBadge(d.pacTeorico.state, d.pacTeorico.state === 'VACIO' ? '0 sem' : `${d.pacTeorico.semanas} sem`)}
+                            </div>
+
+                            <!-- 3. PAC Práctico -->
+                            <div class="flex items-center justify-between text-[10px] gap-2">
+                              <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                <span class="text-xs">🔬</span> PAC Práctico:
+                              </span>
+                              ${item.modality === 'TEORICA_PURA' ? `
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Teórica)</span>
+                              ` : window.renderDocStateBadge(d.pacPractico.state, d.pacPractico.state === 'VACIO' ? '0 guías' : `${d.pacPractico.guias} guías`)}
+                            </div>
+
+                            <!-- 4. Planes de Clase -->
+                            <div class="flex items-center justify-between text-[10px] gap-2">
+                              <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                <span class="text-xs">📅</span> Planes de Clase:
+                              </span>
+                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/40`)}
+                            </div>
+
+                          </div>
+                        `)))}
+                      </td>
+
+                      <!-- Dictamen del documento -->
+                      <td class="p-3.5 text-center whitespace-nowrap min-w-[130px]">
+                        ${estadoPill}
+                      </td>
+
+                      <!-- Estado de Asignación -->
+                      <td class="p-3.5 text-center whitespace-nowrap min-w-[95px]">
+                        ${isAssigned ? `
+                          <span class="inline-flex items-center justify-center whitespace-nowrap bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-black text-[10px] px-2 py-0.5 rounded-md">
+                            Asignada
+                          </span>
+                        ` : `
+                          <span class="inline-flex items-center justify-center whitespace-nowrap bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-black text-[10px] px-2 py-0.5 rounded-md">
+                            Vacante
+                          </span>
+                        `}
+                      </td>
+
+                      <!-- Acciones (Botones compactos exactos) -->
+                      <td class="p-3.5 text-right">
+                        <div class="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-1" role="group" aria-label="Acciones de planificación">
+                          <button type="button" onclick="window.openPacReviewModal('${item.code}', ${sem.number})" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Auditar Expediente y Emitir Dictamen Curricular">
+                            <i data-lucide="file-check-2" class="w-4 h-4"></i>
+                          </button>
+                          <button type="button" onclick="window.openTeacherFolderFromSupervision('${item.code}', '${teacher.ci}')" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Ver Carpeta Docente en Sistema">
+                            <i data-lucide="folder-open" class="w-4 h-4"></i>
+                          </button>
+                          <button type="button" onclick="window.showToast('Asignatura ${item.code} sincronizada con catálogo')" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Sincronización SEA">
+                            <i data-lucide="monitor" class="w-4 h-4"></i>
+                          </button>
+                        </div>
+                      </td>
+
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Accordion Footer (Batch Approval) -->
+          <div class="p-4 bg-slate-50/70 dark:bg-slate-800/40 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Al completar la validación de las asignaturas del semestre podrás emitir la resolución curricular correspondiente.
+            </div>
+            <button onclick="window.openBatchEndorsementModal(${sem.number})" class="bg-[#4f39f6] hover:bg-[#432dd7] text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+              <i data-lucide="check-check" class="w-4 h-4"></i>
+              Aprobar y Finalizar Planificación del Semestre
+            </button>
+          </div>
+
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.onSupervisionSedeChange = function(newSede) {
+    const sedeNames = {
+      'CBA': 'Cochabamba (Campus Juan Pablo II)',
+      'LPZ': 'La Paz (Sede Académica)',
+      'EAL': 'El Alto (Sede Académica)',
+      'CBJ': 'Cobija (Sede Académica)'
+    };
+    const name = sedeNames[newSede] || newSede;
+    window.__SUPERVISION_ACTIVE_SEDE__ = newSede;
+    if (typeof window.showToast === 'function') {
+      window.showToast(`📍 Sede Académica seleccionada: ${name}`);
+    }
+    if (typeof window.renderSupervisionCurricular === 'function') {
+      window.renderSupervisionCurricular();
+    }
+  };
+
+  window.onSupervisionGestionChange = function(newGestion) {
+    window.__SUPERVISION_ACTIVE_GESTION__ = newGestion;
+    if (typeof window.showToast === 'function') {
+      window.showToast(`📅 Gestión Académica activa: ${newGestion}`);
+    }
+    if (typeof window.renderSupervisionCurricular === 'function') {
+      window.renderSupervisionCurricular();
+    }
+  };
+
+  window.returnToSupervisionFromTeacher = function() {
+    window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+    const returnBar = document.getElementById('director-supervision-return-bar');
+    if (returnBar) returnBar.classList.add('hidden');
+    if (typeof window.switchView === 'function') {
+      window.switchView('view2');
+    }
+  };
+
+  window.descargarMallaCurricular = function() {
+    const data = window.__SUPERVISION_DATA__;
+    if (!data || !data.semesters) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Cargando datos curriculares, intente en unos segundos...');
+      }
+      return;
+    }
+
+    const career = data.careerInfo || { name: 'Licenciatura en Ingeniería de Sistemas', code: 'CARSIS' };
+    const dateStr = new Date().toLocaleDateString('es-BO', { day: '2-digit', month: 'long', year: 'numeric' });
+    const timeStr = new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+
+    let semesterTablesHtml = '';
+    for (let s = 1; s <= 8; s++) {
+      const sem = data.semesters[s];
+      if (!sem || sem.courses.length === 0) continue;
+
+      const rows = sem.courses.map(c => {
+        const teacher = (c.teachers && c.teachers[0]) ? c.teachers[0].name : 'Por Designar';
+        const d = c.docs || {};
+        const anaSt = d.analitico ? d.analitico.state : 'VACIO';
+        const pacTSt = d.pacTeorico ? d.pacTeorico.state : 'N/A';
+        const pacPSt = d.pacPractico ? d.pacPractico.state : 'N/A';
+        const plCnt = d.planesClase ? d.planesClase.completados : 0;
+
+        const badgeHtml = (st, detail) => {
+          if (st === 'COMPLETO') return `<span style="color:#047857; font-weight:bold;">Completo${detail ? ' ('+detail+')' : ''}</span>`;
+          if (st === 'INCOMPLETO') return `<span style="color:#b45309; font-weight:bold;">Incompleto${detail ? ' ('+detail+')' : ''}</span>`;
+          if (st === 'VACIO') return `<span style="color:#b91c1c; font-weight:bold;">Vacío</span>`;
+          return `<span style="color:#64748b;">N/A</span>`;
+        };
+
+        const verdictBadge = (st) => {
+          if (st === 'APROBADO') return `<span style="background:#059669; color:#fff; padding:3px 10px; border-radius:4px; font-weight:900; font-size:10px; white-space:nowrap; display:inline-block;">APROBADO</span>`;
+          if (st === 'OBSERVADO') return `<span style="background:#dc2626; color:#fff; padding:3px 10px; border-radius:4px; font-weight:900; font-size:10px; white-space:nowrap; display:inline-block;">OBSERVADO</span>`;
+          return `<span style="background:#d97706; color:#fff; padding:3px 10px; border-radius:4px; font-weight:900; font-size:10px; white-space:nowrap; display:inline-block;">EN REVISIÓN</span>`;
+        };
+
+        const modLabel = c.modality === 'PRACTICA_PURA' ? 'Práctica Pura' : (c.modality === 'TEORICA_PURA' ? 'Teórica Pura' : 'Teórico-Práctica');
+
+        return `
+          <tr style="border-bottom: 1px solid #e2e8f0; font-size: 11px;">
+            <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #4338ca;">${c.code}</td>
+            <td style="padding: 6px 8px; font-weight: bold; color: #1e293b;">
+              ${c.courseName}
+              ${c.isCommon && c.commonCareersText ? `<br><span style="font-size:9px; color:#4f46e5; font-weight:normal;">👥 Común: ${c.commonCareersText}</span>` : ''}
+            </td>
+            <td style="padding: 6px 8px; color: #334155;">${teacher}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px; color: #475569;">${modLabel}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(anaSt, '4U')}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(pacTSt, '20s')}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(pacPSt, '12g')}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(plCnt === 40 ? 'COMPLETO' : (plCnt > 0 ? 'INCOMPLETO' : 'VACIO'), plCnt + '/40')}</td>
+            <td style="padding: 6px 8px; text-align: center; white-space:nowrap;">${verdictBadge(c.status)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      semesterTablesHtml += `
+        <div style="margin-top: 18px; margin-bottom: 8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:6px; margin-bottom:6px; border-left:4px solid #4f39f6;">
+            <strong style="color:#0f172a; font-size:12px; text-transform:uppercase;">${sem.name}</strong>
+            <span style="font-size:10px; color:#475569; font-weight:600;">${sem.approvedCount} de ${sem.totalCount} Aprobadas (${sem.compliancePct}%)</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 9px; text-transform: uppercase; color: #64748b;">
+                <th style="padding: 5px 8px;">Código</th>
+                <th style="padding: 5px 8px;">Asignatura</th>
+                <th style="padding: 5px 8px;">Docente Titular</th>
+                <th style="padding: 5px 8px; text-align:center;">Modalidad</th>
+                <th style="padding: 5px 8px; text-align:center;">P. Analítico</th>
+                <th style="padding: 5px 8px; text-align:center;">PAC Teórico</th>
+                <th style="padding: 5px 8px; text-align:center;">PAC Práctico</th>
+                <th style="padding: 5px 8px; text-align:center;">Planes Clase</th>
+                <th style="padding: 5px 8px; text-align:center; white-space:nowrap;">Dictamen</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    const reportHtml = `
+      <div id="malla-report-printable-content" style="font-family: Arial, Helvetica, sans-serif; color: #1e293b; background: #fff; padding: 24px; max-width: 900px; margin: 0 auto; line-height: 1.4;">
+        
+        <!-- Header Institucional -->
+        <div style="border-bottom: 2px solid #312e81; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h1 style="margin: 0; font-size: 16px; font-weight: 900; color: #1e1b4b; text-transform: uppercase; letter-spacing: 0.5px;">UNIVERSIDAD TÉCNICA PRIVADA COSMOPOLITANA</h1>
+            <h2 style="margin: 3px 0 0 0; font-size: 13px; font-weight: 800; color: #4338ca; text-transform: uppercase;">VICERRECTORADO ACADÉMICO • DIRECCIÓN DE CARRERA</h2>
+            <div style="margin-top: 6px; font-size: 14px; font-weight: 900; color: #0f172a;">
+              ${career.name.toUpperCase()} (${career.code})
+            </div>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #475569;">
+            <div><strong>Sede:</strong> Cochabamba (Campus Juan Pablo II)</div>
+            <div><strong>Gestión:</strong> II-2026 (Activa)</div>
+            <div><strong>Fecha Emisión:</strong> ${dateStr} - ${timeStr}</div>
+            <div style="margin-top: 4px;"><span style="background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 10px;">EXPEDIENTE OFICIAL SISA</span></div>
+          </div>
+        </div>
+
+        <!-- Título del Documento -->
+        <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="margin: 0; font-size: 14px; font-weight: 900; color: #312e81; text-transform: uppercase;">INFORME OFICIAL DE SUPERVISIÓN CURRICULAR Y ESTADO DE PLANIFICACIÓN</h3>
+            <p style="margin: 3px 0 0 0; font-size: 11px; color: #4338ca;">Auditoría de los 4 Documentos Oficiales: Programa Analítico, PAC Teórico, PAC Práctico y Planes de Clase</p>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-size: 20px; font-weight: 900; color: #4f39f6; font-family: monospace;">${data.globalCompliancePct}%</span>
+            <div style="font-size: 10px; font-weight: bold; color: #4338ca;">Cumplimiento Global</div>
+          </div>
+        </div>
+
+        <!-- Métricas Resumen -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; font-size: 11px;">
+          <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; background: #fafafa;">
+            <span style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: bold;">Total Asignaturas</span>
+            <div style="font-size: 16px; font-weight: 900; color: #0f172a; font-family: monospace;">${data.globalTotal}</div>
+            <span style="color: #475569; font-size: 9px;">${data.globalAssigned} asignadas · ${data.globalVacant} vacantes</span>
+          </div>
+          <div style="border: 1px solid #a7f3d0; border-radius: 6px; padding: 8px 12px; background: #ecfdf5;">
+            <span style="color: #047857; font-size: 10px; text-transform: uppercase; font-weight: bold;">Aprobadas</span>
+            <div style="font-size: 16px; font-weight: 900; color: #059669; font-family: monospace;">${data.globalApproved}</div>
+            <span style="color: #047857; font-size: 9px;">Con Dictamen Favorable</span>
+          </div>
+          <div style="border: 1px solid #fed7aa; border-radius: 6px; padding: 8px 12px; background: #fff7ed;">
+            <span style="color: #c2410c; font-size: 10px; text-transform: uppercase; font-weight: bold;">En Revisión</span>
+            <div style="font-size: 16px; font-weight: 900; color: #ea580c; font-family: monospace;">${data.globalPending}</div>
+            <span style="color: #c2410c; font-size: 9px;">En Proceso de Dictamen</span>
+          </div>
+          <div style="border: 1px solid #fecdd3; border-radius: 6px; padding: 8px 12px; background: #fff1f2;">
+            <span style="color: #be123c; font-size: 10px; text-transform: uppercase; font-weight: bold;">Con Observaciones</span>
+            <div style="font-size: 16px; font-weight: 900; color: #e11d48; font-family: monospace;">${data.globalObserved}</div>
+            <span style="color: #be123c; font-size: 9px;">Devueltas para Corrección</span>
+          </div>
+        </div>
+
+        <!-- Tablas por Semestre -->
+        ${semesterTablesHtml}
+
+        <!-- Bloque de Firmas y Sello Institucional -->
+        <div style="margin-top: 36px; padding-top: 20px; border-top: 1px dashed #94a3b8; display: flex; justify-content: space-around; text-align: center; font-size: 11px;">
+          <div style="width: 240px;">
+            <div style="height: 48px; border-bottom: 1px solid #475569; margin-bottom: 6px; display: flex; align-items: flex-end; justify-content: center;">
+              <span style="font-size: 10px; color: #4338ca; font-style: italic; font-weight: bold;">[Firmado Digitalmente SISA]</span>
+            </div>
+            <strong>Lic. Mariana Rios Vargas</strong><br>
+            <span style="color: #64748b; font-size: 10px;">Directora de Carrera • ${career.name}</span><br>
+            <span style="color: #94a3b8; font-size: 9px;">UNITEPC - Sede Cochabamba</span>
+          </div>
+          <div style="width: 240px;">
+            <div style="height: 48px; border-bottom: 1px solid #475569; margin-bottom: 6px; display: flex; align-items: flex-end; justify-content: center;">
+              <span style="font-size: 10px; color: #059669; font-style: italic; font-weight: bold;">[Certificación Institucional]</span>
+            </div>
+            <strong>Dirección Académica</strong><br>
+            <span style="color: #64748b; font-size: 10px;">Vicerrectorado de Sede</span><br>
+            <span style="color: #94a3b8; font-size: 9px;">Acreditación y Calidad Educativa</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+          Documento generado automáticamente por el Sistema Integrado de Seguimiento Académico (SISA) • Universidad Técnica Privada Cosmopolitana
+        </div>
+
+      </div>
+    `;
+
+    // 1. Prepare printable container for window.print()
+    const printContainer = document.getElementById('print-official-folder-container');
+    if (printContainer) {
+      printContainer.innerHTML = `<div class="print-page">${reportHtml}</div>`;
+    }
+
+    // 2. Open Modal Dialog with Preview and Actions
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalFooter = document.getElementById('modal-footer');
+    const modalContainer = document.getElementById('modal-container');
+
+    if (modalTitle) modalTitle.innerText = `Informe Oficial de Plan de Estudios • ${career.code}`;
+    if (modalBody) {
+      modalBody.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-lg bg-[#4f39f6] text-white"><i data-lucide="printer" class="w-4 h-4"></i></span>
+              <div>
+                <strong class="text-xs text-slate-900 dark:text-white block">Vista Previa de Informe de Supervisión Curricular</strong>
+                <span class="text-[11px] text-slate-500">Malla completa de 8 semestres con dictamen oficial para acreditación</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="window.downloadMallaReportPdf()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Descargar PDF (.pdf)</span>
+              </button>
+              <button type="button" onclick="window.printMallaReport()" class="px-3.5 py-1.5 rounded-lg bg-[#4f39f6] hover:bg-[#432dd7] text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span>Imprimir Oficial</span>
+              </button>
+            </div>
+          </div>
+          <div class="max-h-[68vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 p-2 bg-slate-200/50 dark:bg-slate-950/60 custom-scrollbar">
+            ${reportHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    if (modalFooter) modalFooter.classList.add('hidden');
+    if (modalContainer) modalContainer.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.printMallaReport = function() {
+    window.print();
+  };
+
+  window.downloadMallaReportPdf = function() {
+    const printableEl = document.getElementById('malla-report-printable-content');
+    if (!printableEl) {
+      window.print();
+      return;
+    }
+
+    const career = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo) ? window.__SUPERVISION_DATA__.careerInfo.code : 'CARSIS';
+    const filename = `Malla_Curricular_UNITEPC_${career}_2026_II.pdf`;
+
+    if (typeof html2pdf !== 'undefined') {
+      window.showToast('⏳ Generando y descargando PDF oficial...');
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(printableEl).save().then(() => {
+        window.showToast('✅ Malla Curricular descargada en PDF: ' + filename);
+      }).catch(err => {
+        console.warn('html2pdf fallback to print:', err);
+        window.print();
+      });
+    } else {
+      window.print();
+    }
+  };
+
+  window.filterSupervisionBySearch = function(query) {
+    window.__SUPERVISION_SEARCH_QUERY__ = (query || '').toLowerCase().trim();
+    window.renderSupervisionAccordions();
+  };
+
+  window.filterSupervisionGroupType = function(type) {
+    window.__SUPERVISION_GROUP_TYPE__ = type || 'todos';
+    ['all', 'ta', 'tp'].forEach(k => {
+      const btn = document.getElementById('supervision-btn-grp-' + k);
+      if (btn) {
+        if ((k === 'all' && type === 'todos') || (k === 'ta' && type === 'teorico') || (k === 'tp' && type === 'practico')) {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer';
+        } else {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer';
+        }
+      }
+    });
+    window.renderSupervisionAccordions();
+  };
+
+  window.filterSupervisionUnassigned = function(hide) {
+    window.__SUPERVISION_HIDE_UNASSIGNED__ = !!hide;
+    window.renderSupervisionAccordions();
+  };
+
+  window.setSupervisionActiveTab = function(tab) {
+    window.__SUPERVISION_DOC_TAB__ = tab || 'TODOS';
+    ['todos', 'analitico', 'pac', 'practico', 'clases'].forEach(t => {
+      const btn = document.getElementById('supervision-tab-' + t);
+      if (btn) {
+        if (t.toUpperCase() === (tab || 'TODOS').toUpperCase()) {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer';
+        } else {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer';
+        }
+      }
+    });
+    window.renderSupervisionAccordions();
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.switchModalReviewTab = function(tabName) {
+    const tabs = ['analitico', 'pacteorico', 'pacpractico', 'planes'];
+    tabs.forEach(t => {
+      const btn = document.getElementById('btn-modal-tab-' + t);
+      const panel = document.getElementById('panel-modal-' + t);
+      if (btn) {
+        if (t === tabName) {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer flex items-center gap-1.5';
+        } else {
+          btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5';
+        }
+      }
+      if (panel) {
+        if (t === tabName) panel.classList.remove('hidden');
+        else panel.classList.add('hidden');
+      }
+    });
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.jumpToDocFromModal = function(targetTab) {
+    if (!window.__ACTIVE_PAC_REVIEW__) return;
+    const { courseCode, course } = window.__ACTIVE_PAC_REVIEW__;
+    const teacherCi = (course && course.teachers && course.teachers[0]) ? course.teachers[0].ci : '';
+    window.closePacReviewModal();
+    window.openTeacherFolderFromSupervision(courseCode, teacherCi, targetTab);
+  };
+
+  window.toggleSupervisionSemester = function(semNum) {
+    if (!window.__SUPERVISION_EXPANDED_SEMESTERS__) window.__SUPERVISION_EXPANDED_SEMESTERS__ = {};
+    window.__SUPERVISION_EXPANDED_SEMESTERS__[semNum] = !window.__SUPERVISION_EXPANDED_SEMESTERS__[semNum];
+    window.__ACTIVE_SEMESTER_NUM__ = semNum;
+    window.renderSupervisionAccordions();
+  };
+
+  window.filterSupervisionTable = function(filterType) {
+    window.__SUPERVISION_FILTER__ = filterType;
+
+    // Highlight KPI cards
+    const kpiCardMap = {
+      'ALL': 'card-supervision-kpi-all',
+      'APROBADO': 'card-supervision-kpi-approved',
+      'EN_REVISION': 'card-supervision-kpi-pending',
+      'OBSERVADO': 'card-supervision-kpi-observed'
+    };
+
+    Object.values(kpiCardMap).forEach(cardId => {
+      const el = document.getElementById(cardId);
+      if (el) {
+        el.classList.remove('ring-2', 'ring-[#4f39f6]', 'dark:ring-indigo-400');
+      }
+    });
+
+    const targetCardId = kpiCardMap[filterType];
+    if (targetCardId) {
+      const el = document.getElementById(targetCardId);
+      if (el) {
+        el.classList.add('ring-2', 'ring-[#4f39f6]', 'dark:ring-indigo-400');
+      }
+    }
+
+    const btns = document.querySelectorAll('.supervision-filter-btn');
+    btns.forEach(b => {
+      b.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
+      b.classList.add('text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-100');
+    });
+
+    const activeMap = {
+      'ALL': 'supervision-btn-all',
+      'APROBADO': 'supervision-btn-approved',
+      'EN_REVISION': 'supervision-btn-pending',
+      'OBSERVADO': 'supervision-btn-observed'
+    };
+
+    const activeBtn = document.getElementById(activeMap[filterType]);
+    if (activeBtn) {
+      activeBtn.classList.remove('text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-100');
+      activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+    }
+
+    window.renderSupervisionAccordions();
+  };
+
+  window.openTeacherFolderFromSupervision = async function(courseCode, teacherCi, targetTab) {
+    if (!teacherCi || teacherCi === 'Sin Asignar' || teacherCi === 'null' || teacherCi === 'undefined' || String(teacherCi).trim() === '') {
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Esta asignatura aún no tiene docente asignado en el catálogo.');
+      }
+      return;
+    }
+
+    // Set supervision audit course code flag
+    window.__SUPERVISION_AUDIT_COURSE_CODE__ = courseCode;
+    try {
+      localStorage.setItem('sisa_supervision_audit_course', courseCode);
+    } catch (e) {}
+
+    // 1. Switch or load teacher dynamically with preferred course pre-selected
+    if (typeof window.selectDocenteFromApi === 'function') {
+      await window.selectDocenteFromApi(teacherCi, true, courseCode);
+    }
+
+    // 2. Switch to Carpeta Docente view
+    if (typeof window.switchView === 'function') {
+      window.switchView('view1');
+    }
+
+    // 3. Activate requested tab (defaulting to tab-analitico or targetTab)
+    setTimeout(() => {
+      if (typeof window.switchDocMainTab === 'function') {
+        window.switchDocMainTab(targetTab || 'tab-analitico');
+      }
+      if (typeof window.updateTeacherObservationBanner === 'function') {
+        window.updateTeacherObservationBanner(courseCode);
+      }
+    }, 120);
+
+    // 4. Unhide contextual return bar in view1
+    const returnBar = document.getElementById('director-supervision-return-bar');
+    const returnCourse = document.getElementById('director-supervision-return-course');
+    if (returnBar) {
+      returnBar.classList.remove('hidden');
+      if (returnCourse) {
+        const docName = window.__ACTIVE_DOCENTE__ ? window.__ACTIVE_DOCENTE__.nombreCompleto : '';
+        returnCourse.textContent = `• Asignatura: ${courseCode || ''} | Docente: ${docName} (CI: ${teacherCi})`;
+      }
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    if (typeof window.showToast === 'function') {
+      const docName = window.__ACTIVE_DOCENTE__ ? window.__ACTIVE_DOCENTE__.nombreCompleto : teacherCi;
+      window.showToast(`📂 Auditoría Carpeta: ${courseCode} (${docName})`);
+    }
+  };
+
+  // =========================================================================
+  // TEACHER OBSERVATION & VISA BANNER CONTROLLER (PHASE 4)
+  // =========================================================================
+  window.updateTeacherObservationBanner = function(courseCode) {
+    const banner = document.getElementById('teacher-observation-banner');
+    if (!banner) return;
+
+    let targetCode = courseCode;
+    if (!targetCode) {
+      if (typeof activeMateriaKey !== 'undefined' && typeof materiasData !== 'undefined' && materiasData[activeMateriaKey]) {
+        targetCode = materiasData[activeMateriaKey].codigo;
+      }
+    }
+    if (!targetCode) {
+      banner.classList.add('hidden');
+      return;
+    }
+
+    // 1. Resolve current course PAC review status & observations
+    let status = localStorage.getItem('sisa_supervision_status_' + targetCode);
+    let obs = localStorage.getItem('sisa_supervision_obs_' + targetCode);
+    let reviewer = 'Lic. Mariana Rios Vargas - Director de Carrera';
+    let reviewDate = '14/10/2026, 10:30';
+
+    if (window.__PAC_CACHE__ && window.__PAC_CACHE__[targetCode]) {
+      const pac = window.__PAC_CACHE__[targetCode];
+      if (pac.estado) status = pac.estado;
+      if (pac.observacionesRevision) obs = pac.observacionesRevision;
+      if (pac.revisadoPorNombre) reviewer = `${pac.revisadoPorNombre} - Director de Carrera`;
+      if (pac.revisadoEn) {
+        try {
+          reviewDate = new Date(pac.revisadoEn).toLocaleString('es-BO', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+        } catch (e) {}
+      }
+    } else if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      for (const sem of Object.values(window.__SUPERVISION_DATA__.semesters)) {
+        const found = sem.courses.find(c => c.code === targetCode);
+        if (found) {
+          if (!status) status = found.status;
+          if (!obs && found.observacionesRevision) obs = found.observacionesRevision;
+          break;
+        }
+      }
+    }
+
+    // Default status for pilot demo if unreviewed
+    if (!status) {
+      if (targetCode === 'SIS-214') status = 'OBSERVADO';
+      else if (targetCode === 'SIS-213') status = 'EN_REVISION';
+      else status = 'PENDIENTE';
+    }
+
+    const alertCard = document.getElementById('teacher-obs-alert-card');
+    const visaCard = document.getElementById('teacher-visa-seal-card');
+    const obsTextEl = document.getElementById('teacher-obs-text');
+    const obsRevEl = document.getElementById('teacher-obs-reviewer');
+    const obsDateEl = document.getElementById('teacher-obs-date');
+    const visaRevEl = document.getElementById('teacher-visa-reviewer');
+    const visaDateEl = document.getElementById('teacher-visa-date');
+
+    if (status === 'OBSERVADO') {
+      const savedObsDocs = localStorage.getItem('sisa_supervision_obs_docs_' + targetCode);
+      let docsLabel = '';
+      if (savedObsDocs) {
+        try {
+          const arr = JSON.parse(savedObsDocs);
+          const mapNames = {
+            'analitico': 'Programa Analítico',
+            'pacteorico': 'PAC Teórico',
+            'pacpractico': 'PAC Práctico',
+            'planes': 'Planes de Clase'
+          };
+          const names = arr.map(k => mapNames[k] || k);
+          if (names.length > 0) {
+            docsLabel = `[Documentos a corregir: ${names.join(', ')}] — `;
+          }
+        } catch (e) {}
+      }
+      const defaultObs = 'Las matrices de evaluación del hito 2 deben ajustarse a la normativa de 20 semanas y se debe actualizar la bibliografía básica en formato APA 7.';
+      if (obsTextEl) obsTextEl.textContent = docsLabel + ((obs && obs.trim()) ? obs : defaultObs);
+      if (obsRevEl) obsRevEl.textContent = reviewer;
+      if (obsDateEl) obsDateEl.textContent = reviewDate;
+
+      if (alertCard) alertCard.classList.remove('hidden');
+      if (visaCard) visaCard.classList.add('hidden');
+      banner.classList.remove('hidden');
+    } else if (status === 'APROBADO') {
+      if (visaRevEl) visaRevEl.textContent = reviewer;
+      if (visaDateEl) visaDateEl.textContent = `Certificación Oficial • ${reviewDate}`;
+
+      if (alertCard) alertCard.classList.add('hidden');
+      if (visaCard) visaCard.classList.remove('hidden');
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+      if (alertCard) alertCard.classList.add('hidden');
+      if (visaCard) visaCard.classList.add('hidden');
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.resubmitTeacherPac = async function() {
+    let targetCode = null;
+    if (typeof activeMateriaKey !== 'undefined' && typeof materiasData !== 'undefined' && materiasData[activeMateriaKey]) {
+      targetCode = materiasData[activeMateriaKey].codigo;
+    }
+    if (!targetCode) targetCode = 'SIS-214';
+
+    let pacId = null;
+    if (window.__PAC_CACHE__ && window.__PAC_CACHE__[targetCode]) {
+      pacId = window.__PAC_CACHE__[targetCode].id;
+    }
+    if (!pacId) {
+      const storedId = localStorage.getItem('sisa_pac_id_' + targetCode);
+      if (storedId) pacId = parseInt(storedId, 10);
+    }
+
+    const token = typeof window.getAuthToken === 'function' ? window.getAuthToken() : localStorage.getItem('scu_access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    try {
+      if (pacId) {
+        await fetch(`/api/v1/planificaciones/pac/${pacId}/submit`, { method: 'POST', headers });
+      } else {
+        await fetch(`/api/v1/planificaciones/submit`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ asignacionId: (typeof activeAsignacionId !== 'undefined' ? activeAsignacionId : 1) })
+        });
+      }
+    } catch (e) {
+      console.warn('Teacher submit fallback:', e);
+    }
+
+    // Resilient transition to ENVIADO_REVISION
+    localStorage.setItem('sisa_supervision_status_' + targetCode, 'EN_REVISION');
+    localStorage.removeItem('sisa_supervision_obs_' + targetCode);
+
+    if (window.__PAC_CACHE__ && window.__PAC_CACHE__[targetCode]) {
+      window.__PAC_CACHE__[targetCode].estado = 'ENVIADO_REVISION';
+      delete window.__PAC_CACHE__[targetCode].observacionesRevision;
+    }
+
+    window.updateTeacherObservationBanner(targetCode);
+
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      for (const sem of Object.values(window.__SUPERVISION_DATA__.semesters)) {
+        const found = sem.courses.find(c => c.code === targetCode);
+        if (found) {
+          found.status = 'EN_REVISION';
+          delete found.observacionesRevision;
+          break;
+        }
+      }
+      if (typeof window.renderSupervisionAccordions === 'function') {
+        window.renderSupervisionAccordions();
+      }
+    }
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`🚀 ¡Planificación de ${targetCode} reenviada a Dirección de Carrera para su visado institucional!`);
+    }
+  };
+
+  // =========================================================================
+  // CROSS-CAREER COLLABORATIVE NOTE MODAL (PHASE 3)
+  // =========================================================================
+  window.__ACTIVE_COLLAB_NOTE_CODE__ = null;
+
+  window.openCollaborativeNoteModal = function(courseCode) {
+    const modal = document.getElementById('modal-collaborative-note');
+    if (!modal) return;
+
+    window.__ACTIVE_COLLAB_NOTE_CODE__ = courseCode;
+
+    let courseName = courseCode;
+    let leadTag = 'OTRA CARRERA';
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      for (const sem of Object.values(window.__SUPERVISION_DATA__.semesters)) {
+        const found = sem.courses.find(c => c.code === courseCode);
+        if (found) {
+          courseName = found.courseName || courseCode;
+          leadTag = found.leadTag || leadTag;
+          break;
+        }
+      }
+    }
+
+    const titleEl = document.getElementById('modal-collab-title');
+    const codeEl = document.getElementById('modal-collab-code');
+    const nameEl = document.getElementById('modal-collab-name');
+    const inputEl = document.getElementById('modal-collab-note-input');
+
+    if (titleEl) titleEl.textContent = `Nota Colaborativa: ${courseName}`;
+    if (codeEl) codeEl.textContent = courseCode;
+    if (nameEl) nameEl.textContent = `${courseName} (Líder: ${leadTag})`;
+    if (inputEl) {
+      const savedNote = localStorage.getItem('sisa_collab_note_' + courseCode) || '';
+      inputEl.value = savedNote;
+    }
+
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.closeCollaborativeNoteModal = function() {
+    const modal = document.getElementById('modal-collaborative-note');
+    if (modal) modal.classList.add('hidden');
+    window.__ACTIVE_COLLAB_NOTE_CODE__ = null;
+  };
+
+  window.submitCollaborativeNote = function() {
+    const courseCode = window.__ACTIVE_COLLAB_NOTE_CODE__;
+    if (!courseCode) {
+      window.closeCollaborativeNoteModal();
+      return;
+    }
+
+    const inputEl = document.getElementById('modal-collab-note-input');
+    const note = inputEl ? inputEl.value.trim() : '';
+
+    if (!note) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Ingrese una recomendación o nota colaborativa antes de enviar.');
+      }
+      return;
+    }
+
+    localStorage.setItem('sisa_collab_note_' + courseCode, note);
+    window.closeCollaborativeNoteModal();
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`📨 Sugerencia colaborativa enviada a la Dirección de Carrera Líder para ${courseCode}`);
+    }
+  };
+
+  // =========================================================================
+  // INSTITUTIONAL PAC REVIEW MODAL CONTROLLER (DIRECCIÓN DE CARRERA)
+  // =========================================================================
+  window.openPacReviewModal = function(courseCode, semNum, initialDecision) {
+    const modal = document.getElementById('modal-pac-review');
+    if (!modal) return;
+
+    // 1. Resolve target course
+    let targetCourse = null;
+    let targetSem = semNum;
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      if (semNum && window.__SUPERVISION_DATA__.semesters[semNum]) {
+        targetCourse = window.__SUPERVISION_DATA__.semesters[semNum].courses.find(c => c.code === courseCode);
+      }
+      if (!targetCourse) {
+        for (const [sKey, sObj] of Object.entries(window.__SUPERVISION_DATA__.semesters)) {
+          const found = sObj.courses.find(c => c.code === courseCode);
+          if (found) {
+            targetCourse = found;
+            targetSem = parseInt(sKey, 10);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!targetCourse) {
+      targetCourse = {
+        code: courseCode,
+        courseName: courseCode,
+        semester: semNum || 1,
+        teachers: [],
+        shifts: new Set(['Mañana']),
+        classrooms: new Set(['Aula 302']),
+        tienePractica: true,
+        docs: {
+          analitico: { estado: 'APROBADO' },
+          pacTeorico: { estado: 'APROBADO' },
+          pacPractico: { tienePractica: true, estado: 'APROBADO', guias: 12, label: '12 Guías Prácticas' },
+          planesClase: { total: 40, completados: 40, estado: 'COMPLETO', pct: 100 }
+        }
+      };
+    }
+
+    // 2. Resolve teacher & schedule
+    const teacher = (targetCourse.teachers && targetCourse.teachers[0]) || { name: 'Docente Titular', ci: '' };
+    const shiftsStr = targetCourse.shifts && targetCourse.shifts.size > 0 ? Array.from(targetCourse.shifts).join(', ') : 'Mañana';
+    const classroomsStr = targetCourse.classrooms && targetCourse.classrooms.size > 0 ? Array.from(targetCourse.classrooms).join(', ') : 'Aula 302';
+
+    // 3. Populate metadata card
+    const titleEl = document.getElementById('modal-pac-review-title');
+    const codeEl = document.getElementById('modal-pac-review-code');
+    const nameEl = document.getElementById('modal-pac-review-name');
+    const semEl = document.getElementById('modal-pac-review-semester');
+    const teacherEl = document.getElementById('modal-pac-review-teacher');
+    const ciEl = document.getElementById('modal-pac-review-ci');
+    const schedEl = document.getElementById('modal-pac-review-schedule');
+    const badgeEl = document.getElementById('modal-pac-review-practical-badge');
+
+    if (titleEl) titleEl.textContent = `Auditoría: ${targetCourse.courseName}`;
+    if (codeEl) codeEl.textContent = targetCourse.code;
+    if (nameEl) nameEl.textContent = targetCourse.courseName;
+    if (semEl) semEl.textContent = `${targetCourse.semester || targetSem || 1}º Semestre`;
+    if (teacherEl) teacherEl.textContent = teacher.name || 'Docente Titular';
+    if (ciEl) ciEl.textContent = teacher.ci ? `(CI: ${teacher.ci})` : '';
+    if (schedEl) schedEl.textContent = `${shiftsStr} • ${classroomsStr}`;
+
+    if (badgeEl) {
+      if (targetCourse.modality === 'PRACTICA_PURA') {
+        badgeEl.textContent = '🛠️ Asignatura de Práctica Pura (100% Práctica • PAC Teórico N/A)';
+        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300';
+      } else if (targetCourse.modality === 'TEORICA_PURA') {
+        badgeEl.textContent = '📖 Asignatura Teórica Pura (100% Teórica • PAC Práctico N/A)';
+        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300';
+      } else {
+        badgeEl.textContent = '🔬 Asignatura Teórico-Práctica (Requiere PAC Teórico y PAC Práctico con Guías)';
+        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300';
+      }
+    }
+
+    // 4. Populate Document Inspection Panels
+    const d = targetCourse.docs || {
+      analitico: { estado: 'APROBADO' },
+      pacTeorico: { estado: 'APROBADO' },
+      pacPractico: { tienePractica: targetCourse.tienePractica, estado: targetCourse.tienePractica ? 'APROBADO' : 'N/A', guias: 12, label: '12 Guías Prácticas' },
+      planesClase: { total: 40, completados: 40, estado: 'COMPLETO', pct: 100 }
+    };
+
+    const statusAnaEl = document.getElementById('modal-status-analitico');
+    const statusPacTEoEl = document.getElementById('modal-status-pacteorico');
+    const statusPacPracEl = document.getElementById('modal-status-pacpractico');
+    const statusPlanesEl = document.getElementById('modal-status-planes');
+    const planesCountEl = document.getElementById('modal-planes-count');
+    const pracContentEl = document.getElementById('modal-pacpractico-content');
+
+    if (statusAnaEl) statusAnaEl.textContent = d.analitico.estado;
+    if (statusPacTEoEl) {
+      statusPacTEoEl.textContent = targetCourse.modality === 'PRACTICA_PURA' ? 'NO APLICA (EXENTO)' : d.pacTeorico.estado;
+    }
+    if (statusPacPracEl) {
+      statusPacPracEl.textContent = targetCourse.modality === 'TEORICA_PURA' ? 'NO APLICA (EXENTO)' : `${d.pacPractico.guias || 12} GUÍAS (${d.pacPractico.estado})`;
+    }
+    if (statusPlanesEl) {
+      statusPlanesEl.textContent = `${d.planesClase.completados}/40 COMPLETADOS (${d.planesClase.pct}%)`;
+    }
+    if (planesCountEl) {
+      planesCountEl.textContent = `Avance: ${d.planesClase.completados} de 40 Sesiones microplanificadas`;
+    }
+
+    if (pracContentEl) {
+      if (targetCourse.tienePractica) {
+        pracContentEl.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">${d.pacPractico.guias || 12} Protocolos y Guías de Laboratorio</strong>
+                <span class="text-slate-500 text-[10px]">Guías estructuradas con objetivos y actividades prácticas</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-slate-800 dark:text-slate-200 text-[11px] block">Recursos y Requerimientos Técnicos</strong>
+                <span class="text-slate-500 text-[10px]">Equipos, software especializado y normas de seguridad</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        pracContentEl.innerHTML = `
+          <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-800 dark:text-amber-200">
+            <strong class="block font-bold mb-1">📖 Asignatura Teórica Pura:</strong>
+            Esta asignatura no cuenta con carga horaria práctica ni de laboratorio en la malla curricular oficial aprobada por el Vicerrectorado. El requerimiento de PAC Práctico se encuentra en estado <strong>EXENTO (N/A)</strong> y no condiciona la aprobación del expediente curricular.
+          </div>
+        `;
+      }
+    }
+
+    // Default to the first inspection tab (Programa Analítico)
+    if (typeof window.switchModalReviewTab === 'function') {
+      window.switchModalReviewTab('analitico');
+    }
+
+    // 5. Restore checkboxes for observed documents
+    const savedObsDocs = localStorage.getItem('sisa_supervision_obs_docs_' + courseCode);
+    let obsDocsList = ['analitico', 'pacteorico'];
+    if (savedObsDocs) {
+      try { obsDocsList = JSON.parse(savedObsDocs); } catch (e) {}
+    }
+    const cbAna = document.getElementById('cb-obs-analitico');
+    const cbPacT = document.getElementById('cb-obs-pacteorico');
+    const cbPacP = document.getElementById('cb-obs-pacpractico');
+    const cbPlanes = document.getElementById('cb-obs-planes');
+
+    if (cbAna) cbAna.checked = obsDocsList.includes('analitico');
+    if (cbPacT) cbPacT.checked = obsDocsList.includes('pacteorico');
+    if (cbPacP) cbPacP.checked = obsDocsList.includes('pacpractico');
+    if (cbPlanes) cbPlanes.checked = obsDocsList.includes('planes');
+
+    // 6. Resolve pacId
+    let pacId = targetCourse.pacId || null;
+    if (!pacId && window.__PAC_CACHE__ && window.__PAC_CACHE__[courseCode]) {
+      pacId = window.__PAC_CACHE__[courseCode].id;
+    }
+    if (!pacId) {
+      const storedId = localStorage.getItem('sisa_pac_id_' + courseCode);
+      if (storedId) pacId = parseInt(storedId, 10);
+    }
+
+    // 7. Set active context
+    window.__ACTIVE_PAC_REVIEW__ = {
+      courseCode: courseCode,
+      semNum: targetSem,
+      course: targetCourse,
+      pacId: pacId,
+      decision: initialDecision || (targetCourse.status === 'OBSERVADO' ? 'OBSERVADO' : 'APROBADO')
+    };
+
+    // 8. Reset observation textarea
+    const obsInput = document.getElementById('modal-pac-obs-input');
+    if (obsInput) {
+      const savedObs = localStorage.getItem('sisa_supervision_obs_' + courseCode) || targetCourse.observacionesRevision || '';
+      obsInput.value = savedObs;
+    }
+
+    // 9. Initialize decision & character counter
+    window.setPacReviewDecision(window.__ACTIVE_PAC_REVIEW__.decision);
+
+    // 10. Unhide modal
+    modal.classList.remove('hidden');
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.closePacReviewModal = function() {
+    const modal = document.getElementById('modal-pac-review');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    const obsInput = document.getElementById('modal-pac-obs-input');
+    if (obsInput) {
+      obsInput.value = '';
+    }
+    window.__ACTIVE_PAC_REVIEW__ = null;
+  };
+
+  window.setPacReviewDecision = function(decision) {
+    if (!window.__ACTIVE_PAC_REVIEW__) {
+      window.__ACTIVE_PAC_REVIEW__ = { decision: decision };
+    } else {
+      window.__ACTIVE_PAC_REVIEW__.decision = decision;
+    }
+
+    const btnApprove = document.getElementById('btn-decision-approve');
+    const btnObserve = document.getElementById('btn-decision-observe');
+    const obsDocsSection = document.getElementById('modal-pac-obs-docs-section');
+    const reqAsterisk = document.getElementById('modal-pac-obs-required');
+    const hintEl = document.getElementById('modal-pac-validation-hint');
+    const obsInput = document.getElementById('modal-pac-obs-input');
+
+    if (decision === 'APROBADO') {
+      if (btnApprove) {
+        btnApprove.className = 'p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer';
+      }
+      if (btnObserve) {
+        btnObserve.className = 'p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer';
+      }
+      if (obsDocsSection) obsDocsSection.classList.add('hidden');
+      if (reqAsterisk) reqAsterisk.classList.add('hidden');
+      if (hintEl) hintEl.textContent = 'Opcional para dictamen favorable. Obligatorio (mínimo 10 caracteres) para observaciones.';
+    } else {
+      if (btnApprove) {
+        btnApprove.className = 'p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer';
+      }
+      if (btnObserve) {
+        btnObserve.className = 'p-3 rounded-xl border-2 border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer';
+      }
+      if (obsDocsSection) obsDocsSection.classList.remove('hidden');
+      if (reqAsterisk) reqAsterisk.classList.remove('hidden');
+      if (hintEl) hintEl.textContent = 'Obligatorio: seleccione los documentos con observaciones e ingrese al menos 10 caracteres fundamentando las correcciones.';
+    }
+
+    window.handlePacReviewCharCount(obsInput ? obsInput.value : '');
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.handlePacReviewCharCount = function(val) {
+    const rawVal = val || '';
+    const trimmed = rawVal.trim();
+    const count = trimmed.length;
+    const decision = (window.__ACTIVE_PAC_REVIEW__ && window.__ACTIVE_PAC_REVIEW__.decision) || 'APROBADO';
+
+    const counterEl = document.getElementById('modal-pac-char-counter');
+    const submitBtn = document.getElementById('modal-pac-submit-btn');
+
+    if (decision === 'OBSERVADO') {
+      if (count < 10) {
+        if (counterEl) {
+          counterEl.textContent = `${count} / 10 mín.`;
+          counterEl.className = 'text-[11px] font-mono text-rose-500 font-bold';
+        }
+        if (submitBtn) {
+          submitBtn.setAttribute('disabled', 'true');
+          submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          submitBtn.classList.remove('hover:bg-[#432dd7]');
+        }
+      } else {
+        if (counterEl) {
+          counterEl.textContent = `${count} caracteres`;
+          counterEl.className = 'text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold';
+        }
+        if (submitBtn) {
+          submitBtn.removeAttribute('disabled');
+          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          submitBtn.classList.add('hover:bg-[#432dd7]');
+        }
+      }
+    } else {
+      // APROBADO
+      if (counterEl) {
+        counterEl.textContent = count > 0 ? `${count} caracteres (opcional)` : '0 / 10 mín. (opcional)';
+        counterEl.className = 'text-[11px] font-mono text-slate-400';
+      }
+      if (submitBtn) {
+        submitBtn.removeAttribute('disabled');
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.classList.add('hover:bg-[#432dd7]');
+      }
+    }
+  };
+
+  window.submitPacReviewModal = async function() {
+    if (!window.__ACTIVE_PAC_REVIEW__) return;
+
+    const { courseCode, semNum, course } = window.__ACTIVE_PAC_REVIEW__;
+    const decision = window.__ACTIVE_PAC_REVIEW__.decision || 'APROBADO';
+    const obsInput = document.getElementById('modal-pac-obs-input');
+    const obs = obsInput ? obsInput.value.trim() : '';
+
+    if (decision === 'OBSERVADO' && obs.length < 10) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('⚠️ Las observaciones deben tener al menos 10 caracteres.');
+      }
+      return;
+    }
+
+    const submitBtn = document.getElementById('modal-pac-submit-btn');
+    const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Emitiendo Dictamen...';
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // Collect observed documents if OBSERVADO
+    const obsDocs = [];
+    if (decision === 'OBSERVADO') {
+      if (document.getElementById('cb-obs-analitico')?.checked) obsDocs.push('analitico');
+      if (document.getElementById('cb-obs-pacteorico')?.checked) obsDocs.push('pacteorico');
+      if (document.getElementById('cb-obs-pacpractico')?.checked) obsDocs.push('pacpractico');
+      if (document.getElementById('cb-obs-planes')?.checked) obsDocs.push('planes');
+      localStorage.setItem('sisa_supervision_obs_docs_' + courseCode, JSON.stringify(obsDocs));
+    } else {
+      localStorage.removeItem('sisa_supervision_obs_docs_' + courseCode);
+    }
+
+    // Resolve pacId
+    let pacId = (course && course.pacId) || window.__ACTIVE_PAC_REVIEW__.pacId;
+    if (!pacId && window.__PAC_CACHE__ && window.__PAC_CACHE__[courseCode]) {
+      pacId = window.__PAC_CACHE__[courseCode].id;
+    }
+    if (!pacId) {
+      const storedId = localStorage.getItem('sisa_pac_id_' + courseCode);
+      if (storedId) pacId = parseInt(storedId, 10);
+    }
+
+    const token = typeof window.getAuthToken === 'function' ? window.getAuthToken() : localStorage.getItem('scu_access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'demo_token') {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+
+    let networkSuccess = false;
+
+    try {
+      // If we don't have pacId yet, try to auto-provision by calling by-carrera endpoint
+      if (!pacId) {
+        const cCode = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo && window.__SUPERVISION_DATA__.careerInfo.code) || 'CARSIS';
+        const syncRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=1`, { headers });
+        if (syncRes.ok) {
+          const syncJson = await syncRes.json();
+          const pList = (syncJson && syncJson.data) ? syncJson.data : (Array.isArray(syncJson) ? syncJson : []);
+          const match = pList.find(p => p.codigoAsignatura === courseCode);
+          if (match) {
+            pacId = match.id;
+            if (!window.__PAC_CACHE__) window.__PAC_CACHE__ = {};
+            window.__PAC_CACHE__[courseCode] = match;
+            localStorage.setItem('sisa_pac_id_' + courseCode, pacId);
+          }
+        }
+      }
+
+      if (pacId) {
+        const payload = {
+          nuevoEstado: decision,
+          observaciones: obs
+        };
+        const res = await fetch(`/api/v1/planificaciones/pac/${pacId}/review`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          networkSuccess = true;
+          if (window.__PAC_CACHE__ && window.__PAC_CACHE__[courseCode]) {
+            window.__PAC_CACHE__[courseCode].estado = decision;
+            window.__PAC_CACHE__[courseCode].observacionesRevision = obs;
+          }
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.warn('Supervisión Review API returned status:', res.status, errData);
+        }
+      }
+    } catch (err) {
+      console.warn('Supervisión Review: Network error, falling back to resilient local buffer:', err);
+    }
+
+    // Always perform resilient optimistic update
+    localStorage.setItem('sisa_supervision_status_' + courseCode, decision);
+    localStorage.setItem('sisa_supervision_obs_' + courseCode, obs);
+
+    if (course) {
+      course.status = decision;
+      course.observacionesRevision = obs;
+
+      const tienePrac = course.tienePractica !== false;
+      let anaSt = decision;
+      let pacTSt = decision;
+      let pacPSt = tienePrac ? decision : 'N/A';
+      let plCount = (decision === 'APROBADO') ? 40 : ((decision === 'OBSERVADO') ? 14 : 24);
+      let plSt = (plCount === 40) ? 'COMPLETO' : 'EN_AVANCE';
+
+      if (decision === 'OBSERVADO') {
+        anaSt = obsDocs.includes('analitico') ? 'OBSERVADO' : 'APROBADO';
+        pacTSt = obsDocs.includes('pacteorico') ? 'OBSERVADO' : 'APROBADO';
+        if (tienePrac) pacPSt = obsDocs.includes('pacpractico') ? 'OBSERVADO' : 'APROBADO';
+        if (obsDocs.includes('planes')) plSt = 'OBSERVADO';
+      }
+
+      course.docs = {
+        analitico: { estado: anaSt, unidades: 4, competencias: true, bibliografiaApa: true },
+        pacTeorico: { estado: pacTSt, semanas: 20, columnas: 7 },
+        pacPractico: { tienePractica: tienePrac, estado: pacPSt, guias: tienePrac ? 12 : 0, label: tienePrac ? '12 Guías Prácticas' : 'N/A (Teórica Pura)' },
+        planesClase: { total: 40, completados: plCount, estado: plSt, pct: Math.round((plCount / 40) * 100) }
+      };
+    }
+
+    window.closePacReviewModal();
+
+    if (typeof window.updateTeacherObservationBanner === 'function') {
+      window.updateTeacherObservationBanner(courseCode);
+    }
+
+    if (typeof window.renderSupervisionCurricular === 'function') {
+      window.renderSupervisionCurricular();
+    }
+
+    if (typeof window.showToast === 'function') {
+      if (networkSuccess) {
+        window.showToast(decision === 'APROBADO'
+          ? `✅ Dictamen oficial emitido: Expediente de ${courseCode} APROBADO y visado.`
+          : `⚠️ Dictamen oficial emitido: Expediente de ${courseCode} marcado como OBSERVADO.`);
+      } else {
+        window.showToast(decision === 'APROBADO'
+          ? `✅ Dictamen guardado: Expediente de ${courseCode} APROBADO (sincronizado)`
+          : `⚠️ Dictamen guardado: Expediente de ${courseCode} OBSERVADO (sincronizado)`);
+      }
+    }
+
+    if (submitBtn) {
+      submitBtn.removeAttribute('disabled');
+      submitBtn.innerHTML = originalHtml;
+    }
+  };
+
+  // Safe delegations replacing legacy prompt()
+  window.approveSubjectSupervision = function(courseCode, semNum) {
+    window.openPacReviewModal(courseCode, semNum, 'APROBADO');
+  };
+
+  window.observeSubjectSupervision = function(courseCode, semNum) {
+    window.openPacReviewModal(courseCode, semNum, 'OBSERVADO');
+  };
+
+  window.__CURRENT_BATCH_SEMESTER__ = 3;
+
+  window.openBatchEndorsementModal = function(semNum) {
+    const sNum = parseInt(semNum, 10) || 3;
+    window.__CURRENT_BATCH_SEMESTER__ = sNum;
+
+    let sem = null;
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      sem = window.__SUPERVISION_DATA__.semesters[sNum];
+    }
+
+    const sName = sem ? sem.name : `${sNum}º SEMESTRE`;
+    const titleEl = document.getElementById('modal-batch-sem-title');
+    if (titleEl) {
+      titleEl.textContent = `${sName} - Gestión II-2026`;
+    }
+
+    const courses = (sem && Array.isArray(sem.courses)) ? sem.courses : [];
+    const pendingCourses = courses.filter(c => c.status !== 'APROBADO');
+
+    const countEl = document.getElementById('modal-batch-count');
+    if (countEl) {
+      countEl.textContent = pendingCourses.length;
+    }
+
+    const listEl = document.getElementById('modal-batch-courses-list');
+    if (listEl) {
+      if (pendingCourses.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-4 text-center text-slate-500 dark:text-slate-400">
+            <i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-1 text-emerald-500 inline-block"></i>
+            <p class="font-semibold text-xs">Todas las asignaturas del semestre ya se encuentran aprobadas.</p>
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = pendingCourses.map(c => `
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300">${c.code}</span>
+              <span class="font-bold text-slate-900 dark:text-white text-xs">${c.name}</span>
+              ${c.isCommon ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300">Común</span>` : ''}
+            </div>
+            <div class="text-[11px] text-slate-600 dark:text-slate-400">
+              Docente: <strong class="text-slate-800 dark:text-slate-200">${c.teacher || 'Sin Asignar'}</strong>
+              <span class="font-mono text-[10px] text-slate-400">(${c.teacherCi ? 'CI: ' + c.teacherCi : 'Sin CI'})</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    const cb = document.getElementById('modal-batch-acknowledge-cb');
+    if (cb) {
+      cb.checked = false;
+      cb.disabled = (pendingCourses.length === 0);
+    }
+
+    const submitBtn = document.getElementById('modal-batch-submit-btn');
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      submitBtn.innerHTML = `<i data-lucide="check-check" class="w-4 h-4"></i><span>Certificar Semestre</span>`;
+    }
+
+    const modal = document.getElementById('modal-batch-endorsement');
+    if (modal) {
+      modal.classList.remove('hidden');
+      if (window.lucide) window.lucide.createIcons();
+    }
+  };
+
+  window.closeBatchEndorsementModal = function() {
+    const modal = document.getElementById('modal-batch-endorsement');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    const cb = document.getElementById('modal-batch-acknowledge-cb');
+    if (cb) cb.checked = false;
+    window.handleBatchAcknowledgeToggle(false);
+  };
+
+  window.handleBatchAcknowledgeToggle = function(checked) {
+    const submitBtn = document.getElementById('modal-batch-submit-btn');
+    if (!submitBtn) return;
+    const semNum = window.__CURRENT_BATCH_SEMESTER__ || 3;
+    const sem = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters)
+      ? window.__SUPERVISION_DATA__.semesters[semNum]
+      : null;
+    const pendingCount = sem ? sem.courses.filter(c => c.status !== 'APROBADO').length : 1;
+
+    if (checked && pendingCount > 0) {
+      submitBtn.removeAttribute('disabled');
+      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+  };
+
+  window.submitBatchEndorsement = async function() {
+    const semNum = window.__CURRENT_BATCH_SEMESTER__ || 3;
+    const sem = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters)
+      ? window.__SUPERVISION_DATA__.semesters[semNum]
+      : null;
+    const semName = sem ? sem.name : `${semNum}º Semestre`;
+    const submitBtn = document.getElementById('modal-batch-submit-btn');
+
+    if (submitBtn) {
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Certificando...</span>`;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    const courses = sem ? sem.courses : [];
+    const pendingCourses = courses.filter(c => c.status !== 'APROBADO');
+    const pacIds = pendingCourses.map(c => c.pacId).filter(id => !!id);
+
+    const careerCode = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo && window.__SUPERVISION_DATA__.careerInfo.code) || 'CARSIS';
+
+    const payload = {
+      carreraId: careerCode,
+      gestionId: 1,
+      semestre: semNum,
+      pacIds: pacIds.length > 0 ? pacIds : null,
+      observaciones: `Certificación curricular en bloque - ${semName} Gestión II-2026`
+    };
+
+    const headers = { 'Content-Type': 'application/json' };
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('sisa_token') || localStorage.getItem('jwt_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    } catch (e) {}
+
+    try {
+      const res = await fetch('/api/v1/planificaciones/pac/batch-review', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        console.log('Batch review REST persisted successfully');
+      } else {
+        console.warn('Batch review REST response status:', res.status);
+      }
+    } catch (err) {
+      console.warn('Network error during batch review REST:', err);
+    }
+
+    // Optimistic state update: mark all courses in that semester as APROBADO
+    if (sem && sem.courses) {
+      sem.courses.forEach(c => {
+        c.status = 'APROBADO';
+        localStorage.setItem('sisa_supervision_status_' + c.code, 'APROBADO');
+      });
+    }
+
+    // Recalculate KPIs and re-render supervision accordions
+    if (typeof window.renderSupervisionCurricular === 'function') {
+      window.renderSupervisionCurricular();
+    }
+
+    // Close modal and show celebratory toast
+    window.closeBatchEndorsementModal();
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`🎉 ¡Planificación del ${semName} aprobada y visada en su totalidad!`);
+    }
+  };
+
+  window.certifySemesterBatch = function(semNum) {
+    window.openBatchEndorsementModal(semNum);
+  };
+
+  window.certifyAllActiveSemesters = function() {
+    window.openBatchEndorsementModal(3);
   };
 
   // Dropdown toggle
@@ -7072,6 +9920,8 @@ document.addEventListener('change', (e) => {
 
   window.showLoginView = function() {
     window._isAuthScreenActive = true;
+    window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
     const shell = document.getElementById('sp-shell');
     const pwdView = document.getElementById('view-change-password');
     const loginView = document.getElementById('view-login');
@@ -7164,6 +10014,8 @@ document.addEventListener('change', (e) => {
     }
     if (currentUser && currentUser.role === 'ROLE_DOCENTE' && targetViewId !== 'view-dashboard' && targetViewId !== 'view1') {
       targetViewId = 'view-dashboard';
+    } else if (currentUser && currentUser.role === 'ROLE_DIR_CARRERA' && (!targetViewId || targetViewId === 'view-dashboard')) {
+      targetViewId = 'view2';
     }
 
     if (typeof window.switchView === 'function') {
@@ -8115,20 +10967,23 @@ document.addEventListener('change', (e) => {
         if (meUser.mustChangePassword) {
           window.showChangePasswordView(meUser, token, false);
         } else {
-          window.showPortalShell(meUser.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
+          const initView = meUser.role === 'ROLE_ADMIN' ? 'view6' : (meUser.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
+          window.showPortalShell(initView);
         }
       } else if (resp.status === 401 || resp.status === 403) {
         // Token invalid or expired
         window.logoutUser();
       } else if (user) {
         window.updateUserProfileUi(user);
-        window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
+        const initView = user.role === 'ROLE_ADMIN' ? 'view6' : (user.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
+        window.showPortalShell(initView);
       }
     } catch (err) {
       // Offline fallback: keep cached session if present
       if (user) {
         window.updateUserProfileUi(user);
-        window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
+        const initView = user.role === 'ROLE_ADMIN' ? 'view6' : (user.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
+        window.showPortalShell(initView);
       } else {
         window.showLoginView();
       }

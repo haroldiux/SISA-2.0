@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development: Http Files Development
+name: frontend-development-http
 description: Rules and guidelines for Http Files Development in the frontend project.
 ---
 

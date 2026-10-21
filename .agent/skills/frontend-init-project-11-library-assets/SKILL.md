@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 11: Assets y estilos de la librería
-description: Rules and guidelines for PASO 11: Assets y estilos de la librería in the frontend project.
+name: frontend-init-project-11-library-assets
+description: "Rules and guidelines for PASO 11: Assets y estilos de la librería in the frontend project."
 ---
 
 # PASO 11: Assets y estilos de la librería

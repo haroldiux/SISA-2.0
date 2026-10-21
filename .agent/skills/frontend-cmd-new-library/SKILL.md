@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Cmd: /project:new-library
+name: frontend-cmd-new-library
 description: Scaffolding instructions and command reference for /project:new-library in the frontend project.
 ---
 

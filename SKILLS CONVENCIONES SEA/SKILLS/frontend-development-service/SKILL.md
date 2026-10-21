@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development: Service Development
+name: frontend-development-service
 description: Rules and guidelines for Service Development in the frontend project.
 ---
 

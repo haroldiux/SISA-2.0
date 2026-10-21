@@ -20,13 +20,18 @@
     </div>
 
     <div class="mb-3">
-      <label class="font-semibold text-sm">Observaciones y Retroalimentación Pedagógica</label>
-      <p class="text-xs text-color-secondary mb-1">Obligatorio si el dictamen es "OBSERVAR CON CORRECCIONES"</p>
+      <div class="flex justify-content-between align-items-center mb-1">
+        <label class="font-semibold text-sm">Observaciones y Retroalimentación Pedagógica</label>
+        <span class="text-xs font-mono" [class.text-red-500]="charCount < 10 && charCount > 0" [class.text-green-500]="charCount >= 10">
+          {{ charCount }} / 10 mín.
+        </span>
+      </div>
+      <p class="text-xs text-color-secondary mb-1">Obligatorio si el dictamen es "OBSERVAR CON CORRECCIONES" (mínimo 10 caracteres)</p>
       <textarea
         pInputTextarea
         [(ngModel)]="observaciones"
         rows="4"
-        placeholder="Ingrese observaciones para el docente..."
+        placeholder="Ingrese observaciones pedagógicas para el docente (mínimo 10 caracteres)..."
         class="w-full">
       </textarea>
     </div>
@@ -38,7 +43,7 @@
       pButton
       label="Observar con Cambios"
       icon="pi pi-exclamation-triangle"
-      [disabled]="!observaciones.trim() || isProcessing"
+      [disabled]="!isObserveValid || isProcessing"
       [loading]="isProcessing"
       (click)="onObserve()"
       class="p-button-warning p-button-sm mr-2">

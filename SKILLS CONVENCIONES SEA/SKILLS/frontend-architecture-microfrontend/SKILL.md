@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Architecture: Microfrontend (Module Federation)
+name: frontend-architecture-microfrontend
 description: Rules and guidelines for Microfrontend (Module Federation) in the frontend project.
 ---
 

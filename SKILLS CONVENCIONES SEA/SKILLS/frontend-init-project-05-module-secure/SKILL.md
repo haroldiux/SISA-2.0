@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 5: Módulo Secure (layout)
-description: Rules and guidelines for PASO 5: Módulo Secure (layout) in the frontend project.
+name: frontend-init-project-05-module-secure
+description: "Rules and guidelines for PASO 5: Módulo Secure (layout) in the frontend project."
 ---
 
 # PASO 5: Módulo Secure (layout)

@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Development-modules: Library Modules Development
+name: frontend-development-modules-library-modules
 description: Rules and guidelines for Library Modules Development in the frontend project.
 ---
 

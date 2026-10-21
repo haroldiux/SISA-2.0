@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Architecture: Project Structure
+name: frontend-architecture-project-structure
 description: Rules and guidelines for Project Structure in the frontend project.
 ---
 

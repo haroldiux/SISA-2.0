@@ -4,6 +4,7 @@ import bo.edu.unitepc.sisa.api.request.ScuPacReviewRequest;
 import bo.edu.unitepc.sisa.api.request.ScuSesionMatriz7Dto;
 import bo.edu.unitepc.sisa.api.response.ScuPacResponse;
 import bo.edu.unitepc.sisa.domain.enums.EstadoPlanificacion;
+import bo.edu.unitepc.sisa.domain.enums.RolUsuario;
 import bo.edu.unitepc.sisa.domain.model.Pac;
 import bo.edu.unitepc.sisa.domain.model.Usuario;
 import bo.edu.unitepc.sisa.domain.repository.PacRepository;
@@ -57,6 +58,22 @@ public class ScuReviewPacCmd {
         }
 
         TenantInfo tenant = TenantContext.getTenantInfo();
+        if (tenant != null && RolUsuario.ROLE_DIR_CARRERA.equals(tenant.getRol())
+                && tenant.getCarreraIds() != null && !tenant.getCarreraIds().isEmpty()) {
+            if (pac.getAsignacion() != null
+                    && pac.getAsignacion().getAsignatura() != null
+                    && pac.getAsignacion().getAsignatura().getCarrera() != null) {
+                Long pacCarreraId = pac.getAsignacion().getAsignatura().getCarrera().getId();
+                if (pacCarreraId != null && !tenant.getCarreraIds().contains(pacCarreraId)) {
+                    throw new ScuException(
+                            "UNAUTHORIZED_CAREER_REVIEW",
+                            "No tiene autorización para emitir dictamen sobre asignaturas de otra carrera líder.",
+                            HttpStatus.FORBIDDEN
+                    );
+                }
+            }
+        }
+
         Usuario reviewer = (tenant != null && tenant.getUserId() != null)
                 ? this.usuarioRepository.findById(tenant.getUserId()).orElse(null)
                 : null;
@@ -88,9 +105,19 @@ public class ScuReviewPacCmd {
                         .build())
                 .collect(Collectors.toList());
 
+        var asig = saved.getAsignacion();
+        var materia = asig != null ? asig.getAsignatura() : null;
+        var docente = asig != null ? asig.getDocente() : null;
+
         return ScuPacResponse.builder()
                 .id(saved.getId())
-                .asignacionId(saved.getAsignacion().getId())
+                .asignacionId(asig != null ? asig.getId() : null)
+                .codigoAsignatura(materia != null ? materia.getCodigo() : null)
+                .nombreAsignatura(materia != null ? materia.getNombre() : null)
+                .semestre(materia != null ? materia.getSemestre() : null)
+                .docenteId(docente != null ? docente.getId() : null)
+                .docenteNombre(docente != null ? docente.getNombreCompleto() : null)
+                .docenteCi(docente != null ? docente.getCi() : null)
                 .estado(saved.getEstado())
                 .seccionesIdentificacion(saved.getSeccionesIdentificacion())
                 .estrategiasMetodologicas(saved.getEstrategiasMetodologicas())
@@ -100,6 +127,7 @@ public class ScuReviewPacCmd {
                 .revisadoPorId(saved.getRevisadoPor() != null ? saved.getRevisadoPor().getId() : null)
                 .revisadoPorNombre(saved.getRevisadoPor() != null ? saved.getRevisadoPor().getNombreCompleto() : null)
                 .revisadoEn(saved.getRevisadoEn())
+                .matriz7Count(saved.getSesiones() != null ? saved.getSesiones().size() : 0)
                 .matriz7(sDtos)
                 .creadoEn(saved.getCreadoEn())
                 .actualizadoEn(saved.getActualizadoEn())

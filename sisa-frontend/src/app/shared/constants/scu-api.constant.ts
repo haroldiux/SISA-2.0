@@ -62,5 +62,10 @@ export const SCU_API = {
     TIME_FRAME_CAREERS: '/api/v1/catalogo-academico/timeFrameCareers',
     TIME_FRAME_CAREERS_ACTIVE: '/api/v1/catalogo-academico/timeFrameCareers/active',
     ANALYTICAL_PROGRAM: '/api/v1/catalogo-academico/analyticalProgram'
+  },
+  ASISTENCIA: {
+    SESION: '/api/v1/asistencias/sesion',
+    SESIONES_BY_MATERIA: (materiaCodigo: string) => `/api/v1/asistencias/sesiones/${materiaCodigo}`,
+    RESUMEN_BY_MATERIA: (materiaCodigo: string) => `/api/v1/asistencias/resumen/${materiaCodigo}`
   }
 };

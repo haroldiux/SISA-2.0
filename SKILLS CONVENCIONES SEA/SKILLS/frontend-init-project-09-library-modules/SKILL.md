@@ -1,6 +1,6 @@
 ﻿---
-name: Frontend - Init-project: PASO 9: Módulos de la librería — Main y Shared
-description: Rules and guidelines for PASO 9: Módulos de la librería — Main y Shared in the frontend project.
+name: frontend-init-project-09-library-modules
+description: "Rules and guidelines for PASO 9: Módulos de la librería — Main y Shared in the frontend project."
 ---
 
 # PASO 9: Módulos de la librería — Main y Shared

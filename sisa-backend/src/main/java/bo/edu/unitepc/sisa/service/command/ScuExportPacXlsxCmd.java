@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 /**
  * Command for exporting official PAC Matriz 7 to formatted XLSX workbook stream.
  *
@@ -28,29 +30,44 @@ public class ScuExportPacXlsxCmd {
 
     @Transactional(readOnly = true)
     public byte[] execute(Long pacId) {
-        return execute(pacId, null, null);
+        return execute(pacId, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public byte[] execute(Long pacId, Long carreraId) {
-        return execute(pacId, carreraId, null);
+        return execute(pacId, carreraId, null, null);
     }
 
     @Transactional(readOnly = true)
     public byte[] execute(Long pacId, Long carreraId, String pacType) {
-        Pac pac = this.pacRepository.findById(pacId)
-                .or(() -> this.pacRepository.findByAsignacionId(pacId))
-                .orElseGet(() -> {
-                    Pac stub = new Pac();
-                    stub.setPacType(pacType != null ? pacType : "GRAL");
-                    stub.getSeccionesIdentificacion().put("justificacion", "Planificación curricular diseñada bajo el modelo educativo por competencias.");
-                    stub.getSeccionesIdentificacion().put("propositoGeneral", "Desarrollar competencias teóricas y prácticas integradas.");
-                    stub.getSeccionesIdentificacion().put("competenciaGlobal", "Aplica conocimientos disciplinares en la resolución de problemas reales.");
-                    return stub;
-                });
+        return execute(pacId, carreraId, pacType, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] execute(Long pacId, Long carreraId, String pacType, Map<String, String> meta) {
+        Pac pac = null;
+        if (pacId != null && pacId > 0) {
+            pac = this.pacRepository.findById(pacId)
+                    .or(() -> this.pacRepository.findByAsignacionId(pacId))
+                    .orElse(null);
+        }
+
+        if (pac == null) {
+            pac = new Pac();
+            pac.setPacType(pacType != null ? pacType : "GRAL");
+        }
 
         try {
-            return this.officeTemplateService.exportPacXlsx(pac, carreraId, pacType);
+            return this.officeTemplateService.exportPacXlsx(pac, carreraId, pacType, meta);
+        } catch (Exception e) {
+            throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del PAC: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] executeFromModel(Pac pac, Long carreraId, String pacType, Map<String, String> meta) {
+        try {
+            return this.officeTemplateService.exportPacXlsx(pac, carreraId, pacType, meta);
         } catch (Exception e) {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del PAC: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }

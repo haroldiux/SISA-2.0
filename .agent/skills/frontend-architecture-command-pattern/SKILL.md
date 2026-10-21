@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Architecture: Command Pattern
+name: frontend-architecture-command-pattern
 description: Rules and guidelines for Command Pattern in the frontend project.
 ---
 

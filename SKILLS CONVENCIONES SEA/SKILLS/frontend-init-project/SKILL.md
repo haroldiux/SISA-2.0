@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend: /init-project:monorepo
+name: frontend-init-project
 description: Rules and guidelines for /init-project:monorepo in the frontend project.
 ---
 

@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Code-conventions: Naming Conventions
+name: frontend-code-conventions-naming
 description: Rules and guidelines for Naming Conventions in the frontend project.
 ---
 

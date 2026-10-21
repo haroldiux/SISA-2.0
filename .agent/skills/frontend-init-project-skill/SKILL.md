@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Init-project: /init-project:monorepo
+name: frontend-init-project-skill
 description: Rules and guidelines for /init-project:monorepo in the frontend project.
 ---
 

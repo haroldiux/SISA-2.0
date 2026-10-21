@@ -1,5 +1,5 @@
 ﻿---
-name: Frontend - Auth: Keycloak Authentication
+name: frontend-auth-keycloak
 description: Rules and guidelines for Keycloak Authentication in the frontend project.
 ---
 
