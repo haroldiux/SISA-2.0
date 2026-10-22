@@ -69,10 +69,9 @@ public class ScuAsistenciaController {
                         ResourceBuilder.of(dto)
                                 .message("Sesión de asistencia obtenida exitosamente")
                                 .build()))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                .orElseGet(() -> ResponseEntity.ok(
                         ResourceBuilder.<AsistenciaSesionDto>of(null)
-                                .status(HttpStatus.NOT_FOUND.value())
-                                .message("No se encontró registro de asistencia para la sesión especificada")
+                                .message("No se encontró registro de asistencia previo para la sesión especificada")
                                 .build()
                 ));
     }

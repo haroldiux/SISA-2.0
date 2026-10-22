@@ -11235,7 +11235,7 @@ document.addEventListener('change', (e) => {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0 && !parsed.some(s => s.isMock || (s.code && String(s.code).startsWith('SIS-2024-')))) {
+        if (Array.isArray(parsed) && parsed.length > 0 && !parsed.some(s => s.isMock || !s.code || s.code === 'null' || !s.fullName || s.fullName === 'null' || (s.code && String(s.code).startsWith('SIS-2024-')))) {
           cached = parsed;
         } else {
           localStorage.removeItem(storageKey);
@@ -11271,21 +11271,24 @@ document.addEventListener('change', (e) => {
             if (res.ok) {
               const list = await res.json();
               if (Array.isArray(list) && list.length > 0) {
-                return list.map(item => {
-                  const fn = `${item.firstLastName || ''} ${item.secondLastName || ''} ${item.firstName || ''}`.trim() || item.code;
-                  return {
-                    id: item.id || item.code,
-                    code: item.code,
-                    studentCode: item.code,
-                    firstName: item.firstName,
-                    firstLastName: item.firstLastName,
-                    secondLastName: item.secondLastName,
-                    fullName: fn,
-                    carreraCodigo: g.careerCode || (data.carrerasCodes && data.carrerasCodes[0]) || 'CARSIS',
-                    carreraNombre: g.careerName || (data.carrerasResolved && data.carrerasResolved[0]?.name) || 'Ingeniería de Sistemas',
-                    carreraTag: g.careerTag || 'ING. SISTEMAS'
-                  };
-                });
+                return list
+                  .filter(item => (item.studentCode || item.code || item.id || item.fullName))
+                  .map(item => {
+                    const sCode = item.studentCode || item.code || item.id || '';
+                    const sName = item.fullName || `${item.firstLastName || ''} ${item.secondLastName || ''} ${item.firstName || ''}`.trim() || sCode;
+                    return {
+                      id: sCode,
+                      code: sCode,
+                      studentCode: sCode,
+                      firstName: item.firstName || '',
+                      firstLastName: item.firstLastName || '',
+                      secondLastName: item.secondLastName || '',
+                      fullName: sName,
+                      carreraCodigo: g.careerCode || (data.carrerasCodes && data.carrerasCodes[0]) || 'CARSIS',
+                      carreraNombre: g.careerName || (data.carrerasResolved && data.carrerasResolved[0]?.name) || 'Ingeniería de Sistemas',
+                      carreraTag: g.careerTag || 'ING. SISTEMAS'
+                    };
+                  });
               }
             }
           } catch (err) {
@@ -11303,7 +11306,7 @@ document.addEventListener('change', (e) => {
 
     if (fetchedStudents.length > 0) {
       const map = new Map();
-      fetchedStudents.forEach(s => map.set(s.code, s));
+      fetchedStudents.filter(s => s.code && s.code !== 'null').forEach(s => map.set(s.code, s));
       activeRosterStudents = Array.from(map.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
       localStorage.setItem(storageKey, JSON.stringify(activeRosterStudents));
       window.renderAttendanceCareerFilters();
