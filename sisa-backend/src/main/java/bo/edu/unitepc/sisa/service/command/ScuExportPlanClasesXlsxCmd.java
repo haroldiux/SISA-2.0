@@ -68,4 +68,13 @@ public class ScuExportPlanClasesXlsxCmd {
             throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del Plan de Clase: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
         }
     }
+
+    @Transactional(readOnly = true)
+    public byte[] executeFromDto(bo.edu.unitepc.sisa.api.request.ScuPlanClaseDto planDto, Long carreraId, String planType, Map<String, String> meta) {
+        try {
+            return this.officeTemplateService.exportPlanClasesXlsx(planDto, planType, meta);
+        } catch (Exception e) {
+            throw new ScuException("OFFICE_EXPORT_ERROR", "Error al generar documento Excel del Plan de Clase: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
+    }
 }

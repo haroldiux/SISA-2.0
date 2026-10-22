@@ -69,7 +69,8 @@ public class ScuOfficeController {
         this.parserFactory = parserFactory;
     }
 
-    @RequestMapping(value = {"/export/pac", "/export/pac/{id}", "/pac/{id}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = {"/export/pac", "/export/pac/{id}", "/pac/{id}/export", "/export/cronograma", "/export/cronograma/{id}"}, method = {RequestMethod.GET, RequestMethod.POST})
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
     public ResponseEntity<byte[]> exportPac(
             @PathVariable(required = false) Long id,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
@@ -141,6 +142,7 @@ public class ScuOfficeController {
     }
 
     @RequestMapping(value = {"/export/plan-clase", "/export/plan-clase/{sesionId}", "/plan-clase/{sesionId}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_DIR_CARRERA', 'ROLE_ADMIN')")
     public ResponseEntity<byte[]> exportPlanClases(
             @PathVariable(required = false) Long sesionId,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
@@ -168,12 +170,23 @@ public class ScuOfficeController {
             if (body.get("semestre") != null && !meta.containsKey("semestre")) meta.put("semestre", body.get("semestre").toString().trim());
             if (body.get("planType") != null && planType == null) planType = body.get("planType").toString();
 
-            PlanDeClase planModel = new PlanDeClase();
-            if (body.get("objetivoSesion") != null) planModel.setObjetivoSesion(body.get("objetivoSesion").toString());
-            if (body.get("duracionTotalMin") != null) {
-                try { planModel.setDuracionTotalMin(Integer.parseInt(body.get("duracionTotalMin").toString())); } catch (Exception ignored) {}
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                bo.edu.unitepc.sisa.api.request.ScuPlanClaseDto planDto = mapper.convertValue(body, bo.edu.unitepc.sisa.api.request.ScuPlanClaseDto.class);
+                if (planDto.getNombreDocente() == null && meta.containsKey("docente")) planDto.setNombreDocente(meta.get("docente"));
+                if (planDto.getNombreAsignatura() == null && meta.containsKey("asignatura")) planDto.setNombreAsignatura(meta.get("asignatura"));
+                if (planDto.getCarrera() == null && meta.containsKey("carrera")) planDto.setCarrera(meta.get("carrera"));
+                if (planDto.getSemestre() == null && meta.containsKey("semestre")) planDto.setSemestre(meta.get("semestre"));
+                content = this.exportPlanClasesCmd.executeFromDto(planDto, carreraId, planType, meta);
+            } catch (Exception ex) {
+                PlanDeClase planModel = new PlanDeClase();
+                if (body.get("objetivoSesion") != null) planModel.setObjetivoSesion(body.get("objetivoSesion").toString());
+                if (body.get("duracionTotalMin") != null) {
+                    try { planModel.setDuracionTotalMin(Integer.parseInt(body.get("duracionTotalMin").toString())); } catch (Exception ignored) {}
+                }
+                content = this.exportPlanClasesCmd.executeFromModel(planModel, carreraId, planType, meta);
             }
-            content = this.exportPlanClasesCmd.executeFromModel(planModel, carreraId, planType, meta);
         } else {
             content = this.exportPlanClasesCmd.execute(sesionId != null ? sesionId : 0L, carreraId, planType, meta);
         }
@@ -192,6 +205,7 @@ public class ScuOfficeController {
     }
 
     @RequestMapping(value = {"/export/programa-analitico", "/export/programa-analitico/{asignacionId}", "/programa-analitico/{asignacionId}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
     public ResponseEntity<byte[]> exportProgramaDocx(
             @PathVariable(required = false) Long asignacionId,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
@@ -287,7 +301,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/cronograma", "/cronograma/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importCronograma(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "pacType", required = false) String pacTypeQuery,
@@ -318,7 +332,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/pac", "/pac/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPac(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "pacType", required = false) String pacTypeQuery,
@@ -349,7 +363,7 @@ public class ScuOfficeController {
     }
 
     @PostMapping(value = {"/import/plan-clase", "/plan-clase/import"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_DIR_CARRERA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPlanesClase(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "planType", required = false) String planTypeQuery,
@@ -386,7 +400,7 @@ public class ScuOfficeController {
 
     @PostMapping(value = {"/import/programa-analitico", "/programa-analitico/import"},
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> importPrograma(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "asignacionId", required = false) Long asignacionId) {

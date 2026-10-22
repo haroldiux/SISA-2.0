@@ -79,7 +79,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/pac")
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> savePac(@Valid @RequestBody ScuPacRequest request) {
         ScuPacResponse response = this.savePacCmd.execute(request);
         return new ResponseEntity<>(
@@ -92,7 +92,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/pac/{id}/submit")
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> submitPacById(@PathVariable Long id) {
         ScuPacResponse response = this.submitPacCmd.executeById(id);
         return ResponseEntity.ok(
@@ -103,7 +103,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/submit")
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> submitPacByAssignment(
             @Valid @RequestBody ScuPlanningSubmitRequest request) {
         ScuPacResponse response = this.submitPacCmd.executeByAsignacionId(request.getAsignacionId());
@@ -175,7 +175,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/programa-analitico")
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> saveProgramaAnalitico(
             @Valid @RequestBody ScuProgramaAnaliticoRequest request) {
         ScuProgramaAnaliticoResponse response = this.saveProgramaCmd.execute(request);
@@ -199,7 +199,7 @@ public class ScuPlanningController {
     }
 
     @PostMapping("/plan-clase")
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_DIR_CARRERA', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, Object>> savePlanClase(
             @Valid @RequestBody ScuPlanClaseRequest request) {
         ScuPlanClaseResponse response = this.savePlanClaseCmd.execute(request);

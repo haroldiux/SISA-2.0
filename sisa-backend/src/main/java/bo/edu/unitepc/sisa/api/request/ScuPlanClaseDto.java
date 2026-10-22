@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -497,6 +498,15 @@ public class ScuPlanClaseDto {
             if (personalData.getMomentos() != null && !personalData.getMomentos().isEmpty()) {
                 this.momentos = personalData.getMomentos();
             }
+            if (personalData.getFasesMetodologicas() != null && !personalData.getFasesMetodologicas().isEmpty()) {
+                this.fasesMetodologicas = personalData.getFasesMetodologicas();
+            }
+            if (personalData.getPasosDesarrollo() != null && !personalData.getPasosDesarrollo().isEmpty()) {
+                this.pasosDesarrollo = personalData.getPasosDesarrollo();
+            }
+            if (personalData.getNotasDocente() != null && !personalData.getNotasDocente().isEmpty()) {
+                this.notasDocente = personalData.getNotasDocente();
+            }
         }
     }
 
@@ -540,6 +550,9 @@ public class ScuPlanClaseDto {
         this.personalData.setModeloMetodologico(this.modeloMetodologico);
         this.personalData.setDesarrollo(this.desarrollo);
         this.personalData.setObservaciones(this.observaciones);
+        this.personalData.setFasesMetodologicas(this.fasesMetodologicas);
+        this.personalData.setPasosDesarrollo(this.pasosDesarrollo);
+        this.personalData.setNotasDocente(this.notasDocente);
 
         this.sharedData.setTituloPractica(this.tituloPractica);
         this.sharedData.setObjetivoAprendizaje(this.objetivoAprendizaje);
@@ -563,6 +576,46 @@ public class ScuPlanClaseDto {
     private String desarrollo;
     private String observaciones;
     private String semestre;
+
+    // 4. MODELO METODOLÓGICO (4 Fases Oficiales UNITEPC)
+    private String modeloPrepFin;
+    private String modeloPrepDoc;
+    private String modeloPrepEst;
+    private String modeloGuiFin;
+    private String modeloGuiDoc;
+    private String modeloGuiEst;
+    private String modeloAutFin;
+    private String modeloAutDoc;
+    private String modeloAutEst;
+    private String modeloCieFin;
+    private String modeloCieDoc;
+    private String modeloCieEst;
+
+    // 6. DESARROLLO (4 Fases Operativas)
+    private String desarrolloTiempo1;
+    private String desarrolloAct1;
+    private String desarrolloRec1;
+    private String desarrolloInfo1;
+
+    private String desarrolloTiempo2;
+    private String desarrolloAct2;
+    private String desarrolloRec2;
+    private String desarrolloInfo2;
+
+    private String desarrolloTiempo3;
+    private String desarrolloAct3;
+    private String desarrolloRec3;
+    private String desarrolloInfo3;
+
+    private String desarrolloTiempo4;
+    private String desarrolloAct4;
+    private String desarrolloRec4;
+    private String desarrolloInfo4;
+
+    // Structured 7-Section Practical Models
+    private List<FaseMetodologicaDto> fasesMetodologicas = new ArrayList<>();
+    private List<DesarrolloPasoDto> pasosDesarrollo = new ArrayList<>();
+    private List<NotaDocenteSesionDto> notasDocente = new ArrayList<>();
 
     public void setAmbiente(String ambiente) {
         this.ambiente = ambiente;
@@ -746,6 +799,48 @@ public class ScuPlanClaseDto {
         return this.semestre;
     }
 
+    public void setFasesMetodologicas(List<FaseMetodologicaDto> fasesMetodologicas) {
+        this.fasesMetodologicas = fasesMetodologicas;
+        if (this.personalData != null) {
+            this.personalData.setFasesMetodologicas(fasesMetodologicas);
+        }
+    }
+
+    public List<FaseMetodologicaDto> getFasesMetodologicas() {
+        if (this.personalData != null && this.personalData.getFasesMetodologicas() != null && !this.personalData.getFasesMetodologicas().isEmpty()) {
+            return this.personalData.getFasesMetodologicas();
+        }
+        return this.fasesMetodologicas;
+    }
+
+    public void setPasosDesarrollo(List<DesarrolloPasoDto> pasosDesarrollo) {
+        this.pasosDesarrollo = pasosDesarrollo;
+        if (this.personalData != null) {
+            this.personalData.setPasosDesarrollo(pasosDesarrollo);
+        }
+    }
+
+    public List<DesarrolloPasoDto> getPasosDesarrollo() {
+        if (this.personalData != null && this.personalData.getPasosDesarrollo() != null && !this.personalData.getPasosDesarrollo().isEmpty()) {
+            return this.personalData.getPasosDesarrollo();
+        }
+        return this.pasosDesarrollo;
+    }
+
+    public void setNotasDocente(List<NotaDocenteSesionDto> notasDocente) {
+        this.notasDocente = notasDocente;
+        if (this.personalData != null) {
+            this.personalData.setNotasDocente(notasDocente);
+        }
+    }
+
+    public List<NotaDocenteSesionDto> getNotasDocente() {
+        if (this.personalData != null && this.personalData.getNotasDocente() != null && !this.personalData.getNotasDocente().isEmpty()) {
+            return this.personalData.getNotasDocente();
+        }
+        return this.notasDocente;
+    }
+
     /**
      * Shared Plan Data: Sections 1-2 (Datos Generales & Planificación del Aprendizaje).
      */
@@ -803,5 +898,59 @@ public class ScuPlanClaseDto {
         private String desarrollo;
         private String observaciones;
         private List<ScuMomentoPedagogicoDto> momentos = new ArrayList<>();
+
+        // Structured 7-Section Practical Models
+        private List<FaseMetodologicaDto> fasesMetodologicas = new ArrayList<>();
+        private List<DesarrolloPasoDto> pasosDesarrollo = new ArrayList<>();
+        private List<NotaDocenteSesionDto> notasDocente = new ArrayList<>();
+    }
+
+    /**
+     * Represents one of the 4 institutional phases of the practical pedagogical model.
+     * Institutional Phases: Preparación, Ejecución guiada, Ejecución autónoma, Cierre.
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class FaseMetodologicaDto {
+        private String fase;
+        private String finalidad;
+        private String actividadDocente;
+        private String actividadEstudiante;
+        private Integer duracionMin;
+    }
+
+    /**
+     * Represents a dynamic execution step in Section 6 (Desarrollo) of the practical plan.
+     * Pre-allocated rows 48 to 54 in PLAN DE CLASES PRÁCTICO.xlsx.
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DesarrolloPasoDto {
+        private Integer pasoNro;
+        private String faseComun;
+        private Integer tiempoMin;
+        private String actividad;
+        private String recursos;
+        private String otraInformacion;
+    }
+
+    /**
+     * Represents a longitudinal reflection note in Section 7 (Notas del Docente).
+     * Pre-allocated rows 59 to 77 for Sessions 1.0 through 19.0.
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class NotaDocenteSesionDto {
+        private Double sesionNro;
+        private String nota;
     }
 }

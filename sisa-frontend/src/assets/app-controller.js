@@ -105,6 +105,236 @@
       'view6': 'nav-item-view6'
     };
 
+    // Centralized Role Permissions Manager (GentleAI SDD change 13)
+    window.applyUserRolePermissions = function(role) {
+      let currentRole = role;
+      if (!currentRole && typeof window.getCurrentUser === 'function') {
+        const u = window.getCurrentUser();
+        if (u && u.role) currentRole = u.role;
+      }
+      if (!currentRole) {
+        currentRole = localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
+      }
+
+      const isDocente = (currentRole === 'ROLE_DOCENTE');
+
+      // 1. Top Document Upload Button (#btn-top-upload-doc)
+      const topUploadBtn = document.getElementById('btn-top-upload-doc');
+      if (topUploadBtn) {
+        if (isDocente) {
+          topUploadBtn.classList.add('hidden');
+          topUploadBtn.disabled = true;
+          topUploadBtn.setAttribute('title', 'Acción exclusiva para Dirección de Carrera');
+        } else {
+          topUploadBtn.classList.remove('hidden');
+          topUploadBtn.disabled = false;
+          topUploadBtn.removeAttribute('title');
+        }
+      }
+
+      // 2. Master Tabs Governance Badges
+      const badge1 = document.getElementById('tab-governance-badge-1');
+      const badge2 = document.getElementById('tab-governance-badge-2');
+      const badge3 = document.getElementById('tab-governance-badge-3');
+
+      if (badge1) {
+        if (isDocente) badge1.classList.remove('hidden');
+        else badge1.classList.add('hidden');
+      }
+      if (badge2) {
+        if (isDocente) badge2.classList.remove('hidden');
+        else badge2.classList.add('hidden');
+      }
+      if (badge3) {
+        if (isDocente) badge3.classList.remove('hidden');
+        else badge3.classList.add('hidden');
+      }
+
+      // 3. File inputs (#analitico-file-input, #pac-file-input, #cronograma-file-input)
+      ['analitico-file-input', 'pac-file-input', 'cronograma-file-input'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          if (isDocente) {
+            el.classList.add('hidden');
+            el.disabled = true;
+          } else {
+            el.disabled = false;
+          }
+        }
+      });
+
+      // 4. Action buttons in Tabs 1, 2, 3 (import, vaciar, add row, etc.)
+      const masterActionButtons = [
+        'btn-import-programa', 'btn-vaciar-programa',
+        'btn-import-pac', 'btn-vaciar-pac',
+        'btn-import-cronograma', 'btn-vaciar-cronograma', 'btn-add-cronograma-row'
+      ];
+      masterActionButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          if (isDocente) {
+            btn.classList.add('hidden');
+            btn.disabled = true;
+          } else {
+            btn.classList.remove('hidden');
+            btn.disabled = false;
+          }
+        }
+      });
+
+      // 5. Lock/Unlock inputs & textareas inside master tabs
+      const masterTabIds = ['tab-analitico', 'tab-pac-matrix', 'tab-cronograma-semanas'];
+      masterTabIds.forEach(tabId => {
+        const tabEl = document.getElementById(tabId);
+        if (!tabEl) return;
+
+        // Inputs and textareas
+        const formControls = tabEl.querySelectorAll('input:not([type="hidden"]), textarea');
+        formControls.forEach(ctrl => {
+          if (ctrl.id && (ctrl.id.includes('search') || ctrl.id.includes('filter'))) return;
+          if (isDocente) {
+            ctrl.readOnly = true;
+            ctrl.classList.add('bg-slate-100', 'dark:bg-slate-800/60', 'cursor-not-allowed', 'border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+            ctrl.classList.remove('bg-white', 'dark:bg-slate-900', 'cursor-text');
+          } else {
+            ctrl.readOnly = false;
+            ctrl.classList.remove('bg-slate-100', 'dark:bg-slate-800/60', 'cursor-not-allowed', 'border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+            ctrl.classList.add('bg-white', 'dark:bg-slate-900', 'cursor-text');
+          }
+        });
+
+        // Select controls
+        const selects = tabEl.querySelectorAll('select');
+        selects.forEach(sel => {
+          if (isDocente) {
+            sel.disabled = true;
+            sel.classList.add('bg-slate-100', 'dark:bg-slate-800/60', 'cursor-not-allowed');
+          } else {
+            sel.disabled = false;
+            sel.classList.remove('bg-slate-100', 'dark:bg-slate-800/60', 'cursor-not-allowed');
+          }
+        });
+
+        // Editing buttons (trash, plus, upload, vaciar, etc.)
+        const editButtons = tabEl.querySelectorAll('button');
+        editButtons.forEach(btn => {
+          const onclickAttr = btn.getAttribute('onclick') || '';
+          const isExportOrSubtab = (
+            onclickAttr.includes('exportExactFile') ||
+            onclickAttr.includes('selectCarrera') ||
+            onclickAttr.includes('switchActivePacType') ||
+            onclickAttr.includes('switchActiveCronogramaType') ||
+            onclickAttr.includes('toggle') ||
+            onclickAttr.includes('Print')
+          );
+          if (isExportOrSubtab) return;
+
+          if (btn.querySelector('[data-lucide="trash-2"]') ||
+              btn.querySelector('[data-lucide="plus"]') ||
+              btn.querySelector('[data-lucide="upload"]') ||
+              (btn.textContent && (btn.textContent.includes('Vaciar') || btn.textContent.includes('Importar') || btn.textContent.includes('Agregar')))) {
+            if (isDocente) {
+              btn.classList.add('hidden');
+              btn.disabled = true;
+            } else {
+              btn.classList.remove('hidden');
+              btn.disabled = false;
+            }
+          }
+        });
+      });
+
+      // 6. Master document exports in Sidebar Direct Export Center
+      const dirExportButtons = [
+        'btn-export-programa-docx',
+        'btn-export-pac-gral-xlsx',
+        'btn-export-pac-prac-xlsx'
+      ];
+      dirExportButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          if (isDocente) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('hover:underline', 'cursor-pointer');
+            btn.title = 'Acción exclusiva para Dirección de Carrera';
+            if (!btn.querySelector('.exclusivo-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'exclusivo-badge ml-auto text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-normal';
+              badge.innerText = 'Exclusivo Dirección';
+              btn.appendChild(badge);
+            }
+          } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.classList.add('hover:underline', 'cursor-pointer');
+            btn.removeAttribute('title');
+            const badge = btn.querySelector('.exclusivo-badge');
+            if (badge) badge.remove();
+          }
+        }
+      });
+
+      // 7. Personal micro-planning and attendance exports in Sidebar (Remain active for ROLE_DOCENTE and all roles)
+      const personalExportButtons = [
+        'btn-export-planes-teorico',
+        'btn-export-planes-prac',
+        'btn-export-asistencia'
+      ];
+      personalExportButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+          btn.classList.add('hover:underline', 'cursor-pointer');
+          btn.removeAttribute('title');
+          const badge = btn.querySelector('.exclusivo-badge');
+          if (badge) badge.remove();
+        }
+      });
+
+      // Export buttons inside Tab 1, 2, 3 action bars
+      ['btn-export-programa-tab', 'btn-export-pac-tab', 'btn-export-cronograma-tab'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (isDocente) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.title = 'Descarga oficial restringida a Dirección de Carrera';
+          } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.removeAttribute('title');
+          }
+        }
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchUserRole = function(newRole) {
+      if (!newRole) return;
+      localStorage.setItem('sisa_user_role', newRole);
+      let user = null;
+      try {
+        const cached = localStorage.getItem('scu_user_info');
+        if (cached) user = JSON.parse(cached);
+      } catch(e) {}
+      if (user) {
+        user.role = newRole;
+        localStorage.setItem('scu_user_info', JSON.stringify(user));
+        if (typeof window.updateUserProfileUi === 'function') {
+          window.updateUserProfileUi(user);
+        }
+      }
+      if (typeof window.applyUserRolePermissions === 'function') {
+        window.applyUserRolePermissions(newRole);
+      }
+      if (typeof window.updateSidebarNavForRole === 'function') {
+        window.updateSidebarNavForRole(newRole);
+      }
+    };
+
     // Role-based Navigation and UI Filtering
     window.updateSidebarNavForRole = function(role) {
       let currentRole = role;
@@ -115,6 +345,11 @@
       if (!currentRole) currentRole = 'ROLE_DOCENTE';
 
       const isDocente = (currentRole === 'ROLE_DOCENTE');
+
+      // Apply centralized master document and action permissions
+      if (typeof window.applyUserRolePermissions === 'function') {
+        window.applyUserRolePermissions(currentRole);
+      }
 
       // Toggle Docente Dashboard vs Admin Dashboard
       const docenteDash = document.getElementById('dashboard-docente');
@@ -330,6 +565,12 @@
         }
       }
 
+      if (tabId === 'tab-cronograma-planes') {
+        if (typeof window.applyModalityIsolation === 'function') {
+          window.applyModalityIsolation(window.activeTeacherModalityMode);
+        }
+      }
+
       if (tabId === 'tab-asistencia') {
         if (typeof window.loadAttendanceForCurrentSelection === 'function') {
           window.loadAttendanceForCurrentSelection();
@@ -538,6 +779,11 @@
         window.activePlanesPracticoList = [];
         if (activeMateriaKey) {
           localStorage.removeItem('sisa_saved_planes_prac_' + activeMateriaKey);
+          Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('sisa_plan_practico_' + activeMateriaKey)) {
+              localStorage.removeItem(k);
+            }
+          });
         }
         window.showToast('🗑️ Planes de clase prácticos vaciados.');
       } else {
@@ -680,6 +926,23 @@
         summary: sortedTypes.join(' + ')
       };
     };
+
+    // ── TASK 5.1: TEACHER COMPONENT MODALITY EVALUATOR (GENTLE AI SDD CHANGE 13) ────
+    window.evaluateTeacherComponentModality = function(groups) {
+      const comp = (typeof window.detectComponentTypes === 'function')
+        ? window.detectComponentTypes(groups || [])
+        : { hasTA: true, hasPractice: false };
+
+      if (comp.hasTA && !comp.hasPractice) {
+        return 'TEORICO_ONLY';
+      } else if (!comp.hasTA && comp.hasPractice) {
+        return 'PRACTICO_ONLY';
+      } else if (comp.hasTA && comp.hasPractice) {
+        return 'DUAL_MODALITY';
+      }
+      return 'TEORICO_ONLY';
+    };
+    window.activeTeacherModalityMode = 'TEORICO_ONLY';
 
     // ── TASK 5.5: VISUAL BADGES WITH OFFICIAL SEA DESIGN TOKENS ───────────────
     // TA: #7B47B8 ($sp-purple), PA: #1F9FAD ($sp-teal), PL: #0284C7 ($sp-blue), PS: #D97706 ($sp-amber)
@@ -1379,8 +1642,20 @@
         if (prac && Array.isArray(prac) && prac.some(p => p.contenidoTema && p.contenidoTema.includes('Configuración de Entorno Experimental'))) {
           prac = [];
         }
-        if (!prac || !Array.isArray(prac)) {
-          prac = [];
+        if (!prac || !Array.isArray(prac) || prac.length === 0) {
+          prac = (typeof window.generateDefaultPlanesList === 'function') ? window.generateDefaultPlanesList(mKey, true) : [];
+        } else {
+          prac.forEach((p, i) => {
+            const sheetBackup = localStorage.getItem('sisa_plan_practico_' + mKey + '_' + i);
+            if (sheetBackup) {
+              try {
+                const parsed = JSON.parse(sheetBackup);
+                if (parsed && typeof parsed === 'object') {
+                  Object.assign(p, parsed);
+                }
+              } catch(e) {}
+            }
+          });
         }
         window.activePlanesPracticoList = prac;
         activePlanesList = prac;
@@ -1391,22 +1666,16 @@
           try { teorico = JSON.parse(savedTeorico); } catch(e) {}
         }
         if (!teorico || !Array.isArray(teorico) || teorico.length === 0) {
-          const defData = materiasData[mKey] || {};
-          teorico = [
-            {
-              sesionId: 1,
-              nombreHoja: 'UA-1',
-              contenidoTema: defData.nombre || 'Introducción y Fundamentos',
-              unidadTitulo: 'Unidad 1',
-              elementoCompetencia: 'Comprende los conceptos clave y fundamentos teóricos de la asignatura.',
-              objetivoSesion: 'Identificar y contrastar los principios teóricos fundamentales.',
-              planType: 'TEORICO',
-              referenciasBibliograficas: []
-            }
-          ];
+          teorico = (typeof window.generateDefaultPlanesList === 'function') ? window.generateDefaultPlanesList(mKey, false) : [];
         }
         window.activePlanesTeoricoList = teorico;
         activePlanesList = teorico;
+      }
+
+      if (activePlanesList && activePlanesList.length > 0) {
+        if (typeof window.cascadeMasterDataToPlanSheet === 'function') {
+          window.cascadeMasterDataToPlanSheet(0, currentType === 'PRACTICO');
+        }
       }
 
       activePlanSheetIndex = 0;
@@ -1418,71 +1687,63 @@
       }
     };
 
-    window.renderDynamicPlanForm = function(planType) {
-      const data = materiasData[activeMateriaKey];
-      const requiredPlan = (data && data.components && data.components.requiredPlan) ? data.components.requiredPlan : ['TEORICO_PRACTICO'];
-      const hasMultiple = Array.isArray(requiredPlan) && requiredPlan.length > 1;
+    // ── TASK 5.2: MODALITY-DRIVEN SWITCHER & VIEW ENGINE (GENTLE AI SDD CHANGE 13) ──
+    window.switchPlanModalityView = function(modality) {
+      const currentType = (modality === 'PRACTICO') ? 'PRACTICO' : 'TEORICO';
 
-      const currentType = planType || window.activePlanType || (hasMultiple ? requiredPlan[0] : requiredPlan[0] || 'TEORICO_PRACTICO');
-      window.activePlanType = currentType;
-      const isPractico = (currentType === 'PRACTICO');
-
-      const switcherContainer = document.getElementById('plan-type-switcher-container');
-      if (switcherContainer) {
-        if (hasMultiple) {
-          switcherContainer.innerHTML = `
-            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2 shadow-xs">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <i data-lucide="sliders" class="w-4 h-4 text-brand-600"></i> Modalidad de Plan de Clases:
-                </span>
-                <button type="button" onclick="window.switchActivePlanType('TEORICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'TEORICO' ? 'bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
-                  <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Plan Teórico
-                </button>
-                <button type="button" onclick="window.switchActivePlanType('PRACTICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${currentType === 'PRACTICO' ? 'bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60'}">
-                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> Plan Práctico
-                </button>
-              </div>
-              <div class="flex items-center gap-2 text-[11px]">
-                <span class="text-slate-500 dark:text-slate-400 font-medium">Secuencia en Ejecución:</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${currentType === 'PRACTICO' ? 'bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700' : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700'}">
-                  ${currentType === 'PRACTICO' ? '🔬 4 Fases Metodológicas' : '📖 5 Momentos Didácticos'}
-                </span>
-              </div>
-            </div>
-          `;
-        } else {
-          const typeNames = {
-            'TEORICO': '📖 PLAN TEÓRICO (Aula Conceptual)',
-            'PRACTICO': '🔬 PLAN PRÁCTICO (Laboratorio / Simulación)',
-            'TEORICO_PRACTICO': '⚡ PLAN TEÓRICO-PRÁCTICO (Integrado)'
-          };
-          switcherContainer.innerHTML = `
-            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <i data-lucide="file-check" class="w-4 h-4 text-brand-600"></i> Plantilla Oficial Plan de Clases:
-                </span>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${currentType === 'PRACTICO' ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border border-teal-300' : (currentType === 'TEORICO' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300' : 'bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 border border-brand-300')}">
-                  ${typeNames[currentType] || typeNames['TEORICO_PRACTICO']}
-                </span>
-              </div>
-              <span class="text-[11px] text-slate-400 font-medium">Asignado a: <strong>${data?.components?.summary || 'TA'}</strong></span>
-            </div>
-          `;
-        }
+      // 1. Preserve unsaved form input values in memory across toggles
+      if (typeof window.syncCurrentPlanFormToState === 'function') {
+        window.syncCurrentPlanFormToState();
       }
 
-      // Procedimental Handling (Task 5.3):
-      // In TEÓRICO mode: do NOT delete procedural content, mute/lock it and show UNITEPC notification
+      window.activePlanType = currentType;
+      window.activePlanModality = currentType;
+
+      // 2. Highlight / Un-highlight switcher pill buttons
+      const btnTeo = document.getElementById('btn-toggle-modality-teorico');
+      const btnPrac = document.getElementById('btn-toggle-modality-practico');
+
+      const activeTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold';
+      const inactiveTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
+
+      const activePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold';
+      const inactivePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
+
+      if (btnTeo) {
+        btnTeo.className = (currentType === 'TEORICO') ? activeTeoClass : inactiveTeoClass;
+      }
+      if (btnPrac) {
+        btnPrac.className = (currentType === 'PRACTICO') ? activePracClass : inactivePracClass;
+      }
+
+      // 3. Modality Section Isolation
+      const planTeoricoFields = document.getElementById('plan-teorico-fields');
+      const planPracticoFields = document.getElementById('plan-practico-fields');
+      const secStandard = document.getElementById('plan-secuencia-standard');
+      const secPractica = document.getElementById('plan-secuencia-practica');
+      const sec2Datos = document.getElementById('plan-sec-2-datos-practica');
+      const sec3Alineacion = document.getElementById('plan-sec-3-alineacion');
+      const sec4Metodologia = document.getElementById('plan-sec-4-metodologia');
+      const sec6Desarrollo = document.getElementById('plan-sec-6-desarrollo');
+      const secNotas = document.getElementById('plan-sec-7-notas');
+
       const procTextarea = document.getElementById('plan-procedimental-input');
       const procTag = document.getElementById('plan-procedimental-status-tag');
       const procBadge = document.getElementById('plan-procedimental-omitted-badge');
-      const practicoFields = document.getElementById('plan-practico-fields');
-      const secStandard = document.getElementById('plan-secuencia-standard');
-      const secPractica = document.getElementById('plan-secuencia-practica');
 
       if (currentType === 'TEORICO') {
+        // Show theoretical sequence, hide practical fields
+        if (planTeoricoFields) planTeoricoFields.classList.remove('hidden');
+        if (secStandard) secStandard.classList.remove('hidden');
+        if (secPractica) secPractica.classList.add('hidden');
+
+        if (planPracticoFields) planPracticoFields.classList.add('hidden');
+        if (sec2Datos) sec2Datos.classList.add('hidden');
+        if (sec3Alineacion) sec3Alineacion.classList.add('hidden');
+        if (sec4Metodologia) sec4Metodologia.classList.add('hidden');
+        if (sec6Desarrollo) sec6Desarrollo.classList.add('hidden');
+        if (secNotas) secNotas.classList.add('hidden');
+
         if (procTextarea) {
           procTextarea.readOnly = true;
           procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 text-xs cursor-not-allowed';
@@ -1491,10 +1752,19 @@
           procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">Omitido en Teoría</span>';
         }
         if (procBadge) procBadge.classList.remove('hidden');
-        if (practicoFields) practicoFields.classList.add('hidden');
-        if (secStandard) secStandard.classList.remove('hidden');
-        if (secPractica) secPractica.classList.add('hidden');
-      } else if (currentType === 'PRACTICO') {
+      } else {
+        // Show 7-section practical fields, hide theoretical sequence
+        if (planTeoricoFields) planTeoricoFields.classList.add('hidden');
+        if (secStandard) secStandard.classList.add('hidden');
+        if (secPractica) secPractica.classList.remove('hidden');
+
+        if (planPracticoFields) planPracticoFields.classList.remove('hidden');
+        if (sec2Datos) sec2Datos.classList.remove('hidden');
+        if (sec3Alineacion) sec3Alineacion.classList.remove('hidden');
+        if (sec4Metodologia) sec4Metodologia.classList.remove('hidden');
+        if (sec6Desarrollo) sec6Desarrollo.classList.remove('hidden');
+        if (secNotas) secNotas.classList.remove('hidden');
+
         if (procTextarea) {
           procTextarea.readOnly = false;
           procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
@@ -1503,26 +1773,17 @@
           procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700">Requerido / Central</span>';
         }
         if (procBadge) procBadge.classList.add('hidden');
-        if (practicoFields) practicoFields.classList.remove('hidden');
-        if (secStandard) secStandard.classList.add('hidden');
-        if (secPractica) secPractica.classList.remove('hidden');
-        window.updateSecuenciaPracticaTotals();
-      } else {
-        // TEORICO_PRACTICO
-        if (procTextarea) {
-          procTextarea.readOnly = false;
-          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
+
+        if (typeof window.renderDesarrolloPasos === 'function') {
+          window.renderDesarrolloPasos(activePlanSheetIndex || 0);
         }
-        if (procTag) {
-          procTag.innerHTML = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">Activo (Integrado)</span>';
+        if (typeof window.updateDesarrolloTimeSum === 'function') {
+          window.updateDesarrolloTimeSum();
         }
-        if (procBadge) procBadge.classList.add('hidden');
-        if (practicoFields) practicoFields.classList.remove('hidden');
-        if (secStandard) secStandard.classList.remove('hidden');
-        if (secPractica) secPractica.classList.add('hidden');
       }
 
       // Update button texts and headers in Tab 4
+      const isPractico = (currentType === 'PRACTICO');
       const btnPlanVaciar = document.getElementById('btn-plan-vaciar-text');
       const btnPlanImport = document.getElementById('btn-plan-import-text');
       const btnPlanExport = document.getElementById('btn-plan-export-text');
@@ -1543,20 +1804,234 @@
         if (planDocSubtitle) planDocSubtitle.innerText = 'Microdidáctica de aula conceptual con Momentos Didácticos por tema.';
       }
 
+      // 4. Load state into active planes sheet
+      if (typeof window.loadActivePlanStateToDom === 'function') {
+        window.loadActivePlanStateToDom(currentType);
+      }
+
       if (window.lucide) window.lucide.createIcons();
     };
 
-    window.switchActivePlanType = function(type) {
-      if (type === window.activePlanType) return;
-      if (typeof window.syncCurrentPlanFormToState === 'function') {
-        window.syncCurrentPlanFormToState();
+    window.switchActivePlanType = window.switchPlanModalityView;
+
+    // ── TASK 5.2.3: ENFORCE SINGLE-MODALITY AND DUAL-MODALITY ISOLATION ───────
+    window.applyModalityIsolation = function(modalityMode) {
+      const mode = modalityMode || window.activeTeacherModalityMode || 'TEORICO_ONLY';
+      window.activeTeacherModalityMode = mode;
+      const switcherContainer = document.getElementById('plan-type-switcher-container');
+
+      if (mode === 'TEORICO_ONLY') {
+        if (switcherContainer) switcherContainer.classList.add('hidden');
+        window.switchPlanModalityView('TEORICO');
+      } else if (mode === 'PRACTICO_ONLY') {
+        if (switcherContainer) switcherContainer.classList.add('hidden');
+        window.switchPlanModalityView('PRACTICO');
+      } else if (mode === 'DUAL_MODALITY') {
+        if (switcherContainer) {
+          switcherContainer.classList.remove('hidden');
+          if (!document.getElementById('btn-toggle-modality-teorico')) {
+            switcherContainer.innerHTML = `
+              <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-inner">
+                <button type="button" id="btn-toggle-modality-teorico" onclick="window.switchPlanModalityView('TEORICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold">
+                  <i data-lucide="book-open" class="w-3.5 h-3.5"></i> <span>📘 Plan Teórico (TA)</span>
+                </button>
+                <button type="button" id="btn-toggle-modality-practico" onclick="window.switchPlanModalityView('PRACTICO')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> <span>🔬 Guía Práctica (PL/PA)</span>
+                </button>
+              </div>
+            `;
+          }
+        }
+        const activeMod = (window.activePlanType === 'PRACTICO') ? 'PRACTICO' : 'TEORICO';
+        window.switchPlanModalityView(activeMod);
       }
-      window.activePlanType = type;
-      if (typeof window.loadActivePlanStateToDom === 'function') {
-        window.loadActivePlanStateToDom(type);
+    };
+
+    window.renderDynamicPlanForm = function(planType) {
+      const data = (typeof materiasData !== 'undefined' && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : {};
+      const modalityMode = (typeof window.evaluateTeacherComponentModality === 'function')
+        ? window.evaluateTeacherComponentModality(data.groups || [])
+        : 'TEORICO_ONLY';
+      window.activeTeacherModalityMode = modalityMode;
+
+      if (planType && modalityMode === 'DUAL_MODALITY') {
+        const switcherContainer = document.getElementById('plan-type-switcher-container');
+        if (switcherContainer) switcherContainer.classList.remove('hidden');
+        window.switchPlanModalityView(planType);
+      } else {
+        window.applyModalityIsolation(modalityMode);
       }
-      window.renderDynamicPlanForm(type);
-      window.showToast('📋 Plan ajustado a: ' + (type === 'PRACTICO' ? 'Plan Práctico (Laboratorio / Simulación)' : (type === 'TEORICO' ? 'Plan Teórico (Aula Conceptual)' : 'Plan Teórico-Práctico')));
+    };
+
+    // ── SECTION 6: DYNAMIC STEP MATRIX HELPERS (PLAN PRÁCTICO) ───────────────
+    window.updateDesarrolloTimeSum = function() {
+      const container = document.getElementById('plan-desarrollo-rows-container');
+      let totalMin = 0;
+      if (container) {
+        const timeInputs = container.querySelectorAll('.plan-paso-tiempo');
+        timeInputs.forEach(inp => {
+          const v = parseInt(inp.value, 10);
+          if (!isNaN(v) && v > 0) totalMin += v;
+        });
+      }
+
+      const badge = document.getElementById('plan-desarrollo-total-min');
+      if (badge) {
+        badge.innerText = `${totalMin} min`;
+        badge.setAttribute('data-total-min', totalMin);
+      }
+
+      const durInput = document.getElementById('plan-prac-duracion');
+      if (durInput) {
+        const hrs = (totalMin / 60).toFixed(1);
+        durInput.value = `${totalMin} min (${hrs} hrs)`;
+      }
+
+      if (activePlanesList && activePlanesList[activePlanSheetIndex]) {
+        const p = activePlanesList[activePlanSheetIndex];
+        p.duracionTotalMin = totalMin;
+        p.duracionPractica = `${totalMin} min`;
+      }
+      return totalMin;
+    };
+
+    window.renderDesarrolloPasos = function(sheetIndex) {
+      const container = document.getElementById('plan-desarrollo-rows-container');
+      if (!container) return;
+      const idx = (typeof sheetIndex === 'number') ? sheetIndex : activePlanSheetIndex;
+      const list = activePlanesList || window.activePlanesList;
+      const p = (list && list[idx]) ? list[idx] : null;
+      if (!p) {
+        container.innerHTML = '';
+        return;
+      }
+
+      if (!p.pasosDesarrollo || !Array.isArray(p.pasosDesarrollo) || p.pasosDesarrollo.length === 0) {
+        p.pasosDesarrollo = [
+          {
+            pasoNro: 1,
+            faseComun: 'Preparación',
+            tiempoMin: 15,
+            actividad: p.desarrolloAct1 || 'Revisión de bioseguridad, EPP e inducción a la guía de práctica',
+            recursos: p.desarrolloRec1 || 'Guía de laboratorio, EPP reglamentario',
+            otraInformacion: p.desarrolloInfo1 || 'Control de asistencia e inducción de seguridad'
+          },
+          {
+            pasoNro: 2,
+            faseComun: 'Ejecución guiada',
+            tiempoMin: 25,
+            actividad: p.desarrolloAct2 || 'Demostración procedimental guiada por el docente',
+            recursos: p.desarrolloRec2 || 'Instrumental, software y equipamiento del gabinete',
+            otraInformacion: p.desarrolloInfo2 || 'Modelado paso a paso y resolución de dudas'
+          },
+          {
+            pasoNro: 3,
+            faseComun: 'Ejecución autónoma',
+            tiempoMin: 40,
+            actividad: p.desarrolloAct3 || 'Desarrollo experimental por equipos de estudiantes',
+            recursos: p.desarrolloRec3 || 'Materiales y estaciones de trabajo',
+            otraInformacion: p.desarrolloInfo3 || 'Acompañamiento docente y registro de variables'
+          },
+          {
+            pasoNro: 4,
+            faseComun: 'Cierre',
+            tiempoMin: 10,
+            actividad: p.desarrolloAct4 || 'Conclusiones técnicas, entrega de bitácora y orden del ambiente',
+            recursos: p.desarrolloRec4 || 'Ficha de cotejo y protocolo de limpieza',
+            otraInformacion: p.desarrolloInfo4 || 'Evaluación de desempeño y firma de bitácora'
+          }
+        ];
+      }
+
+      const escapeHtml = str => {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      };
+
+      const fasesOpts = ['Preparación', 'Ejecución guiada', 'Ejecución autónoma', 'Cierre'];
+
+      let html = '';
+      p.pasosDesarrollo.forEach((step, sIdx) => {
+        const stepNum = sIdx + 1;
+        step.pasoNro = stepNum;
+        const selectedFase = step.faseComun || 'Preparación';
+
+        html += `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors" data-step-index="${sIdx}">
+            <td class="py-2 px-2 text-center font-bold text-teal-700 dark:text-teal-400 font-mono text-xs">
+              ${stepNum}
+            </td>
+            <td class="py-2 px-2">
+              <select class="plan-paso-fase w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200" onchange="window.syncCurrentPlanFormToState()">
+                ${fasesOpts.map(f => `<option value="${f}" ${f === selectedFase ? 'selected' : ''}>${f}</option>`).join('')}
+              </select>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <input type="number" min="0" max="600" step="5" value="${step.tiempoMin || 0}" class="plan-paso-tiempo w-full p-1.5 text-center font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white" oninput="window.updateDesarrolloTimeSum(); window.syncCurrentPlanFormToState();">
+            </td>
+            <td class="py-2 px-2">
+              <textarea rows="2" placeholder="Descripción de la actividad..." class="plan-paso-actividad w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white" oninput="window.syncCurrentPlanFormToState()">${escapeHtml(step.actividad || '')}</textarea>
+            </td>
+            <td class="py-2 px-2">
+              <textarea rows="2" placeholder="Recursos e insumos..." class="plan-paso-recursos w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white" oninput="window.syncCurrentPlanFormToState()">${escapeHtml(step.recursos || '')}</textarea>
+            </td>
+            <td class="py-2 px-2">
+              <textarea rows="2" placeholder="Advertencias y criterios..." class="plan-paso-otra w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white" oninput="window.syncCurrentPlanFormToState()">${escapeHtml(step.otraInformacion || '')}</textarea>
+            </td>
+            <td class="py-2 px-2 text-center">
+              <button type="button" onclick="window.removeDesarrolloPaso(${sIdx})" class="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer" title="Eliminar paso ${stepNum}">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      container.innerHTML = html;
+      if (window.lucide) window.lucide.createIcons();
+      window.updateDesarrolloTimeSum();
+    };
+
+    window.addDesarrolloPaso = function(stepData) {
+      const list = activePlanesList || window.activePlanesList;
+      if (!list || list.length === 0) return;
+      const p = list[activePlanSheetIndex];
+      if (!p) return;
+      if (!p.pasosDesarrollo || !Array.isArray(p.pasosDesarrollo)) {
+        p.pasosDesarrollo = [];
+      }
+      const newNum = p.pasosDesarrollo.length + 1;
+      const newStep = stepData || {
+        pasoNro: newNum,
+        faseComun: 'Preparación',
+        tiempoMin: 15,
+        actividad: '',
+        recursos: '',
+        otraInformacion: ''
+      };
+      p.pasosDesarrollo.push(newStep);
+      window.renderDesarrolloPasos(activePlanSheetIndex);
+      window.syncCurrentPlanFormToState();
+    };
+
+    window.removeDesarrolloPaso = function(stepIndex) {
+      const list = activePlanesList || window.activePlanesList;
+      if (!list || list.length === 0) return;
+      const p = list[activePlanSheetIndex];
+      if (!p || !p.pasosDesarrollo || p.pasosDesarrollo.length <= 1) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ El plan de práctica debe contener al menos un paso de desarrollo.');
+        }
+        return;
+      }
+      p.pasosDesarrollo.splice(stepIndex, 1);
+      p.pasosDesarrollo.forEach((st, i) => st.pasoNro = i + 1);
+      window.renderDesarrolloPasos(activePlanSheetIndex);
+      window.syncCurrentPlanFormToState();
     };
 
     window.updateSecuenciaPracticaTotals = function() {
@@ -1908,16 +2383,18 @@
         window.loadSavedDocenteData(activeMateriaKey);
       }
 
-      // Render Dynamic PAC and Plan de Clases based on detected SEA components (Tasks 5.2, 5.3, 5.4)
+      // Render Dynamic PAC and Plan de Clases based on detected SEA components (Tasks 5.1 & 5.2)
+      if (typeof window.evaluateTeacherComponentModality === 'function') {
+        window.activeTeacherModalityMode = window.evaluateTeacherComponentModality(data.groups || []);
+      }
       const compInfo = data.components || (typeof window.detectComponentTypes === 'function' ? window.detectComponentTypes(data.groups || []) : null);
       if (compInfo) {
         const defPac = Array.isArray(compInfo.requiredPac) ? compInfo.requiredPac[0] : (compInfo.requiredPac || 'GRAL');
-        const defPlan = Array.isArray(compInfo.requiredPlan) ? compInfo.requiredPlan[0] : (compInfo.requiredPlan || 'TEORICO_PRACTICO');
         if (typeof window.renderDynamicPacForm === 'function') {
           window.renderDynamicPacForm(defPac);
         }
         if (typeof window.renderDynamicPlanForm === 'function') {
-          window.renderDynamicPlanForm(defPlan);
+          window.renderDynamicPlanForm();
         }
       }
 
@@ -1951,6 +2428,9 @@
       window.showToast('📁 Carpeta cargada: ' + data.breadcrumb);
       if (typeof window.updateTeacherObservationBanner === 'function') {
         window.updateTeacherObservationBanner(data.codigo || activeMateriaKey);
+      }
+      if (typeof window.applyUserRolePermissions === 'function') {
+        window.applyUserRolePermissions();
       }
       if (window.lucide) window.lucide.createIcons();
     };
@@ -2003,6 +2483,15 @@
     };
 
     window.exportExactFile = function(type) {
+      // Master document export security guard (Change 13)
+      const currentRole = (typeof window.getCurrentUser === 'function' && window.getCurrentUser()?.role) || localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
+      const isDocente = (currentRole === 'ROLE_DOCENTE');
+      const isMasterExport = ['docx', 'programa_docx', 'pac_gral_xlsx', 'pac_prac_xlsx', 'pac_cronograma_xlsx', 'pac_xlsx'].includes(type);
+      if (isDocente && isMasterExport) {
+        window.showToast('⚠️ La descarga de documentos oficiales de cátedra está restringida a Dirección de Carrera.');
+        return;
+      }
+
       const data = (typeof materiasData !== 'undefined' && (materiasData[activeMateriaKey] || Object.values(materiasData)[0])) ? (materiasData[activeMateriaKey] || Object.values(materiasData)[0]) : {};
       const docente = window.__ACTIVE_DOCENTE__ || {};
       const asigId = data.asignacionId || activeAsignacionId || 1;
@@ -3561,61 +4050,164 @@
           practicoCardsHtml = '<div style="padding: 16px; text-align: center; color: #64748b; font-style: italic; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 6mm;">Sin planes de clase prácticos registrados en esta asignatura.</div>';
         } else {
         practicoList.forEach((p, idx) => {
+          const sesNum = p.sesionId || (idx + 1);
           practicoCardsHtml += `
             <div style="border: 1.5px solid #000; margin-bottom: 8mm; page-break-inside: avoid; font-size: 8pt; background: #fff;">
               <div style="background: #f0fdfa; border-bottom: 1.5px solid #000; padding: 4px 8px; text-align: center;">
-                <div style="font-weight: bold; font-size: 10pt; color: #0d9488;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS - UNITEPC</div>
-                <div style="font-weight: bold; font-size: 9pt; color: #000;">PLAN DE CLASE PRÁCTICO (PCP) - SESIÓN #${p.sesionId || (idx + 1)}</div>
+                <div style="font-weight: bold; font-size: 8.5pt; color: #0d9488; text-transform: uppercase;">UNIVERSIDAD TÉCNICA PRIVADA COSMOS • VICERRECTORADO ACADÉMICO INSTITUCIONAL</div>
+                <div style="font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase;">PLANIFICACIÓN MICROCURRICULAR</div>
+                <div style="font-weight: 900; font-size: 9.5pt; color: #000;">PLAN DE CLASE PRÁCTICO (PCP) - SESIÓN #${sesNum}</div>
               </div>
 
-              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #000; font-size: 7.5pt;">
+              <!-- 1. DATOS GENERALES -->
+              <div style="background: #581c87; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">1. DATOS GENERALES</div>
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #ccc; font-size: 7.2pt;">
                 <tr>
-                  <td style="padding: 3px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
-                  <td style="padding: 3px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(currentAsignatura)}</td>
+                  <td style="padding: 2px 6px; width: 50%; border-right: 1px solid #ccc;"><strong>Nombre del docente:</strong> ${docenteName}</td>
+                  <td style="padding: 2px 6px; width: 50%;"><strong>Asignatura:</strong> ${safe(currentAsignatura)}</td>
                 </tr>
-                <tr style="border-top: 1px solid #ccc;">
-                  <td style="padding: 3px 6px; border-right: 1px solid #ccc;"><strong>Ambiente / Lab:</strong> ${safe(p.ambiente || 'Laboratorio de Computación')}</td>
-                  <td style="padding: 3px 6px;"><strong>Comisión / Estudiantes:</strong> ${safe(p.comision || 'PL-01')} (${safe(p.numEstudiantes || 25)} estudiantes)</td>
+                <tr style="border-top: 1px solid #eee;">
+                  <td style="padding: 2px 6px; border-right: 1px solid #ccc;"><strong>Fecha:</strong> ${safe(p.fecha || '')}</td>
+                  <td style="padding: 2px 6px;"><strong>Carrera:</strong> ${safe(p.carrera || currentCarreraName)}</td>
+                </tr>
+                <tr style="border-top: 1px solid #eee;">
+                  <td colspan="2" style="padding: 2px 6px;"><strong>Unidad de aprendizaje 1:</strong> ${safe(p.unidadTitulo || 'Unidad de Práctica')}</td>
+                </tr>
+                <tr style="border-top: 1px solid #eee;">
+                  <td colspan="2" style="padding: 2px 6px;"><strong>Elemento de Competencia 1:</strong> ${safe(p.elementoCompetencia || 'Desarrollo de competencias procedimentales')}</td>
                 </tr>
               </table>
 
-              <div style="padding: 4px 6px; border-bottom: 1px solid #ccc; background: #fafafa; font-size: 7.5pt;">
-                <p style="margin: 2px 0;"><strong>PRÁCTICA:</strong> ${safe(p.contenidoTema || p.tema || `Práctica ${idx + 1}`)}</p>
-                <p style="margin: 2px 0; white-space: pre-line;"><strong>Objetivo de la Práctica:</strong> ${safe(p.objetivoSesion || p.objetivo || 'Desarrolla habilidades procedimentales mediante experimentación guiada.')}</p>
-                <p style="margin: 2px 0; white-space: pre-line;"><strong>Equipamiento y Bioseguridad:</strong> ${safe(p.equipamiento || 'Equipos de computación, manual de normas y bitácoras institucionales.')}</p>
-              </div>
-
-              <table style="width: 100%; border-collapse: collapse; font-size: 7.2pt;">
-                <tr style="background: #0d9488; color: white; font-weight: bold;">
-                  <th style="padding: 3px 6px; text-align: left; width: 25%;">FASE DE LA PRÁCTICA (4 FASES)</th>
-                  <th style="padding: 3px 6px; text-align: left; width: 63%;">DESCRIPCIÓN DE LA ACTIVIDAD EXPERIMENTAL</th>
-                  <th style="padding: 3px 6px; text-align: center; width: 12%;">DURACIÓN</th>
-                </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 3px 6px; font-weight: bold; color: #0284c7; vertical-align: top;">FASE 1: PREPARATORIA</td>
-                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase1Prep || 'Verificación de equipos, directrices de seguridad y objetivos de la práctica.')}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase1PrepDur || 20)} min</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 3px 6px; font-weight: bold; color: #0d9488; vertical-align: top;">FASE 2: DEMOSTRACIÓN GUIADA</td>
-                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase2Guiada || 'Explicación técnica paso a paso del protocolo experimental por el docente.')}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase2GuiadaDur || 40)} min</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 3px 6px; font-weight: bold; color: #7c3aed; vertical-align: top;">FASE 3: EJECUCIÓN AUTÓNOMA</td>
-                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase3Autonoma || 'Desarrollo independiente del protocolo por los equipos y captura de resultados.')}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase3AutonomaDur || 50)} min</td>
-                </tr>
+              <!-- 2. DATOS DE LA PRÁCTICA -->
+              <div style="background: #0f766e; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">2. DATOS DE LA PRÁCTICA</div>
+              <table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #ccc; font-size: 7.2pt;">
                 <tr>
-                  <td style="padding: 3px 6px; font-weight: bold; color: #b45309; vertical-align: top;">FASE 4: CONCLUSIÓN Y CIERRE</td>
-                  <td style="padding: 3px 6px; white-space: pre-line; word-break: break-word;">${safe(p.fase4Cierre || 'Análisis de resultados, conclusiones técnicas y registro en bitácora evaluada.')}</td>
-                  <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${safe(p.fase4CierreDur || 25)} min</td>
+                  <td style="padding: 2px 6px; width: 40%; border-right: 1px solid #ccc;"><strong>Título:</strong> ${safe(p.tituloPractica || p.contenidoTema || `Práctica ${idx + 1}`)}</td>
+                  <td style="padding: 2px 6px; width: 20%; border-right: 1px solid #ccc;"><strong>Fecha:</strong> ${safe(p.fechaPractica || p.fecha || '')}</td>
+                  <td style="padding: 2px 6px; width: 20%; border-right: 1px solid #ccc;"><strong>Duración:</strong> ${safe(p.duracionPractica || '180 min')}</td>
+                  <td style="padding: 2px 6px; width: 20%;"><strong>Semestre:</strong> ${safe(p.semestre || 'Cuarto')}</td>
+                </tr>
+                <tr style="border-top: 1px solid #eee;">
+                  <td style="padding: 2px 6px; border-right: 1px solid #ccc;"><strong>Ambiente:</strong> ${safe(p.ambiente || 'Laboratorio')}</td>
+                  <td style="padding: 2px 6px; border-right: 1px solid #ccc;"><strong>N° estudiantes:</strong> ${safe(p.numEstudiantes || p.nroEstudiantes || 25)}</td>
+                  <td colspan="2" style="padding: 2px 6px;"><strong>Docente:</strong> ${docenteName}</td>
                 </tr>
               </table>
 
-              <div style="padding: 3px 6px; border-top: 1px solid #ccc; background: #f8fafc; font-size: 7.2pt; display: flex; justify-content: space-between;">
-                <span><strong>Instrumento de Evaluación:</strong> ${safe(p.instrumentoEvaluacion || 'Rúbrica de Práctica')}</span>
-                <span><strong>Evidencia Entregable:</strong> ${safe(p.evidenciasEvaluacion || 'Informe de Laboratorio')}</span>
+              <!-- 3. ALINEACIÓN Y RECURSOS -->
+              <div style="background: #581c87; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">3. ALINEACIÓN Y RECURSOS</div>
+              <div style="padding: 3px 6px; font-size: 7.2pt; border-bottom: 1px solid #ccc; background: #faf5ff;">
+                <p style="margin: 2px 0;"><strong>Objetivo de aprendizaje:</strong> ${safe(p.objetivoAprendizaje || p.objetivoSesion || 'Desarrolla habilidades procedimentales mediante experimentación guiada.')}</p>
+                <p style="margin: 2px 0;"><strong>Resultados de aprendizaje (taxonomía de Bloom):</strong> ${safe(p.resultadosBloom || p.logrosEsperados || 'Aplicar y ejecutar técnicas operativas')}</p>
+                <p style="margin: 2px 0;"><strong>Preparación de materiales (previo a la sesión):</strong> ${safe(p.preparacionMateriales || 'Guía de laboratorio y materiales verificados previo al ingreso.')}</p>
+                <div style="display: flex; gap: 8px; margin-top: 2px;">
+                  <span style="flex: 1;"><strong>Equipamiento (entorno):</strong> ${safe(p.equipamiento || 'Laboratorio especializado / PC')}</span>
+                  <span style="flex: 1;"><strong>Equipo (para la):</strong> ${safe(p.equipo || 'Instrumental, software y equipos de prueba')}</span>
+                </div>
+              </div>
+
+              <!-- 4. MODELO METODOLÓGICO -->
+              <div style="background: #0f766e; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">4. MODELO METODOLÓGICO</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 7pt; border-bottom: 1px solid #ccc;">
+                <tr style="background: #ccfbf1; font-weight: bold;">
+                  <th style="padding: 2px 4px; text-align: left; width: 18%; border: 1px solid #99f6e4;">FASE COMÚN</th>
+                  <th style="padding: 2px 4px; text-align: left; width: 28%; border: 1px solid #99f6e4;">FINALIDAD</th>
+                  <th style="padding: 2px 4px; text-align: left; width: 27%; border: 1px solid #99f6e4;">ACTIVIDAD DEL DOCENTE</th>
+                  <th style="padding: 2px 4px; text-align: left; width: 27%; border: 1px solid #99f6e4;">ACTIVIDAD DEL ESTUDIANTE</th>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #0f766e; border: 1px solid #e2e8f0; vertical-align: top;">Preparación:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloPrepFin || 'Activar conocimientos y condiciones')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloPrepDoc || 'Verificación de condiciones y EPP')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloPrepEst || 'Alistamiento de materiales y prueba')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #0f766e; border: 1px solid #e2e8f0; vertical-align: top;">Ejecución guiada:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloGuiFin || 'Modelado procedimental')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloGuiDoc || 'Demostración de técnica')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloGuiEst || 'Imitación y registro')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #0f766e; border: 1px solid #e2e8f0; vertical-align: top;">Ejecución autónoma:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloAutFin || 'Desempeño procedimental autónomo')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloAutDoc || 'Supervisión activa')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloAutEst || 'Resolución técnica independiente')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #0f766e; border: 1px solid #e2e8f0; vertical-align: top;">Cierre:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloCieFin || 'Consolidación de aprendizaje')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloCieDoc || 'Retroalimentación formativa')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0; vertical-align: top;">${safe(p.modeloCieEst || 'Entrega de informe y orden')}</td>
+                </tr>
+              </table>
+
+              <!-- 5. EVALUACIÓN DE LOS APRENDIZAJES -->
+              <div style="background: #581c87; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">5. EVALUACIÓN DE LOS APRENDIZAJES</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 7pt; border-bottom: 1px solid #ccc;">
+                <tr style="background: #f3e8ff; font-weight: bold;">
+                  <th style="padding: 2px 4px; width: 18%; border: 1px solid #d8b4fe;">FASE COMÚN</th>
+                  <th style="padding: 2px 4px; border: 1px solid #d8b4fe;">ACTIVIDADES Y TÉCNICAS</th>
+                  <th style="padding: 2px 4px; width: 28%; border: 1px solid #d8b4fe;">INSTRUMENTOS</th>
+                  <th style="padding: 2px 4px; width: 28%; border: 1px solid #d8b4fe;">EVIDENCIAS</th>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #581c87; border: 1px solid #e2e8f0;">Formativa:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionFormativaActividad || 'Observación directa del protocolo')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionFormativaInstrumento || 'Lista de cotejo / Ficha técnica')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionFormativaEvidencia || 'Bitácora de práctica')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-weight: bold; color: #581c87; border: 1px solid #e2e8f0;">Sumativa:</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionSumativaActividad || 'Evaluación de informe y producto')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionSumativaInstrumento || 'Rúbrica analítica de práctica')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.evaluacionSumativaEvidencia || 'Informe final de práctica')}</td>
+                </tr>
+              </table>
+
+              <!-- 6. DESARROLLO -->
+              <div style="background: #0f766e; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">6. DESARROLLO</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 7pt; border-bottom: 1px solid #ccc;">
+                <tr style="background: #ccfbf1; font-weight: bold;">
+                  <th style="padding: 2px 4px; width: 18%; border: 1px solid #99f6e4;">FASE COMÚN</th>
+                  <th style="padding: 2px 4px; width: 12%; border: 1px solid #99f6e4;">TIEMPO</th>
+                  <th style="padding: 2px 4px; border: 1px solid #99f6e4;">ACTIVIDAD</th>
+                  <th style="padding: 2px 4px; width: 22%; border: 1px solid #99f6e4;">RECURSOS</th>
+                  <th style="padding: 2px 4px; width: 22%; border: 1px solid #99f6e4;">OTRA INFORMACIÓN</th>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloFase1 || 'Preparación')}</td>
+                  <td style="padding: 2px 4px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0;">${safe(p.desarrolloTiempo1 || '15 min')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloAct1 || 'Inducción de bioseguridad y revisión de insumos')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloRec1 || 'Guía de laboratorio, EPP')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloInfo1 || 'Control de ingreso')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloFase2 || 'Ejecución guiada')}</td>
+                  <td style="padding: 2px 4px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0;">${safe(p.desarrolloTiempo2 || '25 min')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloAct2 || 'Modelado procedimental por el docente')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloRec2 || 'Equipos e instrumental')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloInfo2 || 'Técnicas clave')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloFase3 || 'Ejecución autónoma')}</td>
+                  <td style="padding: 2px 4px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0;">${safe(p.desarrolloTiempo3 || '40 min')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloAct3 || 'Práctica activa por equipos de estudiantes')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloRec3 || 'Materiales e instrumental')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloInfo3 || 'Supervisión activa')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloFase4 || 'Cierre')}</td>
+                  <td style="padding: 2px 4px; text-align: center; font-weight: bold; border: 1px solid #e2e8f0;">${safe(p.desarrolloTiempo4 || '10 min')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloAct4 || 'Conclusiones, bitácora y desinfección')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloRec4 || 'Ficha de entrega')}</td>
+                  <td style="padding: 2px 4px; border: 1px solid #e2e8f0;">${safe(p.desarrolloInfo4 || 'Evaluación')}</td>
+                </tr>
+              </table>
+
+              <!-- 7. NOTAS DEL DOCENTE -->
+              <div style="background: #581c87; color: white; padding: 2px 6px; font-weight: bold; font-size: 7.5pt;">7. NOTAS DEL DOCENTE (SESIÓN #${sesNum})</div>
+              <div style="padding: 4px 6px; font-size: 7.2pt; background: #faf5ff;">
+                ${safe((p.notasDocente && p.notasDocente[sesNum]) || p.notasDocenteSesion || 'Sin observaciones extraordinarias en la ejecución de la práctica.')}
               </div>
             </div>
           `;
@@ -3645,8 +4237,9 @@
         const printByCareer = new Map();
         printStudents.forEach(s => {
           const cKey = s.carreraCodigo || 'CARSIS';
+          const cInfo = (typeof window.resolveCarreraInfo === 'function') ? window.resolveCarreraInfo('', cKey) : { name: cKey };
           if (!printByCareer.has(cKey)) {
-            printByCareer.set(cKey, { code: cKey, name: s.carreraNombre || 'Ingeniería de Sistemas', list: [] });
+            printByCareer.set(cKey, { code: cKey, name: cInfo.name || s.carreraNombre || 'Ing. de Sistemas', list: [] });
           }
           printByCareer.get(cKey).list.push(s);
         });
@@ -3825,6 +4418,14 @@
 
 
     window.triggerAutoCapture = function() {
+      const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+      const role = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE');
+      if (role === 'ROLE_DOCENTE') {
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ La subida y reemplazo de documentos de cátedra está reservada para Dirección de Carrera.');
+        }
+        return;
+      }
       if (typeof window.showOfficialUploadModal === 'function') {
         window.showOfficialUploadModal();
       }
@@ -3838,6 +4439,144 @@
       const el = document.getElementById(id);
       if (el) el.value = (val !== null && val !== undefined) ? val : '';
     }
+
+    // ── AUTOMATED CASCADING DATA INHERITANCE ENGINE (GentleAI SDD change 13) ────
+    window.cascadeMasterDataToPlanSheet = function(sheetIndex, isPractical) {
+      const list = activePlanesList || window.activePlanesList;
+      if (!list || !list[sheetIndex]) return;
+      const p = list[sheetIndex];
+      const mKey = activeMateriaKey || localStorage.getItem('sisa_active_materia_key') || '';
+      const defData = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
+
+      // 1. Resolve authoritative learning unit (activeAnaliticoUnidades)
+      let unitTitle = p.unidadTitulo || '';
+      let elemComp = p.elementoCompetencia || '';
+      let bloomLevel = p.nivelBloom || '';
+
+      if (typeof activeAnaliticoUnidades !== 'undefined' && Array.isArray(activeAnaliticoUnidades) && activeAnaliticoUnidades.length > 0) {
+        const u = activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length];
+        if (u) {
+          unitTitle = u.titulo ? (u.titulo.startsWith('Unidad') ? u.titulo : `Unidad ${u.numeroUnidad || (sheetIndex + 1)}: ${u.titulo}`) : `Unidad ${sheetIndex + 1}`;
+          if (u.nivelBloom) bloomLevel = u.nivelBloom;
+        }
+      } else if (!unitTitle) {
+        unitTitle = `Unidad ${sheetIndex + 1}`;
+      }
+
+      // 2. Resolve competence element from activePacElementosCompetencia or materiasData
+      if (typeof activePacElementosCompetencia !== 'undefined' && Array.isArray(activePacElementosCompetencia) && activePacElementosCompetencia.length > 0) {
+        elemComp = activePacElementosCompetencia[sheetIndex % activePacElementosCompetencia.length] || elemComp;
+      } else if (defData && Array.isArray(defData.elementosCompetencia) && defData.elementosCompetencia.length > 0) {
+        elemComp = defData.elementosCompetencia[sheetIndex % defData.elementosCompetencia.length] || elemComp;
+      }
+      if (!elemComp) {
+        elemComp = 'Comprende, analiza y aplica con rigurosidad técnica los conceptos y metodologías fundamentales de la unidad temática.';
+      }
+
+      // 3. Resolve topic & 3 saberes from Matriz 7 (Cronograma de 20 semanas)
+      let liveMatriz7 = [];
+      if (typeof matriz7 !== 'undefined' && Array.isArray(matriz7) && matriz7.length > 0) {
+        liveMatriz7 = matriz7;
+      } else if (window.activePacGralData && Array.isArray(window.activePacGralData.matriz7) && window.activePacGralData.matriz7.length > 0) {
+        liveMatriz7 = window.activePacGralData.matriz7;
+      } else if (typeof window.extractCurrentCronogramaFromDom === 'function') {
+        const extracted = window.extractCurrentCronogramaFromDom();
+        if (extracted && extracted.length > 0) liveMatriz7 = extracted;
+      } else if (mKey) {
+        const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
+        if (savedPac) {
+          try {
+            const parsed = JSON.parse(savedPac);
+            if (parsed.matriz7 && Array.isArray(parsed.matriz7) && parsed.matriz7.length > 0) liveMatriz7 = parsed.matriz7;
+          } catch(e) {}
+        }
+      }
+
+      let topicName = p.contenidoTema || '';
+      let saberC = p.saberConceptual || '';
+      let saberP = p.saberProcedimental || '';
+      let saberA = p.saberActitudinal || '';
+      let objSesion = p.objetivoSesion || '';
+      let logrosEsperados = p.logrosEsperados || '';
+
+      if (liveMatriz7 && liveMatriz7.length > 0) {
+        const s = liveMatriz7[sheetIndex % liveMatriz7.length];
+        if (s) {
+          if (!topicName || topicName === 'Práctica de formación profesional' || topicName.startsWith('Tema ')) {
+            topicName = s.contenidoEspecifico || s.tema || topicName;
+          }
+          if (!saberC) saberC = s.saberConceptual || '';
+          if (!saberP) saberP = s.saberProcedimental || '';
+          if (!saberA) saberA = s.saberActitudinal || '';
+          if (!objSesion) objSesion = s.criterioDesempeno || s.objetivo || '';
+          if (!logrosEsperados) logrosEsperados = s.criterioDesempeno || s.evidenciaAprendizaje || objSesion;
+        }
+      }
+
+      // Fallbacks if not set
+      if (!topicName) {
+        if (typeof activeAnaliticoUnidades !== 'undefined' && activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length]) {
+          const u = activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length];
+          if (u.temas && u.temas.length > 0) {
+            topicName = u.temas[0].titulo || u.temas[0].contenido || ('Tema ' + (sheetIndex + 1));
+          }
+        }
+      }
+      if (!topicName) topicName = `Tema ${sheetIndex + 1}: Fundamentos y Aplicación Práctica`;
+      if (!saberC) saberC = `Fundamentos conceptuales, definiciones y estructuras formales de ${topicName}.`;
+      if (!saberP) saberP = `Desarrollo de ejercicios prácticos, análisis de casos y ejecución procedimental en aula o laboratorio.`;
+      if (!saberA) saberA = `Responsabilidad ética, rigor metodológico y trabajo colaborativo en la resolución de problemas.`;
+      if (!objSesion) objSesion = `Desarrollar y consolidar las competencias asociadas a ${topicName} mediante metodologías activas.`;
+      if (!logrosEsperados) logrosEsperados = objSesion;
+      if (!bloomLevel) bloomLevel = 'Aplicar / Analizar (Nivel 3-4)';
+
+      // 4. Resolve APA Bibliography
+      if (typeof window.getAvailableSubjectBibliography === 'function') {
+        const books = window.getAvailableSubjectBibliography();
+        if (books && books.length > 0 && (!p.referenciasBibliograficas || p.referenciasBibliograficas.length === 0)) {
+          p.referenciasBibliograficas = [
+            {
+              texto: books[0],
+              pagDesde: '1',
+              pagHasta: '25'
+            }
+          ];
+        }
+      }
+
+      // 5. Assign cascaded values to active plan sheet object
+      p.unidadTitulo = unitTitle;
+      p.elementoCompetencia = elemComp;
+      p.contenidoTema = topicName;
+      p.saberConceptual = saberC;
+      p.saberProcedimental = saberP;
+      p.saberActitudinal = saberA;
+      p.objetivoSesion = objSesion;
+      p.logrosEsperados = logrosEsperados;
+      p.indicadoresLogro = p.indicadoresLogro || `Demuestra dominio en la aplicación de los conceptos de ${topicName}.`;
+      p.nivelBloom = bloomLevel;
+
+      // Metadata
+      if (!p.nombreAsignatura && defData.nombre) p.nombreAsignatura = defData.nombre;
+      if (!p.carrera && defData.carrera) p.carrera = defData.carrera;
+      if (!p.nombreDocente) {
+        const curDoc = (typeof window.resolveCurrentDocente === 'function') ? window.resolveCurrentDocente() : null;
+        if (curDoc && curDoc.nombre) p.nombreDocente = curDoc.nombre;
+      }
+
+      // If this is the currently active sheet, synchronize to DOM inputs
+      if (sheetIndex === activePlanSheetIndex) {
+        setVal('plan-unidad-input', p.unidadTitulo);
+        setVal('plan-tema-input', p.contenidoTema);
+        setVal('plan-elemento-input', p.elementoCompetencia);
+        setVal('plan-conceptual-input', p.saberConceptual);
+        setVal('plan-procedimental-input', p.saberProcedimental);
+        setVal('plan-actitudinal-input', p.saberActitudinal);
+        setVal('plan-resultados-input', p.objetivoSesion);
+        setVal('plan-logros-input', p.logrosEsperados);
+        setVal('plan-indicadores-input', p.indicadoresLogro);
+      }
+    };
 
     // ── REFERENCIAS BIBLIOGRÁFICAS DEL PLAN DE CLASE ─────────────────────
     window.getAvailableSubjectBibliography = function() {
@@ -4118,6 +4857,82 @@
       setVal('plan-sec-fase4', p.fase4Cierre || '');
       setVal('plan-sec-fase4-dur', p.fase4CierreDur !== undefined ? p.fase4CierreDur : 10);
 
+      // ── FICHA OFICIAL DEL PLAN DE CLASE PRÁCTICO (7 SECCIONES) ──
+      // 2. Datos de la Práctica
+      setVal('plan-prac-titulo', p.tituloPractica || p.contenidoTema || '');
+      setVal('plan-prac-fecha', p.fechaPractica || p.fecha || '');
+      setVal('plan-prac-duracion', p.duracionPractica || (p.duracionTotalMin ? p.duracionTotalMin + ' min' : '180 min (3.0 hrs)'));
+      setVal('plan-prac-semestre', p.semestre || '');
+      setVal('plan-prac-ambiente', p.ambiente || 'Laboratorio');
+      setVal('plan-prac-estudiantes', p.numEstudiantes || p.nroEstudiantes || '25');
+      setVal('plan-prac-docente-resp', p.docenteResponsable || p.nombreDocente || curPlanDoc.nombre || '');
+
+      // 3. Alineación y Recursos
+      setVal('plan-prac-objetivo', p.objetivoAprendizaje || p.objetivoSesion || '');
+      setVal('plan-prac-bloom-res', p.resultadosBloom || p.logrosEsperados || '');
+      setVal('plan-prac-materiales-previos', p.materialesPrevios || p.preparacionMateriales || '');
+      setVal('plan-prac-equipamiento', p.equipamiento || '');
+      setVal('plan-prac-equipo-especifico', p.equipoEspecifico || p.equipo || '');
+
+      // 4. Modelo Metodológico (4 Fases x 3 Cols)
+      const getFase = (name, defFin, defDoc, defEst) => {
+        let f = null;
+        if (p.fasesMetodologicas && Array.isArray(p.fasesMetodologicas)) {
+          f = p.fasesMetodologicas.find(fm => (fm.fase && fm.fase.toUpperCase() === name.toUpperCase()));
+        }
+        return {
+          finalidad: (f && f.finalidad) ? f.finalidad : defFin,
+          actDocente: (f && f.actividadDocente) ? f.actividadDocente : defDoc,
+          actEstudiante: (f && f.actividadEstudiante) ? f.actividadEstudiante : defEst
+        };
+      };
+
+      const f1 = getFase('PREPARACION', p.modeloPrepFin || 'Activar conocimientos y verificar condiciones de ingreso, bioseguridad y materiales', p.modeloPrepDoc || 'Verificación de condiciones de ingreso y activación', p.modeloPrepEst || 'Estudio previo, prueba de ingreso y alistamiento de materiales');
+      setVal('plan-prac-fase1-finalidad', f1.finalidad);
+      setVal('plan-prac-fase1-act-docente', f1.actDocente);
+      setVal('plan-prac-fase1-act-estudiante', f1.actEstudiante);
+
+      const f2 = getFase('EJECUCION_GUIADA', p.modeloGuiFin || 'Modelar y practicar con acompañamiento, demostración de técnica y corrección inmediata', p.modeloGuiDoc || 'Modelado y práctica con acompañamiento docente', p.modeloGuiEst || 'Imita, ensaya, pregunta y registra datos del procedimiento');
+      setVal('plan-prac-fase2-finalidad', f2.finalidad);
+      setVal('plan-prac-fase2-act-docente', f2.actDocente);
+      setVal('plan-prac-fase2-act-estudiante', f2.actEstudiante);
+
+      const f3 = getFase('EJECUCION_AUTONOMA', p.modeloAutFin || 'Supervisar y evaluar el desempeño procedimental con responsabilidad creciente', p.modeloAutDoc || 'Supervisión y evaluación del desempeño autónomo', p.modeloAutEst || 'Ejecuta de manera autónoma, decide, justifica y controla variables del procedimiento');
+      setVal('plan-prac-fase3-finalidad', f3.finalidad);
+      setVal('plan-prac-fase3-act-docente', f3.actDocente);
+      setVal('plan-prac-fase3-act-estudiante', f3.actEstudiante);
+
+      const f4 = getFase('CIERRE', p.modeloCieFin || 'Consolidar, retroalimentar y proyectar mejora técnica', p.modeloCieDoc || 'Devolución, retroalimentación y consolidación', p.modeloCieEst || 'Autoevalúa, entrega evidencia de práctica y propone ajustes de mejora');
+      setVal('plan-prac-fase4-finalidad', f4.finalidad);
+      setVal('plan-prac-fase4-act-docente', f4.actDocente);
+      setVal('plan-prac-fase4-act-estudiante', f4.actEstudiante);
+
+      // 5. Evaluación de los Aprendizajes
+      setVal('plan-eval-formativa-act', p.evaluacionFormativaActividad || 'Observación directa y retroalimentación continua');
+      setVal('plan-eval-formativa-inst', p.evaluacionFormativaInstrumento || 'Lista de cotejo / Ficha de observación');
+      setVal('plan-eval-formativa-evid', p.evaluacionFormativaEvidencia || 'Guía de práctica y bitácora de laboratorio');
+
+      setVal('plan-eval-sumativa-act', p.evaluacionSumativaActividad || 'Evaluación de producto y reporte de resultados');
+      setVal('plan-eval-sumativa-inst', p.evaluacionSumativaInstrumento || 'Rúbrica analítica de laboratorio');
+      setVal('plan-eval-sumativa-evid', p.evaluacionSumativaEvidencia || 'Informe final de práctica con análisis técnico');
+
+      // 6. Desarrollo (Dynamic Step Matrix)
+      if (typeof window.renderDesarrolloPasos === 'function') {
+        window.renderDesarrolloPasos(sheetIndex);
+      }
+
+      // 7. Notas del Docente (Bitácora de Sesiones 1 a 19)
+      for (let s = 1; s <= 19; s++) {
+        let noteVal = '';
+        if (p.notasDocente && p.notasDocente[s] !== undefined) {
+          noteVal = p.notasDocente[s];
+        } else if (p.notasDocenteList && Array.isArray(p.notasDocenteList)) {
+          const found = p.notasDocenteList.find(n => Math.round(n.sesionNro) === s);
+          if (found) noteVal = found.nota || '';
+        }
+        setVal('plan-prac-nota-sesion-' + s, noteVal);
+      }
+
       if (typeof window.renderDynamicPlanForm === 'function') {
         window.renderDynamicPlanForm(p.planType || window.activePlanType || 'TEORICO_PRACTICO');
       }
@@ -4144,9 +4959,14 @@
 
     window.selectPlanSheet = function(index) {
       activePlanSheetIndex = index;
+      if (typeof window.cascadeMasterDataToPlanSheet === 'function') {
+        const isPrac = (window.activePlanType === 'PRACTICO');
+        window.cascadeMasterDataToPlanSheet(index, isPrac);
+      }
       window.renderPlanesSheetsTabs();
       window.renderPlanSheetForm(index);
     };
+    window.switchPlanSheet = window.selectPlanSheet;
 
     window.updateSecuenciaTotals = function() {
       const getNum = id => {
@@ -4239,6 +5059,150 @@
       p.fase4Cierre = gv('plan-sec-fase4');
       p.fase4CierreDur = gn('plan-sec-fase4-dur');
 
+      // ── SYNC OFFICIAL 7-SECTION PLAN DE CLASE PRÁCTICO ──
+      if (window.activePlanType === 'PRACTICO') {
+        p.tituloPractica = gv('plan-prac-titulo') || p.tituloPractica;
+        p.contenidoTema = p.tituloPractica || p.contenidoTema;
+        p.fechaPractica = gv('plan-prac-fecha');
+        p.fecha = p.fechaPractica || p.fecha;
+        p.duracionPractica = gv('plan-prac-duracion');
+        p.semestre = gv('plan-prac-semestre');
+        p.ambiente = gv('plan-prac-ambiente') || p.ambiente;
+        p.numEstudiantes = gv('plan-prac-estudiantes') || p.numEstudiantes;
+        p.nroEstudiantes = p.numEstudiantes;
+        p.docenteResponsable = gv('plan-prac-docente-resp');
+        if (p.docenteResponsable) p.nombreDocente = p.docenteResponsable;
+
+        // Section 3: Alineación y Recursos
+        p.objetivoAprendizaje = gv('plan-prac-objetivo');
+        p.objetivoSesion = p.objetivoAprendizaje || p.objetivoSesion;
+        p.resultadosBloom = gv('plan-prac-bloom-res');
+        p.logrosEsperados = p.resultadosBloom || p.logrosEsperados;
+        p.materialesPrevios = gv('plan-prac-materiales-previos');
+        p.preparacionMateriales = p.materialesPrevios;
+        p.equipamiento = gv('plan-prac-equipamiento') || p.equipamiento;
+        p.equipoEspecifico = gv('plan-prac-equipo-especifico');
+        p.equipo = p.equipoEspecifico;
+
+        // Section 4: Modelo Metodológico (4 Fases x 3 Cols)
+        p.fasesMetodologicas = [
+          {
+            fase: 'PREPARACION',
+            finalidad: gv('plan-prac-fase1-finalidad'),
+            actividadDocente: gv('plan-prac-fase1-act-docente'),
+            actividadEstudiante: gv('plan-prac-fase1-act-estudiante')
+          },
+          {
+            fase: 'EJECUCION_GUIADA',
+            finalidad: gv('plan-prac-fase2-finalidad'),
+            actividadDocente: gv('plan-prac-fase2-act-docente'),
+            actividadEstudiante: gv('plan-prac-fase2-act-estudiante')
+          },
+          {
+            fase: 'EJECUCION_AUTONOMA',
+            finalidad: gv('plan-prac-fase3-finalidad'),
+            actividadDocente: gv('plan-prac-fase3-act-docente'),
+            actividadEstudiante: gv('plan-prac-fase3-act-estudiante')
+          },
+          {
+            fase: 'CIERRE',
+            finalidad: gv('plan-prac-fase4-finalidad'),
+            actividadDocente: gv('plan-prac-fase4-act-docente'),
+            actividadEstudiante: gv('plan-prac-fase4-act-estudiante')
+          }
+        ];
+        p.modeloPrepFin = gv('plan-prac-fase1-finalidad');
+        p.modeloPrepDoc = gv('plan-prac-fase1-act-docente');
+        p.modeloPrepEst = gv('plan-prac-fase1-act-estudiante');
+        p.modeloGuiFin = gv('plan-prac-fase2-finalidad');
+        p.modeloGuiDoc = gv('plan-prac-fase2-act-docente');
+        p.modeloGuiEst = gv('plan-prac-fase2-act-estudiante');
+        p.modeloAutFin = gv('plan-prac-fase3-finalidad');
+        p.modeloAutDoc = gv('plan-prac-fase3-act-docente');
+        p.modeloAutEst = gv('plan-prac-fase3-act-estudiante');
+        p.modeloCieFin = gv('plan-prac-fase4-finalidad');
+        p.modeloCieDoc = gv('plan-prac-fase4-act-docente');
+        p.modeloCieEst = gv('plan-prac-fase4-act-estudiante');
+
+        // Section 5: Evaluación de los Aprendizajes
+        p.evaluacionFormativaActividad = gv('plan-eval-formativa-act') || p.evaluacionFormativaActividad;
+        p.evaluacionFormativaInstrumento = gv('plan-eval-formativa-inst') || p.evaluacionFormativaInstrumento;
+        p.evaluacionFormativaEvidencia = gv('plan-eval-formativa-evid') || p.evaluacionFormativaEvidencia;
+        p.evaluacionSumativaActividad = gv('plan-eval-sumativa-act') || p.evaluacionSumativaActividad;
+        p.evaluacionSumativaInstrumento = gv('plan-eval-sumativa-inst') || p.evaluacionSumativaInstrumento;
+        p.evaluacionSumativaEvidencia = gv('plan-eval-sumativa-evid') || p.evaluacionSumativaEvidencia;
+
+        // Section 6: Desarrollo (Pasos de Ejecución)
+        const stepRows = document.querySelectorAll('#plan-desarrollo-rows-container tr');
+        if (stepRows.length > 0) {
+          const steps = [];
+          stepRows.forEach((row, sIdx) => {
+            const sel = row.querySelector('.plan-paso-fase');
+            const tiempo = row.querySelector('.plan-paso-tiempo');
+            const act = row.querySelector('.plan-paso-actividad');
+            const rec = row.querySelector('.plan-paso-recursos');
+            const otra = row.querySelector('.plan-paso-otra');
+            steps.push({
+              pasoNro: sIdx + 1,
+              faseComun: sel ? sel.value : 'Preparación',
+              tiempoMin: tiempo ? (parseInt(tiempo.value, 10) || 0) : 0,
+              actividad: act ? act.value : '',
+              recursos: rec ? rec.value : '',
+              otraInformacion: otra ? otra.value : ''
+            });
+          });
+          p.pasosDesarrollo = steps;
+        }
+
+        // Section 7: Notas del Docente (Sesiones 1 a 19)
+        if (!p.notasDocente) p.notasDocente = {};
+        p.notasDocenteList = [];
+        for (let s = 1; s <= 19; s++) {
+          const el = document.getElementById('plan-prac-nota-sesion-' + s);
+          const val = el ? el.value : (p.notasDocente[s] || '');
+          p.notasDocente[s] = val;
+          p.notasDocenteList.push({ sesionNro: s * 1.0, nota: val });
+        }
+
+        // Sync into structured sharedData and personalData
+        if (!p.sharedData) p.sharedData = {};
+        p.sharedData.carrera = p.carrera;
+        p.sharedData.nombreAsignatura = p.nombreAsignatura;
+        p.sharedData.unidadTitulo = p.unidadTitulo;
+        p.sharedData.contenidoTema = p.contenidoTema || p.tituloPractica;
+        p.sharedData.elementoCompetencia = p.elementoCompetencia;
+        p.sharedData.objetivoSesion = p.objetivoSesion;
+        p.sharedData.logrosEsperados = p.logrosEsperados;
+        p.sharedData.indicadoresLogro = p.indicadoresLogro;
+        p.sharedData.saberConceptual = p.saberConceptual;
+        p.sharedData.saberProcedimental = p.saberProcedimental;
+        p.sharedData.saberActitudinal = p.saberActitudinal;
+        p.sharedData.tituloPractica = p.tituloPractica;
+        p.sharedData.objetivoAprendizaje = p.objetivoAprendizaje;
+        p.sharedData.resultadosBloom = p.resultadosBloom;
+        p.sharedData.preparacionMateriales = p.preparacionMateriales;
+        p.sharedData.equipamiento = p.equipamiento;
+        p.sharedData.equipo = p.equipo;
+        p.sharedData.semestre = p.semestre;
+        p.sharedData.duracionTotalMin = p.duracionTotalMin;
+
+        if (!p.personalData) p.personalData = {};
+        p.personalData.nombreDocente = p.nombreDocente;
+        p.personalData.fecha = p.fecha;
+        p.personalData.ambiente = p.ambiente;
+        p.personalData.nroEstudiantes = String(p.numEstudiantes || '');
+        p.personalData.duracionPractica = p.duracionPractica;
+        p.personalData.evaluacionFormativaActividad = p.evaluacionFormativaActividad;
+        p.personalData.evaluacionFormativaInstrumento = p.evaluacionFormativaInstrumento;
+        p.personalData.evaluacionFormativaEvidencia = p.evaluacionFormativaEvidencia;
+        p.personalData.evaluacionSumativaActividad = p.evaluacionSumativaActividad;
+        p.personalData.evaluacionSumativaInstrumento = p.evaluacionSumativaInstrumento;
+        p.personalData.evaluacionSumativaEvidencia = p.evaluacionSumativaEvidencia;
+        p.personalData.fasesMetodologicas = p.fasesMetodologicas;
+        p.personalData.pasosDesarrollo = p.pasosDesarrollo;
+        p.personalData.notasDocente = p.notasDocenteList;
+      }
+
       if (typeof window.updateSecuenciaTotals === 'function') {
         window.updateSecuenciaTotals();
       }
@@ -4267,11 +5231,150 @@
       if (window.activePlanType === 'PRACTICO') {
         window.activePlanesPracticoList = activePlanesList;
         localStorage.setItem('sisa_saved_planes_prac_' + mKey, JSON.stringify(activePlanesList));
+        localStorage.setItem('sisa_plan_practico_' + mKey + '_' + activePlanSheetIndex, JSON.stringify(p));
       } else {
         window.activePlanesTeoricoList = activePlanesList;
         localStorage.setItem('sisa_saved_planes_teorico_' + mKey, JSON.stringify(activePlanesList));
       }
       localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(activePlanesList));
+    };
+
+    window.savePlanClase = async function() {
+      if (typeof window.syncCurrentPlanFormToState === 'function') {
+        window.syncCurrentPlanFormToState();
+      }
+      if (!activePlanesList || activePlanesList.length === 0 || !activePlanesList[activePlanSheetIndex]) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ No hay plan de clases activo para guardar.');
+        }
+        return;
+      }
+      const p = activePlanesList[activePlanSheetIndex];
+      const isPractical = (window.activePlanType === 'PRACTICO');
+      const mKey = activeMateriaKey || 'default';
+
+      // Ensure momentos is not empty to satisfy @NotEmpty backend bean validation
+      let momentosPayload = (p.momentos && p.momentos.length > 0) ? p.momentos : [];
+      if (momentosPayload.length === 0 || isPractical) {
+        const f1Act = (p.fasesMetodologicas && p.fasesMetodologicas[0]?.actividadDocente) || 'Preparación e inducción a la práctica';
+        const f2Act = (p.fasesMetodologicas && p.fasesMetodologicas[1]?.actividadDocente) || 'Ejecución práctica guiada y autónoma';
+        const f4Act = (p.fasesMetodologicas && p.fasesMetodologicas[3]?.actividadDocente) || 'Cierre de práctica y retroalimentación';
+        momentosPayload = [
+          { tipoMomento: 'INICIO', actividadesDocente: f1Act, duracionMin: 15 },
+          { tipoMomento: 'DESARROLLO', actividadesDocente: f2Act, duracionMin: 65 },
+          { tipoMomento: 'CIERRE', actividadesDocente: f4Act, duracionMin: 10 }
+        ];
+      }
+
+      const payload = {
+        id: p.id || null,
+        sesionId: p.sesionId || (activePlanSheetIndex + 1),
+        templateType: isPractical ? 'PRACTICO' : 'TEORICO',
+        componentType: isPractical ? 'LABORATORIO' : 'AULA',
+        duracionTotalMin: p.duracionTotalMin || (isPractical ? 180 : 90),
+        nombreHoja: p.nombreHoja || ('Hoja ' + (activePlanSheetIndex + 1)),
+        nombreDocente: p.nombreDocente || '',
+        fecha: p.fecha || '',
+        carrera: p.carrera || '',
+        nombreAsignatura: p.nombreAsignatura || '',
+        unidadTitulo: p.unidadTitulo || '',
+        contenidoTema: p.contenidoTema || p.tituloPractica || '',
+        elementoCompetencia: p.elementoCompetencia || '',
+        objetivoSesion: p.objetivoSesion || p.objetivoAprendizaje || '',
+        logrosEsperados: p.logrosEsperados || p.resultadosBloom || '',
+        indicadoresLogro: p.indicadoresLogro || '',
+        saberConceptual: p.saberConceptual || '',
+        saberProcedimental: p.saberProcedimental || '',
+        saberActitudinal: p.saberActitudinal || '',
+        estrategiaEnsenanza: p.estrategiaEnsenanza || '',
+        estrategiaAprendizaje: p.estrategiaAprendizaje || '',
+        recursosEnsenanza: p.recursosEnsenanza || '',
+        evaluacionFormativaActividad: p.evaluacionFormativaActividad || '',
+        evaluacionFormativaInstrumento: p.evaluacionFormativaInstrumento || '',
+        evaluacionFormativaEvidencia: p.evaluacionFormativaEvidencia || '',
+        evaluacionSumativaActividad: p.evaluacionSumativaActividad || '',
+        evaluacionSumativaInstrumento: p.evaluacionSumativaInstrumento || '',
+        evaluacionSumativaEvidencia: p.evaluacionSumativaEvidencia || '',
+        momentos: momentosPayload,
+        sharedData: {
+          carrera: p.carrera || '',
+          nombreAsignatura: p.nombreAsignatura || '',
+          unidadTitulo: p.unidadTitulo || '',
+          contenidoTema: p.contenidoTema || p.tituloPractica || '',
+          nombreHoja: p.nombreHoja || ('Hoja ' + (activePlanSheetIndex + 1)),
+          elementoCompetencia: p.elementoCompetencia || '',
+          objetivoSesion: p.objetivoSesion || p.objetivoAprendizaje || '',
+          logrosEsperados: p.logrosEsperados || p.resultadosBloom || '',
+          indicadoresLogro: p.indicadoresLogro || '',
+          saberConceptual: p.saberConceptual || '',
+          saberProcedimental: p.saberProcedimental || '',
+          saberActitudinal: p.saberActitudinal || '',
+          tituloPractica: p.tituloPractica || '',
+          objetivoAprendizaje: p.objetivoAprendizaje || '',
+          resultadosBloom: p.resultadosBloom || '',
+          preparacionMateriales: p.preparacionMateriales || '',
+          equipamiento: p.equipamiento || '',
+          equipo: p.equipo || p.equipoEspecifico || '',
+          semestre: p.semestre || '',
+          duracionTotalMin: p.duracionTotalMin || (isPractical ? 180 : 90)
+        },
+        personalData: {
+          nombreDocente: p.nombreDocente || '',
+          fecha: p.fecha || '',
+          ambiente: p.ambiente || '',
+          nroEstudiantes: String(p.numEstudiantes || p.nroEstudiantes || ''),
+          duracionPractica: p.duracionPractica || '',
+          estrategiaEnsenanza: p.estrategiaEnsenanza || '',
+          estrategiaAprendizaje: p.estrategiaAprendizaje || '',
+          evaluacionFormativaActividad: p.evaluacionFormativaActividad || '',
+          evaluacionFormativaInstrumento: p.evaluacionFormativaInstrumento || '',
+          evaluacionFormativaEvidencia: p.evaluacionFormativaEvidencia || '',
+          evaluacionSumativaActividad: p.evaluacionSumativaActividad || '',
+          evaluacionSumativaInstrumento: p.evaluacionSumativaInstrumento || '',
+          evaluacionSumativaEvidencia: p.evaluacionSumativaEvidencia || '',
+          fasesMetodologicas: p.fasesMetodologicas || [],
+          pasosDesarrollo: p.pasosDesarrollo || [],
+          notasDocente: p.notasDocenteList || []
+        }
+      };
+
+      const btn = document.getElementById('btn-plan-guardar-text');
+      const origText = btn ? btn.innerText : '';
+      if (btn) btn.innerText = 'Guardando...';
+
+      try {
+        const authHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
+        const res = await fetch('/api/v1/planificaciones/plan-clase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authHeaders
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.data && data.data.id) {
+            p.id = data.data.id;
+          }
+          if (typeof window.showToast === 'function') {
+            window.showToast('✅ Plan de clase guardado exitosamente en el servidor.');
+          }
+        } else {
+          // Graceful fallback to local persistence
+          if (typeof window.showToast === 'function') {
+            window.showToast('💾 Plan de clase guardado localmente en navegador.');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al guardar plan de clase:', err);
+        if (typeof window.showToast === 'function') {
+          window.showToast('💾 Plan de clase respaldado localmente en navegador.');
+        }
+      } finally {
+        if (btn) btn.innerText = origText || 'Guardar Plan';
+      }
     };
 
     document.addEventListener('input', function(e) {
@@ -4552,6 +5655,9 @@ window.renderAnaliticoBibliografia = function(biblioList) {
     </div>
   `;
   setTimeout(() => window.autoResizeAllTextareas(), 10);
+  if (typeof window.applyUserRolePermissions === 'function') {
+    window.applyUserRolePermissions();
+  }
   if (window.lucide) window.lucide.createIcons();
 };
 
@@ -4965,8 +6071,60 @@ window.loadSavedDocenteData = function(materiaKey) {
   return true;
 };
 
-window.generateDefaultPlanesList = function(mKey) {
-  return [];
+window.generateDefaultPlanesList = function(mKey, isPractical) {
+  const planType = isPractical ? 'PRACTICO' : 'TEORICO';
+  const defData = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
+  
+  let totalSheets = 4;
+  if (typeof activeAnaliticoUnidades !== 'undefined' && Array.isArray(activeAnaliticoUnidades) && activeAnaliticoUnidades.length > 0) {
+    let temasCount = 0;
+    activeAnaliticoUnidades.forEach(u => {
+      temasCount += (u.temas && u.temas.length > 0) ? u.temas.length : 1;
+    });
+    totalSheets = Math.max(temasCount, activeAnaliticoUnidades.length);
+  } else if (typeof matriz7 !== 'undefined' && Array.isArray(matriz7) && matriz7.length > 0) {
+    totalSheets = Math.min(matriz7.length, 6);
+  }
+
+  const list = [];
+  const curDoc = (typeof window.resolveCurrentDocente === 'function') ? window.resolveCurrentDocente() : null;
+  const docenteNombre = curDoc ? curDoc.nombre : '';
+
+  for (let i = 0; i < totalSheets; i++) {
+    const sheet = {
+      sesionId: i + 1,
+      nombreHoja: 'UA-' + (i + 1),
+      contenidoTema: '',
+      unidadTitulo: '',
+      elementoCompetencia: '',
+      objetivoSesion: '',
+      logrosEsperados: '',
+      indicadoresLogro: '',
+      saberConceptual: '',
+      saberProcedimental: '',
+      saberActitudinal: '',
+      planType: planType,
+      referenciasBibliograficas: [],
+      nombreDocente: docenteNombre,
+      nombreAsignatura: defData.nombre || '',
+      carrera: defData.carrera || '',
+      fecha: new Date().toISOString().split('T')[0]
+    };
+    list.push(sheet);
+  }
+
+  const prevPlanes = activePlanesList;
+  activePlanesList = list;
+  window.activePlanesList = list;
+  for (let i = 0; i < list.length; i++) {
+    if (typeof window.cascadeMasterDataToPlanSheet === 'function') {
+      window.cascadeMasterDataToPlanSheet(i, isPractical);
+    }
+  }
+  activePlanesList = prevPlanes;
+  window.activePlanesList = prevPlanes;
+
+  return list;
 };
 
 window.generateDefaultMatriz7 = function(mKey) {
@@ -5024,6 +6182,9 @@ window.renderPacElementosCompetencia = function() {
     }
   }, 10);
 
+  if (typeof window.applyUserRolePermissions === 'function') {
+    window.applyUserRolePermissions();
+  }
   if (window.lucide) window.lucide.createIcons();
 };
 
@@ -5605,6 +6766,14 @@ window.exportPlanesOfficial = async function() {
 
 // Real actions and dual modalities for official file uploads
 window.showOfficialUploadModal = function() {
+  const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+  const role = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE');
+  if (role === 'ROLE_DOCENTE') {
+    if (typeof window.showToast === 'function') {
+      window.showToast('⚠️ La subida y reemplazo de documentos de cátedra está reservada para Dirección de Carrera.');
+    }
+    return;
+  }
   const modalBody = `
     <div class="space-y-4 text-xs">
       <p class="text-slate-700 dark:text-slate-300">Seleccioná el documento base oficial que deseas importar:</p>
@@ -5687,7 +6856,18 @@ window.showOfficialUploadModal = function() {
   document.getElementById('modal-container').classList.remove('hidden');
   if (window.lucide) window.lucide.createIcons();
 };
-window.triggerAutoCapture = window.showOfficialUploadModal;
+
+window.triggerAutoCapture = function() {
+  const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+  const role = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE');
+  if (role === 'ROLE_DOCENTE') {
+    if (typeof window.showToast === 'function') {
+      window.showToast('⚠️ La subida y reemplazo de documentos de cátedra está reservada para Dirección de Carrera.');
+    }
+    return;
+  }
+  window.showOfficialUploadModal();
+};
 
 // Global interceptor for all "Guardar" buttons
 
@@ -7535,6 +8715,12 @@ document.addEventListener('change', (e) => {
     }
     if (user) {
       localStorage.setItem('scu_user_info', JSON.stringify(user));
+      if (user.role) {
+        localStorage.setItem('sisa_user_role', user.role);
+        if (typeof window.applyUserRolePermissions === 'function') {
+          window.applyUserRolePermissions(user.role);
+        }
+      }
       window.updateUserProfileUi(user);
       if (user.role === 'ROLE_DOCENTE') {
         const teacherCi = user.ci || user.username;
@@ -10303,12 +11489,18 @@ document.addEventListener('change', (e) => {
   window._tempPasswordChangeUser = null;
   window._tempPasswordChangeToken = null;
   window._isVoluntaryPasswordChange = false;
+  window._isSubmittingPasswordChange = false;
 
   window.handleForcedPasswordSubmit = async function(event) {
     if (event) {
       event.preventDefault();
       if (typeof event.stopPropagation === 'function') event.stopPropagation();
     }
+    if (window._isSubmittingPasswordChange) {
+      console.warn('[SISA] Password change already in progress, ignoring duplicate invocation.');
+      return;
+    }
+    window._isSubmittingPasswordChange = true;
     console.log('[SISA] handleForcedPasswordSubmit is executing...');
     const curPwdInput = document.getElementById('change-current-password');
     const newPwdInput = document.getElementById('change-new-password');
@@ -10425,6 +11617,7 @@ document.addEventListener('change', (e) => {
       console.error('[SISA] Password change exception:', err);
       showError(err.message || 'Error al procesar el cambio de contraseña.');
     } finally {
+      window._isSubmittingPasswordChange = false;
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = '<span>Guardar nueva contraseña</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
@@ -11236,7 +12429,18 @@ document.addEventListener('change', (e) => {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0 && !parsed.some(s => s.isMock || !s.code || s.code === 'null' || !s.fullName || s.fullName === 'null' || (s.code && String(s.code).startsWith('SIS-2024-')))) {
-          cached = parsed;
+          // Normalize career names and clean student names
+          cached = parsed.map(s => {
+            const cCode = s.carreraCodigo || 'CARSIS';
+            const cInfo = (typeof window.resolveCarreraInfo === 'function') ? window.resolveCarreraInfo('', cCode) : { name: cCode, tag: cCode };
+            return {
+              ...s,
+              fullName: String(s.fullName || '').replace(/^[\s\.\-]+/, '').trim(),
+              carreraCodigo: cCode,
+              carreraNombre: cInfo.name || s.carreraNombre || 'Ing. de Sistemas',
+              carreraTag: cInfo.tag || s.carreraTag || 'ING. SISTEMAS'
+            };
+          });
         } else {
           localStorage.removeItem(storageKey);
         }
@@ -11275,7 +12479,12 @@ document.addEventListener('change', (e) => {
                   .filter(item => (item.studentCode || item.code || item.id || item.fullName))
                   .map(item => {
                     const sCode = item.studentCode || item.code || item.id || '';
-                    const sName = item.fullName || `${item.firstLastName || ''} ${item.secondLastName || ''} ${item.firstName || ''}`.trim() || sCode;
+                    let sName = item.fullName || `${item.firstLastName || ''} ${item.secondLastName || ''} ${item.firstName || ''}`.trim() || sCode;
+                    sName = sName.replace(/^[\s\.\-]+/, '').trim();
+                    const grpCareerCode = g.careerCode || (data.carrerasCodes && data.carrerasCodes[0]) || 'CARSIS';
+                    const careerInfo = (typeof window.resolveCarreraInfo === 'function')
+                      ? window.resolveCarreraInfo('', grpCareerCode)
+                      : { name: grpCareerCode, tag: grpCareerCode };
                     return {
                       id: sCode,
                       code: sCode,
@@ -11284,9 +12493,9 @@ document.addEventListener('change', (e) => {
                       firstLastName: item.firstLastName || '',
                       secondLastName: item.secondLastName || '',
                       fullName: sName,
-                      carreraCodigo: g.careerCode || (data.carrerasCodes && data.carrerasCodes[0]) || 'CARSIS',
-                      carreraNombre: g.careerName || (data.carrerasResolved && data.carrerasResolved[0]?.name) || 'Ingeniería de Sistemas',
-                      carreraTag: g.careerTag || 'ING. SISTEMAS'
+                      carreraCodigo: grpCareerCode,
+                      carreraNombre: careerInfo.name || 'Ing. de Sistemas',
+                      carreraTag: careerInfo.tag || 'ING. SISTEMAS'
                     };
                   });
               }
@@ -11352,7 +12561,8 @@ document.addEventListener('change', (e) => {
     const distinctCareers = new Map();
     activeRosterStudents.forEach(s => {
       const cCode = s.carreraCodigo || 'CARSIS';
-      const cName = s.carreraNombre || 'Ingeniería de Sistemas';
+      const cInfo = (typeof window.resolveCarreraInfo === 'function') ? window.resolveCarreraInfo('', cCode) : { name: cCode, tag: cCode };
+      const cName = cInfo.name || s.carreraNombre || 'Ing. de Sistemas';
       if (!distinctCareers.has(cCode)) {
         distinctCareers.set(cCode, { code: cCode, name: cName, count: 0 });
       }
@@ -11447,10 +12657,12 @@ document.addEventListener('change', (e) => {
     const byCareer = new Map();
     displayStudents.forEach(s => {
       const cKey = s.carreraCodigo || 'CARSIS';
+      const cInfo = (typeof window.resolveCarreraInfo === 'function') ? window.resolveCarreraInfo('', cKey) : { name: cKey, tag: cKey };
+      const cName = cInfo.name || s.carreraNombre || 'Ing. de Sistemas';
       if (!byCareer.has(cKey)) {
         byCareer.set(cKey, {
           code: cKey,
-          name: s.carreraNombre || 'Ingeniería de Sistemas',
+          name: cName,
           students: []
         });
       }
@@ -11485,6 +12697,9 @@ document.addEventListener('change', (e) => {
         ? 'bg-purple-600 text-white'
         : 'bg-indigo-600 text-white';
 
+      const rawName = cohort.name || 'Ing. de Sistemas';
+      const displayTitle = rawName.toUpperCase().startsWith('LIC') ? rawName : ('Licenciatura en ' + rawName);
+
       html += `
         <!-- Career Cohort Header Banner -->
         <tr class="${bannerTheme} font-bold border-y-2 border-slate-200 dark:border-slate-700">
@@ -11492,7 +12707,7 @@ document.addEventListener('change', (e) => {
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 rounded text-[10px] uppercase font-extrabold tracking-wider ${badgeTheme}">${careerCode}</span>
-                <span class="text-xs uppercase tracking-wide">Carrera: Licenciatura en ${cohort.name}</span>
+                <span class="text-xs uppercase tracking-wide">Carrera: ${displayTitle}</span>
               </div>
               <div id="cohort-summary-${careerCode}" class="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-2">
                 <span>${cohort.students.length} estudiantes matriculados</span>
