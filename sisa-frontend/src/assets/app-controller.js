@@ -30,22 +30,33 @@
     // Automatic storage purge to eliminate prior mock caches
     (function purgeLegacyMockStorage() {
       try {
-        const mockKeywords = ['Configuración de Entorno Experimental', 'Laboratorio de Computación / Simulación Técnica', 'Modelado Orientado a Objetos', 'Configuración de Entorno de Desarrollo'];
+        const mockKeywords = [
+          'Configuración de Entorno Experimental',
+          'Laboratorio de Computación / Simulación Técnica',
+          'Modelado Orientado a Objetos',
+          'Configuración de Entorno de Desarrollo',
+          'Reconocimiento de Instrumental',
+          'Procedimiento Guiado',
+          'Simulación Avanzada'
+        ];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_'))) {
+          if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_') || k.startsWith('sisa_saved_pac_'))) {
             const val = localStorage.getItem(k);
             if (val && mockKeywords.some(w => val.includes(w))) {
               localStorage.removeItem(k);
             }
           }
         }
-        const PURGE_FLAG = 'sisa_purged_mock_v265';
+        const PURGE_FLAG = 'sisa_purged_mock_v270';
         if (!localStorage.getItem(PURGE_FLAG)) {
           for (let i = localStorage.length - 1; i >= 0; i--) {
             const k = localStorage.key(i);
             if (k && (k.startsWith('sisa_saved_programa_analitico_') || k.startsWith('sisa_saved_pac_') || k.startsWith('sisa_saved_planes_') || k.startsWith('sisa_saved_cron_'))) {
-              localStorage.removeItem(k);
+              const val = localStorage.getItem(k);
+              if (val && mockKeywords.some(w => val.includes(w))) {
+                localStorage.removeItem(k);
+              }
             }
           }
           localStorage.setItem(PURGE_FLAG, 'true');
@@ -997,32 +1008,7 @@
     // ── TASK 5.2: DYNAMIC PAC FORM (GRAL vs PRÁCTICO) ───────────────────────────
     window.activePacType = 'GRAL';
 
-    window.pacPracticasList = [
-      {
-        numero: 1,
-        titulo: 'Reconocimiento de Instrumental, Bioseguridad y Normativa de Práctica',
-        escenario: 'Laboratorio Central',
-        duracion: '2',
-        desempeno: 'Fase 1 y 2: Identificación correcta de instrumental, EPP y reporte inicial de seguridad',
-        instrumento: 'Rúbrica de Desempeño'
-      },
-      {
-        numero: 2,
-        titulo: 'Procedimiento Guiado y Ejecución Experimental Paso a Paso',
-        escenario: 'Laboratorio Central',
-        duracion: '4',
-        desempeno: 'Fase 2 y 3: Ejecución técnica supervisada y recolección de mediciones experimentales',
-        instrumento: 'Lista de Cotejo Técnica'
-      },
-      {
-        numero: 3,
-        titulo: 'Simulación Avanzada, Resolución Autónoma de Casos y Cierre de Protocolo',
-        escenario: 'Gabinete / Laboratorio',
-        duracion: '4',
-        desempeno: 'Fase 3 y 4: Resolución autónoma de casos prácticos, análisis de resultados y síntesis',
-        instrumento: 'Evaluación de Producto y Rúbrica'
-      }
-    ];
+    window.pacPracticasList = [];
 
     window.renderPacPracticasTable = function() {
       const tbody = document.getElementById('pac-practicas-table-body');
@@ -1180,8 +1166,9 @@
         if (savedPrac) {
           try { prac = JSON.parse(savedPrac); } catch(e) {}
         }
-        if (prac && (prac.pracEscenario === 'Laboratorio de Computación / Simulación Técnica' || (prac.pacPracticas && Array.isArray(prac.pacPracticas) && prac.pacPracticas.some(p => p.titulo && p.titulo.includes('Configuración de Entorno'))))) {
+        if (prac && (prac.pracEscenario === 'Laboratorio de Computación / Simulación Técnica' || (prac.pacPracticas && Array.isArray(prac.pacPracticas) && prac.pacPracticas.some(p => p.titulo && (p.titulo.includes('Configuración de Entorno') || p.titulo.includes('Reconocimiento de Instrumental') || p.titulo.includes('Procedimiento Guiado')))))) {
           prac = null;
+          if (mKey) localStorage.removeItem('sisa_saved_pac_prac_' + mKey);
         }
         if (!prac) {
           prac = {
@@ -1209,6 +1196,7 @@
           };
         }
         window.activePacPracData = prac;
+        window.pacPracticasList = (prac && Array.isArray(prac.pacPracticas)) ? [...prac.pacPracticas] : [];
         window.populatePacDom(prac);
       } else {
         let gral = null;
@@ -1436,14 +1424,14 @@
     window.renderCronogramaPracticoTable = function(sessions) {
       const tbody = document.getElementById('cronograma-practico-table-body');
       if (!tbody) return;
-      const list = sessions || (window.activePacPracData && (window.activePacPracData.matriz7 || window.activePacPracData.pacPracticas)) || [];
+      const list = sessions || (window.activePacPracData && (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0 ? window.activePacPracData.matriz7 : window.activePacPracData.pacPracticas)) || window.pacPracticasList || [];
       if (!Array.isArray(list) || list.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
               <i data-lucide="flask-conical" class="w-8 h-8 mx-auto mb-2 opacity-50 text-teal-500"></i>
               <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin prácticas registradas en el cronograma de laboratorio</p>
-              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+              <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Cargar desde PAC Práctico (.xlsx)" o presiona "+ Agregar Fila".</p>
             </td>
           </tr>
         `;
@@ -1565,6 +1553,9 @@
       if (typeof window.syncCurrentPacDomToState === 'function') {
         window.syncCurrentPacDomToState();
       }
+      if (typeof window.loadActivePacStateToDom === 'function') {
+        window.loadActivePacStateToDom(type);
+      }
       window.renderDynamicCronograma(type);
       if (typeof window.renderDynamicPacForm === 'function') {
         window.renderDynamicPacForm(type);
@@ -1585,14 +1576,29 @@
               <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
                 <i data-lucide="flask-conical" class="w-8 h-8 mx-auto mb-2 opacity-50 text-teal-500"></i>
                 <p class="font-bold text-xs text-slate-600 dark:text-slate-400">Sin prácticas registradas en el cronograma de laboratorio</p>
-                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Importar Cronograma (.xlsx)" o presiona "+ Agregar Fila".</p>
+                <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Haz clic en "Cargar desde PAC Práctico (.xlsx)" o presiona "+ Agregar Fila".</p>
               </td>
             </tr>
           `;
           if (window.lucide) window.lucide.createIcons();
         }
-        if (window.activePacPracData) window.activePacPracData.matriz7 = [];
-        if (activeMateriaKey) localStorage.removeItem('sisa_saved_cron_prac_' + activeMateriaKey);
+        if (window.activePacPracData) {
+          window.activePacPracData.matriz7 = [];
+          window.activePacPracData.pacPracticas = [];
+        }
+        window.pacPracticasList = [];
+        if (activeMateriaKey) {
+          localStorage.removeItem('sisa_saved_cron_prac_' + activeMateriaKey);
+          const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + activeMateriaKey);
+          if (savedPrac) {
+            try {
+              const p = JSON.parse(savedPrac);
+              p.matriz7 = [];
+              p.pacPracticas = [];
+              localStorage.setItem('sisa_saved_pac_prac_' + activeMateriaKey, JSON.stringify(p));
+            } catch(e) {}
+          }
+        }
         window.showToast('🗑️ Cronograma Práctico vaciado.');
       } else {
         const tbody = document.getElementById('cronograma-table-body');
@@ -6576,8 +6582,8 @@ window.populatePacDom = function(data) {
   setVal('pac-prac-eval-criterios', data.pracEvalCriterios || data.evalCriterios || '');
   setVal('pac-prac-eval-instrumentos', data.pracEvalInstrumentos || data.evalInstrumentos || '');
 
-  if (data.pacPracticas && Array.isArray(data.pacPracticas) && data.pacPracticas.length > 0) {
-    window.pacPracticasList = data.pacPracticas;
+  if (data.pacPracticas && Array.isArray(data.pacPracticas)) {
+    window.pacPracticasList = [...data.pacPracticas];
   } else if (data.seccionesIdentificacion && Array.isArray(data.seccionesIdentificacion.contenidosPractica) && data.seccionesIdentificacion.contenidosPractica.length > 0) {
     window.pacPracticasList = data.seccionesIdentificacion.contenidosPractica.map(cp => ({
       numero: cp.numero || 1,
@@ -6587,6 +6593,8 @@ window.populatePacDom = function(data) {
       desempeno: cp.resultadoAprendizaje || '',
       instrumento: cp.instrumento || 'Rúbrica de Práctica'
     }));
+  } else {
+    window.pacPracticasList = [];
   }
   if (typeof window.renderPacPracticasTable === 'function') {
     window.renderPacPracticasTable();
