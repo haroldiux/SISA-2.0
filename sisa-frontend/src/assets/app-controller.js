@@ -37,22 +37,28 @@
           'Configuración de Entorno de Desarrollo',
           'Reconocimiento de Instrumental',
           'Procedimiento Guiado',
-          'Simulación Avanzada'
+          'Simulación Avanzada',
+          'Fundamentos y Aplicación Práctica',
+          'Comprende, analiza y aplica con rigurosidad técnica',
+          'Fundamentos conceptuales, definiciones y estructuras formales',
+          'Desarrollo de ejercicios prácticos, análisis de casos y ejecución procedimental',
+          'Responsabilidad ética, rigor metodológico y trabajo colaborativo',
+          'Desarrollar y consolidar las competencias asociadas'
         ];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_') || k.startsWith('sisa_saved_pac_'))) {
+          if (k && (k.startsWith('sisa_saved_pac_prac_') || k.startsWith('sisa_saved_planes_prac_') || k.startsWith('sisa_saved_cron_prac_') || k.startsWith('sisa_saved_pac_') || k.startsWith('sisa_saved_planes_') || k.startsWith('sisa_plan_practico_'))) {
             const val = localStorage.getItem(k);
             if (val && mockKeywords.some(w => val.includes(w))) {
               localStorage.removeItem(k);
             }
           }
         }
-        const PURGE_FLAG = 'sisa_purged_mock_v270';
+        const PURGE_FLAG = 'sisa_purged_mock_v272';
         if (!localStorage.getItem(PURGE_FLAG)) {
           for (let i = localStorage.length - 1; i >= 0; i--) {
             const k = localStorage.key(i);
-            if (k && (k.startsWith('sisa_saved_programa_analitico_') || k.startsWith('sisa_saved_pac_') || k.startsWith('sisa_saved_planes_') || k.startsWith('sisa_saved_cron_'))) {
+            if (k && (k.startsWith('sisa_saved_programa_analitico_') || k.startsWith('sisa_saved_pac_') || k.startsWith('sisa_saved_planes_') || k.startsWith('sisa_saved_cron_') || k.startsWith('sisa_plan_practico_'))) {
               const val = localStorage.getItem(k);
               if (val && mockKeywords.some(w => val.includes(w))) {
                 localStorage.removeItem(k);
@@ -1685,8 +1691,12 @@
         if (savedPrac) {
           try { prac = JSON.parse(savedPrac); } catch(e) {}
         }
-        if (prac && Array.isArray(prac) && prac.some(p => p.contenidoTema && p.contenidoTema.includes('Configuración de Entorno Experimental'))) {
-          prac = [];
+        if (prac && Array.isArray(prac) && (
+          prac.some(p => p.contenidoTema && p.contenidoTema.includes('Configuración de Entorno Experimental')) ||
+          prac.some(p => (p.contenidoTema && p.contenidoTema.includes('Fundamentos y Aplicación Práctica')) || (p.nombreHoja && p.nombreHoja.includes('Fundamentos y Aplicación Práctica')))
+        )) {
+          prac = null;
+          localStorage.removeItem('sisa_saved_planes_prac_' + mKey);
         }
         if (!prac || !Array.isArray(prac) || prac.length === 0) {
           prac = (typeof window.generateDefaultPlanesList === 'function') ? window.generateDefaultPlanesList(mKey, true) : [];
@@ -1710,6 +1720,13 @@
         const savedTeorico = localStorage.getItem('sisa_saved_planes_teorico_' + mKey) || localStorage.getItem('sisa_saved_planes_' + mKey);
         if (savedTeorico) {
           try { teorico = JSON.parse(savedTeorico); } catch(e) {}
+        }
+        if (teorico && Array.isArray(teorico) && (
+          teorico.some(p => (p.contenidoTema && p.contenidoTema.includes('Fundamentos y Aplicación Práctica')) || (p.nombreHoja && p.nombreHoja.includes('Fundamentos y Aplicación Práctica')))
+        )) {
+          teorico = null;
+          localStorage.removeItem('sisa_saved_planes_teorico_' + mKey);
+          localStorage.removeItem('sisa_saved_planes_' + mKey);
         }
         if (!teorico || !Array.isArray(teorico) || teorico.length === 0) {
           teorico = (typeof window.generateDefaultPlanesList === 'function') ? window.generateDefaultPlanesList(mKey, false) : [];
@@ -4538,23 +4555,22 @@
       let bloomLevel = p.nivelBloom || '';
 
       if (typeof activeAnaliticoUnidades !== 'undefined' && Array.isArray(activeAnaliticoUnidades) && activeAnaliticoUnidades.length > 0) {
-        const u = activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length];
-        if (u) {
-          unitTitle = u.titulo ? (u.titulo.startsWith('Unidad') ? u.titulo : `Unidad ${u.numeroUnidad || (sheetIndex + 1)}: ${u.titulo}`) : `Unidad ${sheetIndex + 1}`;
-          if (u.nivelBloom) bloomLevel = u.nivelBloom;
+        if (!unitTitle) {
+          const u = activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length];
+          if (u) {
+            unitTitle = u.titulo ? (u.titulo.startsWith('Unidad') ? u.titulo : `Unidad ${u.numeroUnidad || (sheetIndex + 1)}: ${u.titulo}`) : `Unidad ${sheetIndex + 1}`;
+            if (u.nivelBloom) bloomLevel = u.nivelBloom;
+          }
         }
-      } else if (!unitTitle) {
-        unitTitle = `Unidad ${sheetIndex + 1}`;
       }
 
       // 2. Resolve competence element from activePacElementosCompetencia or materiasData
-      if (typeof activePacElementosCompetencia !== 'undefined' && Array.isArray(activePacElementosCompetencia) && activePacElementosCompetencia.length > 0) {
-        elemComp = activePacElementosCompetencia[sheetIndex % activePacElementosCompetencia.length] || elemComp;
-      } else if (defData && Array.isArray(defData.elementosCompetencia) && defData.elementosCompetencia.length > 0) {
-        elemComp = defData.elementosCompetencia[sheetIndex % defData.elementosCompetencia.length] || elemComp;
-      }
       if (!elemComp) {
-        elemComp = 'Comprende, analiza y aplica con rigurosidad técnica los conceptos y metodologías fundamentales de la unidad temática.';
+        if (typeof activePacElementosCompetencia !== 'undefined' && Array.isArray(activePacElementosCompetencia) && activePacElementosCompetencia.length > 0) {
+          elemComp = activePacElementosCompetencia[sheetIndex % activePacElementosCompetencia.length] || '';
+        } else if (defData && Array.isArray(defData.elementosCompetencia) && defData.elementosCompetencia.length > 0) {
+          elemComp = defData.elementosCompetencia[sheetIndex % defData.elementosCompetencia.length] || '';
+        }
       }
 
       // 3. Resolve topic & 3 saberes from Matriz 7 (Cronograma de 20 semanas)
@@ -4586,7 +4602,7 @@
       if (liveMatriz7 && liveMatriz7.length > 0) {
         const s = liveMatriz7[sheetIndex % liveMatriz7.length];
         if (s) {
-          if (!topicName || topicName === 'Práctica de formación profesional' || topicName.startsWith('Tema ')) {
+          if (!topicName || topicName === 'Práctica de formación profesional') {
             topicName = s.contenidoEspecifico || s.tema || topicName;
           }
           if (!saberC) saberC = s.saberConceptual || '';
@@ -4597,22 +4613,15 @@
         }
       }
 
-      // Fallbacks if not set
+      // If topic name is not yet set, check activeAnaliticoUnidades
       if (!topicName) {
         if (typeof activeAnaliticoUnidades !== 'undefined' && activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length]) {
           const u = activeAnaliticoUnidades[sheetIndex % activeAnaliticoUnidades.length];
           if (u.temas && u.temas.length > 0) {
-            topicName = u.temas[0].titulo || u.temas[0].contenido || ('Tema ' + (sheetIndex + 1));
+            topicName = u.temas[0].titulo || u.temas[0].contenido || '';
           }
         }
       }
-      if (!topicName) topicName = `Tema ${sheetIndex + 1}: Fundamentos y Aplicación Práctica`;
-      if (!saberC) saberC = `Fundamentos conceptuales, definiciones y estructuras formales de ${topicName}.`;
-      if (!saberP) saberP = `Desarrollo de ejercicios prácticos, análisis de casos y ejecución procedimental en aula o laboratorio.`;
-      if (!saberA) saberA = `Responsabilidad ética, rigor metodológico y trabajo colaborativo en la resolución de problemas.`;
-      if (!objSesion) objSesion = `Desarrollar y consolidar las competencias asociadas a ${topicName} mediante metodologías activas.`;
-      if (!logrosEsperados) logrosEsperados = objSesion;
-      if (!bloomLevel) bloomLevel = 'Aplicar / Analizar (Nivel 3-4)';
 
       // 4. Resolve APA Bibliography
       if (typeof window.getAvailableSubjectBibliography === 'function') {
@@ -4637,7 +4646,9 @@
       p.saberActitudinal = saberA;
       p.objetivoSesion = objSesion;
       p.logrosEsperados = logrosEsperados;
-      p.indicadoresLogro = p.indicadoresLogro || `Demuestra dominio en la aplicación de los conceptos de ${topicName}.`;
+      if (!p.indicadoresLogro && topicName) {
+        p.indicadoresLogro = `Demuestra dominio en la aplicación de los conceptos de ${topicName}.`;
+      }
       p.nivelBloom = bloomLevel;
 
       // Metadata
@@ -4801,7 +4812,8 @@
 
       container.innerHTML = '';
       if (!activePlanesList || activePlanesList.length === 0) {
-        container.innerHTML = '<div class="text-xs text-slate-400 py-1">Sin hojas de clase cargadas. Importa el archivo Plan de Clases (.xlsx) para ver todos los temas.</div>';
+        container.innerHTML = '<div class="text-xs text-slate-400 py-2 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4 text-purple-400"></i><span>Sin hojas de clase registradas. Se generan automáticamente a partir de las unidades y temas del Programa Analítico, o haz clic en <strong>Sincronizar con Programa</strong>.</span></div>';
+        if (window.lucide) window.lucide.createIcons();
         return;
       }
 
@@ -5784,6 +5796,11 @@ window.addAnaliticoUnidad = function() {
     window.renderPacElementosCompetencia();
   }
 
+  // If Planes de Clase was empty, auto-generate first sheets from Programa Analítico
+  if (typeof window.syncPlanesFromAnalitico === 'function' && (!activePlanesList || activePlanesList.length === 0)) {
+    window.syncPlanesFromAnalitico(false);
+  }
+
   window.scheduleAutoSave(500);
   window.showToast('➕ Unidad ' + newNum + ' agregada y articulada con Elemento de Competencia ' + newNum);
 };
@@ -6156,56 +6173,137 @@ window.generateDefaultPlanesList = function(mKey, isPractical) {
   const planType = isPractical ? 'PRACTICO' : 'TEORICO';
   const defData = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
   
-  let totalSheets = 4;
-  if (typeof activeAnaliticoUnidades !== 'undefined' && Array.isArray(activeAnaliticoUnidades) && activeAnaliticoUnidades.length > 0) {
-    let temasCount = 0;
-    activeAnaliticoUnidades.forEach(u => {
-      temasCount += (u.temas && u.temas.length > 0) ? u.temas.length : 1;
-    });
-    totalSheets = Math.max(temasCount, activeAnaliticoUnidades.length);
-  } else if (typeof matriz7 !== 'undefined' && Array.isArray(matriz7) && matriz7.length > 0) {
-    totalSheets = Math.min(matriz7.length, 6);
+  if (!activeAnaliticoUnidades || !Array.isArray(activeAnaliticoUnidades) || activeAnaliticoUnidades.length === 0) {
+    return [];
   }
 
   const list = [];
   const curDoc = (typeof window.resolveCurrentDocente === 'function') ? window.resolveCurrentDocente() : null;
   const docenteNombre = curDoc ? curDoc.nombre : '';
 
-  for (let i = 0; i < totalSheets; i++) {
-    const sheet = {
-      sesionId: i + 1,
-      nombreHoja: 'UA-' + (i + 1),
-      contenidoTema: '',
-      unidadTitulo: '',
-      elementoCompetencia: '',
-      objetivoSesion: '',
-      logrosEsperados: '',
-      indicadoresLogro: '',
-      saberConceptual: '',
-      saberProcedimental: '',
-      saberActitudinal: '',
-      planType: planType,
-      referenciasBibliograficas: [],
-      nombreDocente: docenteNombre,
-      nombreAsignatura: defData.nombre || '',
-      carrera: defData.carrera || '',
-      fecha: new Date().toISOString().split('T')[0]
-    };
-    list.push(sheet);
+  let availableBooks = [];
+  if (typeof window.getAvailableSubjectBibliography === 'function') {
+    availableBooks = window.getAvailableSubjectBibliography() || [];
   }
 
-  const prevPlanes = activePlanesList;
-  activePlanesList = list;
-  window.activePlanesList = list;
-  for (let i = 0; i < list.length; i++) {
-    if (typeof window.cascadeMasterDataToPlanSheet === 'function') {
-      window.cascadeMasterDataToPlanSheet(i, isPractical);
+  activeAnaliticoUnidades.forEach((u, uIdx) => {
+    const unitNum = u.numeroUnidad || (uIdx + 1);
+    const unitTitle = u.titulo 
+      ? (u.titulo.startsWith('Unidad') ? u.titulo : `Unidad ${unitNum}: ${u.titulo}`) 
+      : `Unidad ${unitNum}`;
+    
+    let elemComp = '';
+    if (typeof activePacElementosCompetencia !== 'undefined' && Array.isArray(activePacElementosCompetencia) && activePacElementosCompetencia[uIdx]) {
+      elemComp = activePacElementosCompetencia[uIdx];
+    } else if (u.elementoCompetencia) {
+      elemComp = u.elementoCompetencia;
+    } else if (defData.elementosCompetencia && defData.elementosCompetencia[uIdx]) {
+      elemComp = defData.elementosCompetencia[uIdx];
     }
-  }
-  activePlanesList = prevPlanes;
-  window.activePlanesList = prevPlanes;
+
+    const temas = (u.temas && Array.isArray(u.temas) && u.temas.length > 0) ? u.temas : null;
+
+    if (temas) {
+      temas.forEach((t, tIdx) => {
+        const temaNum = t.numeroTema || (tIdx + 1);
+        const temaTitle = t.titulo || t.contenido || `Tema ${temaNum}`;
+        const biblio = (availableBooks.length > 0) ? [{
+          texto: availableBooks[0],
+          pagDesde: '1',
+          pagHasta: '25'
+        }] : [];
+
+        const sheet = {
+          sesionId: list.length + 1,
+          nombreHoja: `UA-${unitNum}: Tema ${temaNum}`,
+          unidadTitulo: unitTitle,
+          contenidoTema: temaTitle,
+          elementoCompetencia: elemComp,
+          objetivoSesion: t.objetivo || t.criterioDesempeno || '',
+          logrosEsperados: t.logrosEsperados || t.criterioDesempeno || '',
+          indicadoresLogro: t.indicadoresLogro || (temaTitle ? `Demuestra dominio en la aplicación de los conceptos de ${temaTitle}.` : ''),
+          saberConceptual: t.saberConceptual || t.contenido || '',
+          saberProcedimental: t.saberProcedimental || '',
+          saberActitudinal: t.saberActitudinal || '',
+          nivelBloom: t.nivelBloom || u.nivelBloom || '',
+          planType: planType,
+          referenciasBibliograficas: biblio,
+          nombreDocente: docenteNombre,
+          nombreAsignatura: defData.nombre || '',
+          carrera: defData.carrera || '',
+          fecha: new Date().toISOString().split('T')[0]
+        };
+        list.push(sheet);
+      });
+    } else {
+      const biblio = (availableBooks.length > 0) ? [{
+        texto: availableBooks[0],
+        pagDesde: '1',
+        pagHasta: '25'
+      }] : [];
+
+      const sheet = {
+        sesionId: list.length + 1,
+        nombreHoja: `UA-${unitNum}`,
+        unidadTitulo: unitTitle,
+        contenidoTema: u.titulo || `Unidad ${unitNum}`,
+        elementoCompetencia: elemComp,
+        objetivoSesion: u.objetivo || '',
+        logrosEsperados: u.logrosEsperados || '',
+        indicadoresLogro: u.indicadoresLogro || '',
+        saberConceptual: u.saberConceptual || '',
+        saberProcedimental: u.saberProcedimental || '',
+        saberActitudinal: u.saberActitudinal || '',
+        nivelBloom: u.nivelBloom || '',
+        planType: planType,
+        referenciasBibliograficas: biblio,
+        nombreDocente: docenteNombre,
+        nombreAsignatura: defData.nombre || '',
+        carrera: defData.carrera || '',
+        fecha: new Date().toISOString().split('T')[0]
+      };
+      list.push(sheet);
+    }
+  });
 
   return list;
+};
+
+window.syncPlanesFromAnalitico = function(showToastAlert = false) {
+  const mKey = activeMateriaKey || localStorage.getItem('sisa_active_materia_key') || '';
+  if (!mKey) return;
+
+  const currentType = window.activePlanType || 'TEORICO';
+  const isPrac = (currentType === 'PRACTICO');
+
+  const newPlanesTeo = window.generateDefaultPlanesList(mKey, false);
+  const newPlanesPrac = window.generateDefaultPlanesList(mKey, true);
+
+  window.activePlanesTeoricoList = newPlanesTeo;
+  window.activePlanesPracticoList = newPlanesPrac;
+  activePlanesList = isPrac ? newPlanesPrac : newPlanesTeo;
+  window.activePlanesList = activePlanesList;
+  activePlanSheetIndex = 0;
+
+  localStorage.setItem('sisa_saved_planes_teorico_' + mKey, JSON.stringify(newPlanesTeo));
+  localStorage.setItem('sisa_saved_planes_' + mKey, JSON.stringify(newPlanesTeo));
+  localStorage.setItem('sisa_saved_planes_prac_' + mKey, JSON.stringify(newPlanesPrac));
+
+  if (typeof window.renderPlanesSheetsTabs === 'function') {
+    window.renderPlanesSheetsTabs();
+  }
+  if (typeof window.renderPlanSheetForm === 'function') {
+    window.renderPlanSheetForm(0);
+  }
+
+  if (showToastAlert) {
+    if (activePlanesList.length > 0) {
+      window.showToast(`🔄 Se sincronizaron ${activePlanesList.length} temas/hojas articulados desde el Programa Analítico.`);
+    } else {
+      window.showToast('ℹ️ No hay unidades cargadas en el Programa Analítico para generar hojas.');
+    }
+  }
+  if (window.lucide) window.lucide.createIcons();
 };
 
 window.generateDefaultMatriz7 = function(mKey) {
@@ -6426,6 +6524,11 @@ window.importProgramaDocx = function() {
         });
         if (typeof window.renderPacElementosCompetencia === 'function') {
           window.renderPacElementosCompetencia();
+        }
+
+        // Auto-synchronize lesson plan sheets from the imported units & topics
+        if (typeof window.syncPlanesFromAnalitico === 'function') {
+          window.syncPlanesFromAnalitico(false);
         }
       }
 
