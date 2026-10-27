@@ -11484,10 +11484,6 @@ document.addEventListener('change', (e) => {
         window.setAuthSession(token, user);
         window.showPortalShell(user.role === 'ROLE_ADMIN' ? 'view6' : 'view-dashboard');
         window.showToast('✅ ¡Bienvenido a SISA, ' + (user.nombres || user.nombreCompleto || user.username) + '!');
-
-        if (user.role === 'ROLE_ADMIN' && typeof window.loadAdminUsers === 'function') {
-          window.loadAdminUsers();
-        }
       }
     } catch (err) {
       if (errContainer && errMsg) {
@@ -11760,13 +11756,21 @@ document.addEventListener('change', (e) => {
     window.renderAdminUsersTable(window.adminUsersList);
   };
 
-  window.renderAdminUsersTable = function(users) {
+  let _adminUsersCurrentPage = 1;
+  const _adminUsersPageSize = 25;
+
+  window.renderAdminUsersTable = function(users, page) {
     const tbody = document.getElementById('admin-users-table-body');
     const counter = document.getElementById('admin-users-counter');
-    if (counter) counter.innerText = users.length;
+    const targetUsers = users || window.adminUsersList || [];
+    if (counter) counter.innerText = targetUsers.length;
     if (!tbody) return;
 
-    if (!users || users.length === 0) {
+    if (page !== undefined && page !== null) {
+      _adminUsersCurrentPage = page;
+    }
+
+    if (targetUsers.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="py-12 text-center text-slate-400">
@@ -11775,9 +11779,19 @@ document.addEventListener('change', (e) => {
           </td>
         </tr>
       `;
+      const pagEl = document.getElementById('admin-users-pagination');
+      if (pagEl) pagEl.innerHTML = '';
       if (window.lucide) window.lucide.createIcons();
       return;
     }
+
+    const totalPages = Math.ceil(targetUsers.length / _adminUsersPageSize) || 1;
+    if (_adminUsersCurrentPage > totalPages) _adminUsersCurrentPage = totalPages;
+    if (_adminUsersCurrentPage < 1) _adminUsersCurrentPage = 1;
+
+    const startIdx = (_adminUsersCurrentPage - 1) * _adminUsersPageSize;
+    const endIdx = Math.min(startIdx + _adminUsersPageSize, targetUsers.length);
+    const pagedUsers = targetUsers.slice(startIdx, endIdx);
 
     const roleBadges = {
       ROLE_ADMIN: 'bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
@@ -11798,7 +11812,7 @@ document.addEventListener('change', (e) => {
     };
 
     let html = '';
-    users.forEach(u => {
+    pagedUsers.forEach(u => {
       const ciVal = u.ci || u.username;
       const initials = (u.nombres && u.apellidos)
         ? (u.nombres.charAt(0) + u.apellidos.charAt(0)).toUpperCase()
@@ -11870,6 +11884,29 @@ document.addEventListener('change', (e) => {
     });
 
     tbody.innerHTML = html;
+
+    // Render pagination bar
+    let pagContainer = document.getElementById('admin-users-pagination');
+    if (!pagContainer) {
+      pagContainer = document.createElement('div');
+      pagContainer.id = 'admin-users-pagination';
+      pagContainer.className = 'flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500';
+      const tableWrapper = tbody.closest('.overflow-x-auto') || (tbody.closest('table') ? tbody.closest('table').parentElement : null);
+      if (tableWrapper && tableWrapper.parentElement) {
+        tableWrapper.parentElement.appendChild(pagContainer);
+      }
+    }
+    if (pagContainer) {
+      pagContainer.innerHTML = `
+        <div>Mostrando <span class="font-bold text-slate-800 dark:text-slate-200">${startIdx + 1}</span> a <span class="font-bold text-slate-800 dark:text-slate-200">${endIdx}</span> de <span class="font-bold text-slate-800 dark:text-slate-200">${targetUsers.length}</span> usuarios</div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.renderAdminUsersTable(null, ${_adminUsersCurrentPage - 1})" ${_adminUsersCurrentPage <= 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer">← Anterior</button>
+          <span class="font-semibold text-slate-600 dark:text-slate-300">Página ${_adminUsersCurrentPage} de ${totalPages}</span>
+          <button type="button" onclick="window.renderAdminUsersTable(null, ${_adminUsersCurrentPage + 1})" ${_adminUsersCurrentPage >= totalPages ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer">Siguiente →</button>
+        </div>
+      `;
+    }
+
     if (window.lucide) window.lucide.createIcons();
   };
 

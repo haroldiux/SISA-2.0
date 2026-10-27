@@ -222,7 +222,7 @@ public class UnitepcGatewayClient {
             return result != null ? result : Collections.emptyList();
         } catch (Exception ex) {
             log.warn("Error fetching courses for branch {} / career {}: {}", branchOfficeCode, careerCode, ex.getMessage());
-            throw new RuntimeException("Gateway courses request failed", ex);
+            return Collections.emptyList();
         }
     }
 

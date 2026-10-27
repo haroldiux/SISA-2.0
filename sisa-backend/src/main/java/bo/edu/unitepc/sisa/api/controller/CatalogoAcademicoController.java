@@ -256,12 +256,6 @@ public class CatalogoAcademicoController {
                     })
                     .toList();
 
-            try {
-                this.seaDocenteAutoProvisionService.provisionDocentesFromList(remoteDocentes);
-            } catch (Exception e) {
-                log.warn("Could not auto-provision remote docentes: {}", e.getMessage());
-            }
-
             return ResponseEntity.ok(remoteDocentes);
         }
 
@@ -317,12 +311,6 @@ public class CatalogoAcademicoController {
                 })
                 .toList();
 
-        try {
-            this.seaDocenteAutoProvisionService.provisionDocentesFromList(result);
-        } catch (Exception e) {
-            log.warn("Could not auto-provision local mirror docentes: {}", e.getMessage());
-        }
-
         return ResponseEntity.ok(result);
     }
 
@@ -331,7 +319,7 @@ public class CatalogoAcademicoController {
      */
     @GetMapping("/docentes/{ci}/materias")
     public ResponseEntity<List<CourseDto>> getDocenteMaterias(@PathVariable String ci) {
-        var grupos = this.seaGrupoRepository.findByDocenteCi(ci);
+        var grupos = this.seaGrupoRepository.findByDocenteCiFlexible(ci);
         List<String> materiaIds = grupos.stream()
                 .map(bo.edu.unitepc.sisa.domain.model.SeaGrupo::getMateriaId)
                 .filter(java.util.Objects::nonNull)
