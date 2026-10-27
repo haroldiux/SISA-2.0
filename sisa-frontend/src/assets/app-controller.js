@@ -119,6 +119,26 @@
       'view6': 'nav-item-view6'
     };
 
+    // Centralized Documentation Download Permission Guard
+    window.canDownloadDocumentation = function(role) {
+      let currentRole = role;
+      if (!currentRole && typeof window.getCurrentUser === 'function') {
+        const u = window.getCurrentUser();
+        if (u && u.role) currentRole = u.role;
+      }
+      if (!currentRole) {
+        currentRole = localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
+      }
+      const elevatedRoles = [
+        'ROLE_DIR_CARRERA',
+        'ROLE_DIR_ACADEMICA',
+        'ROLE_VICERRECTOR_SEDE',
+        'ROLE_VICERRECTOR_NACIONAL',
+        'ROLE_ADMIN'
+      ];
+      return elevatedRoles.includes(currentRole);
+    };
+
     // Centralized Role Permissions Manager (GentleAI SDD change 13)
     window.applyUserRolePermissions = function(role) {
       let currentRole = role;
@@ -131,8 +151,9 @@
       }
 
       const isDocente = (currentRole === 'ROLE_DOCENTE');
+      const canDownload = window.canDownloadDocumentation(currentRole);
 
-      // 1. Top Document Upload Button (#btn-top-upload-doc)
+      // 1. Top Document Upload Button (#btn-top-upload-doc) and Print Button (#btn-top-print-pdf)
       const topUploadBtn = document.getElementById('btn-top-upload-doc');
       if (topUploadBtn) {
         if (isDocente) {
@@ -143,6 +164,19 @@
           topUploadBtn.classList.remove('hidden');
           topUploadBtn.disabled = false;
           topUploadBtn.removeAttribute('title');
+        }
+      }
+
+      const topPrintBtn = document.getElementById('btn-top-print-pdf');
+      if (topPrintBtn) {
+        if (!canDownload) {
+          topPrintBtn.classList.add('hidden');
+          topPrintBtn.disabled = true;
+          topPrintBtn.setAttribute('title', 'Acción exclusiva para Dirección de Carrera y Autoridades');
+        } else {
+          topPrintBtn.classList.remove('hidden');
+          topPrintBtn.disabled = false;
+          topPrintBtn.removeAttribute('title');
         }
       }
 
@@ -258,20 +292,23 @@
         });
       });
 
-      // 6. Master document exports in Sidebar Direct Export Center
-      const dirExportButtons = [
+      // 6. Documentation exports in Sidebar Direct Export Center (Restricted for ROLE_DOCENTE)
+      const docExportButtons = [
         'btn-export-programa-docx',
         'btn-export-pac-gral-xlsx',
-        'btn-export-pac-prac-xlsx'
+        'btn-export-pac-prac-xlsx',
+        'btn-export-planes-teorico',
+        'btn-export-planes-prac',
+        'btn-sidebar-export-pdf'
       ];
-      dirExportButtons.forEach(btnId => {
+      docExportButtons.forEach(btnId => {
         const btn = document.getElementById(btnId);
         if (btn) {
-          if (isDocente) {
+          if (!canDownload) {
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
             btn.classList.remove('hover:underline', 'cursor-pointer');
-            btn.title = 'Acción exclusiva para Dirección de Carrera';
+            btn.title = 'Acción exclusiva para Dirección de Carrera y Autoridades Superiores';
             if (!btn.querySelector('.exclusivo-badge')) {
               const badge = document.createElement('span');
               badge.className = 'exclusivo-badge ml-auto text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-normal';
@@ -289,10 +326,8 @@
         }
       });
 
-      // 7. Personal micro-planning and attendance exports in Sidebar (Remain active for ROLE_DOCENTE and all roles)
+      // 7. Attendance exports in Sidebar (Active for ROLE_DOCENTE and all roles)
       const personalExportButtons = [
-        'btn-export-planes-teorico',
-        'btn-export-planes-prac',
         'btn-export-asistencia'
       ];
       personalExportButtons.forEach(btnId => {
@@ -311,10 +346,10 @@
       ['btn-export-programa-tab', 'btn-export-pac-tab', 'btn-export-cronograma-tab'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-          if (isDocente) {
+          if (!canDownload) {
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
-            btn.title = 'Descarga oficial restringida a Dirección de Carrera';
+            btn.title = 'Descarga oficial restringida a Dirección de Carrera y Autoridades';
           } else {
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -2113,6 +2148,7 @@
       const container = document.getElementById('director-consolidated-content');
       if (!container) return;
 
+      const canDownload = (typeof window.canDownloadDocumentation === 'function') ? window.canDownloadDocumentation() : false;
       const data = (activeMateriaKey && materiasData[activeMateriaKey]) ? materiasData[activeMateriaKey] : (Object.values(materiasData)[0] || {});
       const compInfo = data.components || window.detectComponentTypes(data.groups || []);
 
@@ -2257,9 +2293,13 @@
                 <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
                   <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Teórico Validado
                 </span>
+                ${canDownload ? `
                 <button type="button" onclick="window.exportExactFile('planes_teorico_xlsx')" class="px-3 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
                 </button>
+                ` : `
+                <span class="text-[10px] text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">🔒 Exclusivo Dirección</span>
+                `}
               </div>
             </div>
 
@@ -2299,9 +2339,13 @@
                 <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] flex items-center gap-1">
                   <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Plan Práctico Validado
                 </span>
+                ${canDownload ? `
                 <button type="button" onclick="window.exportExactFile('planes_prac_xlsx')" class="px-3 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 border border-teal-200 dark:border-teal-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
                   <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Plan (.xlsx)
                 </button>
+                ` : `
+                <span class="text-[10px] text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">🔒 Exclusivo Dirección</span>
+                `}
               </div>
             </div>
           </div>
@@ -2501,12 +2545,14 @@
     };
 
     window.exportExactFile = function(type) {
-      // Master document export security guard (Change 13)
+      // Documentation export security guard: strictly restricted to Carrera Director and higher authorities
       const currentRole = (typeof window.getCurrentUser === 'function' && window.getCurrentUser()?.role) || localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
-      const isDocente = (currentRole === 'ROLE_DOCENTE');
-      const isMasterExport = ['docx', 'programa_docx', 'pac_gral_xlsx', 'pac_prac_xlsx', 'pac_cronograma_xlsx', 'pac_xlsx'].includes(type);
-      if (isDocente && isMasterExport) {
-        window.showToast('⚠️ La descarga de documentos oficiales de cátedra está restringida a Dirección de Carrera.');
+      const canDownload = (typeof window.canDownloadDocumentation === 'function')
+        ? window.canDownloadDocumentation(currentRole)
+        : ['ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN'].includes(currentRole);
+
+      if (!canDownload) {
+        window.showToast('⚠️ La descarga de documentación oficial está restringida a Dirección de Carrera y autoridades superiores.');
         return;
       }
 
@@ -2751,6 +2797,16 @@
     };
 
     window.openPdfPrintModal = function() {
+      const currentRole = (typeof window.getCurrentUser === 'function' && window.getCurrentUser()?.role) || localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
+      const canDownload = (typeof window.canDownloadDocumentation === 'function')
+        ? window.canDownloadDocumentation(currentRole)
+        : ['ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN'].includes(currentRole);
+
+      if (!canDownload) {
+        window.showToast('⚠️ La exportación e impresión de la Carpeta Docente en PDF está restringida a Dirección de Carrera y autoridades superiores.');
+        return;
+      }
+
       const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
       const data = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
       const rawCareers = data.carrerasCodes || ['CARSIS'];
@@ -2957,6 +3013,16 @@
     };
 
     window.downloadOfficialFolderPdf = function() {
+      const currentRole = (typeof window.getCurrentUser === 'function' && window.getCurrentUser()?.role) || localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
+      const canDownload = (typeof window.canDownloadDocumentation === 'function')
+        ? window.canDownloadDocumentation(currentRole)
+        : ['ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN'].includes(currentRole);
+
+      if (!canDownload) {
+        window.showToast('⚠️ La descarga de la Carpeta Docente en PDF está restringida a Dirección de Carrera y autoridades superiores.');
+        return;
+      }
+
       const selectedSections = [];
       const masterChecked = document.getElementById('chk-print-all')?.checked;
       if (masterChecked) {

@@ -517,25 +517,25 @@
               <i data-lucide="download" class="w-3.5 h-3.5 text-[var(--sp-purple)]"></i>
               <span class="truncate">Exportar Carpeta Activa:</span>
             </div>
-            <button id="btn-export-programa-docx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" onclick="window.exportExactFile('programa_docx')" class="w-full text-left py-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+            <button id="btn-export-programa-docx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('programa_docx')" class="w-full text-left py-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="file-text" class="w-3 h-3 flex-shrink-0"></i> <span class="truncate">1. Programa Analítico (.docx)</span>
             </button>
-            <button id="btn-export-pac-gral-xlsx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" onclick="window.exportExactFile('pac_gral_xlsx')" class="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+            <button id="btn-export-pac-gral-xlsx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('pac_gral_xlsx')" class="w-full text-left py-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="table" class="w-3 h-3 flex-shrink-0"></i> <span class="truncate">2. PAC General + Cronog. (.xlsx)</span>
             </button>
-            <button id="btn-export-pac-prac-xlsx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN" onclick="window.exportExactFile('pac_prac_xlsx')" class="w-full text-left py-1 text-teal-600 dark:text-teal-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+            <button id="btn-export-pac-prac-xlsx" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('pac_prac_xlsx')" class="w-full text-left py-1 text-teal-600 dark:text-teal-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="flask-conical" class="w-3 h-3 flex-shrink-0"></i> <span class="truncate">3. PAC Práctico + Cronog. (.xlsx)</span>
             </button>
-            <button id="btn-export-planes-teorico" onclick="window.exportExactFile('planes_teorico_xlsx')" class="w-full text-left py-1 text-purple-600 dark:text-purple-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+            <button id="btn-export-planes-teorico" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('planes_teorico_xlsx')" class="w-full text-left py-1 text-purple-600 dark:text-purple-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="calendar-range" class="w-3.5 h-3.5 flex-shrink-0"></i> <span class="truncate">4. Planes de Clase Teóricos (.xlsx)</span>
             </button>
-            <button id="btn-export-planes-prac" onclick="window.exportExactFile('planes_prac_xlsx')" class="w-full text-left py-1 text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
+            <button id="btn-export-planes-prac" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('planes_prac_xlsx')" class="w-full text-left py-1 text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="layers" class="w-3 h-3 flex-shrink-0"></i> <span class="truncate">5. Planes de Clase Prácticos (.xlsx)</span>
             </button>
             <button id="btn-export-asistencia" onclick="window.exportAttendanceExcel()" class="w-full text-left py-1 text-teal-600 dark:text-teal-400 font-semibold hover:underline flex items-center gap-1.5 truncate cursor-pointer">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 flex-shrink-0"></i> <span class="truncate">6. Asistencia Oficial (.xlsx)</span>
             </button>
-            <button onclick="window.openPdfPrintModal()" class="w-full text-left py-1.5 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-[var(--sp-border)] truncate cursor-pointer">
+            <button id="btn-sidebar-export-pdf" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.openPdfPrintModal()" class="w-full text-left py-1.5 text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1.5 pt-1.5 border-t border-[var(--sp-border)] truncate cursor-pointer">
               <i data-lucide="printer" class="w-3.5 h-3.5 flex-shrink-0"></i> <span class="truncate">📄 Imprimir / Descargar PDF</span>
             </button>
           </div>
@@ -1213,7 +1213,7 @@
               <div class="flex items-center gap-3 relative z-10">
                 
                 <!-- BOTÓN IMPRIMIR EN PDF -->
-                <button onclick="window.openPdfPrintModal()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer">
+                <button id="btn-top-print-pdf" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.openPdfPrintModal()" class="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer">
                   <i data-lucide="printer" class="w-4 h-4 text-white"></i>
                   <span>Imprimir en PDF</span>
                   <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-80"></i>

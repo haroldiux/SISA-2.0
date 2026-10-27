@@ -142,7 +142,7 @@ public class ScuOfficeController {
     }
 
     @RequestMapping(value = {"/export/plan-clase", "/export/plan-clase/{sesionId}", "/plan-clase/{sesionId}/export"}, method = {RequestMethod.GET, RequestMethod.POST})
-    @PreAuthorize("hasAnyRole('ROLE_DOCENTE', 'ROLE_DIR_CARRERA', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_DIR_CARRERA', 'ROLE_DIR_ACADEMICA', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL', 'ROLE_ADMIN')")
     public ResponseEntity<byte[]> exportPlanClases(
             @PathVariable(required = false) Long sesionId,
             @RequestParam(value = "carreraId", required = false) Long carreraId,
