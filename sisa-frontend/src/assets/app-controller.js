@@ -9,6 +9,7 @@
     // ── AUTO-GROWING TEXTAREAS ENGINE (ZERO SCROLLBARS) ─────────────────────────
     window.autoResizeTextarea = function(el) {
       if (!el || el.tagName !== 'TEXTAREA') return;
+      if (el.offsetParent === null) return;
       el.style.height = 'auto';
       el.style.overflowY = 'hidden';
       el.style.resize = 'none';
@@ -16,9 +17,11 @@
       el.style.height = newHeight + 'px';
     };
 
-    window.autoResizeAllTextareas = function() {
-      document.querySelectorAll('textarea').forEach(el => {
-        window.autoResizeTextarea(el);
+    window.autoResizeAllTextareas = function(container = document) {
+      container.querySelectorAll('textarea').forEach(el => {
+        if (el.offsetParent !== null) {
+          window.autoResizeTextarea(el);
+        }
       });
     };
 
@@ -411,6 +414,7 @@
       document.querySelectorAll('.frame-view').forEach(view => view.classList.add('hidden'));
       const target = document.getElementById(viewId);
       if (target) target.classList.remove('hidden');
+      try { localStorage.setItem('sisa_active_view_id', viewId); } catch(e) {}
 
       // 2. Update Global Sidebar Nav active highlight
       document.querySelectorAll('.global-nav-btn').forEach(btn => {
@@ -514,6 +518,7 @@
         tabId = 'tab-' + tabId;
       }
       activeTabId = tabId;
+      try { localStorage.setItem('sisa_active_doc_tab', tabId); } catch(e) {}
       document.querySelectorAll('.doc-tab-panel').forEach(panel => panel.classList.add('hidden'));
       const target = document.getElementById(tabId);
       if (target) target.classList.remove('hidden');
@@ -1688,128 +1693,135 @@
     };
 
     // ── TASK 5.2: MODALITY-DRIVEN SWITCHER & VIEW ENGINE (GENTLE AI SDD CHANGE 13) ──
+    let _isSwitchingPlanModality = false;
     window.switchPlanModalityView = function(modality) {
-      const currentType = (modality === 'PRACTICO') ? 'PRACTICO' : 'TEORICO';
+      if (_isSwitchingPlanModality) return;
+      _isSwitchingPlanModality = true;
+      try {
+        const currentType = (modality === 'PRACTICO') ? 'PRACTICO' : 'TEORICO';
 
-      // 1. Preserve unsaved form input values in memory across toggles
-      if (typeof window.syncCurrentPlanFormToState === 'function') {
-        window.syncCurrentPlanFormToState();
-      }
-
-      window.activePlanType = currentType;
-      window.activePlanModality = currentType;
-
-      // 2. Highlight / Un-highlight switcher pill buttons
-      const btnTeo = document.getElementById('btn-toggle-modality-teorico');
-      const btnPrac = document.getElementById('btn-toggle-modality-practico');
-
-      const activeTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold';
-      const inactiveTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
-
-      const activePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold';
-      const inactivePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
-
-      if (btnTeo) {
-        btnTeo.className = (currentType === 'TEORICO') ? activeTeoClass : inactiveTeoClass;
-      }
-      if (btnPrac) {
-        btnPrac.className = (currentType === 'PRACTICO') ? activePracClass : inactivePracClass;
-      }
-
-      // 3. Modality Section Isolation
-      const planTeoricoFields = document.getElementById('plan-teorico-fields');
-      const planPracticoFields = document.getElementById('plan-practico-fields');
-      const secStandard = document.getElementById('plan-secuencia-standard');
-      const secPractica = document.getElementById('plan-secuencia-practica');
-      const sec2Datos = document.getElementById('plan-sec-2-datos-practica');
-      const sec3Alineacion = document.getElementById('plan-sec-3-alineacion');
-      const sec4Metodologia = document.getElementById('plan-sec-4-metodologia');
-      const sec6Desarrollo = document.getElementById('plan-sec-6-desarrollo');
-      const secNotas = document.getElementById('plan-sec-7-notas');
-
-      const procTextarea = document.getElementById('plan-procedimental-input');
-      const procTag = document.getElementById('plan-procedimental-status-tag');
-      const procBadge = document.getElementById('plan-procedimental-omitted-badge');
-
-      if (currentType === 'TEORICO') {
-        // Show theoretical sequence, hide practical fields
-        if (planTeoricoFields) planTeoricoFields.classList.remove('hidden');
-        if (secStandard) secStandard.classList.remove('hidden');
-        if (secPractica) secPractica.classList.add('hidden');
-
-        if (planPracticoFields) planPracticoFields.classList.add('hidden');
-        if (sec2Datos) sec2Datos.classList.add('hidden');
-        if (sec3Alineacion) sec3Alineacion.classList.add('hidden');
-        if (sec4Metodologia) sec4Metodologia.classList.add('hidden');
-        if (sec6Desarrollo) sec6Desarrollo.classList.add('hidden');
-        if (secNotas) secNotas.classList.add('hidden');
-
-        if (procTextarea) {
-          procTextarea.readOnly = true;
-          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 text-xs cursor-not-allowed';
+        // 1. Preserve unsaved form input values in memory across toggles
+        if (typeof window.syncCurrentPlanFormToState === 'function') {
+          window.syncCurrentPlanFormToState();
         }
-        if (procTag) {
-          procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">Omitido en Teoría</span>';
-        }
-        if (procBadge) procBadge.classList.remove('hidden');
-      } else {
-        // Show 7-section practical fields, hide theoretical sequence
-        if (planTeoricoFields) planTeoricoFields.classList.add('hidden');
-        if (secStandard) secStandard.classList.add('hidden');
-        if (secPractica) secPractica.classList.remove('hidden');
 
-        if (planPracticoFields) planPracticoFields.classList.remove('hidden');
-        if (sec2Datos) sec2Datos.classList.remove('hidden');
-        if (sec3Alineacion) sec3Alineacion.classList.remove('hidden');
-        if (sec4Metodologia) sec4Metodologia.classList.remove('hidden');
-        if (sec6Desarrollo) sec6Desarrollo.classList.remove('hidden');
-        if (secNotas) secNotas.classList.remove('hidden');
+        window.activePlanType = currentType;
+        window.activePlanModality = currentType;
 
-        if (procTextarea) {
-          procTextarea.readOnly = false;
-          procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
-        }
-        if (procTag) {
-          procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700">Requerido / Central</span>';
-        }
-        if (procBadge) procBadge.classList.add('hidden');
+        // 2. Highlight / Un-highlight switcher pill buttons
+        const btnTeo = document.getElementById('btn-toggle-modality-teorico');
+        const btnPrac = document.getElementById('btn-toggle-modality-practico');
 
-        if (typeof window.renderDesarrolloPasos === 'function') {
-          window.renderDesarrolloPasos(activePlanSheetIndex || 0);
+        const activeTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-purple-600 text-white shadow-sm ring-2 ring-purple-500/30 font-extrabold';
+        const inactiveTeoClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
+
+        const activePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-teal-600 text-white shadow-sm ring-2 ring-teal-500/30 font-extrabold';
+        const inactivePracClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200/60 font-medium';
+
+        if (btnTeo) {
+          btnTeo.className = (currentType === 'TEORICO') ? activeTeoClass : inactiveTeoClass;
         }
-        if (typeof window.updateDesarrolloTimeSum === 'function') {
-          window.updateDesarrolloTimeSum();
+        if (btnPrac) {
+          btnPrac.className = (currentType === 'PRACTICO') ? activePracClass : inactivePracClass;
         }
+
+        // 3. Modality Section Isolation
+        const planTeoricoFields = document.getElementById('plan-teorico-fields');
+        const planPracticoFields = document.getElementById('plan-practico-fields');
+        const secStandard = document.getElementById('plan-secuencia-standard');
+        const secPractica = document.getElementById('plan-secuencia-practica');
+        const sec2Datos = document.getElementById('plan-sec-2-datos-practica');
+        const sec3Alineacion = document.getElementById('plan-sec-3-alineacion');
+        const sec4Metodologia = document.getElementById('plan-sec-4-metodologia');
+        const sec6Desarrollo = document.getElementById('plan-sec-6-desarrollo');
+        const secNotas = document.getElementById('plan-sec-7-notas');
+
+        const procTextarea = document.getElementById('plan-procedimental-input');
+        const procTag = document.getElementById('plan-procedimental-status-tag');
+        const procBadge = document.getElementById('plan-procedimental-omitted-badge');
+
+        if (currentType === 'TEORICO') {
+          // Show theoretical sequence, hide practical fields
+          if (planTeoricoFields) planTeoricoFields.classList.remove('hidden');
+          if (secStandard) secStandard.classList.remove('hidden');
+          if (secPractica) secPractica.classList.add('hidden');
+
+          if (planPracticoFields) planPracticoFields.classList.add('hidden');
+          if (sec2Datos) sec2Datos.classList.add('hidden');
+          if (sec3Alineacion) sec3Alineacion.classList.add('hidden');
+          if (sec4Metodologia) sec4Metodologia.classList.add('hidden');
+          if (sec6Desarrollo) sec6Desarrollo.classList.add('hidden');
+          if (secNotas) secNotas.classList.add('hidden');
+
+          if (procTextarea) {
+            procTextarea.readOnly = true;
+            procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 text-xs cursor-not-allowed';
+          }
+          if (procTag) {
+            procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">Omitido en Teoría</span>';
+          }
+          if (procBadge) procBadge.classList.remove('hidden');
+        } else {
+          // Show 7-section practical fields, hide theoretical sequence
+          if (planTeoricoFields) planTeoricoFields.classList.add('hidden');
+          if (secStandard) secStandard.classList.add('hidden');
+          if (secPractica) secPractica.classList.remove('hidden');
+
+          if (planPracticoFields) planPracticoFields.classList.remove('hidden');
+          if (sec2Datos) sec2Datos.classList.remove('hidden');
+          if (sec3Alineacion) sec3Alineacion.classList.remove('hidden');
+          if (sec4Metodologia) sec4Metodologia.classList.remove('hidden');
+          if (sec6Desarrollo) sec6Desarrollo.classList.remove('hidden');
+          if (secNotas) secNotas.classList.remove('hidden');
+
+          if (procTextarea) {
+            procTextarea.readOnly = false;
+            procTextarea.className = 'w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white';
+          }
+          if (procTag) {
+            procTag.innerHTML = '<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700">Requerido / Central</span>';
+          }
+          if (procBadge) procBadge.classList.add('hidden');
+
+          if (typeof window.renderDesarrolloPasos === 'function') {
+            window.renderDesarrolloPasos(activePlanSheetIndex || 0);
+          }
+          if (typeof window.updateDesarrolloTimeSum === 'function') {
+            window.updateDesarrolloTimeSum();
+          }
+        }
+
+        // Update button texts and headers in Tab 4
+        const isPractico = (currentType === 'PRACTICO');
+        const btnPlanVaciar = document.getElementById('btn-plan-vaciar-text');
+        const btnPlanImport = document.getElementById('btn-plan-import-text');
+        const btnPlanExport = document.getElementById('btn-plan-export-text');
+        const planDocTitle = document.getElementById('plan-doc-title');
+        const planDocSubtitle = document.getElementById('plan-doc-subtitle');
+
+        if (isPractico) {
+          if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Prácticos';
+          if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Práctico (.xlsx)';
+          if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Práctico (.xlsx)';
+          if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Prácticos (.xlsx):';
+          if (planDocSubtitle) planDocSubtitle.innerText = 'Guías de laboratorio con 4 Fases Metodológicas Institucionales por práctica.';
+        } else {
+          if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Teóricos';
+          if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Teórico (.xlsx)';
+          if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Teórico (.xlsx)';
+          if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Teóricos (.xlsx):';
+          if (planDocSubtitle) planDocSubtitle.innerText = 'Microdidáctica de aula conceptual con Momentos Didácticos por tema.';
+        }
+
+        // 4. Load state into active planes sheet
+        if (typeof window.loadActivePlanStateToDom === 'function') {
+          window.loadActivePlanStateToDom(currentType);
+        }
+
+        if (window.lucide) window.lucide.createIcons();
+      } finally {
+        _isSwitchingPlanModality = false;
       }
-
-      // Update button texts and headers in Tab 4
-      const isPractico = (currentType === 'PRACTICO');
-      const btnPlanVaciar = document.getElementById('btn-plan-vaciar-text');
-      const btnPlanImport = document.getElementById('btn-plan-import-text');
-      const btnPlanExport = document.getElementById('btn-plan-export-text');
-      const planDocTitle = document.getElementById('plan-doc-title');
-      const planDocSubtitle = document.getElementById('plan-doc-subtitle');
-
-      if (isPractico) {
-        if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Prácticos';
-        if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Práctico (.xlsx)';
-        if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Práctico (.xlsx)';
-        if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Prácticos (.xlsx):';
-        if (planDocSubtitle) planDocSubtitle.innerText = 'Guías de laboratorio con 4 Fases Metodológicas Institucionales por práctica.';
-      } else {
-        if (btnPlanVaciar) btnPlanVaciar.innerText = 'Vaciar Planes Teóricos';
-        if (btnPlanImport) btnPlanImport.innerText = 'Importar Plan Teórico (.xlsx)';
-        if (btnPlanExport) btnPlanExport.innerText = 'Exportar Plan Teórico (.xlsx)';
-        if (planDocTitle) planDocTitle.innerText = 'Documento 4: Planes de Clase Teóricos (.xlsx):';
-        if (planDocSubtitle) planDocSubtitle.innerText = 'Microdidáctica de aula conceptual con Momentos Didácticos por tema.';
-      }
-
-      // 4. Load state into active planes sheet
-      if (typeof window.loadActivePlanStateToDom === 'function') {
-        window.loadActivePlanStateToDom(currentType);
-      }
-
-      if (window.lucide) window.lucide.createIcons();
     };
 
     window.switchActivePlanType = window.switchPlanModalityView;
@@ -4933,9 +4945,6 @@
         setVal('plan-prac-nota-sesion-' + s, noteVal);
       }
 
-      if (typeof window.renderDynamicPlanForm === 'function') {
-        window.renderDynamicPlanForm(p.planType || window.activePlanType || 'TEORICO_PRACTICO');
-      }
       if (typeof window.updateSecuenciaPracticaTotals === 'function') {
         window.updateSecuenciaPracticaTotals();
       }
@@ -8733,7 +8742,12 @@ document.addEventListener('change', (e) => {
 
   window.logoutUser = function() {
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
-    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+    try {
+      localStorage.removeItem('sisa_supervision_audit_course');
+      localStorage.removeItem('sisa_active_view_id');
+      localStorage.removeItem('sisa_active_doc_tab');
+      document.documentElement.classList.remove('sisa-authenticated');
+    } catch (e) {}
     localStorage.removeItem('scu_access_token');
     localStorage.removeItem('scu_refresh_token');
     localStorage.removeItem('scu_user_info');
@@ -11236,7 +11250,10 @@ document.addEventListener('change', (e) => {
   window.showLoginView = function() {
     window._isAuthScreenActive = true;
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
-    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+    try {
+      localStorage.removeItem('sisa_supervision_audit_course');
+      document.documentElement.classList.remove('sisa-authenticated');
+    } catch (e) {}
     const shell = document.getElementById('sp-shell');
     const pwdView = document.getElementById('view-change-password');
     const loginView = document.getElementById('view-login');
@@ -11313,6 +11330,7 @@ document.addEventListener('change', (e) => {
     try {
       sessionStorage.removeItem('scu_temp_user');
       sessionStorage.removeItem('scu_temp_token');
+      document.documentElement.classList.add('sisa-authenticated');
     } catch (e) {}
 
     const loginView = document.getElementById('view-login');
@@ -12275,7 +12293,24 @@ document.addEventListener('change', (e) => {
       return;
     }
 
-    // Validate token against backend /api/v1/auth/me
+    // 1. Immediate synchronous UI hydration to prevent any reload login flicker
+    try {
+      const savedView = localStorage.getItem('sisa_active_view_id');
+      const defaultRoleView = (user && user.role === 'ROLE_ADMIN') ? 'view6' : ((user && user.role === 'ROLE_DIR_CARRERA') ? 'view2' : 'view-dashboard');
+      const targetInitView = savedView || defaultRoleView;
+      if (user) {
+        window.updateUserProfileUi(user);
+      }
+      window.showPortalShell(targetInitView);
+      if (targetInitView === 'view1') {
+        const savedTab = localStorage.getItem('sisa_active_doc_tab');
+        if (savedTab && typeof window.switchDocMainTab === 'function') {
+          setTimeout(() => window.switchDocMainTab(savedTab), 30);
+        }
+      }
+    } catch (e) {}
+
+    // 2. Validate token asynchronously in background
     try {
       const resp = await fetch('/api/v1/auth/me', {
         headers: window.getAuthHeaders()
@@ -12288,27 +12323,13 @@ document.addEventListener('change', (e) => {
 
         if (meUser.mustChangePassword) {
           window.showChangePasswordView(meUser, token, false);
-        } else {
-          const initView = meUser.role === 'ROLE_ADMIN' ? 'view6' : (meUser.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
-          window.showPortalShell(initView);
         }
       } else if (resp.status === 401 || resp.status === 403) {
         // Token invalid or expired
         window.logoutUser();
-      } else if (user) {
-        window.updateUserProfileUi(user);
-        const initView = user.role === 'ROLE_ADMIN' ? 'view6' : (user.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
-        window.showPortalShell(initView);
       }
     } catch (err) {
       // Offline fallback: keep cached session if present
-      if (user) {
-        window.updateUserProfileUi(user);
-        const initView = user.role === 'ROLE_ADMIN' ? 'view6' : (user.role === 'ROLE_DIR_CARRERA' ? 'view2' : 'view-dashboard');
-        window.showPortalShell(initView);
-      } else {
-        window.showLoginView();
-      }
     }
   };
 
@@ -13511,12 +13532,14 @@ document.addEventListener('change', (e) => {
     window.loadAttendanceHistory();
   };
 
-  // Initial check on load
+  // Initial check on load: run checkInitialAuth immediately to restore view/session without delay
+  if (typeof window.checkInitialAuth === 'function') {
+    window.checkInitialAuth();
+  }
   setTimeout(() => {
     window.checkSeaGatewayHealth();
     window.loadDocentesFromApi();
-    window.checkInitialAuth();
-  }, 150);
+  }, 50);
 })();
 
 

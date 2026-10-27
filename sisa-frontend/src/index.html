@@ -15,9 +15,16 @@
         } else if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         }
+        if (localStorage.getItem('scu_access_token')) {
+          document.documentElement.classList.add('sisa-authenticated');
+        }
       } catch (e) {}
     })();
   </script>
+  <style>
+    html.sisa-authenticated #view-login { display: none !important; }
+    html.sisa-authenticated #sp-shell { display: flex !important; }
+  </style>
 
   
   <!-- Fonts: Inter & Plus Jakarta Sans -->
