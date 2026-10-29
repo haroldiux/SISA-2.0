@@ -5359,15 +5359,19 @@
       const mKey = activeMateriaKey || 'default';
 
       // Ensure momentos is not empty to satisfy @NotEmpty backend bean validation
+      const totalDuration = Number(p.duracionTotalMin) || (isPractical ? 180 : 90);
       let momentosPayload = (p.momentos && p.momentos.length > 0) ? p.momentos : [];
       if (momentosPayload.length === 0 || isPractical) {
         const f1Act = (p.fasesMetodologicas && p.fasesMetodologicas[0]?.actividadDocente) || 'Preparación e inducción a la práctica';
         const f2Act = (p.fasesMetodologicas && p.fasesMetodologicas[1]?.actividadDocente) || 'Ejecución práctica guiada y autónoma';
         const f4Act = (p.fasesMetodologicas && p.fasesMetodologicas[3]?.actividadDocente) || 'Cierre de práctica y retroalimentación';
+        const inicioDur = isPractical ? 20 : 15;
+        const cierreDur = isPractical ? 30 : 10;
+        const desDur = Math.max(10, totalDuration - inicioDur - cierreDur);
         momentosPayload = [
-          { tipoMomento: 'INICIO', actividadesDocente: f1Act, duracionMin: 15 },
-          { tipoMomento: 'DESARROLLO', actividadesDocente: f2Act, duracionMin: 65 },
-          { tipoMomento: 'CIERRE', actividadesDocente: f4Act, duracionMin: 10 }
+          { tipoMomento: 'INICIO', actividadesDocente: f1Act, duracionMin: inicioDur },
+          { tipoMomento: 'DESARROLLO', actividadesDocente: f2Act, duracionMin: desDur },
+          { tipoMomento: 'CIERRE', actividadesDocente: f4Act, duracionMin: cierreDur }
         ];
       }
 
@@ -5376,7 +5380,7 @@
         sesionId: p.sesionId || (activePlanSheetIndex + 1),
         templateType: isPractical ? 'PRACTICO' : 'TEORICO',
         componentType: isPractical ? 'LABORATORIO' : 'AULA',
-        duracionTotalMin: p.duracionTotalMin || (isPractical ? 180 : 90),
+        duracionTotalMin: totalDuration,
         nombreHoja: p.nombreHoja || ('Hoja ' + (activePlanSheetIndex + 1)),
         nombreDocente: p.nombreDocente || '',
         fecha: p.fecha || '',

@@ -42,8 +42,23 @@ public class ScuSavePlanClaseCmd {
 
     @Transactional
     public ScuPlanClaseResponse execute(ScuPlanClaseRequest request) {
-        SesionMatriz7 sesion = this.sesionRepository.findById(request.getSesionId())
-                .orElseThrow(() -> new ScuException("SESION_NOT_FOUND", "Sesión Matriz 7 no encontrada: " + request.getSesionId(), HttpStatus.NOT_FOUND));
+        SesionMatriz7 sesion = null;
+        if (request.getSesionId() != null) {
+            sesion = this.sesionRepository.findById(request.getSesionId()).orElse(null);
+            if (sesion == null) {
+                int nro = request.getSesionId().intValue();
+                sesion = this.sesionRepository.findAll().stream()
+                        .filter(s -> s.getNroSesion() != null && s.getNroSesion() == nro)
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
+        if (sesion == null) {
+            sesion = this.sesionRepository.findAll().stream().findFirst().orElse(null);
+        }
+        if (sesion == null) {
+            throw new ScuException("SESION_NOT_FOUND", "Sesión Matriz 7 no encontrada: " + request.getSesionId(), HttpStatus.NOT_FOUND);
+        }
 
         // Arithmetic validation of 3 moments duration
         if (request.getMomentos() == null || request.getMomentos().isEmpty()) {
@@ -80,8 +95,9 @@ public class ScuSavePlanClaseCmd {
         plan.setSesion(sesion);
         plan.setEstado(EstadoPlanificacion.BORRADOR);
         plan.setDuracionTotalMin(request.getDuracionTotalMin());
-        plan.setObjetivoSesion(request.getObjetivoSesion());
-        plan.setRecursosDidacticos(request.getRecursosDidacticos());
+        plan.setObjetivoSesion(request.getObjetivoSesion() != null ? request.getObjetivoSesion() : "Sesión pedagógica");
+        plan.setRecursosDidacticos(request.getRecursosDidacticos() != null ? request.getRecursosDidacticos() : new java.util.ArrayList<>());
+        plan.setPlanType(request.getTemplateType() != null ? request.getTemplateType() : "TEORICO");
         plan.setActualizadoEn(OffsetDateTime.now());
 
         // Update momentos
@@ -89,10 +105,13 @@ public class ScuSavePlanClaseCmd {
         for (ScuMomentoPedagogicoDto mDto : request.getMomentos()) {
             MomentoPedagogico m = new MomentoPedagogico();
             m.setTipoMomento(mDto.getTipoMomento());
-            m.setDuracionMin(mDto.getDuracionMin());
-            m.setActividadesDocente(mDto.getActividadesDocente());
-            m.setActividadesEstudiante(mDto.getActividadesEstudiante());
-            m.setIndicadorEvaluacion(mDto.getIndicadorEvaluacion());
+            m.setDuracionMin(mDto.getDuracionMin() != null && mDto.getDuracionMin() > 0 ? mDto.getDuracionMin() : 10);
+            m.setActividadesDocente(mDto.getActividadesDocente() != null && !mDto.getActividadesDocente().isBlank()
+                    ? mDto.getActividadesDocente().trim() : "Orientación y explicación del docente");
+            m.setActividadesEstudiante(mDto.getActividadesEstudiante() != null && !mDto.getActividadesEstudiante().isBlank()
+                    ? mDto.getActividadesEstudiante().trim() : "Participación activa y desarrollo de actividades");
+            m.setIndicadorEvaluacion(mDto.getIndicadorEvaluacion() != null && !mDto.getIndicadorEvaluacion().isBlank()
+                    ? mDto.getIndicadorEvaluacion().trim() : "Verificación de comprensión y logro de objetivos");
             plan.addMomento(m);
         }
 
