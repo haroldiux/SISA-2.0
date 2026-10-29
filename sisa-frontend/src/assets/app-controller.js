@@ -9137,7 +9137,8 @@ document.addEventListener('change', (e) => {
     // 4. Live Sync SISA PAC Statuses from Backend
     try {
       const pacHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
-      const pacRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=1`, {
+      const gId = (window.__SUPERVISION_ACTIVE_GESTION__ === 'I-2026') ? 1 : 2;
+      const pacRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=${gId}`, {
         headers: pacHeaders
       });
       if (pacRes.ok) {
@@ -11037,7 +11038,8 @@ document.addEventListener('change', (e) => {
       // If we don't have pacId yet, try to auto-provision by calling by-carrera endpoint
       if (!pacId) {
         const cCode = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo && window.__SUPERVISION_DATA__.careerInfo.code) || 'CARSIS';
-        const syncRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=1`, { headers });
+        const gId = (window.__SUPERVISION_ACTIVE_GESTION__ === 'I-2026') ? 1 : 2;
+        const syncRes = await fetch(`/api/v1/planificaciones/pac/by-carrera/${cCode}?gestionId=${gId}`, { headers });
         if (syncRes.ok) {
           const syncJson = await syncRes.json();
           const pList = (syncJson && syncJson.data) ? syncJson.data : (Array.isArray(syncJson) ? syncJson : []);
@@ -11264,12 +11266,13 @@ document.addEventListener('change', (e) => {
 
     const careerCode = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo && window.__SUPERVISION_DATA__.careerInfo.code) || 'CARSIS';
 
+    const gId = (window.__SUPERVISION_ACTIVE_GESTION__ === 'I-2026') ? 1 : 2;
     const payload = {
       carreraId: careerCode,
-      gestionId: 1,
+      gestionId: gId,
       semestre: semNum,
       pacIds: pacIds.length > 0 ? pacIds : null,
-      observaciones: `Certificación curricular en bloque - ${semName} Gestión II-2026`
+      observaciones: `Certificación curricular en bloque - ${semName} Gestión ${window.__SUPERVISION_ACTIVE_GESTION__ || 'II-2026'}`
     };
 
     const headers = { 'Content-Type': 'application/json' };
