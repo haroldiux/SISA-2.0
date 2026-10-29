@@ -9285,7 +9285,11 @@ document.addEventListener('change', (e) => {
 
       // Resolve Curricular Modality: TEORICO_PRACTICA | TEORICA_PURA | PRACTICA_PURA
       const cUpper = (course.courseName || '').toUpperCase();
-      let modality = 'TEORICO_PRACTICA';
+      const compInfo = (typeof window.detectComponentTypes === 'function')
+        ? window.detectComponentTypes(course.groups || [])
+        : null;
+
+      let modality = 'TEORICA_PURA';
 
       // 1. Asignaturas de Práctica Pura (100% horas prácticas, 0 horas teóricas: internados, prácticas preprofesionales, pasantías, talleres de grado)
       if (cUpper.includes('PRÁCTICA PRE-PROFESIONAL') || cUpper.includes('PRACTICA PRE-PROFESIONAL') ||
@@ -9297,19 +9301,40 @@ document.addEventListener('change', (e) => {
           cUpper.includes('MODALIDAD DE GRADUACI') || cUpper.includes('TRABAJO DE GRADO')) {
         modality = 'PRACTICA_PURA';
       }
-      // 2. Asignaturas Teóricas Puras (100% expositivas/conceptuales, sin ninguna práctica ni en aula ni en laboratorio)
-      else if (cUpper.includes('LEGISLACI') || cUpper.includes('DEONTOLOG') || 
-               cUpper.includes('FILOSOF') || cUpper.includes('ÉTICA') || cUpper.includes('ETICA') ||
-               cUpper.includes('HISTORIA DE LA') || cUpper.includes('DERECHO CONSTITUCIONAL')) {
-        modality = 'TEORICA_PURA';
-      }
-      // 3. Asignaturas Teórico-Prácticas (Mixtas: teoría + práctica de aula y/o laboratorio; ej. Álgebra, Cálculo, Programación, etc.)
-      else {
+      // 2. Component inspection from active academic groups
+      else if (compInfo && compInfo.hasTA && (compInfo.hasLabOrSim || (compInfo.hasPractice && compInfo.hasPL))) {
         modality = 'TEORICO_PRACTICA';
       }
+      else if (compInfo && !compInfo.hasTA && compInfo.hasPractice) {
+        modality = 'PRACTICA_PURA';
+      }
+      else if (compInfo && compInfo.hasTA && !compInfo.hasLabOrSim) {
+        // TA only or TA + PA (classroom practice without lab) -> In UNITEPC, PA is taught in classroom, no PAC Práctico
+        modality = 'TEORICA_PURA';
+      }
+      // 3. Known laboratory / experimental subjects fallback
+      else if (cUpper.includes('PROGRAMACIÓN') || cUpper.includes('PROGRAMACION') ||
+               cUpper.includes('REDES') || cUpper.includes('SISTEMAS OPERATIVOS') ||
+               cUpper.includes('BASE DE DATOS') || cUpper.includes('BASES DE DATOS') ||
+               cUpper.includes('INTELIGENCIA ARTIFICIAL') || cUpper.includes('ROBÓTICA') || cUpper.includes('ROBOTICA') ||
+               cUpper.includes('CIRCUITOS') || cUpper.includes('ELECTRÓNIC') || cUpper.includes('ELECTRONIC') ||
+               cUpper.includes('HARDWARE') || cUpper.includes('ARQUITECTURA DE COMPUTADORAS') ||
+               cUpper.includes('LABORATORIO') ||
+               cUpper.includes('ANATOMÍA') || cUpper.includes('ANATOMIA') ||
+               cUpper.includes('FISIOLOGÍA') || cUpper.includes('FISIOLOGIA') ||
+               cUpper.includes('BIOQUÍMICA') || cUpper.includes('BIOQUIMICA') ||
+               cUpper.includes('MICROBIOLOGÍA') || cUpper.includes('MICROBIOLOGIA') ||
+               cUpper.includes('FARMACOLOGÍA') || cUpper.includes('FARMACOLOGIA') ||
+               cUpper.includes('HISTOLOGÍA') || cUpper.includes('HISTOLOGIA') ||
+               cUpper.includes('QUÍMICA') || cUpper.includes('QUIMICA') ||
+               cUpper.includes('FÍSICA') || cUpper.includes('FISICA')) {
+        modality = 'TEORICO_PRACTICA';
+      } else {
+        modality = 'TEORICA_PURA';
+      }
 
-      const tieneTeoria = (modality !== 'PRACTICA_PURA');
-      const tienePractica = (modality !== 'TEORICA_PURA');
+      let tieneTeoria = (modality !== 'PRACTICA_PURA');
+      let tienePractica = (modality === 'TEORICO_PRACTICA' || modality === 'PRACTICA_PURA');
 
       // Scan localStorage for REAL saved documents belonging to this specific course
       let hasRealProg = false;
@@ -9324,11 +9349,18 @@ document.addEventListener('change', (e) => {
         const cCode = String(course.code || '').trim().toUpperCase();
         const cClean = cCode.replace(/[^A-Z0-9]/g, '_');
         const cHyphen = cCode.replace(/_/g, '-');
+        const cName = String(course.courseName || '').trim().toUpperCase();
+        const cNameClean = cName.replace(/[^A-Z0-9]/g, '_');
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
           if (!k) continue;
           const kUpper = k.toUpperCase();
-          const matchesCourse = (cCode && kUpper.includes(cCode)) || (cClean && kUpper.includes(cClean)) || (cHyphen && kUpper.includes(cHyphen));
+          const matchesCourse = (cCode && kUpper.includes(cCode)) || 
+                                (cClean && kUpper.includes(cClean)) || 
+                                (cHyphen && kUpper.includes(cHyphen)) ||
+                                (cName && kUpper.includes(cName)) ||
+                                (cNameClean && kUpper.includes(cNameClean)) ||
+                                (course.groups && course.groups.some(g => g.materiaId && kUpper.includes(String(g.materiaId).toUpperCase())));
           if (k.startsWith('sisa_saved_programa_analitico_') && matchesCourse) {
             try {
               const p = JSON.parse(localStorage.getItem(k));
@@ -9427,8 +9459,20 @@ document.addEventListener('change', (e) => {
         }
       }
 
+      if (hasRealPacPrac) {
+        tienePractica = true;
+      }
+      if (hasRealPacTeo) {
+        tieneTeoria = true;
+      }
+      if (tieneTeoria && tienePractica) {
+        modality = 'TEORICO_PRACTICA';
+      }
+
+      const targetPlanesTotal = (tieneTeoria && tienePractica) ? 40 : 20;
+
       let plState = 'VACIO';
-      if (realPlanesCount >= 40) plState = 'COMPLETO';
+      if (realPlanesCount >= targetPlanesTotal) plState = 'COMPLETO';
       else if (realPlanesCount > 0) plState = 'INCOMPLETO';
       else plState = 'VACIO';
 
@@ -9460,11 +9504,11 @@ document.addEventListener('change', (e) => {
           label: tienePractica ? ((hasRealPacPrac ? realPacPracGuias : 0) + ' Guías Prácticas') : 'N/A (Teórica Pura)'
         },
         planesClase: {
-          total: 40,
+          total: targetPlanesTotal,
           completados: realPlanesCount,
           estado: planesStatus,
           state: plState,
-          pct: Math.round((realPlanesCount / 40) * 100)
+          pct: Math.round((realPlanesCount / targetPlanesTotal) * 100)
         }
       };
     });
@@ -9869,15 +9913,15 @@ document.addEventListener('change', (e) => {
                               <span class="text-[10px] font-black text-purple-700 dark:text-purple-300 truncate flex items-center gap-1">
                                 <span>📅</span> Planes de Clase
                               </span>
-                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/40`)}
+                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/${d.planesClase.total}`)}
                             </div>
                             <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
-                              <span>Avance: ${d.planesClase.completados} de 40 Sesiones</span>
+                              <span>Avance: ${d.planesClase.completados} de ${d.planesClase.total} Sesiones</span>
                               <span class="font-bold text-slate-700 dark:text-slate-300">${d.planesClase.pct}%</span>
                             </div>
                           </div>
                         ` : `
-                          <!-- DOSSIER COMPLETO (TODOS): Desglose explícito de los 4 documentos con estado individual -->
+                          <!-- DOSSIER COMPLETO (TODOS): Desglose explícito de los documentos que corresponden a la materia -->
                           <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-2 space-y-1.5 shadow-2xs">
                             
                             <!-- 1. Programa Analítico -->
@@ -9888,32 +9932,32 @@ document.addEventListener('change', (e) => {
                               ${window.renderDocStateBadge(d.analitico.state, d.analitico.state === 'VACIO' ? '0 Unid' : `${d.analitico.unidades} Unid`)}
                             </div>
 
-                            <!-- 2. PAC Teórico -->
+                            <!-- 2. PAC Teórico (Solo si corresponde a la materia) -->
+                            ${item.tieneTeoria ? `
                             <div class="flex items-center justify-between text-[10px] gap-2">
                               <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
                                 <span class="text-xs">📘</span> PAC Teórico:
                               </span>
-                              ${item.modality === 'PRACTICA_PURA' ? `
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Práctica)</span>
-                              ` : window.renderDocStateBadge(d.pacTeorico.state, d.pacTeorico.state === 'VACIO' ? '0 sem' : `${d.pacTeorico.semanas} sem`)}
+                              ${window.renderDocStateBadge(d.pacTeorico.state, d.pacTeorico.state === 'VACIO' ? '0 sem' : `${d.pacTeorico.semanas} sem`)}
                             </div>
+                            ` : ''}
 
-                            <!-- 3. PAC Práctico -->
+                            <!-- 3. PAC Práctico (Solo si corresponde a la materia) -->
+                            ${item.tienePractica ? `
                             <div class="flex items-center justify-between text-[10px] gap-2">
                               <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
                                 <span class="text-xs">🔬</span> PAC Práctico:
                               </span>
-                              ${item.modality === 'TEORICA_PURA' ? `
-                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">N/A (Teórica)</span>
-                              ` : window.renderDocStateBadge(d.pacPractico.state, d.pacPractico.state === 'VACIO' ? '0 guías' : `${d.pacPractico.guias} guías`)}
+                              ${window.renderDocStateBadge(d.pacPractico.state, d.pacPractico.state === 'VACIO' ? '0 guías' : `${d.pacPractico.guias} guías`)}
                             </div>
+                            ` : ''}
 
                             <!-- 4. Planes de Clase -->
                             <div class="flex items-center justify-between text-[10px] gap-2">
                               <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
                                 <span class="text-xs">📅</span> Planes de Clase:
                               </span>
-                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/40`)}
+                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/${d.planesClase.total}`)}
                             </div>
 
                           </div>
@@ -10790,11 +10834,12 @@ document.addEventListener('change', (e) => {
     if (statusPacPracEl) {
       statusPacPracEl.textContent = targetCourse.modality === 'TEORICA_PURA' ? 'NO APLICA (EXENTO)' : `${d.pacPractico.guias || 12} GUÍAS (${d.pacPractico.estado})`;
     }
+    const totalTargetPlanes = d.planesClase?.total || (targetCourse.tieneTeoria && targetCourse.tienePractica ? 40 : 20);
     if (statusPlanesEl) {
-      statusPlanesEl.textContent = `${d.planesClase.completados}/40 COMPLETADOS (${d.planesClase.pct}%)`;
+      statusPlanesEl.textContent = `${d.planesClase.completados}/${totalTargetPlanes} COMPLETADOS (${d.planesClase.pct}%)`;
     }
     if (planesCountEl) {
-      planesCountEl.textContent = `Avance: ${d.planesClase.completados} de 40 Sesiones microplanificadas`;
+      planesCountEl.textContent = `Avance: ${d.planesClase.completados} de ${totalTargetPlanes} Sesiones microplanificadas`;
     }
 
     if (pracContentEl) {
