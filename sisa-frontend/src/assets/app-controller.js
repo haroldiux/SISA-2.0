@@ -8956,14 +8956,22 @@ document.addEventListener('change', (e) => {
 
   // ── SUPERVISIÓN CURRICULAR ENGINE (VIEW 2 - ROL DIRECTOR DE CARRERA) ───────────
   window.__SUPERVISION_CAREER_MAP__ = {
-    'CARSIS': { id: '648febfd-dc79-4dd8-a8aa-dc7549ef649b', code: 'CARSIS', name: 'Ingeniería de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' },
-    'CARELE': { id: '2ef716a7-b545-4e8d-b497-94fdedaef3cc', code: 'CARELE', name: 'Ingeniería Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' },
-    'CARSON': { id: '51ecba92-6699-4474-9d34-dcde6eeaba63', code: 'CARSON', name: 'Ingeniería de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' },
-    'CARIBI': { id: 'c6c95b52-e67a-4496-9821-9eb79e4506ac', code: 'CARIBI', name: 'Ingeniería Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' },
-    'CARMED': { id: 'fdcd6c35-8e0e-47ea-993c-119eb1a7789c', code: 'CARMED', name: 'Medicina Humana', tag: 'MEDICINA', color: 'rose' },
-    'CARDER': { id: 'f82b04f1-d439-4c9c-852c-5d22d1407c7c', code: 'CARDER', name: 'Derecho', tag: 'DERECHO', color: 'amber' },
-    'CARODO': { id: '5969e19b-fefd-4bd2-8883-5f554ae3095b', code: 'CARODO', name: 'Odontología', tag: 'ODONTOLOGÍA', color: 'sky' },
-    'CARVET': { id: '0159e8bd-0cb5-4ab6-90f0-2c0fd4c8b795', code: 'CARVET', name: 'Medicina Veterinaria', tag: 'VETERINARIA', color: 'teal' }
+    'CARSIS': { id: '648febfd-dc79-4dd8-a8aa-dc7549ef649b', code: 'CARSIS', name: 'Licenciatura en Ingeniería de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' },
+    'CARELE': { id: '2ef716a7-b545-4e8d-b497-94fdedaef3cc', code: 'CARELE', name: 'Licenciatura en Ingeniería Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' },
+    'CARSON': { id: '51ecba92-6699-4474-9d34-dcde6eeaba63', code: 'CARSON', name: 'Licenciatura en Ingeniería de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' },
+    'CARIBI': { id: 'c6c95b52-e67a-4496-9821-9eb79e4506ac', code: 'CARIBI', name: 'Licenciatura en Ingeniería Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' },
+    'CARMED': { id: 'fdcd6c35-8e0e-47ea-993c-119eb1a7789c', code: 'CARMED', name: 'Licenciatura en Medicina', tag: 'MEDICINA', color: 'rose' },
+    'CARDER': { id: 'f82b04f1-d439-4c9c-852c-5d22d1407c7c', code: 'CARDER', name: 'Licenciatura en Derecho', tag: 'DERECHO', color: 'amber' },
+    'CARODO': { id: '5969e19b-fefd-4bd2-8883-5f554ae3095b', code: 'CARODO', name: 'Licenciatura en Odontología', tag: 'ODONTOLOGÍA', color: 'sky' },
+    'CARVET': { id: '0159e8bd-0cb5-4ab6-90f0-2c0fd4c8b795', code: 'CARVET', name: 'Licenciatura en Medicina Veterinaria y Zootecnia', tag: 'VETERINARIA', color: 'teal' },
+    'CARBYF': { id: '39d6b24f-bdce-444c-8a4a-287def7f5a4a', code: 'CARBYF', name: 'Licenciatura en Bioquímica y Farmacia', tag: 'BIOQUÍMICA', color: 'emerald' },
+    'CARENL': { id: 'f56e7ae6-5159-4282-b78e-fed3de7c0cd0', code: 'CARENL', name: 'Licenciatura en Enfermería', tag: 'ENFERMERÍA', color: 'teal' },
+    'CARFIS': { id: '6b61b4bf-e8ed-4a48-bf20-245e05761cff', code: 'CARFIS', name: 'Licenciatura en Fisioterapia y Kinesiología', tag: 'FISIOTERAPIA', color: 'orange' },
+    'CARNYD': { id: '584ee772-8fbe-4dda-9fb0-111b6d9f433e', code: 'CARNYD', name: 'Licenciatura en Nutrición y Dietética', tag: 'NUTRICIÓN', color: 'green' },
+    'CARADM': { id: 'c3fc680b-6d50-4d4a-82e5-e3a65f53af89', code: 'CARADM', name: 'Licenciatura en Administración de Empresas', tag: 'ADMINISTRACIÓN', color: 'violet' },
+    'CARCPU': { id: '3d122b59-3d49-4441-8295-5207ddb6da9f', code: 'CARCPU', name: 'Licenciatura en Contaduría Pública', tag: 'CONTADURÍA', color: 'stone' },
+    'CARICO': { id: '89379cab-b335-4d99-b676-ea80dc045d8f', code: 'CARICO', name: 'Licenciatura en Ingeniería Comercial', tag: 'ING. COMERCIAL', color: 'lime' },
+    'CARCSO': { id: '51e7147a-580b-4614-91f7-0ffbe0c06850', code: 'CARCSO', name: 'Licenciatura en Comunicación Social', tag: 'COMUNICACIÓN', color: 'pink' }
   };
 
   window.__SUPERVISION_DATA__ = null;
@@ -9059,9 +9067,9 @@ document.addEventListener('change', (e) => {
     if (!container) return;
 
     // 1. Resolve active career identity
-    let cCode = targetCareerCode || 'CARSIS';
+    let cCode = targetCareerCode || localStorage.getItem('sisa_supervision_active_career') || 'CARSIS';
     const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
-    if (!targetCareerCode && currentUser && currentUser.username) {
+    if (!targetCareerCode && !localStorage.getItem('sisa_supervision_active_career') && currentUser && currentUser.username) {
       if (currentUser.username.includes('.ele')) cCode = 'CARELE';
       else if (currentUser.username.includes('.son')) cCode = 'CARSON';
       else if (currentUser.username.includes('.med')) cCode = 'CARMED';
@@ -9071,32 +9079,20 @@ document.addEventListener('change', (e) => {
     const careerInfo = window.__SUPERVISION_CAREER_MAP__[cCode] || window.__SUPERVISION_CAREER_MAP__['CARSIS'];
     const careerUuid = targetCareerId || careerInfo.id;
 
-    const badgeEl = document.getElementById('supervision-career-badge');
+    // The career select element must ALWAYS be visible so Directors can manage multiple careers
     const selectEl = document.getElementById('supervision-career-select');
-    const userRole = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || '');
-    const isElevatedRole = ['ROLE_DIR_ACADEMICA', 'ROLE_ADMIN', 'ROLE_VICERRECTOR_SEDE', 'ROLE_VICERRECTOR_NACIONAL'].includes(userRole);
-
-    if (badgeEl) {
-      badgeEl.textContent = careerInfo.name;
-      if (isElevatedRole) {
-        badgeEl.classList.add('hidden');
-      } else {
-        badgeEl.classList.remove('hidden');
-      }
-    }
-
     if (selectEl) {
-      if (isElevatedRole) {
-        selectEl.classList.remove('hidden');
-        selectEl.value = cCode;
-      } else {
-        selectEl.classList.add('hidden');
-      }
+      selectEl.classList.remove('hidden');
+      selectEl.value = cCode;
     }
 
     window.onSupervisionCareerChange = function(newCareerCode) {
       if (!newCareerCode) return;
+      localStorage.setItem('sisa_supervision_active_career', newCareerCode);
       const info = window.__SUPERVISION_CAREER_MAP__[newCareerCode];
+      if (typeof window.showToast === 'function' && info) {
+        window.showToast(`🎓 Carrera seleccionada: ${info.name}`);
+      }
       if (info && typeof window.renderSupervisionCurricular === 'function') {
         window.renderSupervisionCurricular(info.id, newCareerCode);
       }
