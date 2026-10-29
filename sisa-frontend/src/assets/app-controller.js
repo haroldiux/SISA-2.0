@@ -348,8 +348,8 @@
         }
       });
 
-      // Export buttons inside Tab 1, 2, 3 action bars
-      ['btn-export-programa-tab', 'btn-export-pac-tab', 'btn-export-cronograma-tab'].forEach(id => {
+      // Export buttons inside Tab 1, 2, 3, 4 action bars
+      ['btn-export-programa-tab', 'btn-export-pac-tab', 'btn-export-cronograma-tab', 'btn-export-planes-tab'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
           if (!canDownload) {
@@ -2704,6 +2704,10 @@
           } catch (e) {}
         }
         if (planBody) {
+          if (Array.isArray(planBody)) {
+            const activePlan = planBody[window.activePlanSheetIndex || 0] || {};
+            planBody = Object.assign({ planes: planBody }, activePlan);
+          }
           planBody.codigoAsignatura = courseCode;
           planBody.nombreAsignatura = courseName;
           if (careerName) planBody.carrera = careerName;
@@ -2722,6 +2726,10 @@
           } catch (e) {}
         }
         if (planBody) {
+          if (Array.isArray(planBody)) {
+            const activePlan = planBody[window.activePlanSheetIndex || 0] || {};
+            planBody = Object.assign({ planes: planBody }, activePlan);
+          }
           planBody.codigoAsignatura = courseCode;
           planBody.nombreAsignatura = courseName;
           if (careerName) planBody.carrera = careerName;
@@ -2743,6 +2751,10 @@
           } catch (e) {}
         }
         if (planBody) {
+          if (Array.isArray(planBody)) {
+            const activePlan = planBody[window.activePlanSheetIndex || 0] || {};
+            planBody = Object.assign({ planes: planBody }, activePlan);
+          }
           planBody.codigoAsignatura = courseCode;
           planBody.nombreAsignatura = courseName;
           if (careerName) planBody.carrera = careerName;

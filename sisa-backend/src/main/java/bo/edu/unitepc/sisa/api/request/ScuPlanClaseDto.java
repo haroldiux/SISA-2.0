@@ -83,6 +83,8 @@ public class ScuPlanClaseDto {
 
     private List<String> recursosDidacticos = new ArrayList<>();
 
+    private List<ScuPlanClaseDto> planes = new ArrayList<>();
+
     @NotEmpty(message = "Debe incluir los momentos pedagógicos planificados")
     @Valid
     private List<ScuMomentoPedagogicoDto> momentos = new ArrayList<>();

@@ -1459,7 +1459,7 @@
                     <button id="btn-import-programa" onclick="window.importProgramaDocx()" class="px-3.5 py-1.5 bg-white text-blue-700 border border-blue-300 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300 font-bold rounded-lg text-xs hover:bg-blue-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Word (.docx)
                     </button>
-                    <button id="btn-export-programa-tab" onclick="window.exportExactFile('docx')" class="px-3.5 py-1.5 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                    <button id="btn-export-programa-tab" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('docx')" class="px-3.5 py-1.5 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Programa Analítico (.docx)
                     </button>
                     <input type="file" id="analitico-file-input" class="hidden" accept=".docx">
@@ -1616,7 +1616,7 @@
                     <button type="button" id="btn-import-pac" onclick="window.importPacExcel(false)" class="px-3.5 py-1.5 bg-white text-emerald-700 border border-emerald-300 dark:border-emerald-700 dark:bg-slate-800 dark:text-emerald-300 font-bold rounded-lg text-xs hover:bg-emerald-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="upload" class="w-3.5 h-3.5"></i> <span id="btn-pac-import-text">Importar PAC (.xlsx)</span>
                     </button>
-                    <button type="button" id="btn-export-pac-tab" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                    <button type="button" id="btn-export-pac-tab" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="table" class="w-3.5 h-3.5"></i> <span id="btn-pac-export-text">Exportar PAC + Cronograma (.xlsx)</span>
                     </button>
                     <input type="file" id="pac-file-input" class="hidden" accept=".xlsx">
@@ -1928,7 +1928,7 @@
                     <button type="button" id="btn-add-cronograma-row" onclick="window.addCronogramaRow()" class="px-3 py-1.5 bg-amber-600 text-white font-bold rounded-lg text-xs hover:bg-amber-700 flex items-center gap-1 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Fila
                     </button>
-                    <button type="button" id="btn-export-cronograma-tab" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                    <button type="button" id="btn-export-cronograma-tab" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('pac_cronograma_xlsx')" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="download" class="w-3.5 h-3.5"></i> <span id="btn-cronograma-export-text">Exportar PAC + Cronograma (.xlsx)</span>
                     </button>
                     <input type="file" id="cronograma-file-input" class="hidden" accept=".xlsx">
@@ -2026,7 +2026,7 @@
                     <button type="button" onclick="window.savePlanClase()" class="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Guardar cambios del plan de clase actual">
                       <i data-lucide="save" class="w-3.5 h-3.5"></i> <span id="btn-plan-guardar-text">Guardar Plan</span>
                     </button>
-                    <button type="button" onclick="window.exportExactFile('planes_xlsx')" class="px-3.5 py-1.5 bg-purple-600 text-white font-bold rounded-lg text-xs hover:bg-purple-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                    <button type="button" id="btn-export-planes-tab" data-roles="ROLE_DIR_CARRERA,ROLE_DIR_ACADEMICA,ROLE_ADMIN,ROLE_VICERRECTOR_SEDE,ROLE_VICERRECTOR_NACIONAL" onclick="window.exportExactFile('planes_xlsx')" class="px-3.5 py-1.5 bg-purple-600 text-white font-bold rounded-lg text-xs hover:bg-purple-700 flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
                       <i data-lucide="download" class="w-3.5 h-3.5"></i> <span id="btn-plan-export-text">Exportar Planes de Clase (.xlsx)</span>
                     </button>
                   </div>

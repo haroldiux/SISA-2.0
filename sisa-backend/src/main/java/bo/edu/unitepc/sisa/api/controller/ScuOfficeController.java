@@ -80,7 +80,23 @@ public class ScuOfficeController {
             @RequestParam(value = "docente", required = false) String docente,
             @RequestParam(value = "carrera", required = false) String carrera,
             @RequestParam(value = "semestre", required = false) String semestre,
-            @RequestBody(required = false) Map<String, Object> body) {
+            @RequestBody(required = false) Object rawBody) {
+
+        Map<String, Object> body = null;
+        if (rawBody instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> casted = (Map<String, Object>) rawBody;
+            body = casted;
+        } else if (rawBody instanceof List && !((List<?>) rawBody).isEmpty()) {
+            body = new HashMap<>();
+            body.put("sesiones", rawBody);
+            Object first = ((List<?>) rawBody).get(0);
+            if (first instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> castedFirst = (Map<String, Object>) first;
+                body.putAll(castedFirst);
+            }
+        }
 
         Map<String, String> meta = new HashMap<>();
         if (codigo != null && !codigo.isBlank()) meta.put("codigo", codigo.trim());
@@ -152,7 +168,23 @@ public class ScuOfficeController {
             @RequestParam(value = "docente", required = false) String docente,
             @RequestParam(value = "carrera", required = false) String carrera,
             @RequestParam(value = "semestre", required = false) String semestre,
-            @RequestBody(required = false) Map<String, Object> body) {
+            @RequestBody(required = false) Object rawBody) {
+
+        Map<String, Object> body = null;
+        if (rawBody instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> casted = (Map<String, Object>) rawBody;
+            body = casted;
+        } else if (rawBody instanceof List && !((List<?>) rawBody).isEmpty()) {
+            body = new HashMap<>();
+            body.put("planes", rawBody);
+            Object first = ((List<?>) rawBody).get(0);
+            if (first instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> castedFirst = (Map<String, Object>) first;
+                body.putAll(castedFirst);
+            }
+        }
 
         Map<String, String> meta = new HashMap<>();
         if (codigo != null && !codigo.isBlank()) meta.put("codigo", codigo.trim());

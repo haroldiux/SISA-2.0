@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -263,145 +264,180 @@ public class OfficeTemplateService {
         try (InputStream is = this.loadTemplate(resolvedTemplate);
              XlsxTemplateCloner cloner = new XlsxTemplateCloner(is)) {
 
-            XSSFSheet sheet = cloner.getSheetAt(0);
-            if (sheet != null && plan != null) {
-                String carreraNombre = meta != null && meta.get("carrera") != null ? meta.get("carrera") : (plan.getCarrera() != null ? plan.getCarrera() : "");
-                String asigNombre = meta != null && meta.get("asignatura") != null ? meta.get("asignatura") : (plan.getNombreAsignatura() != null ? plan.getNombreAsignatura() : "");
-                String codigoAsig = meta != null && meta.get("codigo") != null ? meta.get("codigo") : "";
-                String docenteNombre = meta != null && meta.get("docente") != null ? meta.get("docente") : (plan.getNombreDocente() != null ? plan.getNombreDocente() : "");
-                String semestre = meta != null && meta.get("semestre") != null ? meta.get("semestre") : (plan.getSemestre() != null ? plan.getSemestre() : "");
+            if (plan != null) {
+                List<ScuPlanClaseDto> sheetList = (plan.getPlanes() != null && !plan.getPlanes().isEmpty())
+                        ? plan.getPlanes()
+                        : Collections.singletonList(plan);
 
-                if (isPractico) {
-                    // 1. DATOS GENERALES (C12, G12, C13, G13, C15, C16)
-                    if (!docenteNombre.isEmpty()) this._setCellText(sheet, 11, 2, docenteNombre);
-                    if (!asigNombre.isEmpty()) this._setCellText(sheet, 11, 6, asigNombre + (!codigoAsig.isEmpty() ? " (" + codigoAsig + ")" : ""));
-                    if (plan.getFecha() != null) this._setCellText(sheet, 12, 2, plan.getFecha());
-                    if (!carreraNombre.isEmpty()) this._setCellText(sheet, 12, 6, carreraNombre);
-                    if (plan.getUnidadTitulo() != null) this._setCellText(sheet, 14, 2, plan.getUnidadTitulo());
-                    if (plan.getElementoCompetencia() != null) this._setCellText(sheet, 15, 2, plan.getElementoCompetencia());
-
-                    // 2. DATOS DE LA PRÁCTICA (C20, E20, G20, I20, C21, E21, G21)
-                    String tit = plan.getTituloPractica() != null ? plan.getTituloPractica() : plan.getContenidoTema();
-                    if (tit != null) this._setCellText(sheet, 19, 2, tit);
-                    if (plan.getFecha() != null) this._setCellText(sheet, 19, 4, plan.getFecha());
-                    this._setCellText(sheet, 19, 6, plan.getDuracionPractica() != null ? plan.getDuracionPractica() : ((plan.getDuracionTotalMin() != null ? plan.getDuracionTotalMin() : 180) + " min"));
-                    if (!semestre.isEmpty()) this._setCellText(sheet, 19, 8, semestre);
-                    if (plan.getAmbiente() != null) this._setCellText(sheet, 20, 2, plan.getAmbiente());
-                    if (plan.getNroEstudiantes() != null) this._setCellText(sheet, 20, 4, plan.getNroEstudiantes());
-                    if (!docenteNombre.isEmpty()) this._setCellText(sheet, 20, 6, docenteNombre);
-
-                    // 3. ALINEACIÓN Y RECURSOS (D25, D26, D27, D28, D29)
-                    String obj = plan.getObjetivoAprendizaje() != null ? plan.getObjetivoAprendizaje() : plan.getObjetivoSesion();
-                    if (obj != null) this._setCellText(sheet, 24, 3, obj);
-                    String bloom = plan.getResultadosBloom() != null ? plan.getResultadosBloom() : plan.getLogrosEsperados();
-                    if (bloom != null) this._setCellText(sheet, 25, 3, bloom);
-                    if (plan.getPreparacionMateriales() != null) this._setCellText(sheet, 26, 3, plan.getPreparacionMateriales());
-                    if (plan.getEquipamiento() != null) this._setCellText(sheet, 27, 3, plan.getEquipamiento());
-                    String eq = plan.getEquipo() != null ? plan.getEquipo() : plan.getRecursosEnsenanza();
-                    if (eq != null) this._setCellText(sheet, 28, 3, eq);
-
-                    // 4. MODELO METODOLÓGICO (Rows 34-37 -> 0-indexed 33-36 across cols C, F, H)
-                    List<ScuPlanClaseDto.FaseMetodologicaDto> fases = (plan.getPersonalData() != null && plan.getPersonalData().getFasesMetodologicas() != null && !plan.getPersonalData().getFasesMetodologicas().isEmpty())
-                            ? plan.getPersonalData().getFasesMetodologicas()
-                            : plan.getFasesMetodologicas();
-                    if (fases != null && !fases.isEmpty()) {
-                        for (int i = 0; i < Math.min(fases.size(), 4); i++) {
-                            ScuPlanClaseDto.FaseMetodologicaDto f = fases.get(i);
-                            int r = 33 + i;
-                            if (f.getFinalidad() != null) this._setCellText(sheet, r, 2, f.getFinalidad());
-                            if (f.getActividadDocente() != null) this._setCellText(sheet, r, 5, f.getActividadDocente());
-                            if (f.getActividadEstudiante() != null) this._setCellText(sheet, r, 7, f.getActividadEstudiante());
+                for (int i = 0; i < sheetList.size(); i++) {
+                    ScuPlanClaseDto currentPlan = sheetList.get(i);
+                    XSSFSheet targetSheet;
+                    if (i == 0) {
+                        targetSheet = cloner.getSheetAt(0);
+                        if (currentPlan.getNombreHoja() != null && !currentPlan.getNombreHoja().isBlank()) {
+                            try { cloner.getWorkbook().setSheetName(0, currentPlan.getNombreHoja().trim()); } catch (Exception ignored) {}
                         }
-                    } else if (plan.getMomentos() != null && !plan.getMomentos().isEmpty()) {
-                        for (ScuMomentoPedagogicoDto m : plan.getMomentos()) {
-                            if (m.getTipoMomento() != null) {
-                                String tipo = m.getTipoMomento().name().toUpperCase();
-                                int r = -1;
-                                if (tipo.contains("PREP") || tipo.contains("INICIO")) r = 33;
-                                else if (tipo.contains("GUIADA")) r = 34;
-                                else if (tipo.contains("AUTONOMA")) r = 35;
-                                else if (tipo.contains("CIERRE")) r = 36;
-                                if (r != -1) {
-                                    if (m.getActividadesDocente() != null) this._setCellText(sheet, r, 5, m.getActividadesDocente());
-                                    if (m.getActividadesEstudiante() != null) this._setCellText(sheet, r, 7, m.getActividadesEstudiante());
-                                }
-                            }
-                        }
+                    } else {
+                        targetSheet = cloner.getWorkbook().cloneSheet(0);
+                        String sheetName = (currentPlan.getNombreHoja() != null && !currentPlan.getNombreHoja().isBlank())
+                                ? currentPlan.getNombreHoja().trim()
+                                : ("UA-" + (i + 1));
+                        try {
+                            cloner.getWorkbook().setSheetName(cloner.getWorkbook().getSheetIndex(targetSheet), sheetName);
+                        } catch (Exception ignored) {}
                     }
 
-                    // 5. EVALUACIÓN (Row 42: Formativa, Row 43: Sumativa)
-                    if (plan.getEvaluacionFormativaActividad() != null) this._setCellText(sheet, 41, 2, plan.getEvaluacionFormativaActividad());
-                    if (plan.getEvaluacionFormativaInstrumento() != null) this._setCellText(sheet, 41, 5, plan.getEvaluacionFormativaInstrumento());
-                    if (plan.getEvaluacionFormativaEvidencia() != null) this._setCellText(sheet, 41, 7, plan.getEvaluacionFormativaEvidencia());
-
-                    if (plan.getEvaluacionSumativaActividad() != null) this._setCellText(sheet, 42, 2, plan.getEvaluacionSumativaActividad());
-                    if (plan.getEvaluacionSumativaInstrumento() != null) this._setCellText(sheet, 42, 5, plan.getEvaluacionSumativaInstrumento());
-                    if (plan.getEvaluacionSumativaEvidencia() != null) this._setCellText(sheet, 42, 7, plan.getEvaluacionSumativaEvidencia());
-
-                    // 6. DESARROLLO (Rows 48-54 -> 0-indexed 47-53 across cols B, C, D, F, H)
-                    List<ScuPlanClaseDto.DesarrolloPasoDto> pasos = (plan.getPersonalData() != null && plan.getPersonalData().getPasosDesarrollo() != null && !plan.getPersonalData().getPasosDesarrollo().isEmpty())
-                            ? plan.getPersonalData().getPasosDesarrollo()
-                            : plan.getPasosDesarrollo();
-                    if (pasos != null && !pasos.isEmpty()) {
-                        for (int i = 0; i < Math.min(pasos.size(), 7); i++) {
-                            ScuPlanClaseDto.DesarrolloPasoDto p = pasos.get(i);
-                            int r = 47 + i;
-                            if (p.getFaseComun() != null) this._setCellText(sheet, r, 1, p.getFaseComun());
-                            if (p.getTiempoMin() != null) this._setCellText(sheet, r, 2, p.getTiempoMin() + " min");
-                            if (p.getActividad() != null) this._setCellText(sheet, r, 3, p.getActividad());
-                            if (p.getRecursos() != null) this._setCellText(sheet, r, 5, p.getRecursos());
-                            if (p.getOtraInformacion() != null) this._setCellText(sheet, r, 7, p.getOtraInformacion());
-                        }
-                    }
-
-                    // 7. NOTAS DEL DOCENTE (Rows 59-77 -> 0-indexed 58-76 across cols B, C)
-                    List<ScuPlanClaseDto.NotaDocenteSesionDto> notas = (plan.getPersonalData() != null && plan.getPersonalData().getNotasDocente() != null && !plan.getPersonalData().getNotasDocente().isEmpty())
-                            ? plan.getPersonalData().getNotasDocente()
-                            : plan.getNotasDocente();
-                    if (notas != null && !notas.isEmpty()) {
-                        for (ScuPlanClaseDto.NotaDocenteSesionDto n : notas) {
-                            if (n != null && n.getSesionNro() != null && n.getNota() != null && !n.getNota().isBlank()) {
-                                int s = (int) Math.round(n.getSesionNro());
-                                if (s >= 1 && s <= 19) {
-                                    int r = 58 + (s - 1);
-                                    this._setCellText(sheet, r, 1, s + ".0");
-                                    this._setCellText(sheet, r, 2, n.getNota());
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // PLAN DE CLASES TEÓRICO
-                    if (!docenteNombre.isEmpty()) this._setCellText(sheet, 11, 2, docenteNombre);
-                    if (!asigNombre.isEmpty()) this._setCellText(sheet, 11, 6, asigNombre + (!codigoAsig.isEmpty() ? " (" + codigoAsig + ")" : ""));
-                    if (!carreraNombre.isEmpty()) this._setCellText(sheet, 12, 6, carreraNombre);
-
-                    if (plan.getObjetivoSesion() != null) this._setCellText(sheet, 20, 3, plan.getObjetivoSesion());
-                    if (plan.getSaberConceptual() != null) this._setCellText(sheet, 23, 3, plan.getSaberConceptual());
-                    if (plan.getSaberActitudinal() != null) this._setCellText(sheet, 24, 3, plan.getSaberActitudinal());
-
-                    // Secuencia Didáctica (5 momentos en filas 37 a 41)
-                    if (plan.getMomentos() != null) {
-                        for (ScuMomentoPedagogicoDto m : plan.getMomentos()) {
-                            if (m.getTipoMomento() != null) {
-                                String tipo = m.getTipoMomento().name().toUpperCase();
-                                int r = -1;
-                                if (tipo.contains("INICIO") || tipo.contains("INTRO")) r = 37;
-                                else if (tipo.contains("RESULTADO") || tipo.contains("LOGRO")) r = 38;
-                                else if (tipo.contains("CONTENIDO")) r = 39;
-                                else if (tipo.contains("CUERPO") || tipo.contains("DESARROLLO")) r = 40;
-                                else if (tipo.contains("CIERRE") || tipo.contains("CONCLUSION")) r = 41;
-                                if (r != -1) {
-                                    if (m.getActividadesDocente() != null) this._setCellText(sheet, r, 2, m.getActividadesDocente());
-                                    if (m.getDuracionMin() != null) this._setCellText(sheet, r, 7, m.getDuracionMin() + " min");
-                                }
-                            }
-                        }
+                    if (isPractico) {
+                        this.populatePracticoSheet(targetSheet, currentPlan, meta);
+                    } else {
+                        this.populateTeoricoSheet(targetSheet, currentPlan, meta);
                     }
                 }
             }
 
             return cloner.toByteArray();
+        }
+    }
+
+    private void populatePracticoSheet(XSSFSheet sheet, ScuPlanClaseDto plan, Map<String, String> meta) {
+        String carreraNombre = meta != null && meta.get("carrera") != null ? meta.get("carrera") : (plan.getCarrera() != null ? plan.getCarrera() : "");
+        String asigNombre = meta != null && meta.get("asignatura") != null ? meta.get("asignatura") : (plan.getNombreAsignatura() != null ? plan.getNombreAsignatura() : "");
+        String codigoAsig = meta != null && meta.get("codigo") != null ? meta.get("codigo") : "";
+        String docenteNombre = meta != null && meta.get("docente") != null ? meta.get("docente") : (plan.getNombreDocente() != null ? plan.getNombreDocente() : "");
+        String semestre = meta != null && meta.get("semestre") != null ? meta.get("semestre") : (plan.getSemestre() != null ? plan.getSemestre() : "");
+
+        // 1. DATOS GENERALES (C12, G12, C13, G13, C15, C16)
+        if (!docenteNombre.isEmpty()) this._setCellText(sheet, 11, 2, docenteNombre);
+        if (!asigNombre.isEmpty()) this._setCellText(sheet, 11, 6, asigNombre + (!codigoAsig.isEmpty() ? " (" + codigoAsig + ")" : ""));
+        if (plan.getFecha() != null) this._setCellText(sheet, 12, 2, plan.getFecha());
+        if (!carreraNombre.isEmpty()) this._setCellText(sheet, 12, 6, carreraNombre);
+        if (plan.getUnidadTitulo() != null) this._setCellText(sheet, 14, 2, plan.getUnidadTitulo());
+        if (plan.getElementoCompetencia() != null) this._setCellText(sheet, 15, 2, plan.getElementoCompetencia());
+
+        // 2. DATOS DE LA PRÁCTICA (C20, E20, G20, I20, C21, E21, G21)
+        String tit = plan.getTituloPractica() != null ? plan.getTituloPractica() : plan.getContenidoTema();
+        if (tit != null) this._setCellText(sheet, 19, 2, tit);
+        if (plan.getFecha() != null) this._setCellText(sheet, 19, 4, plan.getFecha());
+        this._setCellText(sheet, 19, 6, plan.getDuracionPractica() != null ? plan.getDuracionPractica() : ((plan.getDuracionTotalMin() != null ? plan.getDuracionTotalMin() : 180) + " min"));
+        if (!semestre.isEmpty()) this._setCellText(sheet, 19, 8, semestre);
+        if (plan.getAmbiente() != null) this._setCellText(sheet, 20, 2, plan.getAmbiente());
+        if (plan.getNroEstudiantes() != null) this._setCellText(sheet, 20, 4, plan.getNroEstudiantes());
+        if (!docenteNombre.isEmpty()) this._setCellText(sheet, 20, 6, docenteNombre);
+
+        // 3. ALINEACIÓN Y RECURSOS (D25, D26, D27, D28, D29)
+        String obj = plan.getObjetivoAprendizaje() != null ? plan.getObjetivoAprendizaje() : plan.getObjetivoSesion();
+        if (obj != null) this._setCellText(sheet, 24, 3, obj);
+        String bloom = plan.getResultadosBloom() != null ? plan.getResultadosBloom() : plan.getLogrosEsperados();
+        if (bloom != null) this._setCellText(sheet, 25, 3, bloom);
+        if (plan.getPreparacionMateriales() != null) this._setCellText(sheet, 26, 3, plan.getPreparacionMateriales());
+        if (plan.getEquipamiento() != null) this._setCellText(sheet, 27, 3, plan.getEquipamiento());
+        String eq = plan.getEquipo() != null ? plan.getEquipo() : plan.getRecursosEnsenanza();
+        if (eq != null) this._setCellText(sheet, 28, 3, eq);
+
+        // 4. MODELO METODOLÓGICO (Rows 34-37 -> 0-indexed 33-36 across cols C, F, H)
+        List<ScuPlanClaseDto.FaseMetodologicaDto> fases = (plan.getPersonalData() != null && plan.getPersonalData().getFasesMetodologicas() != null && !plan.getPersonalData().getFasesMetodologicas().isEmpty())
+                ? plan.getPersonalData().getFasesMetodologicas()
+                : plan.getFasesMetodologicas();
+        if (fases != null && !fases.isEmpty()) {
+            for (int i = 0; i < Math.min(fases.size(), 4); i++) {
+                ScuPlanClaseDto.FaseMetodologicaDto f = fases.get(i);
+                int r = 33 + i;
+                if (f.getFinalidad() != null) this._setCellText(sheet, r, 2, f.getFinalidad());
+                if (f.getActividadDocente() != null) this._setCellText(sheet, r, 5, f.getActividadDocente());
+                if (f.getActividadEstudiante() != null) this._setCellText(sheet, r, 7, f.getActividadEstudiante());
+            }
+        } else if (plan.getMomentos() != null && !plan.getMomentos().isEmpty()) {
+            for (ScuMomentoPedagogicoDto m : plan.getMomentos()) {
+                if (m.getTipoMomento() != null) {
+                    String tipo = m.getTipoMomento().name().toUpperCase();
+                    int r = -1;
+                    if (tipo.contains("PREP") || tipo.contains("INICIO")) r = 33;
+                    else if (tipo.contains("GUIADA")) r = 34;
+                    else if (tipo.contains("AUTONOMA")) r = 35;
+                    else if (tipo.contains("CIERRE")) r = 36;
+                    if (r != -1) {
+                        if (m.getActividadesDocente() != null) this._setCellText(sheet, r, 5, m.getActividadesDocente());
+                        if (m.getActividadesEstudiante() != null) this._setCellText(sheet, r, 7, m.getActividadesEstudiante());
+                    }
+                }
+            }
+        }
+
+        // 5. EVALUACIÓN (Row 42: Formativa, Row 43: Sumativa)
+        if (plan.getEvaluacionFormativaActividad() != null) this._setCellText(sheet, 41, 2, plan.getEvaluacionFormativaActividad());
+        if (plan.getEvaluacionFormativaInstrumento() != null) this._setCellText(sheet, 41, 5, plan.getEvaluacionFormativaInstrumento());
+        if (plan.getEvaluacionFormativaEvidencia() != null) this._setCellText(sheet, 41, 7, plan.getEvaluacionFormativaEvidencia());
+
+        if (plan.getEvaluacionSumativaActividad() != null) this._setCellText(sheet, 42, 2, plan.getEvaluacionSumativaActividad());
+        if (plan.getEvaluacionSumativaInstrumento() != null) this._setCellText(sheet, 42, 5, plan.getEvaluacionSumativaInstrumento());
+        if (plan.getEvaluacionSumativaEvidencia() != null) this._setCellText(sheet, 42, 7, plan.getEvaluacionSumativaEvidencia());
+
+        // 6. DESARROLLO (Rows 48-54 -> 0-indexed 47-53 across cols B, C, D, F, H)
+        List<ScuPlanClaseDto.DesarrolloPasoDto> pasos = (plan.getPersonalData() != null && plan.getPersonalData().getPasosDesarrollo() != null && !plan.getPersonalData().getPasosDesarrollo().isEmpty())
+                ? plan.getPersonalData().getPasosDesarrollo()
+                : plan.getPasosDesarrollo();
+        if (pasos != null && !pasos.isEmpty()) {
+            for (int i = 0; i < Math.min(pasos.size(), 7); i++) {
+                ScuPlanClaseDto.DesarrolloPasoDto p = pasos.get(i);
+                int r = 47 + i;
+                if (p.getFaseComun() != null) this._setCellText(sheet, r, 1, p.getFaseComun());
+                if (p.getTiempoMin() != null) this._setCellText(sheet, r, 2, p.getTiempoMin() + " min");
+                if (p.getActividad() != null) this._setCellText(sheet, r, 3, p.getActividad());
+                if (p.getRecursos() != null) this._setCellText(sheet, r, 5, p.getRecursos());
+                if (p.getOtraInformacion() != null) this._setCellText(sheet, r, 7, p.getOtraInformacion());
+            }
+        }
+
+        // 7. NOTAS DEL DOCENTE (Rows 59-77 -> 0-indexed 58-76 across cols B, C)
+        List<ScuPlanClaseDto.NotaDocenteSesionDto> notas = (plan.getPersonalData() != null && plan.getPersonalData().getNotasDocente() != null && !plan.getPersonalData().getNotasDocente().isEmpty())
+                ? plan.getPersonalData().getNotasDocente()
+                : plan.getNotasDocente();
+        if (notas != null && !notas.isEmpty()) {
+            for (ScuPlanClaseDto.NotaDocenteSesionDto n : notas) {
+                if (n != null && n.getSesionNro() != null && n.getNota() != null && !n.getNota().isBlank()) {
+                    int s = (int) Math.round(n.getSesionNro());
+                    if (s >= 1 && s <= 19) {
+                        int r = 58 + (s - 1);
+                        this._setCellText(sheet, r, 1, s + ".0");
+                        this._setCellText(sheet, r, 2, n.getNota());
+                    }
+                }
+            }
+        }
+    }
+
+    private void populateTeoricoSheet(XSSFSheet sheet, ScuPlanClaseDto plan, Map<String, String> meta) {
+        String carreraNombre = meta != null && meta.get("carrera") != null ? meta.get("carrera") : (plan.getCarrera() != null ? plan.getCarrera() : "");
+        String asigNombre = meta != null && meta.get("asignatura") != null ? meta.get("asignatura") : (plan.getNombreAsignatura() != null ? plan.getNombreAsignatura() : "");
+        String codigoAsig = meta != null && meta.get("codigo") != null ? meta.get("codigo") : "";
+        String docenteNombre = meta != null && meta.get("docente") != null ? meta.get("docente") : (plan.getNombreDocente() != null ? plan.getNombreDocente() : "");
+
+        // PLAN DE CLASES TEÓRICO
+        if (!docenteNombre.isEmpty()) this._setCellText(sheet, 11, 2, docenteNombre);
+        if (!asigNombre.isEmpty()) this._setCellText(sheet, 11, 6, asigNombre + (!codigoAsig.isEmpty() ? " (" + codigoAsig + ")" : ""));
+        if (!carreraNombre.isEmpty()) this._setCellText(sheet, 12, 6, carreraNombre);
+
+        if (plan.getObjetivoSesion() != null) this._setCellText(sheet, 20, 3, plan.getObjetivoSesion());
+        if (plan.getSaberConceptual() != null) this._setCellText(sheet, 23, 3, plan.getSaberConceptual());
+        if (plan.getSaberActitudinal() != null) this._setCellText(sheet, 24, 3, plan.getSaberActitudinal());
+
+        // Secuencia Didáctica (5 momentos en filas 37 a 41)
+        if (plan.getMomentos() != null) {
+            for (ScuMomentoPedagogicoDto m : plan.getMomentos()) {
+                if (m.getTipoMomento() != null) {
+                    String tipo = m.getTipoMomento().name().toUpperCase();
+                    int r = -1;
+                    if (tipo.contains("INICIO") || tipo.contains("INTRO")) r = 37;
+                    else if (tipo.contains("RESULTADO") || tipo.contains("LOGRO")) r = 38;
+                    else if (tipo.contains("CONTENIDO")) r = 39;
+                    else if (tipo.contains("CUERPO") || tipo.contains("DESARROLLO")) r = 40;
+                    else if (tipo.contains("CIERRE") || tipo.contains("CONCLUSION")) r = 41;
+                    if (r != -1) {
+                        if (m.getActividadesDocente() != null) this._setCellText(sheet, r, 2, m.getActividadesDocente());
+                        if (m.getDuracionMin() != null) this._setCellText(sheet, r, 7, m.getDuracionMin() + " min");
+                    }
+                }
+            }
         }
     }
 
