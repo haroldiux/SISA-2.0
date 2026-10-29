@@ -9344,6 +9344,8 @@ document.addEventListener('change', (e) => {
       let hasRealPacPrac = false;
       let realPacPracGuias = 0;
       let realPlanesCount = 0;
+      let realPlanesTeoCount = 0;
+      let realPlanesPracCount = 0;
 
       try {
         const cCode = String(course.code || '').trim().toUpperCase();
@@ -9388,12 +9390,20 @@ document.addEventListener('change', (e) => {
               }
             } catch (e) {}
           }
-          if (k.startsWith('sisa_saved_planes_') && matchesCourse) {
+          if (k.startsWith('sisa_saved_planes_prac_') && matchesCourse) {
             try {
               const p = JSON.parse(localStorage.getItem(k));
-              if (Array.isArray(p)) realPlanesCount = Math.max(realPlanesCount, p.length);
-              else if (p && p.planes && Array.isArray(p.planes)) realPlanesCount = Math.max(realPlanesCount, p.planes.length);
-              else if (p && p.sesiones && Array.isArray(p.sesiones)) realPlanesCount = Math.max(realPlanesCount, p.sesiones.length);
+              if (Array.isArray(p)) realPlanesPracCount = Math.max(realPlanesPracCount, p.length);
+              else if (p && p.planes && Array.isArray(p.planes)) realPlanesPracCount = Math.max(realPlanesPracCount, p.planes.length);
+              else if (p && p.sesiones && Array.isArray(p.sesiones)) realPlanesPracCount = Math.max(realPlanesPracCount, p.sesiones.length);
+            } catch (e) {}
+          }
+          if ((k.startsWith('sisa_saved_planes_teorico_') || (k.startsWith('sisa_saved_planes_') && !k.includes('_prac_'))) && matchesCourse) {
+            try {
+              const p = JSON.parse(localStorage.getItem(k));
+              if (Array.isArray(p)) realPlanesTeoCount = Math.max(realPlanesTeoCount, p.length);
+              else if (p && p.planes && Array.isArray(p.planes)) realPlanesTeoCount = Math.max(realPlanesTeoCount, p.planes.length);
+              else if (p && p.sesiones && Array.isArray(p.sesiones)) realPlanesTeoCount = Math.max(realPlanesTeoCount, p.sesiones.length);
             } catch (e) {}
           }
         }
@@ -9459,17 +9469,31 @@ document.addEventListener('change', (e) => {
         }
       }
 
-      if (hasRealPacPrac) {
+      if (hasRealPacPrac || realPlanesPracCount > 0) {
         tienePractica = true;
       }
-      if (hasRealPacTeo) {
+      if (hasRealPacTeo || realPlanesTeoCount > 0) {
         tieneTeoria = true;
       }
       if (tieneTeoria && tienePractica) {
         modality = 'TEORICO_PRACTICA';
       }
 
+      realPlanesCount = realPlanesTeoCount + realPlanesPracCount;
+
+      const targetPlanesTeo = 20;
+      const targetPlanesPrac = 20;
       const targetPlanesTotal = (tieneTeoria && tienePractica) ? 40 : 20;
+
+      let plTeoState = 'VACIO';
+      if (realPlanesTeoCount >= targetPlanesTeo) plTeoState = 'COMPLETO';
+      else if (realPlanesTeoCount > 0) plTeoState = 'INCOMPLETO';
+      else plTeoState = 'VACIO';
+
+      let plPracState = 'VACIO';
+      if (realPlanesPracCount >= targetPlanesPrac) plPracState = 'COMPLETO';
+      else if (realPlanesPracCount > 0) plPracState = 'INCOMPLETO';
+      else plPracState = 'VACIO';
 
       let plState = 'VACIO';
       if (realPlanesCount >= targetPlanesTotal) plState = 'COMPLETO';
@@ -9502,6 +9526,20 @@ document.addEventListener('change', (e) => {
           state: pacPState,
           guias: (tienePractica && hasRealPacPrac) ? realPacPracGuias : 0,
           label: tienePractica ? ((hasRealPacPrac ? realPacPracGuias : 0) + ' Guías Prácticas') : 'N/A (Teórica Pura)'
+        },
+        planesTeorico: {
+          total: targetPlanesTeo,
+          completados: realPlanesTeoCount,
+          estado: planesStatus,
+          state: plTeoState,
+          pct: Math.round((realPlanesTeoCount / targetPlanesTeo) * 100)
+        },
+        planesPractico: {
+          total: targetPlanesPrac,
+          completados: realPlanesPracCount,
+          estado: planesStatus,
+          state: plPracState,
+          pct: Math.round((realPlanesPracCount / targetPlanesPrac) * 100)
         },
         planesClase: {
           total: targetPlanesTotal,
@@ -9908,18 +9946,39 @@ document.addEventListener('change', (e) => {
                             </div>
                           `}
                         ` : (docTab === 'CLASES' ? `
-                          <div class="rounded-lg border px-2.5 py-2 ${d.planesClase.state === 'COMPLETO' ? 'border-purple-200 bg-purple-50/50 dark:bg-purple-950/30' : (d.planesClase.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
-                            <div class="flex items-center justify-between gap-2 min-w-0">
-                              <span class="text-[10px] font-black text-purple-700 dark:text-purple-300 truncate flex items-center gap-1">
-                                <span>📅</span> Planes de Clase
-                              </span>
-                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/${d.planesClase.total}`)}
+                          ${(item.tieneTeoria && item.tienePractica) ? `
+                            <div class="rounded-lg border border-purple-200 bg-purple-50/30 dark:bg-purple-950/20 p-2 space-y-1.5 shadow-2xs">
+                              <div class="flex items-center justify-between text-[10px] gap-2">
+                                <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                  <span>📅</span> Plan Teórico:
+                                </span>
+                                ${window.renderDocStateBadge(d.planesTeorico.state, `${d.planesTeorico.completados}/${d.planesTeorico.total}`)}
+                              </div>
+                              <div class="flex items-center justify-between text-[10px] gap-2">
+                                <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                  <span>📋</span> Plan Práctico:
+                                </span>
+                                ${window.renderDocStateBadge(d.planesPractico.state, `${d.planesPractico.completados}/${d.planesPractico.total}`)}
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                                <span>Total: ${d.planesClase.completados} de 40 Sesiones</span>
+                                <span class="font-bold text-purple-700 dark:text-purple-300">${d.planesClase.pct}%</span>
+                              </div>
                             </div>
-                            <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
-                              <span>Avance: ${d.planesClase.completados} de ${d.planesClase.total} Sesiones</span>
-                              <span class="font-bold text-slate-700 dark:text-slate-300">${d.planesClase.pct}%</span>
+                          ` : `
+                            <div class="rounded-lg border px-2.5 py-2 ${d.planesClase.state === 'COMPLETO' ? 'border-purple-200 bg-purple-50/50 dark:bg-purple-950/30' : (d.planesClase.state === 'INCOMPLETO' ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/30' : 'border-rose-200 bg-rose-50/50 dark:bg-rose-950/30')}">
+                              <div class="flex items-center justify-between gap-2 min-w-0">
+                                <span class="text-[10px] font-black text-purple-700 dark:text-purple-300 truncate flex items-center gap-1">
+                                  <span>📅</span> ${item.tienePractica ? 'Plan Clase Práctico' : 'Plan Clase Teórico'}
+                                </span>
+                                ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/${d.planesClase.total}`)}
+                              </div>
+                              <div class="mt-1 flex items-center justify-between gap-2 min-w-0 text-[9px] text-slate-500">
+                                <span>Avance: ${d.planesClase.completados} de ${d.planesClase.total} Sesiones</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">${d.planesClase.pct}%</span>
+                              </div>
                             </div>
-                          </div>
+                          `}
                         ` : `
                           <!-- DOSSIER COMPLETO (TODOS): Desglose explícito de los documentos que corresponden a la materia -->
                           <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-2 space-y-1.5 shadow-2xs">
@@ -9952,13 +10011,25 @@ document.addEventListener('change', (e) => {
                             </div>
                             ` : ''}
 
-                            <!-- 4. Planes de Clase -->
+                            <!-- 4. Plan de Clase Teórico (Solo si corresponde a la materia) -->
+                            ${item.tieneTeoria ? `
                             <div class="flex items-center justify-between text-[10px] gap-2">
                               <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
-                                <span class="text-xs">📅</span> Planes de Clase:
+                                <span class="text-xs">📅</span> Plan Clase Teórico:
                               </span>
-                              ${window.renderDocStateBadge(d.planesClase.state, `${d.planesClase.completados}/${d.planesClase.total}`)}
+                              ${window.renderDocStateBadge(d.planesTeorico.state, `${d.planesTeorico.completados}/${d.planesTeorico.total}`)}
                             </div>
+                            ` : ''}
+
+                            <!-- 5. Plan de Clase Práctico (Solo si corresponde a la materia) -->
+                            ${item.tienePractica ? `
+                            <div class="flex items-center justify-between text-[10px] gap-2">
+                              <span class="text-slate-600 dark:text-slate-300 font-semibold truncate flex items-center gap-1">
+                                <span class="text-xs">📋</span> Plan Clase Práctico:
+                              </span>
+                              ${window.renderDocStateBadge(d.planesPractico.state, `${d.planesPractico.completados}/${d.planesPractico.total}`)}
+                            </div>
+                            ` : ''}
 
                           </div>
                         `)))}
@@ -10101,6 +10172,12 @@ document.addEventListener('change', (e) => {
 
         const modLabel = c.modality === 'PRACTICA_PURA' ? 'Práctica Pura' : (c.modality === 'TEORICA_PURA' ? 'Teórica Pura' : 'Teórico-Práctica');
 
+        const plTarget = (c.tieneTeoria && c.tienePractica) ? 40 : 20;
+        const plDetail = (c.tieneTeoria && c.tienePractica)
+          ? `${d.planesTeorico?.completados || 0}/20 T • ${d.planesPractico?.completados || 0}/20 P`
+          : `${plCnt}/${plTarget}`;
+        const plSt = plCnt >= plTarget ? 'COMPLETO' : (plCnt > 0 ? 'INCOMPLETO' : 'VACIO');
+
         return `
           <tr style="border-bottom: 1px solid #e2e8f0; font-size: 11px;">
             <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #4338ca;">${c.code}</td>
@@ -10113,7 +10190,7 @@ document.addEventListener('change', (e) => {
             <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(anaSt, '4U')}</td>
             <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(pacTSt, '20s')}</td>
             <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(pacPSt, '12g')}</td>
-            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(plCnt === 40 ? 'COMPLETO' : (plCnt > 0 ? 'INCOMPLETO' : 'VACIO'), plCnt + '/40')}</td>
+            <td style="padding: 6px 8px; text-align: center; font-size: 10px;">${badgeHtml(plSt, plDetail)}</td>
             <td style="padding: 6px 8px; text-align: center; white-space:nowrap;">${verdictBadge(c.status)}</td>
           </tr>
         `;
@@ -10817,8 +10894,33 @@ document.addEventListener('change', (e) => {
       analitico: { estado: 'APROBADO' },
       pacTeorico: { estado: 'APROBADO' },
       pacPractico: { tienePractica: targetCourse.tienePractica, estado: targetCourse.tienePractica ? 'APROBADO' : 'N/A', guias: 12, label: '12 Guías Prácticas' },
+      planesTeorico: { total: 20, completados: 20, estado: 'COMPLETO', pct: 100 },
+      planesPractico: { total: 20, completados: 20, estado: 'COMPLETO', pct: 100 },
       planesClase: { total: 40, completados: 40, estado: 'COMPLETO', pct: 100 }
     };
+
+    // Configure modal tabs according to subject modality
+    const btnTabPacTeo = document.getElementById('btn-modal-tab-pacteorico');
+    const btnTabPacPrac = document.getElementById('btn-modal-tab-pacpractico');
+    const tabPlanesLabel = document.getElementById('modal-tab-planes-label');
+
+    if (btnTabPacTeo) {
+      if (targetCourse.modality === 'PRACTICA_PURA') btnTabPacTeo.classList.add('hidden');
+      else btnTabPacTeo.classList.remove('hidden');
+    }
+    if (btnTabPacPrac) {
+      if (targetCourse.modality === 'TEORICA_PURA') btnTabPacPrac.classList.add('hidden');
+      else btnTabPacPrac.classList.remove('hidden');
+    }
+    if (tabPlanesLabel) {
+      if (targetCourse.tieneTeoria && targetCourse.tienePractica) {
+        tabPlanesLabel.textContent = '4. Planes de Clase (20 Teo + 20 Prac)';
+      } else if (targetCourse.tienePractica) {
+        tabPlanesLabel.textContent = '3. Plan Clase Práctico (20)';
+      } else {
+        tabPlanesLabel.textContent = '3. Plan Clase Teórico (20)';
+      }
+    }
 
     const statusAnaEl = document.getElementById('modal-status-analitico');
     const statusPacTEoEl = document.getElementById('modal-status-pacteorico');
@@ -10838,8 +10940,34 @@ document.addEventListener('change', (e) => {
     if (statusPlanesEl) {
       statusPlanesEl.textContent = `${d.planesClase.completados}/${totalTargetPlanes} COMPLETADOS (${d.planesClase.pct}%)`;
     }
-    if (planesCountEl) {
-      planesCountEl.textContent = `Avance: ${d.planesClase.completados} de ${totalTargetPlanes} Sesiones microplanificadas`;
+
+    const planesTitleEl = document.getElementById('modal-planes-title');
+    const teoCardEl = document.getElementById('modal-planes-teo-card');
+    const pracCardEl = document.getElementById('modal-planes-prac-card');
+    const teoBadgeEl = document.getElementById('modal-planes-teo-badge');
+    const pracBadgeEl = document.getElementById('modal-planes-prac-badge');
+
+    const dPlanesTeo = d.planesTeorico || { completados: 0, total: 20 };
+    const dPlanesPrac = d.planesPractico || { completados: 0, total: 20 };
+
+    if (teoBadgeEl) teoBadgeEl.textContent = `${dPlanesTeo.completados}/${dPlanesTeo.total}`;
+    if (pracBadgeEl) pracBadgeEl.textContent = `${dPlanesPrac.completados}/${dPlanesPrac.total}`;
+
+    if (targetCourse.tieneTeoria && targetCourse.tienePractica) {
+      if (planesTitleEl) planesTitleEl.textContent = 'Planes de Clase • Microplanificación Didáctica (40 Sesiones)';
+      if (teoCardEl) teoCardEl.classList.remove('hidden');
+      if (pracCardEl) pracCardEl.classList.remove('hidden');
+      if (planesCountEl) planesCountEl.textContent = `Avance: ${dPlanesTeo.completados}/20 Teóricos • ${dPlanesPrac.completados}/20 Prácticos (Total ${d.planesClase.completados} de 40 Sesiones)`;
+    } else if (targetCourse.tienePractica) {
+      if (planesTitleEl) planesTitleEl.textContent = 'Plan de Clases Práctico • Guías y Laboratorio (20 Sesiones)';
+      if (teoCardEl) teoCardEl.classList.add('hidden');
+      if (pracCardEl) pracCardEl.classList.remove('hidden');
+      if (planesCountEl) planesCountEl.textContent = `Avance: ${dPlanesPrac.completados} de 20 Sesiones Prácticas`;
+    } else {
+      if (planesTitleEl) planesTitleEl.textContent = 'Plan de Clases Teórico • Microdidáctica de Aula (20 Sesiones)';
+      if (teoCardEl) teoCardEl.classList.remove('hidden');
+      if (pracCardEl) pracCardEl.classList.add('hidden');
+      if (planesCountEl) planesCountEl.textContent = `Avance: ${dPlanesTeo.completados} de 20 Sesiones Teóricas`;
     }
 
     if (pracContentEl) {
@@ -10883,15 +11011,40 @@ document.addEventListener('change', (e) => {
     if (savedObsDocs) {
       try { obsDocsList = JSON.parse(savedObsDocs); } catch (e) {}
     }
+
+    const wrapPacT = document.getElementById('cb-obs-pacteorico-wrap');
+    const wrapPacP = document.getElementById('cb-obs-pacpractico-wrap');
+    const wrapPlanesTeo = document.getElementById('cb-obs-planesteorico-wrap');
+    const wrapPlanesPrac = document.getElementById('cb-obs-planespractico-wrap');
+
+    if (wrapPacT) {
+      if (targetCourse.modality === 'PRACTICA_PURA') wrapPacT.classList.add('hidden');
+      else wrapPacT.classList.remove('hidden');
+    }
+    if (wrapPacP) {
+      if (targetCourse.modality === 'TEORICA_PURA') wrapPacP.classList.add('hidden');
+      else wrapPacP.classList.remove('hidden');
+    }
+    if (wrapPlanesTeo) {
+      if (targetCourse.modality === 'PRACTICA_PURA') wrapPlanesTeo.classList.add('hidden');
+      else wrapPlanesTeo.classList.remove('hidden');
+    }
+    if (wrapPlanesPrac) {
+      if (targetCourse.modality === 'TEORICA_PURA') wrapPlanesPrac.classList.add('hidden');
+      else wrapPlanesPrac.classList.remove('hidden');
+    }
+
     const cbAna = document.getElementById('cb-obs-analitico');
     const cbPacT = document.getElementById('cb-obs-pacteorico');
     const cbPacP = document.getElementById('cb-obs-pacpractico');
     const cbPlanes = document.getElementById('cb-obs-planes');
+    const cbPlanesPrac = document.getElementById('cb-obs-planespractico');
 
     if (cbAna) cbAna.checked = obsDocsList.includes('analitico');
     if (cbPacT) cbPacT.checked = obsDocsList.includes('pacteorico');
     if (cbPacP) cbPacP.checked = obsDocsList.includes('pacpractico');
-    if (cbPlanes) cbPlanes.checked = obsDocsList.includes('planes');
+    if (cbPlanes) cbPlanes.checked = obsDocsList.includes('planes') || obsDocsList.includes('planesteorico');
+    if (cbPlanesPrac) cbPlanesPrac.checked = obsDocsList.includes('planespractico');
 
     // 6. Resolve pacId
     let pacId = targetCourse.pacId || null;
@@ -11055,7 +11208,8 @@ document.addEventListener('change', (e) => {
       if (document.getElementById('cb-obs-analitico')?.checked) obsDocs.push('analitico');
       if (document.getElementById('cb-obs-pacteorico')?.checked) obsDocs.push('pacteorico');
       if (document.getElementById('cb-obs-pacpractico')?.checked) obsDocs.push('pacpractico');
-      if (document.getElementById('cb-obs-planes')?.checked) obsDocs.push('planes');
+      if (document.getElementById('cb-obs-planes')?.checked) obsDocs.push('planesteorico');
+      if (document.getElementById('cb-obs-planespractico')?.checked) obsDocs.push('planespractico');
       localStorage.setItem('sisa_supervision_obs_docs_' + courseCode, JSON.stringify(obsDocs));
     } else {
       localStorage.removeItem('sisa_supervision_obs_docs_' + courseCode);

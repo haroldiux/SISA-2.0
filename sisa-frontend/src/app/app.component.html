@@ -3846,7 +3846,7 @@
         </button>
         <button type="button" id="btn-modal-tab-planes" onclick="window.switchModalReviewTab('planes')" class="font-bold text-xs px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5">
           <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-          <span>4. Planes de Clase (40)</span>
+          <span id="modal-tab-planes-label">4. Planes de Clase (40)</span>
         </button>
       </div>
     </div>
@@ -3987,34 +3987,36 @@
       </div>
     </div>
 
-    <!-- Panel 4: Planes de Clase (40 Sesiones) -->
+    <!-- Panel 4: Planes de Clase (Microplanificación Didáctica) -->
     <div id="panel-modal-planes" class="space-y-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hidden">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="h-6 w-6 rounded-md bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">📅</div>
-          <span class="font-bold text-xs text-slate-900 dark:text-white">Planes de Clase • Microplanificación Didáctica (40 Sesiones)</span>
+          <span id="modal-planes-title" class="font-bold text-xs text-slate-900 dark:text-white">Planes de Clase • Microplanificación Didáctica</span>
         </div>
         <span id="modal-status-planes" class="px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
-          40/40 COMPLETADOS (100%)
+          0/20 COMPLETADOS (0%)
         </span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-extrabold uppercase text-indigo-500 block">Momento Inicial (15 min)</span>
-          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Motivación e indagación previa</span>
+      <div id="modal-planes-breakdown-dual" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div id="modal-planes-teo-card" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-purple-800 dark:text-purple-300 text-[11px] flex items-center gap-1"><span>📅</span> Plan Clase Teórico</span>
+            <span id="modal-planes-teo-badge" class="px-1.5 py-0.5 rounded text-[9px] font-black bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">0/20</span>
+          </div>
+          <span class="text-[10px] text-slate-500 block mt-1">3 Momentos: Inicio (15m), Desarrollo (60m), Cierre (15m)</span>
         </div>
-        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-extrabold uppercase text-blue-500 block">Momento Desarrollo (60 min)</span>
-          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Construcción y resolución activa</span>
-        </div>
-        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-extrabold uppercase text-teal-500 block">Momento Cierre (15 min)</span>
-          <span class="text-[11px] text-slate-700 dark:text-slate-300 font-medium">Metacognición y síntesis formativa</span>
+        <div id="modal-planes-prac-card" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-800 dark:text-indigo-300 text-[11px] flex items-center gap-1"><span>📋</span> Plan Clase Práctico</span>
+            <span id="modal-planes-prac-badge" class="px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">0/20</span>
+          </div>
+          <span class="text-[10px] text-slate-500 block mt-1">4 Fases: Preparatoria, Demostrativa, Aplicada y Rúbricas</span>
         </div>
       </div>
       <div class="pt-2 flex justify-between items-center">
         <span id="modal-planes-count" class="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
-          Avance: 40 de 40 Sesiones microplanificadas
+          Avance: 0 de 20 Sesiones microplanificadas
         </span>
         <button type="button" onclick="window.jumpToDocFromModal('tab-cronograma-planes')" class="text-xs font-bold text-[#4f39f6] hover:underline flex items-center gap-1.5 cursor-pointer">
           <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -4042,21 +4044,25 @@
         Marcar los Documentos con Observaciones a Subsanar:
       </div>
       <div class="grid grid-cols-2 gap-2 text-xs">
-        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+        <label id="cb-obs-analitico-wrap" class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
           <input type="checkbox" id="cb-obs-analitico" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
           <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📑 Programa Analítico</span>
         </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+        <label id="cb-obs-pacteorico-wrap" class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
           <input type="checkbox" id="cb-obs-pacteorico" checked class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
           <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📘 PAC Teórico (Matriz 7)</span>
         </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+        <label id="cb-obs-pacpractico-wrap" class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
           <input type="checkbox" id="cb-obs-pacpractico" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
           <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">🔬 PAC Práctico / Talleres</span>
         </label>
-        <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+        <label id="cb-obs-planesteorico-wrap" class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
           <input type="checkbox" id="cb-obs-planes" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
-          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📅 Planes de Clase (40)</span>
+          <span id="cb-obs-planes-label" class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📅 Plan Clase Teórico (20)</span>
+        </label>
+        <label id="cb-obs-planespractico-wrap" class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 cursor-pointer">
+          <input type="checkbox" id="cb-obs-planespractico" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500">
+          <span class="text-slate-800 dark:text-slate-200 font-medium text-[11px]">📋 Plan Clase Práctico (20)</span>
         </label>
       </div>
     </div>
