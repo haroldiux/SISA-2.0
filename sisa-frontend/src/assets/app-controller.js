@@ -7372,7 +7372,7 @@ document.addEventListener('change', (e) => {
     try {
       const [coursesRes, groupsRes] = await Promise.all([
         fetch(`/api/v1/catalogo-academico/docentes/${cleanCi}/materias`),
-        fetch(`/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=ea4fb26e-11a9-452f-9bae-4962de2dd931&teacherCi=${cleanCi}`)
+        fetch(`/api/v1/catalogo-academico/groups?term=2-2026&teacherCi=${cleanCi}`)
       ]);
 
       const courses = coursesRes.ok ? await coursesRes.json() : [];
@@ -7521,7 +7521,7 @@ document.addEventListener('change', (e) => {
   };
 
   // Official UNITEPC Curriculum Code Resolver
-  window.resolveOfficialCourseCode = function(courseName, careerCodes) {
+  window.resolveOfficialCourseCode = function(courseName, careerCodes, fallbackSemester = null, courseIdx = null) {
     const rawUpper = (courseName || '').toUpperCase().trim();
     const cUpper = rawUpper.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const has = (k) => cUpper.includes(k.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
@@ -7658,7 +7658,7 @@ document.addEventListener('change', (e) => {
         else if (has('IMAGENOLOGIA')) codes.push('MED-325');
         else if (has('NUTRICION CLINICA')) codes.push('MED-326');
         // 7° SEMESTRE
-        else if (has('CIRUGIA I') || has('CIRUGIA GENERAL')) codes.push('MED-411');
+        else if ((has('CIRUGIA I') || has('CIRUGIA GENERAL')) && !has('CIRUGIA II') && !has('ABDOMEN')) codes.push('MED-411');
         else if (has('ENFERMEDADES TROPICALES') || has('INFECTOLOGIA')) codes.push('MED-412');
         else if (has('DERMATOLOGIA')) codes.push('MED-413');
         else if (has('REUMATOLOGIA')) codes.push('MED-414');
@@ -7708,7 +7708,14 @@ document.addEventListener('change', (e) => {
     });
 
     const uniqueCodes = [...new Set(codes)];
-    return uniqueCodes.length > 0 ? uniqueCodes.join(' / ') : '';
+    if (uniqueCodes.length > 0) return uniqueCodes.join(' / ');
+    if (fallbackSemester && courseIdx) {
+      const firstCar = (careerCodes && careerCodes[0]) ? careerCodes[0].toUpperCase() : 'CARSIS';
+      const carInfo = (window.__SUPERVISION_CAREER_MAP__ && window.__SUPERVISION_CAREER_MAP__[firstCar]) || {};
+      const prefix = carInfo.prefix || (firstCar.startsWith('CAR') ? firstCar.substring(3) : firstCar);
+      return `${prefix}-${fallbackSemester}${String(courseIdx).padStart(2, '0')}`;
+    }
+    return '';
   };
 
   window.renderDynamicSidebarForDocente = function(docente, courses, groups, preferredCourseCode = null) {
@@ -9030,30 +9037,50 @@ document.addEventListener('change', (e) => {
   };
 
   // ── SUPERVISIÓN CURRICULAR ENGINE (VIEW 2 - ROL DIRECTOR DE CARRERA) ───────────
+  window.__SUPERVISION_SEDES_MAP__ = {
+    'CBA': { id: 'ea4fb26e-11a9-452f-9bae-4962de2dd931', code: 'CBA', name: 'COCHABAMBA (CBA)', campus: 'Campus Juan Pablo II', ciudad: 'Cochabamba' },
+    'LPZ': { id: '035656e1-140b-4221-aa8d-84541d4e6608', code: 'LPZ', name: 'LA PAZ (LPZ)', campus: 'Sede La Paz', ciudad: 'La Paz' },
+    'EAL': { id: 'ccd014b4-3ad5-4385-b281-27f711562d38', code: 'EAL', name: 'EL ALTO (EAL)', campus: 'Sede El Alto', ciudad: 'El Alto' },
+    'CBJ': { id: 'f355b875-7c6b-4bed-95d8-b3aa4651b6ab', code: 'CBJ', name: 'COBIJA (CBJ)', campus: 'Sede Cobija', ciudad: 'Cobija' },
+    'IVI': { id: 'bd45cf85-6dbc-4f1a-b8d6-e32188e524b5', code: 'IVI', name: 'IVIRGARZAMA (IVI)', campus: 'Sede Ivirgarzama', ciudad: 'Ivirgarzama' },
+    'STC': { id: '303e75e6-74c3-40b6-adad-ecea9a1a778f', code: 'STC', name: 'SANTA CRUZ (STC)', campus: 'Sede Santa Cruz', ciudad: 'Santa Cruz' },
+    'CVI': { id: 'e1498385-a339-4645-b580-0e09007dc7ed', code: 'CVI', name: 'CARANAVI (CVI)', campus: 'Sede Caranavi', ciudad: 'Caranavi' },
+    'GUA': { id: '279bf4e7-f87b-44f2-a221-548cec0d6a8d', code: 'GUA', name: 'GUAYARAMERIN (GUA)', campus: 'Sede Guayaramerin', ciudad: 'Guayaramerin' },
+    'PTO': { id: 'fe4054d0-4594-4453-9efc-4fb9cd5824ef', code: 'PTO', name: 'PUERTO QUIJARRO (PTO)', campus: 'Sede Puerto Quijarro', ciudad: 'Puerto Quijarro' }
+  };
+
   window.__SUPERVISION_CAREER_MAP__ = {
-    'CARSIS': { id: '648febfd-dc79-4dd8-a8aa-dc7549ef649b', code: 'CARSIS', name: 'Licenciatura en Ingeniería de Sistemas', tag: 'ING. SISTEMAS', color: 'purple' },
-    'CARELE': { id: '2ef716a7-b545-4e8d-b497-94fdedaef3cc', code: 'CARELE', name: 'Licenciatura en Ingeniería Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue' },
-    'CARSON': { id: '51ecba92-6699-4474-9d34-dcde6eeaba63', code: 'CARSON', name: 'Licenciatura en Ingeniería de Sonido', tag: 'ING. DE SONIDO', color: 'indigo' },
-    'CARIBI': { id: 'c6c95b52-e67a-4496-9821-9eb79e4506ac', code: 'CARIBI', name: 'Licenciatura en Ingeniería Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan' },
-    'CARMED': { id: 'fdcd6c35-8e0e-47ea-993c-119eb1a7789c', code: 'CARMED', name: 'Licenciatura en Medicina', tag: 'MEDICINA', color: 'rose' },
-    'CARDER': { id: 'f82b04f1-d439-4c9c-852c-5d22d1407c7c', code: 'CARDER', name: 'Licenciatura en Derecho', tag: 'DERECHO', color: 'amber' },
-    'CARODO': { id: '5969e19b-fefd-4bd2-8883-5f554ae3095b', code: 'CARODO', name: 'Licenciatura en Odontología', tag: 'ODONTOLOGÍA', color: 'sky' },
-    'CARVET': { id: '0159e8bd-0cb5-4ab6-90f0-2c0fd4c8b795', code: 'CARVET', name: 'Licenciatura en Medicina Veterinaria y Zootecnia', tag: 'VETERINARIA', color: 'teal' },
-    'CARBYF': { id: '39d6b24f-bdce-444c-8a4a-287def7f5a4a', code: 'CARBYF', name: 'Licenciatura en Bioquímica y Farmacia', tag: 'BIOQUÍMICA', color: 'emerald' },
-    'CARENL': { id: 'f56e7ae6-5159-4282-b78e-fed3de7c0cd0', code: 'CARENL', name: 'Licenciatura en Enfermería', tag: 'ENFERMERÍA', color: 'teal' },
-    'CARFIS': { id: '6b61b4bf-e8ed-4a48-bf20-245e05761cff', code: 'CARFIS', name: 'Licenciatura en Fisioterapia y Kinesiología', tag: 'FISIOTERAPIA', color: 'orange' },
-    'CARNYD': { id: '584ee772-8fbe-4dda-9fb0-111b6d9f433e', code: 'CARNYD', name: 'Licenciatura en Nutrición y Dietética', tag: 'NUTRICIÓN', color: 'green' },
-    'CARADM': { id: 'c3fc680b-6d50-4d4a-82e5-e3a65f53af89', code: 'CARADM', name: 'Licenciatura en Administración de Empresas', tag: 'ADMINISTRACIÓN', color: 'violet' },
-    'CARCPU': { id: '3d122b59-3d49-4441-8295-5207ddb6da9f', code: 'CARCPU', name: 'Licenciatura en Contaduría Pública', tag: 'CONTADURÍA', color: 'stone' },
-    'CARICO': { id: '89379cab-b335-4d99-b676-ea80dc045d8f', code: 'CARICO', name: 'Licenciatura en Ingeniería Comercial', tag: 'ING. COMERCIAL', color: 'lime' },
-    'CARCSO': { id: '51e7147a-580b-4614-91f7-0ffbe0c06850', code: 'CARCSO', name: 'Licenciatura en Comunicación Social', tag: 'COMUNICACIÓN', color: 'pink' }
+    'CARSIS': { id: '648febfd-dc79-4dd8-a8aa-dc7549ef649b', code: 'CARSIS', prefix: 'SIS', name: 'Licenciatura en Ingeniería de Sistemas', tag: 'ING. SISTEMAS', color: 'purple', maxSem: 8 },
+    'CARELE': { id: '2ef716a7-b545-4e8d-b497-94fdedaef3cc', code: 'CARELE', prefix: 'ELE', name: 'Licenciatura en Ingeniería Electrónica', tag: 'ING. ELECTRÓNICA', color: 'blue', maxSem: 8 },
+    'CARSON': { id: '51ecba92-6699-4474-9d34-dcde6eeaba63', code: 'CARSON', prefix: 'SON', name: 'Licenciatura en Ingeniería de Sonido', tag: 'ING. DE SONIDO', color: 'indigo', maxSem: 8 },
+    'CARIBI': { id: 'c6c95b52-e67a-4496-9821-9eb79e4506ac', code: 'CARIBI', prefix: 'IBI', name: 'Licenciatura en Ingeniería Biomédica', tag: 'ING. BIOMÉDICA', color: 'cyan', maxSem: 8 },
+    'CARMED': { id: 'fdcd6c35-8e0e-47ea-993c-119eb1a7789c', code: 'CARMED', prefix: 'MED', name: 'Licenciatura en Medicina', tag: 'MEDICINA', color: 'rose', maxSem: 10 },
+    'CARDER': { id: 'f82b04f1-d439-4c9c-852c-5d22d1407c7c', code: 'CARDER', prefix: 'DER', name: 'Licenciatura en Derecho', tag: 'DERECHO', color: 'amber', maxSem: 8 },
+    'CARODO': { id: '5969e19b-fefd-4bd2-8883-5f554ae3095b', code: 'CARODO', prefix: 'ODO', name: 'Licenciatura en Odontología', tag: 'ODONTOLOGÍA', color: 'sky', maxSem: 10 },
+    'CARVET': { id: '0159e8bd-0cb5-4ab6-90f0-2c0fd4c8b795', code: 'CARVET', prefix: 'VET', name: 'Licenciatura en Medicina Veterinaria y Zootecnia', tag: 'VETERINARIA', color: 'teal', maxSem: 10 },
+    'CARBYF': { id: '39d6b24f-bdce-444c-8a4a-287def7f5a4a', code: 'CARBYF', prefix: 'BYF', name: 'Licenciatura en Bioquímica y Farmacia', tag: 'BIOQUÍMICA', color: 'emerald', maxSem: 10 },
+    'CARENL': { id: 'f56e7ae6-5159-4282-b78e-fed3de7c0cd0', code: 'CARENL', prefix: 'ENF', name: 'Licenciatura en Enfermería', tag: 'ENFERMERÍA', color: 'teal', maxSem: 8 },
+    'CARFIS': { id: '6b61b4bf-e8ed-4a48-bf20-245e05761cff', code: 'CARFIS', prefix: 'FIS', name: 'Licenciatura en Fisioterapia y Kinesiología', tag: 'FISIOTERAPIA', color: 'orange', maxSem: 8 },
+    'CARNYD': { id: '584ee772-8fbe-4dda-9fb0-111b6d9f433e', code: 'CARNYD', prefix: 'NUT', name: 'Licenciatura en Nutrición y Dietética', tag: 'NUTRICIÓN', color: 'green', maxSem: 8 },
+    'CARADM': { id: 'c3fc680b-6d50-4d4a-82e5-e3a65f53af89', code: 'CARADM', prefix: 'ADM', name: 'Licenciatura en Administración de Empresas', tag: 'ADMINISTRACIÓN', color: 'violet', maxSem: 8 },
+    'CARCPU': { id: '3d122b59-3d49-4441-8295-5207ddb6da9f', code: 'CARCPU', prefix: 'CPU', name: 'Licenciatura en Contaduría Pública', tag: 'CONTADURÍA', color: 'stone', maxSem: 8 },
+    'CARICO': { id: '89379cab-b335-4d99-b676-ea80dc045d8f', code: 'CARICO', prefix: 'ICO', name: 'Licenciatura en Ingeniería Comercial', tag: 'ING. COMERCIAL', color: 'lime', maxSem: 8 },
+    'CARCSO': { id: '51e7147a-580b-4614-91f7-0ffbe0c06850', code: 'CARCSO', prefix: 'CSO', name: 'Licenciatura en Comunicación Social', tag: 'COMUNICACIÓN', color: 'pink', maxSem: 8 },
+    'CARCCP': { id: '1cf01051-0e98-4460-86d7-f4bb3a4a774b', code: 'CARCCP', prefix: 'CCP', name: 'Complementaria Contaduría Pública', tag: 'COMP. CONTADURÍA', color: 'stone', maxSem: 4 },
+    'CARCAD': { id: '273034f2-e55f-442a-b3f9-b88d509ade77', code: 'CARCAD', prefix: 'CAD', name: 'Complementaria en Administración de Empresas', tag: 'COMP. ADMINISTRACIÓN', color: 'violet', maxSem: 4 },
+    'CARECO': { id: '60cd1499-f4c8-4048-8ee5-267e35f0eb09', code: 'CARECO', prefix: 'ECO', name: 'Licenciatura en Economía', tag: 'ECONOMÍA', color: 'emerald', maxSem: 8 },
+    'CARCIC': { id: 'aff8ca8c-5703-4f66-9227-2de0b9aaa0a4', code: 'CARCIC', prefix: 'CIC', name: 'Complementaria Ingeniería Comercial', tag: 'COMP. ING. COMERCIAL', color: 'lime', maxSem: 4 },
+    'CARAYE': { id: '728f9390-d235-4336-98ec-ab19eff6443b', code: 'CARAYE', prefix: 'AYE', name: 'Licenciatura en Arte y Escultura', tag: 'ARTE Y ESCULTURA', color: 'amber', maxSem: 8 },
+    'CARCNE': { id: 'db1fba35-e343-42cd-9d2c-e45c42c5da01', code: 'CARCNE', prefix: 'CNE', name: 'Licenciatura en Cinematografía', tag: 'CINEMATOGRAFÍA', color: 'fuchsia', maxSem: 8 },
+    'CARFON': { id: '784e654f-e465-4d5c-a81e-0652438c3dcb', code: 'CARFON', prefix: 'FON', name: 'Licenciatura en Fonoaudiología', tag: 'FONOAUDIOLOGÍA', color: 'rose', maxSem: 8 },
+    'CARPRO': { id: 'afc602e2-bca1-4cd1-b5e6-e272fbbb7f9e', code: 'CARPRO', prefix: 'PRO', name: 'Prótesis Dental', tag: 'PRÓTESIS DENTAL', color: 'sky', maxSem: 6 }
   };
 
   window.__SUPERVISION_DATA__ = null;
   window.__SUPERVISION_FILTER__ = 'ALL';
   window.__SUPERVISION_EXPANDED_SEMESTERS__ = { 3: true };
 
-  window.getCourseSemester = function(courseName, courseCode) {
+  window.getCourseSemester = function(courseName, courseCode, careerCode, maxSemestersOverride) {
     const cUpper = (courseName || '').toUpperCase().trim();
     const code = (courseCode || '').toUpperCase().trim();
 
@@ -9210,17 +9237,35 @@ document.addEventListener('change', (e) => {
     if ((cUpper.includes('ÁLGEBRA') || cUpper.includes('ALGEBRA')) && !cUpper.includes('LINEAL')) return 1;
     if (cUpper.includes('INGLÉS TÉCNICO I') || cUpper.includes('INGLES TECNICO I')) return 1;
 
-    // Fallback: analyze code
-    if (code.startsWith('SIS-') || code.startsWith('ELC-') || code.startsWith('SON-') || code.startsWith('MED-') || code.startsWith('IBI-')) {
+    const maxSem = maxSemestersOverride || ((careerCode && (careerCode.includes('MED') || careerCode.includes('ODO') || careerCode.includes('VET') || careerCode.includes('BYF'))) ? 10 : 8);
+
+    // Universal Heuristic & Academic Level Balancer for any career
+    if (cUpper.includes('TITULACIÓN') || cUpper.includes('TITULACION') || cUpper.includes('GRADUACIÓN') || cUpper.includes('GRADUACION') || cUpper.includes('INTERNADO') || cUpper.includes('CLÍNICA INTEGRAL') || cUpper.includes('CLINICA INTEGRAL')) return maxSem;
+    if (cUpper.includes('INTRODUCCIÓN') || cUpper.includes('INTRODUCCION') || cUpper.includes('TÉCNICAS DE ESTUDIO') || cUpper.includes('TECNICAS DE ESTUDIO') || cUpper.includes('METODOLOGÍA') || cUpper.includes('METODOLOGIA') || cUpper.includes('BÁSICA') || cUpper.includes('BASICA') || cUpper.includes('FUNDAMENTOS') || cUpper.includes('ROMANO') || cUpper.includes('FILOSOFÍA') || cUpper.includes('FILOSOFIA')) return 1;
+
+    // Check Roman numerals (V, IV, III, II, I)
+    if (cUpper.includes(' V ') || cUpper.endsWith(' V') || cUpper.includes('(V)')) return Math.min(maxSem, maxSem >= 10 ? 9 : 8);
+    if (cUpper.includes(' IV ') || cUpper.endsWith(' IV') || cUpper.includes('(IV)')) return Math.min(maxSem, maxSem >= 10 ? 7 : 7);
+    if (cUpper.includes(' III ') || cUpper.endsWith(' III') || cUpper.includes('(III)')) return Math.min(maxSem, maxSem >= 10 ? 5 : 5);
+    if (cUpper.includes(' II ') || cUpper.endsWith(' II') || cUpper.includes('(II)')) return Math.min(maxSem, maxSem >= 10 ? 3 : 3);
+    if (cUpper.includes(' I ') || cUpper.endsWith(' I') || cUpper.includes('(I)')) return 1;
+
+    // Fallback: analyze code if formatted with semester digit
+    if (code && code.includes('-')) {
       const parts = code.split('-');
       if (parts[1] && parts[1].length >= 2) {
-        const y = parseInt(parts[1][0], 10);
-        const s = parseInt(parts[1][1], 10);
-        if (!isNaN(y) && !isNaN(s)) return (y - 1) * 2 + s;
+        const d1 = parseInt(parts[1][0], 10);
+        if (!isNaN(d1) && d1 >= 1 && d1 <= maxSem) return d1;
       }
     }
 
-    return 1;
+    // Deterministic balanced distribution using string hash
+    let hash = 0;
+    for (let i = 0; i < cUpper.length; i++) {
+      hash = ((hash << 5) - hash) + cUpper.charCodeAt(i);
+      hash |= 0;
+    }
+    return (Math.abs(hash) % maxSem) + 1;
   };
 
   // ── SCOPE & ROLE-BASED SUPERVISION FILTERS CONTROLLER ─────────────────────
@@ -9242,20 +9287,22 @@ document.addEventListener('change', (e) => {
     let allowedSedes = null; // null = all sedes permitted
     if (!isGlobalAdmin) {
       const sedeCodes = new Set();
-      const directSede = user?.sedeNombre || (user?.sede && user.sede.nombre) || '';
-      if (directSede) {
-        const dNorm = directSede.toLowerCase();
-        if (dNorm.includes('cochabamba') || dNorm.includes('cba')) sedeCodes.add('CBA');
-        else if (dNorm.includes('la paz') || dNorm.includes('lpz')) sedeCodes.add('LPZ');
-        else if (dNorm.includes('el alto') || dNorm.includes('eal')) sedeCodes.add('EAL');
-        else if (dNorm.includes('cobija') || dNorm.includes('cbj')) sedeCodes.add('CBJ');
-      }
+      const directSede = user?.sedeNombre || (user?.sede && user.sede.nombre) || user?.sedeCodigo || '';
+      const checkSedeStr = (s) => {
+        const sNorm = (s || '').toLowerCase();
+        if (sNorm.includes('cochabamba') || sNorm.includes('cba')) sedeCodes.add('CBA');
+        else if (sNorm.includes('la paz') || sNorm.includes('lpz')) sedeCodes.add('LPZ');
+        else if (sNorm.includes('el alto') || sNorm.includes('eal')) sedeCodes.add('EAL');
+        else if (sNorm.includes('cobija') || sNorm.includes('cbj')) sedeCodes.add('CBJ');
+        else if (sNorm.includes('ivirgarzama') || sNorm.includes('ivi')) sedeCodes.add('IVI');
+        else if (sNorm.includes('santa cruz') || sNorm.includes('stc')) sedeCodes.add('STC');
+        else if (sNorm.includes('caranavi') || sNorm.includes('cvi')) sedeCodes.add('CVI');
+        else if (sNorm.includes('guayaramerin') || sNorm.includes('gua')) sedeCodes.add('GUA');
+        else if (sNorm.includes('puerto quijarro') || sNorm.includes('pto')) sedeCodes.add('PTO');
+      };
+      if (directSede) checkSedeStr(directSede);
       asignaciones.forEach(a => {
-        const s = (a.sedeNombre || a.sedeCodigo || '').toLowerCase();
-        if (s.includes('cochabamba') || s.includes('cba')) sedeCodes.add('CBA');
-        else if (s.includes('la paz') || s.includes('lpz')) sedeCodes.add('LPZ');
-        else if (s.includes('el alto') || s.includes('eal')) sedeCodes.add('EAL');
-        else if (s.includes('cobija') || s.includes('cbj')) sedeCodes.add('CBJ');
+        checkSedeStr(a.sedeNombre || a.sedeCodigo || '');
       });
       if (sedeCodes.size === 0) sedeCodes.add('CBA');
       allowedSedes = Array.from(sedeCodes);
@@ -9290,6 +9337,16 @@ document.addEventListener('change', (e) => {
         else if (un.includes('son') || un.includes('.son')) careerCodes.add('CARSON');
         else if (un.includes('med') || un.includes('.med')) careerCodes.add('CARMED');
         else if (un.includes('der') || un.includes('.der')) careerCodes.add('CARDER');
+        else if (un.includes('odo') || un.includes('.odo')) careerCodes.add('CARODO');
+        else if (un.includes('vet') || un.includes('.vet')) careerCodes.add('CARVET');
+        else if (un.includes('byf') || un.includes('bioq')) careerCodes.add('CARBYF');
+        else if (un.includes('enf') || un.includes('enfer')) careerCodes.add('CARENL');
+        else if (un.includes('fis') || un.includes('kine')) careerCodes.add('CARFIS');
+        else if (un.includes('nut') || un.includes('diet')) careerCodes.add('CARNYD');
+        else if (un.includes('adm') || un.includes('empr')) careerCodes.add('CARADM');
+        else if (un.includes('cpu') || un.includes('cont')) careerCodes.add('CARCPU');
+        else if (un.includes('ico') || un.includes('comerc')) careerCodes.add('CARICO');
+        else if (un.includes('cso') || un.includes('comun')) careerCodes.add('CARCSO');
         else careerCodes.add('CARSIS');
       }
 
@@ -9315,7 +9372,12 @@ document.addEventListener('change', (e) => {
       { code: 'CBA', name: 'COCHABAMBA (CBA)' },
       { code: 'LPZ', name: 'LA PAZ (LPZ)' },
       { code: 'EAL', name: 'EL ALTO (EAL)' },
-      { code: 'CBJ', name: 'COBIJA (CBJ)' }
+      { code: 'CBJ', name: 'COBIJA (CBJ)' },
+      { code: 'IVI', name: 'IVIRGARZAMA (IVI)' },
+      { code: 'STC', name: 'SANTA CRUZ (STC)' },
+      { code: 'CVI', name: 'CARANAVI (CVI)' },
+      { code: 'GUA', name: 'GUAYARAMERIN (GUA)' },
+      { code: 'PTO', name: 'PUERTO QUIJARRO (PTO)' }
     ];
 
     // 1. Sync Sede Select
@@ -9349,9 +9411,11 @@ document.addEventListener('change', (e) => {
     // 2. Sync Carrera Select
     if (careerSelect) {
       const allEntries = Object.entries(window.__SUPERVISION_CAREER_MAP__);
-      const careersToShow = scope.allowedCareers
-        ? allEntries.filter(([k]) => scope.allowedCareers.includes(k))
-        : allEntries;
+      let careersToShow = allEntries;
+      if (scope.allowedCareers && scope.allowedCareers.length > 0) {
+        const filtered = allEntries.filter(([k]) => scope.allowedCareers.includes(k));
+        if (filtered.length > 0) careersToShow = filtered;
+      }
 
       const currentCareerVal = careerSelect.value;
       careerSelect.innerHTML = careersToShow.map(([k, v]) => 
@@ -9418,8 +9482,16 @@ document.addEventListener('change', (e) => {
       }
     };
 
-    // 2. Instant Cache Load (0ms flash)
-    const cacheKey = 'sisa_cache_supervision_groups_' + cCode;
+    // 2. Resolve Active Sede
+    const activeSedeSelect = document.getElementById('supervision-sede-select');
+    const activeSedeCode = (activeSedeSelect && activeSedeSelect.value) || window.__SUPERVISION_ACTIVE_SEDE__ || 'CBA';
+    const branchInfo = (window.__SUPERVISION_SEDES_MAP__ && window.__SUPERVISION_SEDES_MAP__[activeSedeCode]) 
+      ? window.__SUPERVISION_SEDES_MAP__[activeSedeCode] 
+      : { id: 'ea4fb26e-11a9-452f-9bae-4962de2dd931', code: 'CBA', name: 'COCHABAMBA (CBA)' };
+    const branchId = branchInfo.id;
+
+    // 3. Instant Cache Load (0ms flash)
+    const cacheKey = `sisa_cache_supervision_groups_${activeSedeCode}_${cCode}`;
     const cachedDataStr = localStorage.getItem(cacheKey);
     let rawGroups = null;
 
@@ -9433,9 +9505,8 @@ document.addEventListener('change', (e) => {
       window.processAndRenderSupervisionData(rawGroups, careerInfo);
     }
 
-    // 3. Live Fetch from Gateway
+    // 4. Live Fetch from Gateway
     try {
-      const branchId = 'ea4fb26e-11a9-452f-9bae-4962de2dd931';
       const url = `/api/v1/catalogo-academico/groups?term=2-2026&branchOfficeId=${branchId}&careerId=${careerUuid}`;
       const res = await fetch(url);
       if (res.ok) {
@@ -9450,7 +9521,7 @@ document.addEventListener('change', (e) => {
       console.warn('Supervisión Curricular: Error fetching live groups, using local mirror:', err);
     }
 
-    // 4. Live Sync SISA PAC Statuses from Backend
+    // 5. Live Sync SISA PAC Statuses from Backend
     try {
       const pacHeaders = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
       const gId = (window.__SUPERVISION_ACTIVE_GESTION__ === 'I-2026') ? 1 : 2;
@@ -9483,24 +9554,20 @@ document.addEventListener('change', (e) => {
     const container = document.getElementById('supervision-semesters-container');
     if (!container) return;
 
+    const maxSemesters = careerInfo.maxSem || ((careerInfo.code === 'CARMED' || careerInfo.code === 'MED' || careerInfo.code === 'CARODO' || careerInfo.code === 'CARVET' || careerInfo.code === 'CARBYF') ? 10 : 8);
+    const carPrefix = careerInfo.prefix || (careerInfo.code.startsWith('CAR') ? careerInfo.code.substring(3) : careerInfo.code);
+
     // 1. Aggregate groups into curricular courses
     const coursesMap = {};
 
     rawGroups.forEach(g => {
       const courseName = (g.courseName || g.name || 'Materia').trim();
-      const carPrefix = (careerInfo && careerInfo.code)
-        ? (careerInfo.code.startsWith('CAR') ? careerInfo.code.substring(3) : careerInfo.code)
-        : 'SIS';
-      const resolvedCode = (typeof window.resolveOfficialCourseCode === 'function')
-        ? window.resolveOfficialCourseCode(courseName, [careerInfo.code])
-        : `${carPrefix}-101`;
-      const officialCode = (resolvedCode && resolvedCode.includes('-')) ? resolvedCode.split('/')[0].trim() : (resolvedCode || `${carPrefix}-101`);
 
       if (!coursesMap[courseName]) {
-        const sem = window.getCourseSemester(courseName, officialCode);
+        const sem = window.getCourseSemester(courseName, '', careerInfo.code, maxSemesters);
         coursesMap[courseName] = {
           courseName: courseName,
-          code: officialCode,
+          code: '',
           semester: sem,
           groups: [],
           teachers: [],
@@ -9531,6 +9598,27 @@ document.addEventListener('change', (e) => {
         if (g.schedule.includes('18:') || g.schedule.includes('19:') || g.schedule.includes('20:') || g.schedule.includes('21:')) {
           course.shifts.add('Nocturno');
         } else if (g.schedule.includes('14:') || g.schedule.includes('15:') || g.schedule.includes('16:') || g.schedule.includes('17:')) {
+          course.shifts.add('Tarde');
+        } else {
+          course.shifts.add('Mañana');
+        }
+      }
+      if (g.classroom) course.classrooms.add(g.classroom);
+    });
+
+    // 2. Assign clean official codes and balance semesters
+    const semCounters = {};
+    for (let s = 1; s <= maxSemesters; s++) semCounters[s] = 0;
+
+    Object.values(coursesMap).forEach(course => {
+      const sem = Math.min(Math.max(course.semester || 1, 1), maxSemesters);
+      course.semester = sem;
+      semCounters[sem] = (semCounters[sem] || 0) + 1;
+      const explicitCode = (typeof window.resolveOfficialCourseCode === 'function')
+        ? window.resolveOfficialCourseCode(course.courseName, [careerInfo.code], sem, semCounters[sem])
+        : '';
+      course.code = (explicitCode && explicitCode.includes('-')) ? explicitCode.split('/')[0].trim() : `${carPrefix}-${sem}${String(semCounters[sem]).padStart(2, '0')}`;
+    });
           course.shifts.add('Tarde');
         } else {
           course.shifts.add('Mañana');
@@ -10428,16 +10516,10 @@ document.addEventListener('change', (e) => {
   };
 
   window.onSupervisionSedeChange = function(newSede) {
-    const sedeNames = {
-      'CBA': 'Cochabamba (Campus Juan Pablo II)',
-      'LPZ': 'La Paz (Sede Académica)',
-      'EAL': 'El Alto (Sede Académica)',
-      'CBJ': 'Cobija (Sede Académica)'
-    };
-    const name = sedeNames[newSede] || newSede;
+    const branchInfo = (window.__SUPERVISION_SEDES_MAP__ && window.__SUPERVISION_SEDES_MAP__[newSede]) || { name: newSede };
     window.__SUPERVISION_ACTIVE_SEDE__ = newSede;
     if (typeof window.showToast === 'function') {
-      window.showToast(`📍 Sede Académica seleccionada: ${name}`);
+      window.showToast(`📍 Sede Académica seleccionada: ${branchInfo.name}`);
     }
     if (typeof window.renderSupervisionCurricular === 'function') {
       window.renderSupervisionCurricular();
