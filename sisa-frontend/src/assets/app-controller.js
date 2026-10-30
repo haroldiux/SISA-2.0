@@ -7613,9 +7613,81 @@ document.addEventListener('change', (e) => {
         else if (has('CONTROL, MODELOS Y SIMULACIÓN')) codes.push('IBI-223');
         else if (has('PROGRAMACIÓN')) codes.push('IBI-211');
       } else if (cCode.includes('MED')) {
-        if (has('ANATOMÍA HUMANA I') && !has('II')) codes.push('MED-111');
-        else if (has('ANATOMÍA HUMANA II')) codes.push('MED-121');
-        else if (has('INFORMÁTICA MÉDICA')) codes.push('MED-226');
+        // 1° SEMESTRE
+        if (has('ANATOMIA HUMANA I') && !has('II')) codes.push('MED-111');
+        else if (has('HISTOLOGIA HUMANA I') && !has('II')) codes.push('MED-112');
+        else if (has('GENETICA') || has('EMBRIOLOGIA')) codes.push('MED-113');
+        else if (has('BIOFISICA')) codes.push('MED-114');
+        else if (has('SOPORTE BASICO DE VIDA')) codes.push('MED-115');
+        else if (has('INGLES MEDICO I') && !has('II')) codes.push('MED-116');
+        // 2° SEMESTRE
+        else if (has('ANATOMIA HUMANA II')) codes.push('MED-121');
+        else if (has('HISTOLOGIA HUMANA II')) codes.push('MED-122');
+        else if (has('FISIOLOGIA HUMANA I') && !has('II')) codes.push('MED-123');
+        else if (has('BIOLOGIA MOLECULAR')) codes.push('MED-124');
+        else if (has('MEDICINA SOCIAL Y SALUD PUBLICA I') && !has('II')) codes.push('MED-125');
+        else if (has('INGLES MEDICO II')) codes.push('MED-126');
+        // 3° SEMESTRE
+        else if (has('FISIOLOGIA HUMANA II')) codes.push('MED-211');
+        else if (has('BIOQUIMICA CLINICA')) codes.push('MED-212');
+        else if (has('MICROBIOLOGIA MEDICA')) codes.push('MED-213');
+        else if (has('PARASITOLOGIA MEDICA')) codes.push('MED-214');
+        else if (has('BIOESTADISTICA')) codes.push('MED-215');
+        else if (has('PSICOLOGIA MEDICA')) codes.push('MED-216');
+        else if (has('IDIOMAS')) codes.push('MED-217');
+        // 4° SEMESTRE
+        else if (has('FISIOPATOLOGIA I') && !has('II')) codes.push('MED-221');
+        else if ((has('FARMACOLOGIA') || has('TERAPEUTICA')) && has('I') && !has('II')) codes.push('MED-222');
+        else if (has('PATOLOGIA GENERAL')) codes.push('MED-223');
+        else if (has('INMUNOLOGIA')) codes.push('MED-224');
+        else if (has('SEMIOLOGIA CLINICA I') && !has('II')) codes.push('MED-225');
+        else if (has('METODOLOGIA') || has('INVESTIGACION')) codes.push('MED-226');
+        // 5° SEMESTRE
+        else if (has('FISIOPATOLOGIA II')) codes.push('MED-311');
+        else if ((has('FARMACOLOGIA') || has('TERAPEUTICA')) && has('II')) codes.push('MED-312');
+        else if (has('PATOLOGIA ESPECIAL')) codes.push('MED-313');
+        else if (has('SEMIOLOGIA CLINICA II')) codes.push('MED-314');
+        else if (has('TECNICAS QUIRURGICAS')) codes.push('MED-315');
+        else if (has('INTERPRETACION DE LABORATORIO') || has('LABORATORIO CLINICO')) codes.push('MED-316');
+        else if (has('INFORMATICA MEDICA')) codes.push('MED-317');
+        // 6° SEMESTRE
+        else if (has('CARDIOLOGIA')) codes.push('MED-321');
+        else if (has('NEUMOLOGIA')) codes.push('MED-322');
+        else if (has('GASTROENTEROLOGIA')) codes.push('MED-323');
+        else if (has('NEFROLOGIA')) codes.push('MED-324');
+        else if (has('IMAGENOLOGIA')) codes.push('MED-325');
+        else if (has('NUTRICION CLINICA')) codes.push('MED-326');
+        // 7° SEMESTRE
+        else if (has('CIRUGIA I') || has('CIRUGIA GENERAL')) codes.push('MED-411');
+        else if (has('ENFERMEDADES TROPICALES') || has('INFECTOLOGIA')) codes.push('MED-412');
+        else if (has('DERMATOLOGIA')) codes.push('MED-413');
+        else if (has('REUMATOLOGIA')) codes.push('MED-414');
+        else if (has('HEMATOLOGIA')) codes.push('MED-415');
+        else if (has('EPIDEMIOLOGIA')) codes.push('MED-416');
+        // 8° SEMESTRE
+        else if (has('CIRUGIA II') || has('ABDOMEN')) codes.push('MED-421');
+        else if (has('TRAUMATOLOGIA') || has('ORTOPEDIA')) codes.push('MED-422');
+        else if (has('NEUROLOGIA')) codes.push('MED-423');
+        else if (has('ENDOCRINOLOGIA')) codes.push('MED-424');
+        else if (has('UROLOGIA')) codes.push('MED-425');
+        else if (has('OFTALMOLOGIA')) codes.push('MED-426');
+        else if (has('OTORRINOLARINGOLOGIA')) codes.push('MED-427');
+        // 9° SEMESTRE
+        else if (has('PEDIATRIA')) codes.push('MED-511');
+        else if (has('OBSTETRICIA') || has('GINECOLOGIA')) codes.push('MED-512');
+        else if (has('GERIATRIA') || has('GERONTOLOGIA')) codes.push('MED-513');
+        else if (has('PSIQUIATRIA')) codes.push('MED-514');
+        else if (has('PSICOPATOLOGIA')) codes.push('MED-515');
+        else if (has('MEDICINA SOCIAL Y SALUD PUBLICA II')) codes.push('MED-516');
+        // 10° SEMESTRE
+        else if (has('URGENCIAS')) codes.push('MED-521');
+        else if (has('ANESTESIOLOGIA')) codes.push('MED-522');
+        else if (has('MEDICINA LEGAL')) codes.push('MED-523');
+        else if (has('ONCOLOGIA')) codes.push('MED-524');
+        else if (has('GERENCIA HOSPITALARIA')) codes.push('MED-525');
+        else if (has('SALUD MATERNO INFANTIL')) codes.push('MED-526');
+        else if (has('SALUD OCUPACIONAL')) codes.push('MED-527');
+        else if (has('ETICA') || has('BIOETICA')) codes.push('MED-528');
       } else if (cCode.includes('ICO') || cCode.includes('CIC')) {
         if (has('MODELOS ECONOMETRICOS') || has('ECONOMETRÍA')) codes.push(cCode.includes('CIC') ? 'CIC-312' : 'ICO-412');
         else if (has('INGENIERÍA ECONÓMICA')) codes.push('ICO-314');
@@ -8985,7 +9057,93 @@ document.addEventListener('change', (e) => {
     const cUpper = (courseName || '').toUpperCase().trim();
     const code = (courseCode || '').toUpperCase().trim();
 
+    // MED - MEDICINA HUMANA
+    // 10° SEMESTRE
+    if (cUpper.includes('URGENCIAS MÉDICAS') || cUpper.includes('URGENCIAS MEDICAS') || cUpper.includes('URGENCIAS')) return 10;
+    if (cUpper.includes('ANESTESIOLOGÍA') || cUpper.includes('ANESTESIOLOGIA')) return 10;
+    if (cUpper.includes('MEDICINA LEGAL')) return 10;
+    if (cUpper.includes('ONCOLOGÍA CLÍNICA') || cUpper.includes('ONCOLOGIA CLINICA') || cUpper.includes('ONCOLOGÍA') || cUpper.includes('ONCOLOGIA')) return 10;
+    if (cUpper.includes('GERENCIA HOSPITALARIA')) return 10;
+    if (cUpper.includes('SALUD MATERNO INFANTIL')) return 10;
+    if (cUpper.includes('SALUD OCUPACIONAL')) return 10;
+    if (cUpper.includes('ÉTICA MÉDICA') || cUpper.includes('ETICA MEDICA') || cUpper.includes('BIOÉTICA') || cUpper.includes('BIOETICA')) return 10;
+
+    // 9° SEMESTRE
+    if (cUpper.includes('PEDIATRÍA') || cUpper.includes('PEDIATRIA')) return 9;
+    if (cUpper.includes('OBSTETRICIA') || cUpper.includes('GINECOLOGÍA') || cUpper.includes('GINECOLOGIA')) return 9;
+    if (cUpper.includes('GERIATRÍA') || cUpper.includes('GERONTOLOGÍA') || cUpper.includes('GERIATRIA')) return 9;
+    if (cUpper.includes('PSIQUIATRÍA') || cUpper.includes('PSIQUIATRIA')) return 9;
+    if (cUpper.includes('PSICOPATOLOGÍA') || cUpper.includes('PSICOPATOLOGIA')) return 9;
+    if (cUpper.includes('MEDICINA SOCIAL Y SALUD PÚBLICA II') || cUpper.includes('MEDICINA SOCIAL Y SALUD PUBLICA II')) return 9;
+
     // 8° SEMESTRE
+    if (cUpper.includes('CIRUGÍA II') || cUpper.includes('CIRUGIA II') || cUpper.includes('ABDOMEN, PELVIS') || cUpper.includes('ABDOMEN')) return 8;
+    if (cUpper.includes('TRAUMATOLOGÍA') || cUpper.includes('TRAUMATOLOGIA') || cUpper.includes('ORTOPEDIA')) return 8;
+    if (cUpper.includes('NEUROLOGÍA') || cUpper.includes('NEUROLOGIA')) return 8;
+    if (cUpper.includes('ENDOCRINOLOGÍA') || cUpper.includes('ENDOCRINOLOGIA')) return 8;
+    if (cUpper.includes('UROLOGÍA') || cUpper.includes('UROLOGIA')) return 8;
+    if (cUpper.includes('OFTALMOLOGÍA') || cUpper.includes('OFTALMOLOGIA')) return 8;
+    if (cUpper.includes('OTORRINOLARINGOLOGÍA') || cUpper.includes('OTORRINOLARINGOLOGIA')) return 8;
+
+    // 7° SEMESTRE
+    if (cUpper.includes('CIRUGÍA I') || cUpper.includes('CIRUGIA I') || cUpper.includes('CIRUGÍA GENERAL') || cUpper.includes('CIRUGIA GENERAL')) return 7;
+    if (cUpper.includes('ENFERMEDADES TROPICALES') || cUpper.includes('INFECTOLOGÍA') || cUpper.includes('INFECTOLOGIA')) return 7;
+    if (cUpper.includes('DERMATOLOGÍA') || cUpper.includes('DERMATOLOGIA')) return 7;
+    if (cUpper.includes('REUMATOLOGÍA') || cUpper.includes('REUMATOLOGIA')) return 7;
+    if (cUpper.includes('HEMATOLOGÍA') || cUpper.includes('HEMATOLOGIA')) return 7;
+    if (cUpper.includes('EPIDEMIOLOGÍA') || cUpper.includes('EPIDEMIOLOGIA')) return 7;
+
+    // 6° SEMESTRE
+    if (cUpper.includes('CARDIOLOGÍA') || cUpper.includes('CARDIOLOGIA')) return 6;
+    if (cUpper.includes('NEUMOLOGÍA') || cUpper.includes('NEUMOLOGIA')) return 6;
+    if (cUpper.includes('GASTROENTEROLOGÍA') || cUpper.includes('GASTROENTEROLOGIA')) return 6;
+    if (cUpper.includes('NEFROLOGÍA') || cUpper.includes('NEFROLOGIA')) return 6;
+    if (cUpper.includes('IMAGENOLOGÍA') || cUpper.includes('IMAGENOLOGIA')) return 6;
+    if (cUpper.includes('NUTRICIÓN CLÍNICA') || cUpper.includes('NUTRICION CLINICA')) return 6;
+
+    // 5° SEMESTRE
+    if (cUpper.includes('FISIOPATOLOGÍA II') || cUpper.includes('FISIOPATOLOGIA II')) return 5;
+    if (cUpper.includes('FARMACOLOGÍA Y TERAPEÚTICA II') || cUpper.includes('FARMACOLOGIA Y TERAPEUTICA II') || (cUpper.includes('FARMACOLOGÍA') && cUpper.includes('II'))) return 5;
+    if (cUpper.includes('PATOLOGÍA ESPECIAL') || cUpper.includes('PATOLOGIA ESPECIAL')) return 5;
+    if (cUpper.includes('SEMIOLOGÍA CLÍNICA II') || cUpper.includes('SEMIOLOGIA CLINICA II')) return 5;
+    if (cUpper.includes('TÉCNICAS QUIRÚRGICAS') || cUpper.includes('TECNICAS QUIRURGICAS')) return 5;
+    if (cUpper.includes('INTERPRETACIÓN DE LABORATORIO') || cUpper.includes('LABORATORIO CLÍNICO') || cUpper.includes('LABORATORIO CLINICO')) return 5;
+    if (cUpper.includes('INFORMÁTICA MÉDICA') || cUpper.includes('INFORMATICA MEDICA')) return 5;
+
+    // 4° SEMESTRE
+    if (cUpper.includes('FISIOPATOLOGÍA I') || cUpper.includes('FISIOPATOLOGIA I')) return 4;
+    if (cUpper.includes('FARMACOLOGÍA Y TERAPEÚTICA I') || cUpper.includes('FARMACOLOGIA Y TERAPEUTICA I') || (cUpper.includes('FARMACOLOGÍA') && cUpper.includes('I') && !cUpper.includes('II'))) return 4;
+    if (cUpper.includes('PATOLOGÍA GENERAL') || cUpper.includes('PATOLOGIA GENERAL')) return 4;
+    if (cUpper.includes('INMUNOLOGÍA') || cUpper.includes('INMUNOLOGIA')) return 4;
+    if (cUpper.includes('SEMIOLOGÍA CLÍNICA I') || cUpper.includes('SEMIOLOGIA CLINICA I')) return 4;
+    if (cUpper.includes('INVESTIGACIÓN CIÉNTIFICA') || cUpper.includes('INVESTIGACION CIENTIFICA') || (cUpper.includes('METODOLOGÍA') && cUpper.includes('INVESTIGACIÓN'))) return 4;
+
+    // 3° SEMESTRE
+    if (cUpper.includes('FISIOLOGÍA HUMANA II') || cUpper.includes('FISIOLOGIA HUMANA II')) return 3;
+    if (cUpper.includes('BIOQUÍMICA CLÍNICA') || cUpper.includes('BIOQUIMICA CLINICA')) return 3;
+    if (cUpper.includes('MICROBIOLOGÍA MÉDICA') || cUpper.includes('MICROBIOLOGIA MEDICA')) return 3;
+    if (cUpper.includes('PARASITOLOGÍA MÉDICA') || cUpper.includes('PARASITOLOGIA MEDICA')) return 3;
+    if (cUpper.includes('BIOESTADÍSTICA') || cUpper.includes('BIOESTADISTICA')) return 3;
+    if (cUpper.includes('PSICOLOGÍA MÉDICA') || cUpper.includes('PSICOLOGIA MEDICA')) return 3;
+    if (cUpper.includes('IDIOMAS (CASTELLANO') || (cUpper.includes('IDIOMAS') && cUpper.includes('QUECHUA'))) return 3;
+
+    // 2° SEMESTRE
+    if (cUpper.includes('ANATOMÍA HUMANA II') || cUpper.includes('ANATOMIA HUMANA II')) return 2;
+    if (cUpper.includes('HISTOLOGÍA HUMANA II') || cUpper.includes('HISTOLOGIA HUMANA II')) return 2;
+    if (cUpper.includes('FISIOLOGÍA HUMANA I') || cUpper.includes('FISIOLOGIA HUMANA I')) return 2;
+    if (cUpper.includes('BIOLOGÍA MOLECULAR') || cUpper.includes('BIOLOGIA MOLECULAR')) return 2;
+    if (cUpper.includes('MEDICINA SOCIAL Y SALUD PÚBLICA I') || cUpper.includes('MEDICINA SOCIAL Y SALUD PUBLICA I')) return 2;
+    if (cUpper.includes('INGLÉS MÉDICO II') || cUpper.includes('INGLES MEDICO II')) return 2;
+
+    // 1° SEMESTRE
+    if (cUpper.includes('ANATOMÍA HUMANA I') || cUpper.includes('ANATOMIA HUMANA I')) return 1;
+    if (cUpper.includes('HISTOLOGÍA HUMANA I') || cUpper.includes('HISTOLOGIA HUMANA I')) return 1;
+    if (cUpper.includes('GENÉTICA Y EMBRIOLOGÍA') || cUpper.includes('GENETICA Y EMBRIOLOGIA')) return 1;
+    if (cUpper.includes('BIOFÍSICA') || cUpper.includes('BIOFISICA')) return 1;
+    if (cUpper.includes('SOPORTE BÁSICO DE VIDA') || cUpper.includes('SOPORTE BASICO DE VIDA')) return 1;
+    if (cUpper.includes('INGLÉS MÉDICO I') || cUpper.includes('INGLES MEDICO I')) return 1;
+
+    // 8° SEMESTRE INGENIERÍA
     if (cUpper.includes('TITULACI')) return 8;
     if (cUpper.includes('GESTIÓN ESTRATÉGICA DE EMPRESAS') || cUpper.includes('GESTION ESTRATEGICA DE EMPRESAS')) return 8;
     if (cUpper.includes('TALLER DE INGENIERÍA DE SOFTWARE') || cUpper.includes('TALLER DE INGENIERIA DE SOFTWARE')) return 8;
@@ -9053,7 +9211,7 @@ document.addEventListener('change', (e) => {
     if (cUpper.includes('INGLÉS TÉCNICO I') || cUpper.includes('INGLES TECNICO I')) return 1;
 
     // Fallback: analyze code
-    if (code.startsWith('SIS-') || code.startsWith('ELC-') || code.startsWith('SON-')) {
+    if (code.startsWith('SIS-') || code.startsWith('ELC-') || code.startsWith('SON-') || code.startsWith('MED-') || code.startsWith('IBI-')) {
       const parts = code.split('-');
       if (parts[1] && parts[1].length >= 2) {
         const y = parseInt(parts[1][0], 10);
@@ -9330,10 +9488,13 @@ document.addEventListener('change', (e) => {
 
     rawGroups.forEach(g => {
       const courseName = (g.courseName || g.name || 'Materia').trim();
+      const carPrefix = (careerInfo && careerInfo.code)
+        ? (careerInfo.code.startsWith('CAR') ? careerInfo.code.substring(3) : careerInfo.code)
+        : 'SIS';
       const resolvedCode = (typeof window.resolveOfficialCourseCode === 'function')
         ? window.resolveOfficialCourseCode(courseName, [careerInfo.code])
-        : 'SIS-101';
-      const officialCode = (resolvedCode && resolvedCode.includes('-')) ? resolvedCode.split('/')[0].trim() : (resolvedCode || 'SIS-101');
+        : `${carPrefix}-101`;
+      const officialCode = (resolvedCode && resolvedCode.includes('-')) ? resolvedCode.split('/')[0].trim() : (resolvedCode || `${carPrefix}-101`);
 
       if (!coursesMap[courseName]) {
         const sem = window.getCourseSemester(courseName, officialCode);
@@ -9381,25 +9542,38 @@ document.addEventListener('change', (e) => {
     // Resolve common subjects and with which careers they are shared
     Object.values(coursesMap).forEach(course => {
       const name = (course.courseName || '').toUpperCase();
-      if (course.code === 'SIS-105' || name.includes('ÁLGEBRA') || name.includes('ALGEBRA')) {
-        course.isCommon = true;
-        course.commonCareers = ['Ing. Electrónica', 'Ing. de Sonido'];
-      } else if (course.code === 'SIS-214' || name.includes('BASE DE DATOS')) {
-        course.isCommon = true;
-        course.commonCareers = ['Ing. Electrónica', 'Ing. Telecomunicaciones'];
-      } else if (name.includes('PROBABILIDAD') || name.includes('ESTADÍSTICA') || name.includes('ESTADISTICA')) {
-        course.isCommon = true;
-        course.commonCareers = ['Ing. Comercial', 'Ing. Financiera'];
-      } else if (name.includes('CÁLCULO I') || name.includes('CALCULO I') || name.includes('CÁLCULO 1') || name.includes('CALCULO 1')) {
-        course.isCommon = true;
-        course.commonCareers = ['Ing. Electrónica', 'Ing. Biomédica'];
-      } else if (name.includes('METODOLOGÍA') || name.includes('METODOLOGIA') || name.includes('INVESTIGACIÓN') || name.includes('INVESTIGACION')) {
-        course.isCommon = true;
-        course.commonCareers = ['Derecho', 'Ing. Comercial'];
-      } else if (course.groups.some(g => g.groupLinkId != null)) {
-        course.isCommon = true;
-        if (course.commonCareers.length === 0) {
-          course.commonCareers = ['Ing. Electrónica'];
+      const isMedicine = (careerInfo.code === 'CARMED' || careerInfo.code === 'MED');
+
+      if (isMedicine) {
+        // En Medicina, las materias tienen orientación biomédica exclusiva.
+        // Solo se marcan como comunes si existe un enlace de grupo real (groupLinkId)
+        if (course.groups.some(g => g.groupLinkId != null)) {
+          course.isCommon = true;
+          if (course.commonCareers.length === 0) {
+            course.commonCareers = ['Bioquímica y Farmacia', 'Odontología'];
+          }
+        }
+      } else {
+        if (course.code === 'SIS-105' || name.includes('ÁLGEBRA') || name.includes('ALGEBRA')) {
+          course.isCommon = true;
+          course.commonCareers = ['Ing. Electrónica', 'Ing. de Sonido'];
+        } else if (course.code === 'SIS-214' || name.includes('BASE DE DATOS')) {
+          course.isCommon = true;
+          course.commonCareers = ['Ing. Electrónica', 'Ing. Telecomunicaciones'];
+        } else if ((name.includes('PROBABILIDAD') || name.includes('ESTADÍSTICA') || name.includes('ESTADISTICA')) && !name.includes('BIOESTADÍSTICA') && !name.includes('BIOESTADISTICA')) {
+          course.isCommon = true;
+          course.commonCareers = ['Ing. Comercial', 'Ing. Financiera'];
+        } else if (name.includes('CÁLCULO I') || name.includes('CALCULO I') || name.includes('CÁLCULO 1') || name.includes('CALCULO 1')) {
+          course.isCommon = true;
+          course.commonCareers = ['Ing. Electrónica', 'Ing. Biomédica'];
+        } else if (name.includes('METODOLOGÍA') || name.includes('METODOLOGIA') || name.includes('INVESTIGACIÓN') || name.includes('INVESTIGACION')) {
+          course.isCommon = true;
+          course.commonCareers = ['Derecho', 'Ing. Comercial'];
+        } else if (course.groups.some(g => g.groupLinkId != null)) {
+          course.isCommon = true;
+          if (course.commonCareers.length === 0) {
+            course.commonCareers = ['Ing. Electrónica'];
+          }
         }
       }
 
@@ -9709,9 +9883,10 @@ document.addEventListener('change', (e) => {
       };
     });
 
-    // 3. Group into 8 Semesters
+    // 3. Group into Semesters (10 for Medicina / Odontología, 8 for others)
+    const maxSemesters = (careerInfo.code === 'CARMED' || careerInfo.code === 'MED' || careerInfo.code === 'CARODO') ? 10 : 8;
     const semesters = {};
-    for (let s = 1; s <= 8; s++) {
+    for (let s = 1; s <= maxSemesters; s++) {
       semesters[s] = {
         number: s,
         name: `${s}º SEMESTRE`,
@@ -9726,7 +9901,7 @@ document.addEventListener('change', (e) => {
     }
 
     Object.values(coursesMap).forEach(c => {
-      const sNum = Math.min(Math.max(c.semester || 1, 1), 8);
+      const sNum = Math.min(Math.max(c.semester || 1, 1), maxSemesters);
       const sem = semesters[sNum];
       sem.courses.push(c);
       sem.totalCount++;
@@ -9749,7 +9924,7 @@ document.addEventListener('change', (e) => {
       else globalVacant++;
     });
 
-    for (let s = 1; s <= 8; s++) {
+    for (let s = 1; s <= maxSemesters; s++) {
       const sem = semesters[s];
       sem.courses.sort((a, b) => a.code.localeCompare(b.code));
       sem.compliancePct = sem.totalCount > 0 ? Math.round((sem.approvedCount / sem.totalCount) * 100) : 0;
@@ -10303,7 +10478,8 @@ document.addEventListener('change', (e) => {
     const timeStr = new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
 
     let semesterTablesHtml = '';
-    for (let s = 1; s <= 8; s++) {
+    const maxSemesters = (career && (career.code === 'CARMED' || career.code === 'MED' || career.code === 'CARODO')) ? 10 : 8;
+    for (let s = 1; s <= maxSemesters; s++) {
       const sem = data.semesters[s];
       if (!sem || sem.courses.length === 0) continue;
 
