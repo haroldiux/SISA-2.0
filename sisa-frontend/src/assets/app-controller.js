@@ -9112,6 +9112,8 @@ document.addEventListener('change', (e) => {
         const cCod = (a.carreraCodigo || a.carreraCode || '').toUpperCase();
         if (cCod && window.__SUPERVISION_CAREER_MAP__[cCod]) {
           careerCodes.add(cCod);
+        } else if (cCod && window.__SUPERVISION_CAREER_MAP__['CAR' + cCod]) {
+          careerCodes.add('CAR' + cCod);
         } else if (cNom) {
           for (const [k, v] of Object.entries(window.__SUPERVISION_CAREER_MAP__)) {
             const vNom = v.name.toLowerCase();
