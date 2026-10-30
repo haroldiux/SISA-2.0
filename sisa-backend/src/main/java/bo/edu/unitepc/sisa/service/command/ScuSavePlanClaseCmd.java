@@ -19,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -100,11 +102,24 @@ public class ScuSavePlanClaseCmd {
         plan.setPlanType(request.getTemplateType() != null ? request.getTemplateType() : "TEORICO");
         plan.setActualizadoEn(OffsetDateTime.now());
 
-        // Update momentos
-        plan.getMomentos().clear();
+        // Update momentos in place to preserve IDs and prevent uq_plan_momento unique constraint violations
+        Map<TipoMomentoPedagogico, MomentoPedagogico> existingMap = plan.getMomentos().stream()
+                .filter(m -> m.getTipoMomento() != null)
+                .collect(Collectors.toMap(MomentoPedagogico::getTipoMomento, Function.identity(), (a, b) -> a));
+
+        Set<TipoMomentoPedagogico> incomingTipos = EnumSet.noneOf(TipoMomentoPedagogico.class);
+
         for (ScuMomentoPedagogicoDto mDto : request.getMomentos()) {
-            MomentoPedagogico m = new MomentoPedagogico();
-            m.setTipoMomento(mDto.getTipoMomento());
+            TipoMomentoPedagogico tipo = mDto.getTipoMomento();
+            if (tipo == null) continue;
+            incomingTipos.add(tipo);
+
+            MomentoPedagogico m = existingMap.get(tipo);
+            if (m == null) {
+                m = new MomentoPedagogico();
+                m.setTipoMomento(tipo);
+                plan.addMomento(m);
+            }
             m.setDuracionMin(mDto.getDuracionMin() != null && mDto.getDuracionMin() > 0 ? mDto.getDuracionMin() : 10);
             m.setActividadesDocente(mDto.getActividadesDocente() != null && !mDto.getActividadesDocente().isBlank()
                     ? mDto.getActividadesDocente().trim() : "Orientación y explicación del docente");
@@ -112,8 +127,9 @@ public class ScuSavePlanClaseCmd {
                     ? mDto.getActividadesEstudiante().trim() : "Participación activa y desarrollo de actividades");
             m.setIndicadorEvaluacion(mDto.getIndicadorEvaluacion() != null && !mDto.getIndicadorEvaluacion().isBlank()
                     ? mDto.getIndicadorEvaluacion().trim() : "Verificación de comprensión y logro de objetivos");
-            plan.addMomento(m);
         }
+
+        plan.getMomentos().removeIf(m -> !incomingTipos.contains(m.getTipoMomento()));
 
         PlanDeClase saved = this.planRepository.save(plan);
         return this._mapToResponse(saved);
