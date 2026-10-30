@@ -66,7 +66,11 @@ public class SecurityConfig {
                                 "/api/v1/office/**",
                                 "/api/v1/system/office/**",
                                 "/api/v1/planificaciones/**",
-                                "/api/v1/system/planning/**"
+                                "/api/v1/system/planning/**",
+                                "/api/v1/asistencias/**",
+                                "/api/v1/system/asistencias/**",
+                                "/api/v1/seguimiento/**",
+                                "/api/v1/system/seguimiento/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

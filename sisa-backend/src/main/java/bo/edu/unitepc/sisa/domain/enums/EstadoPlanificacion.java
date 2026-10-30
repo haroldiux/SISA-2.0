@@ -9,5 +9,6 @@ public enum EstadoPlanificacion {
     BORRADOR,
     ENVIADO_REVISION,
     OBSERVADO,
-    APROBADO
+    APROBADO,
+    EJECUTADO
 }

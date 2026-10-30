@@ -68,5 +68,12 @@ export const SCU_API = {
     SESION: '/api/v1/asistencias/sesion',
     SESIONES_BY_MATERIA: (materiaCodigo: string) => `/api/v1/asistencias/sesiones/${materiaCodigo}`,
     RESUMEN_BY_MATERIA: (materiaCodigo: string) => `/api/v1/asistencias/resumen/${materiaCodigo}`
+  },
+  SEGUIMIENTO: {
+    BASE: '/api/v1/seguimiento',
+    SESION: '/api/v1/seguimiento/sesion',
+    SESION_BY_ID: (sesionId: number | string) => `/api/v1/seguimiento/sesion/${sesionId}`,
+    MATERIA: (materiaCodigo: string) => `/api/v1/seguimiento/materia/${materiaCodigo}`,
+    SEMAFORO_CARRERA: (carreraCodigo: string) => `/api/v1/seguimiento/semaforo-carrera/${carreraCodigo}`
   }
 };

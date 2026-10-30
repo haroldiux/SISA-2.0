@@ -6,7 +6,7 @@ This specification establishes the official requirements and formal behavioral c
 
 The system binds the persona **Lic. Mariana Rios Vargas** (`dir.carrera.sis`) to the career **Ingeniería de Sistemas** (`CARSIS`, SEA UUID `648febfd-dc79-4dd8-a8aa-dc7549ef649b`) at **Sede Central Cochabamba** (SEA Gateway Branch UUID `ea4fb26e-11a9-452f-9bae-4962de2dd931`).
 
-This module replaces informal browser dialogs (`prompt()`) and volatile client-only reviews with institutional REST-driven digital governance, structured pedagogical evaluations, multi-career common subject auditing, teacher-director feedback loops, and semester batch certification.
+This module replaces informal browser dialogs (`prompt()`) and volatile client-only reviews with institutional REST-driven digital governance, structured pedagogical evaluations, multi-career common subject auditing, teacher-director feedback loops, semester batch certification, and real-time curricular traffic-light tracking.
 
 ---
 
@@ -100,6 +100,32 @@ This module replaces informal browser dialogs (`prompt()`) and volatile client-o
 ### REQ-SUP-09: Persistent Career PAC Ingestion & Auto-Provisioning
 - **REQ-SUP-09.1**: The backend MUST expose `GET /api/v1/planificaciones/pac/by-carrera/{carreraId}?gestionId={gestionId}` returning all PAC records for the career and academic term.
 - **REQ-SUP-09.2**: If a course from the SEA Gateway catalog does not have a pre-existing PAC entity in PostgreSQL, the system MUST automatically link or provision a provisional PAC in `ENVIADO_REVISION` state so the Director can evaluate and endorse it seamlessly.
+
+### REQ-SUP-10: Pestaña de Semáforo Curricular de Carrera y Ribbon de KPIs Tri-Color
+- **REQ-SUP-10.1**: The supervision workspace (`view2`) MUST include the interactive tab button `#supervision-tab-semaforo` (*"Semáforo de Avance"*), activating the traffic light analytical view.
+- **REQ-SUP-10.2**: When active, the view MUST display the top ribbon `#semaforo-kpi-ribbon` with real-time aggregated metrics:
+  - `Total Asignaturas`: Conteo de todas las materias del pensum evaluadas.
+  - `Al Día (🟢 Verde)`: Asignaturas con $\Delta\% \ge -10.0\%$.
+  - `En Atención (🟡 Amarillo)`: Asignaturas con $-25.0\% \le \Delta\% < -10.0\%$.
+  - `Riesgo Crítico (🔴 Rojo)`: Asignaturas con retraso grave ($\Delta\% < -25.0\%$) o penalizadas normativamente.
+  - `Sin Plan de Clase`: Contador específico de materias con infracción normativa de microplanificación.
+- **REQ-SUP-10.3**: Courses MUST be aggregated into semester accordions (1º to 8º Semestre), rendering interactive comparison tables contrasting the Planned Academic Progress (Week 13 cut-off over 20 weeks = 65.0%) against the Real Classroom Progress calculated from verified session execution scores.
+
+### REQ-SUP-11: Algoritmo Tri-Color Ponderado y Penalización Normativa Estricta
+- **REQ-SUP-11.1**: The traffic light engine (`ScuGetSemaforoCarreraCmd`) MUST compute the delta differential $\Delta\% = \text{Avance Real} - \text{Avance Planeado}$ and assign institutional status:
+  - 🟢 **VERDE (Al Día)**: $\Delta\% \ge -10.0\%$ (variance $\le 2$ weeks behind schedule).
+  - 🟡 **AMARILLO (En Atención)**: $-25.0\% \le \Delta\% < -10.0\%$ (variance between 2 and 5 weeks, requires syllabus rescheduling).
+  - 🔴 **ROJO (Riesgo Crítico)**: $\Delta\% < -25.0\%$ (variance $> 5$ weeks behind schedule).
+- **REQ-SUP-11.2**: **Strict Normative Penalty**: If any course lacks lesson planning (`tienePlanClase == false` or `totalPlanes == 0`), the engine MUST override the mathematical score and force the classification directly to 🔴 **ROJO**, with `motivoAlerta`: *"Penalización crítica: Asignatura sin Plan de Clase registrado"*.
+- **REQ-SUP-11.3**: Penalized subjects MUST display a pulsating red warning badge in the supervision table to demand immediate departmental intervention.
+
+### REQ-SUP-12: Modal Institucional de Auditoría y Detalle Pedagógico Longitudinal
+- **REQ-SUP-12.1**: Each course row in the traffic light view MUST feature an action button *"Ver Auditoría"*.
+- **REQ-SUP-12.2**: Clicking *"Ver Auditoría"* MUST open modal `#modal-supervision-seguimiento-detalle` and retrieve course telemetry from `GET /api/v1/seguimiento/materia/{materiaCodigo}`.
+- **REQ-SUP-12.3**: The modal MUST render the longitudinal course dossier:
+  - Didactic moment compliance percentages (Inicio 15', Desarrollo 60', Cierre 15').
+  - Didactic resources frequency histogram (e.g. Proyector, IDE, Pizarra).
+  - Chronological session execution log with dates, session numbers, topics, scores, and teacher classroom remarks.
 
 ---
 
@@ -214,3 +240,24 @@ This module replaces informal browser dialogs (`prompt()`) and volatile client-o
 **Then** the supervision dashboard smoothly reloads offering groups for `CARELE`  
 **And** the badge displays "Ingeniería Electrónica"  
 **And** accordions render courses for `CARELE` (e.g. `ELC-101` series) with independent KPI metrics.
+
+### Scenario 13: Tablero de Semáforo de Carrera con Ribbon Tri-Color
+**Given** user `dir.carrera.sis` selects the tab *"Semáforo de Avance"* (`#supervision-tab-semaforo`)  
+**When** the client issues `GET /api/v1/seguimiento/semaforo-carrera/CARSIS`  
+**Then** `#semaforo-kpi-ribbon` displays the global counters: Total, Verde, Amarillo, Rojo y Sin Plan de Clase  
+**And** the semester accordions render the comparative progress table displaying Planned Progress (65.00%), Real Progress %, Delta $\Delta\%$, and Traffic Light Badges (🟢, 🟡, 🔴).
+
+### Scenario 14: Penalización Forzada a Semáforo Rojo por Ausencia de Plan de Clase
+**Given** subject `SIS-412` has 0 lesson plans registered (`tienePlanClase == false`)  
+**When** the traffic light endpoint processes the career subjects  
+**Then** `SIS-412` is forced to `ColorSemaforo.ROJO` regardless of any session hours  
+**And** the table row displays a pulsating badge `🔴 Falta Plan de Clase` with alert `motivoAlerta: "Penalización crítica: Asignatura sin Plan de Clase registrado"`  
+**And** the counter `Sin Plan de Clase` in the KPI ribbon increments by 1.
+
+### Scenario 15: Apertura del Modal de Auditoría Pedagógica Longitudinal
+**Given** course `SIS-213` is listed in the Traffic Light table  
+**When** the Director clicks the action button *"Ver Auditoría"*  
+**Then** modal `#modal-supervision-seguimiento-detalle` opens  
+**And** fetches longitudinal records from `GET /api/v1/seguimiento/materia/SIS-213`  
+**And** renders didactic moment averages (Inicio: 100%, Desarrollo: 95.5%, Cierre: 90.9%)  
+**And** displays the didactic resources frequency histogram alongside the full chronological session table.

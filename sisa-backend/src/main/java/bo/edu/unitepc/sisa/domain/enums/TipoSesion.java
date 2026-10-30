@@ -9,5 +9,6 @@ public enum TipoSesion {
     TEORICA,
     PRACTICA,
     LABORATORIO,
-    TALLER
+    TALLER,
+    CLINICA
 }

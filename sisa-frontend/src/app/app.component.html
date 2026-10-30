@@ -2782,6 +2782,196 @@
                   <input type="hidden" id="asistencia-comision-select">
                 </div>
 
+                <!-- PANEL: SEGUIMIENTO PEDAGÓGICO DE SESIÓN EN AULA (Fase 3) -->
+                <div id="panel-seguimiento-sesion" class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-900/60 shadow-sm space-y-4 no-print">
+                  <!-- Header del Panel -->
+                  <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold text-sm shadow-2xs">
+                        <i data-lucide="compass" class="w-5 h-5"></i>
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <h3 class="text-sm font-bold text-slate-900 dark:text-white font-display">Seguimiento Pedagógico de Sesión en Aula</h3>
+                          <!-- Status Badge -->
+                          <span id="badge-seguimiento-status" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>Pendiente de Registro</span>
+                          </span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Verificación curricular en aula en tiempo real (Registro ágil &lt; 5 seg)</p>
+                      </div>
+                    </div>
+
+                    <button type="button" id="btn-guardar-seguimiento" onclick="window.saveSeguimientoSesion()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Guardar seguimiento de la clase actual">
+                      <i data-lucide="check-circle" class="w-4 h-4"></i>
+                      <span id="btn-guardar-seguimiento-text">Guardar Seguimiento de Clase</span>
+                    </button>
+                  </div>
+
+                  <!-- Grid 2 Tarjetas: Macroplanificación vs Planificación Personal de Aula -->
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                    <!-- Tarjeta 1: Macroplanificación Oficial (Matriz 7) -->
+                    <div class="p-4 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="landmark" class="w-4 h-4 text-slate-500"></i> Macroplanificación Oficial (Matriz 7)
+                          </span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                          Normativo (Solo Lectura)
+                        </span>
+                      </div>
+
+                      <div class="space-y-2 text-xs">
+                        <div>
+                          <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Unidad Temática:</span>
+                          <div id="seg-macro-unidad" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-slate-800 dark:text-slate-100">
+                            Cargando unidad temática oficial...
+                          </div>
+                        </div>
+
+                        <div>
+                          <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Tema Oficial del Día:</span>
+                          <div id="seg-macro-tema" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                            Cargando tema del cronograma institucional...
+                          </div>
+                        </div>
+
+                        <!-- Metadatos de la sesión -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                            <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Semana</span>
+                            <span id="seg-macro-semana" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">Sem 13</span>
+                          </div>
+                          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                            <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Sesión N°</span>
+                            <span id="seg-macro-sesion" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">#--</span>
+                          </div>
+                          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                            <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Horario</span>
+                            <span id="seg-macro-horario" class="text-xs font-bold text-slate-700 dark:text-slate-300">--:--</span>
+                          </div>
+                          <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                            <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Aula</span>
+                            <span id="seg-macro-aula" class="text-xs font-bold text-slate-700 dark:text-slate-300">--</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tarjeta 2: Planificación Personal de Aula (Plan de Clase) -->
+                    <div class="p-4 rounded-xl bg-teal-50/40 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-900/60 space-y-3.5">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs font-bold text-teal-950 dark:text-teal-200 flex items-center gap-1.5">
+                            <i data-lucide="user-check" class="w-4 h-4 text-teal-600"></i> Planificación Personal de Aula
+                          </span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-teal-100 dark:bg-teal-900/80 text-teal-800 dark:text-teal-300 uppercase tracking-wide">
+                          Autonomía Docente
+                        </span>
+                      </div>
+
+                      <!-- Momentos Pedagógicos -->
+                      <div class="space-y-1.5">
+                        <label class="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <i data-lucide="clock" class="w-3.5 h-3.5 text-teal-600"></i> Momentos Pedagógicos Desarrollados:
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
+                            <input type="checkbox" id="seg-momento-inicio" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <div class="min-w-0">
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Inicio (15')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Motivación / encuadre</span>
+                            </div>
+                          </label>
+                          <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
+                            <input type="checkbox" id="seg-momento-desarrollo" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <div class="min-w-0">
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Desarrollo (60')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Construcción activa</span>
+                            </div>
+                          </label>
+                          <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
+                            <input type="checkbox" id="seg-momento-cierre" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <div class="min-w-0">
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Cierre (15')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Síntesis y retro</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Cumplimiento de Tema Oficial (Radio buttons rápidos) -->
+                      <div class="space-y-1.5">
+                        <label class="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <i data-lucide="target" class="w-3.5 h-3.5 text-teal-600"></i> Cumplimiento del Tema Oficial:
+                        </label>
+                        <div class="grid grid-cols-3 gap-2" role="group">
+                          <button type="button" id="seg-btn-total" onclick="window.setSeguimientoCumplimiento('TOTALMENTE_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-xs transition-all cursor-pointer">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                            <span>Total (+1.0)</span>
+                          </button>
+                          <button type="button" id="seg-btn-parcial" onclick="window.setSeguimientoCumplimiento('PARCIALMENTE_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-all cursor-pointer">
+                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                            <span>Parcial (+0.5)</span>
+                          </button>
+                          <button type="button" id="seg-btn-no" onclick="window.setSeguimientoCumplimiento('NO_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-all cursor-pointer">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            <span>No (0.0)</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Recursos Didácticos Utilizados -->
+                      <div class="space-y-1.5">
+                        <label class="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <i data-lucide="layers" class="w-3.5 h-3.5 text-teal-600"></i> Recursos Didácticos Utilizados en Clase:
+                        </label>
+                        <div id="seg-recursos-container" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Pizarra Acrílica" checked class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>Pizarra</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Diapositivas" checked class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>Diapositivas</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Proyector Multimedia" checked class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>Proyector</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Guía de Laboratorio / Taller" class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>Guía Lab</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Código Fuente / IDE" class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>IDE / Código</span>
+                          </label>
+                          <label class="flex items-center gap-1.5 p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" value="Plataforma Virtual Moodle" class="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 seg-recurso-cb">
+                            <span>Moodle</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <!-- Observaciones Breves -->
+                      <div class="space-y-1">
+                        <label for="seg-observaciones-input" class="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <i data-lucide="message-square" class="w-3.5 h-3.5 text-teal-600"></i> Observaciones Breves de Aula:
+                        </label>
+                        <textarea id="seg-observaciones-input" rows="2" placeholder="Notas sobre el avance pedagógico, imprevistos o aspectos a reforzar la próxima clase..." class="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+
                 <!-- Real-Time KPI Ribbon Container -->
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 no-print">
                   <!-- Card 1: Total Inscritos -->
@@ -3097,14 +3287,75 @@
                   <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                   <span>Planes de Clase</span>
                 </button>
+
+                <button type="button" id="supervision-tab-semaforo" onclick="window.setSupervisionActiveTab('SEMAFORO')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer">
+                  <i data-lucide="traffic-cone" class="w-3.5 h-3.5"></i>
+                  <span>🚦 Semáforo de Avance</span>
+                </button>
               </div>
 
             </div>
 
           </div>
 
+          <!-- Ribbon de KPIs Tri-Color del Semáforo Curricular (Fase 4) -->
+          <div id="semaforo-kpi-ribbon" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="KPIs del Semáforo Curricular">
+            <!-- Card 1: Total Asignaturas -->
+            <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider">Total Materias</span>
+                <i data-lucide="book-marked" class="w-4 h-4 text-slate-500"></i>
+              </div>
+              <div class="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono" id="kpi-semaforo-total">0</div>
+              <div class="text-[10px] text-slate-500">Malla curricular activa</div>
+            </div>
+
+            <!-- Card 2: Verde Al Día -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 shadow-2xs flex flex-col justify-between">
+              <div class="flex items-center justify-between text-emerald-700 dark:text-emerald-300">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider">🟢 Al Día (Verde)</span>
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+              </div>
+              <div class="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono" id="kpi-semaforo-verde">0</div>
+              <div class="text-[10px] text-emerald-600 dark:text-emerald-400">Δ ≥ -10.0% (Tolerable)</div>
+            </div>
+
+            <!-- Card 3: Amarillo En Atención -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 shadow-2xs flex flex-col justify-between">
+              <div class="flex items-center justify-between text-amber-700 dark:text-amber-300">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider">🟡 En Atención</span>
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+              </div>
+              <div class="mt-2 text-2xl font-black text-amber-700 dark:text-amber-300 font-mono" id="kpi-semaforo-amarillo">0</div>
+              <div class="text-[10px] text-amber-600 dark:text-amber-400">Desfase -10% a -25%</div>
+            </div>
+
+            <!-- Card 4: Rojo Crítico -->
+            <div class="p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 shadow-2xs flex flex-col justify-between">
+              <div class="flex items-center justify-between text-rose-700 dark:text-rose-300">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider">🔴 Crítico (Rojo)</span>
+                <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+              </div>
+              <div class="mt-2 text-2xl font-black text-rose-700 dark:text-rose-300 font-mono" id="kpi-semaforo-rojo">0</div>
+              <div class="text-[10px] text-rose-600 dark:text-rose-400">Δ &lt; -25% o Sin Plan</div>
+            </div>
+
+            <!-- Card 5: Avance Promedio vs 65.0% -->
+            <div class="p-3.5 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 shadow-2xs flex flex-col justify-between">
+              <div class="flex items-center justify-between text-[#4f39f6] dark:text-indigo-300">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider">Avance Promedio</span>
+                <i data-lucide="trending-up" class="w-4 h-4 text-[#4f39f6]"></i>
+              </div>
+              <div class="mt-2 flex items-baseline gap-2">
+                <span class="text-2xl font-black text-[#4f39f6] dark:text-indigo-200 font-mono" id="kpi-semaforo-promedio">0.0%</span>
+                <span class="text-[10px] font-bold text-slate-500">/ 65.0%</span>
+              </div>
+              <div class="text-[10px] text-indigo-600 dark:text-indigo-400">Corte Semana 13</div>
+            </div>
+          </div>
+
           <!-- Tarjetas de Métricas y Supervisión Curricular (Interactiva con Filtrado Directo) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Métricas de Supervisión Curricular">
+          <div id="supervision-metrics-standard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Métricas de Supervisión Curricular">
             
             <!-- Card 1: Por Auditar / En Revisión -->
             <div id="card-supervision-kpi-pending" onclick="window.filterSupervisionTable('EN_REVISION')"
@@ -4272,6 +4523,115 @@
           <span>Certificar Semestre</span>
         </button>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Institucional: Auditoría y Detalle Pedagógico de Seguimiento de Sesiones (Fase 4) -->
+<div id="modal-supervision-seguimiento-detalle" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    
+    <!-- Header -->
+    <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-[#4f39f6] flex items-center justify-center shadow-xs">
+          <i data-lucide="line-chart" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="modal-seg-materia-title" class="text-base font-bold text-slate-900 dark:text-white font-display">Auditoría de Asignatura</h3>
+            <span id="modal-seg-semaforo-badge" class="px-2 py-0.5 rounded text-[10px] font-black uppercase">--</span>
+          </div>
+          <p id="modal-seg-docente-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Docente: -- • Carrera: --</p>
+        </div>
+      </div>
+      <button type="button" onclick="window.closeModalSeguimientoDetalle()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" title="Cerrar modal de auditoría">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Body con scroll -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar text-xs">
+      
+      <!-- Métricas de Momentos Pedagógicos -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <i data-lucide="clock" class="w-4 h-4 text-teal-600"></i> Auditoría de Momentos Pedagógicos (Cumplimiento en Aula)
+          </span>
+          <span class="text-[11px] text-slate-500">Promedio sobre sesiones registradas</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Inicio -->
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400">Inicio (15')</span>
+            <div id="modal-seg-momento-inicio-pct" class="text-xl font-black text-teal-600 dark:text-teal-400 font-mono mt-1">0%</div>
+            <div class="text-[10px] text-slate-500">Motivación y encuadre</div>
+          </div>
+          <!-- Desarrollo -->
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400">Desarrollo (60')</span>
+            <div id="modal-seg-momento-des-pct" class="text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono mt-1">0%</div>
+            <div class="text-[10px] text-slate-500">Construcción conceptual</div>
+          </div>
+          <!-- Cierre -->
+          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400">Cierre (15')</span>
+            <div id="modal-seg-momento-cierre-pct" class="text-xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1">0%</div>
+            <div class="text-[10px] text-slate-500">Síntesis y evaluación</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Histograma de Recursos Didácticos -->
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <i data-lucide="layers" class="w-4 h-4 text-[#4f39f6]"></i> Frecuencia de Recursos Didácticos Utilizados
+          </span>
+          <span class="text-[11px] text-slate-500">Muestreo en aula</span>
+        </div>
+        <div id="modal-seg-recursos-container" class="flex flex-wrap gap-2 pt-1">
+          <span class="text-slate-400 italic text-[11px]">Cargando recursos didácticos...</span>
+        </div>
+      </div>
+
+      <!-- Tabla cronológica de sesiones impartidas -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i> Bitácora Cronológica de Sesiones Registradas
+          </h4>
+          <span id="modal-seg-sesiones-count" class="text-[11px] font-mono text-slate-500">0 sesiones</span>
+        </div>
+        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+                <th class="p-2.5 whitespace-nowrap">Fecha / N°</th>
+                <th class="p-2.5 min-w-[200px]">Tema Impartido en Aula</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Momentos (I/D/C)</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Cumplimiento</th>
+                <th class="p-2.5 min-w-[150px]">Observaciones</th>
+              </tr>
+            </thead>
+            <tbody id="modal-seg-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td colspan="5" class="p-4 text-center text-slate-400 italic">No hay sesiones registradas aún.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex justify-end gap-2">
+      <button type="button" onclick="window.closeModalSeguimientoDetalle()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer">
+        Cerrar
+      </button>
     </div>
 
   </div>
