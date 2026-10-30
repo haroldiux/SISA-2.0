@@ -385,6 +385,9 @@
       if (typeof window.applyUserRolePermissions === 'function') {
         window.applyUserRolePermissions(newRole);
       }
+      if (typeof window.syncSupervisionScopeFilters === 'function') {
+        window.syncSupervisionScopeFilters(user);
+      }
       if (typeof window.updateSidebarNavForRole === 'function') {
         window.updateSidebarNavForRole(newRole);
       }
@@ -9062,24 +9065,181 @@ document.addEventListener('change', (e) => {
     return 1;
   };
 
+  // ── SCOPE & ROLE-BASED SUPERVISION FILTERS CONTROLLER ─────────────────────
+  window.resolveUserScope = function(user) {
+    const role = (user && user.role) ? user.role : (localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE');
+    const isGlobalAdmin = ['ROLE_ADMIN', 'ROLE_VICERRECTOR_NACIONAL'].includes(role);
+    const isSedeAuthority = ['ROLE_VICERRECTOR_SEDE', 'ROLE_DIR_ACADEMICA'].includes(role);
+    const isDirector = (role === 'ROLE_DIR_CARRERA');
+
+    let asignaciones = (user && Array.isArray(user.asignaciones)) ? user.asignaciones : [];
+    if (asignaciones.length === 0 && window.adminUsersList && user) {
+      const match = window.adminUsersList.find(u => u.id === user.id || u.username === user.username || u.ci === user.ci);
+      if (match && Array.isArray(match.asignaciones) && match.asignaciones.length > 0) {
+        asignaciones = match.asignaciones;
+      }
+    }
+
+    // 1. Resolve Sedes
+    let allowedSedes = null; // null = all sedes permitted
+    if (!isGlobalAdmin) {
+      const sedeCodes = new Set();
+      const directSede = user?.sedeNombre || (user?.sede && user.sede.nombre) || '';
+      if (directSede) {
+        const dNorm = directSede.toLowerCase();
+        if (dNorm.includes('cochabamba') || dNorm.includes('cba')) sedeCodes.add('CBA');
+        else if (dNorm.includes('la paz') || dNorm.includes('lpz')) sedeCodes.add('LPZ');
+        else if (dNorm.includes('el alto') || dNorm.includes('eal')) sedeCodes.add('EAL');
+        else if (dNorm.includes('cobija') || dNorm.includes('cbj')) sedeCodes.add('CBJ');
+      }
+      asignaciones.forEach(a => {
+        const s = (a.sedeNombre || a.sedeCodigo || '').toLowerCase();
+        if (s.includes('cochabamba') || s.includes('cba')) sedeCodes.add('CBA');
+        else if (s.includes('la paz') || s.includes('lpz')) sedeCodes.add('LPZ');
+        else if (s.includes('el alto') || s.includes('eal')) sedeCodes.add('EAL');
+        else if (s.includes('cobija') || s.includes('cbj')) sedeCodes.add('CBJ');
+      });
+      if (sedeCodes.size === 0) sedeCodes.add('CBA');
+      allowedSedes = Array.from(sedeCodes);
+    }
+
+    // 2. Resolve Carreras
+    let allowedCareers = null; // null = all careers permitted (e.g. for Admin, Dir Academica, Vicerrector)
+    if (isDirector) {
+      const careerCodes = new Set();
+      asignaciones.forEach(a => {
+        const cNom = (a.carreraNombre || '').toLowerCase();
+        const cCod = (a.carreraCodigo || a.carreraCode || '').toUpperCase();
+        if (cCod && window.__SUPERVISION_CAREER_MAP__[cCod]) {
+          careerCodes.add(cCod);
+        } else if (cNom) {
+          for (const [k, v] of Object.entries(window.__SUPERVISION_CAREER_MAP__)) {
+            const vNom = v.name.toLowerCase();
+            const vTag = v.tag.toLowerCase();
+            if (vNom.includes(cNom) || cNom.includes(vNom) || cNom.includes(vTag)) {
+              careerCodes.add(k);
+            }
+          }
+        }
+      });
+
+      // Heuristic fallback if user has no explicit assignments yet
+      if (careerCodes.size === 0) {
+        const un = (user?.username || user?.email || '').toLowerCase();
+        if (un.includes('elec') || un.includes('.ele')) careerCodes.add('CARELE');
+        else if (un.includes('son') || un.includes('.son')) careerCodes.add('CARSON');
+        else if (un.includes('med') || un.includes('.med')) careerCodes.add('CARMED');
+        else if (un.includes('der') || un.includes('.der')) careerCodes.add('CARDER');
+        else careerCodes.add('CARSIS');
+      }
+
+      allowedCareers = Array.from(careerCodes);
+    }
+
+    return {
+      role,
+      isGlobalAdmin,
+      isSedeAuthority,
+      isDirector,
+      allowedSedes,
+      allowedCareers
+    };
+  };
+
+  window.syncSupervisionScopeFilters = function(currentUser) {
+    const scope = window.resolveUserScope(currentUser);
+    const sedeSelect = document.getElementById('supervision-sede-select');
+    const careerSelect = document.getElementById('supervision-career-select');
+
+    const ALL_SEDES_LIST = [
+      { code: 'CBA', name: 'COCHABAMBA (CBA)' },
+      { code: 'LPZ', name: 'LA PAZ (LPZ)' },
+      { code: 'EAL', name: 'EL ALTO (EAL)' },
+      { code: 'CBJ', name: 'COBIJA (CBJ)' }
+    ];
+
+    // 1. Sync Sede Select
+    if (sedeSelect) {
+      const sedesToShow = scope.allowedSedes 
+        ? ALL_SEDES_LIST.filter(s => scope.allowedSedes.includes(s.code)) 
+        : ALL_SEDES_LIST;
+
+      const currentVal = sedeSelect.value;
+      sedeSelect.innerHTML = sedesToShow.map(s => 
+        `<option value="${s.code}">${s.name}</option>`
+      ).join('');
+
+      if (scope.allowedSedes && scope.allowedSedes.length <= 1) {
+        sedeSelect.value = scope.allowedSedes[0];
+        sedeSelect.disabled = true;
+        sedeSelect.classList.add('opacity-80', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800/40');
+        sedeSelect.title = '🔒 Sede académica asignada a su perfil institucional';
+      } else {
+        sedeSelect.disabled = false;
+        sedeSelect.classList.remove('opacity-80', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800/40');
+        sedeSelect.title = '';
+        if (scope.allowedSedes && !scope.allowedSedes.includes(currentVal)) {
+          sedeSelect.value = scope.allowedSedes[0];
+        } else if (currentVal) {
+          sedeSelect.value = currentVal;
+        }
+      }
+    }
+
+    // 2. Sync Carrera Select
+    if (careerSelect) {
+      const allEntries = Object.entries(window.__SUPERVISION_CAREER_MAP__);
+      const careersToShow = scope.allowedCareers
+        ? allEntries.filter(([k]) => scope.allowedCareers.includes(k))
+        : allEntries;
+
+      const currentCareerVal = careerSelect.value;
+      careerSelect.innerHTML = careersToShow.map(([k, v]) => 
+        `<option value="${k}">${v.name.toUpperCase()} (${k})</option>`
+      ).join('');
+
+      if (scope.allowedCareers && scope.allowedCareers.length <= 1) {
+        careerSelect.value = scope.allowedCareers[0];
+        careerSelect.disabled = true;
+        careerSelect.classList.add('opacity-80', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800/40');
+        careerSelect.title = '🔒 Carrera fija asignada a su perfil de dirección';
+      } else {
+        careerSelect.disabled = false;
+        careerSelect.classList.remove('opacity-80', 'cursor-not-allowed', 'bg-slate-100', 'dark:bg-slate-800/40');
+        careerSelect.title = '';
+        if (scope.allowedCareers && !scope.allowedCareers.includes(currentCareerVal)) {
+          careerSelect.value = scope.allowedCareers[0];
+        } else if (currentCareerVal) {
+          careerSelect.value = currentCareerVal;
+        }
+      }
+    }
+
+    return scope;
+  };
+
   window.renderSupervisionCurricular = async function(targetCareerId, targetCareerCode) {
     const container = document.getElementById('supervision-semesters-container');
     if (!container) return;
 
-    // 1. Resolve active career identity
-    let cCode = targetCareerCode || localStorage.getItem('sisa_supervision_active_career') || 'CARSIS';
+    // 1. Synchronize scope filters according to active user and role
     const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
-    if (!targetCareerCode && !localStorage.getItem('sisa_supervision_active_career') && currentUser && currentUser.username) {
-      if (currentUser.username.includes('.ele')) cCode = 'CARELE';
-      else if (currentUser.username.includes('.son')) cCode = 'CARSON';
-      else if (currentUser.username.includes('.med')) cCode = 'CARMED';
-      else if (currentUser.username.includes('.der')) cCode = 'CARDER';
+    const scope = window.syncSupervisionScopeFilters(currentUser);
+
+    // 2. Resolve active career identity
+    let cCode = targetCareerCode;
+    if (!cCode) {
+      if (scope.allowedCareers && scope.allowedCareers.length > 0) {
+        const stored = localStorage.getItem('sisa_supervision_active_career');
+        cCode = (stored && scope.allowedCareers.includes(stored)) ? stored : scope.allowedCareers[0];
+      } else {
+        cCode = localStorage.getItem('sisa_supervision_active_career') || 'CARSIS';
+      }
     }
 
     const careerInfo = window.__SUPERVISION_CAREER_MAP__[cCode] || window.__SUPERVISION_CAREER_MAP__['CARSIS'];
     const careerUuid = targetCareerId || careerInfo.id;
 
-    // The career select element must ALWAYS be visible so Directors can manage multiple careers
     const selectEl = document.getElementById('supervision-career-select');
     if (selectEl) {
       selectEl.classList.remove('hidden');
@@ -11627,6 +11787,9 @@ document.addEventListener('change', (e) => {
     // 5. Dynamic Sidebar and Workspace Role Filtering
     if (typeof window.updateSidebarNavForRole === 'function') {
       window.updateSidebarNavForRole(user.role);
+    }
+    if (typeof window.syncSupervisionScopeFilters === 'function') {
+      window.syncSupervisionScopeFilters(user);
     }
     if (user.role === 'ROLE_DOCENTE' && typeof window.renderDocenteDashboard === 'function') {
       window.renderDocenteDashboard(user);

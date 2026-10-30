@@ -1,5 +1,6 @@
 package bo.edu.unitepc.sisa.api.controller;
 
+import bo.edu.unitepc.sisa.api.request.AcademicaAsignacionDto;
 import bo.edu.unitepc.sisa.api.request.ScuChangePasswordRequest;
 import bo.edu.unitepc.sisa.api.request.ScuLoginRequest;
 import bo.edu.unitepc.sisa.api.request.ScuRefreshTokenRequest;
@@ -7,6 +8,7 @@ import bo.edu.unitepc.sisa.api.response.ScuAuthResponse;
 import bo.edu.unitepc.sisa.api.response.ScuUserResponse;
 import bo.edu.unitepc.sisa.builder.ResourceBuilder;
 import bo.edu.unitepc.sisa.domain.model.Usuario;
+import bo.edu.unitepc.sisa.domain.model.UsuarioAsignacionAcademica;
 import bo.edu.unitepc.sisa.domain.repository.UsuarioRepository;
 import bo.edu.unitepc.sisa.exception.ScuAuthException;
 import bo.edu.unitepc.sisa.infrastructure.security.TenantContext;
@@ -18,6 +20,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -85,6 +89,21 @@ public class ScuAuthController {
         Usuario user = this.usuarioRepository.findById(tenant.getUserId())
                 .orElseThrow(() -> new ScuAuthException("Usuario no encontrado"));
 
+        List<AcademicaAsignacionDto> asignaciones = new ArrayList<>();
+        if (user.getAsignacionesAcademicas() != null) {
+            for (UsuarioAsignacionAcademica asig : user.getAsignacionesAcademicas()) {
+                asignaciones.add(AcademicaAsignacionDto.builder()
+                        .id(asig.getId())
+                        .sedeId(asig.getSede() != null ? asig.getSede().getId() : null)
+                        .sedeNombre(asig.getSede() != null ? asig.getSede().getNombre() : null)
+                        .carreraId(asig.getCarrera() != null ? asig.getCarrera().getId() : null)
+                        .carreraNombre(asig.getCarrera() != null ? asig.getCarrera().getNombre() : null)
+                        .asignaturaId(asig.getAsignatura() != null ? asig.getAsignatura().getId() : null)
+                        .asignaturaNombre(asig.getAsignatura() != null ? asig.getAsignatura().getNombre() : null)
+                        .build());
+            }
+        }
+
         ScuUserResponse response = ScuUserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -96,6 +115,7 @@ public class ScuAuthController {
                 .apellidos(user.getApellidos())
                 .nombreCompleto(user.getNombreCompleto())
                 .mustChangePassword(Boolean.TRUE.equals(user.getMustChangePassword()))
+                .asignaciones(asignaciones)
                 .build();
 
         return ResponseEntity.ok(

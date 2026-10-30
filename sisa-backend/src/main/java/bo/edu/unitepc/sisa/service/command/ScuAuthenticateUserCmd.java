@@ -1,15 +1,20 @@
 package bo.edu.unitepc.sisa.service.command;
 
+import bo.edu.unitepc.sisa.api.request.AcademicaAsignacionDto;
 import bo.edu.unitepc.sisa.api.request.ScuLoginRequest;
 import bo.edu.unitepc.sisa.api.response.ScuAuthResponse;
 import bo.edu.unitepc.sisa.api.response.ScuUserResponse;
 import bo.edu.unitepc.sisa.domain.model.Usuario;
+import bo.edu.unitepc.sisa.domain.model.UsuarioAsignacionAcademica;
 import bo.edu.unitepc.sisa.domain.repository.UsuarioRepository;
 import bo.edu.unitepc.sisa.exception.ScuAuthException;
 import bo.edu.unitepc.sisa.infrastructure.security.JwtTokenProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Command for authenticating user credentials and issuing JWT token envelopes.
@@ -52,6 +57,21 @@ public class ScuAuthenticateUserCmd {
                 : this.jwtTokenProvider.generateAccessToken(user);
         String refreshToken = mustChangePassword ? null : this.jwtTokenProvider.generateRefreshToken(user);
 
+        List<AcademicaAsignacionDto> asignaciones = new ArrayList<>();
+        if (user.getAsignacionesAcademicas() != null) {
+            for (UsuarioAsignacionAcademica asig : user.getAsignacionesAcademicas()) {
+                asignaciones.add(AcademicaAsignacionDto.builder()
+                        .id(asig.getId())
+                        .sedeId(asig.getSede() != null ? asig.getSede().getId() : null)
+                        .sedeNombre(asig.getSede() != null ? asig.getSede().getNombre() : null)
+                        .carreraId(asig.getCarrera() != null ? asig.getCarrera().getId() : null)
+                        .carreraNombre(asig.getCarrera() != null ? asig.getCarrera().getNombre() : null)
+                        .asignaturaId(asig.getAsignatura() != null ? asig.getAsignatura().getId() : null)
+                        .asignaturaNombre(asig.getAsignatura() != null ? asig.getAsignatura().getNombre() : null)
+                        .build());
+            }
+        }
+
         ScuUserResponse userResponse = ScuUserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -63,6 +83,7 @@ public class ScuAuthenticateUserCmd {
                 .apellidos(user.getApellidos())
                 .nombreCompleto(user.getNombreCompleto())
                 .mustChangePassword(mustChangePassword)
+                .asignaciones(asignaciones)
                 .build();
 
         return ScuAuthResponse.builder()

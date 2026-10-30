@@ -1,11 +1,14 @@
 package bo.edu.unitepc.sisa.api.response;
 
+import bo.edu.unitepc.sisa.api.request.AcademicaAsignacionDto;
 import bo.edu.unitepc.sisa.domain.enums.RolUsuario;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 /**
  * User summary response DTO.
@@ -28,4 +31,5 @@ public class ScuUserResponse {
     private String apellidos;
     private String nombreCompleto;
     private Boolean mustChangePassword;
+    private List<AcademicaAsignacionDto> asignaciones;
 }
