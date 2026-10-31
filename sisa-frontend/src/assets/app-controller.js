@@ -13568,21 +13568,18 @@ document.addEventListener('change', (e) => {
     const badge = document.getElementById('asistencia-sync-badge');
     if (!badge) return;
 
-    if (mode === 'online') {
-      badge.className = 'px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-300 dark:border-teal-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span><span id="asistencia-sync-text">En línea (SEA Gateway)</span>';
-    } else if (mode === 'cached') {
-      badge.className = 'px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span><span id="asistencia-sync-text">Caché local sincronizado</span>';
+    if (mode === 'online' || mode === 'cached') {
+      badge.className = 'px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-bold text-xs flex items-center gap-2.5 shadow-2xs cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all';
+      badge.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span><div><span id="asistencia-sync-text" class="block font-bold">SEA en Línea • Nómina Sincronizada</span><span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal block">Servidor Central UNITEPC Disponible</span></div>';
     } else if (mode === 'offline_cached') {
-      badge.className = 'px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span><span id="asistencia-sync-text">SEA Desconectado (Caché local)</span>';
+      badge.className = 'px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-2.5 shadow-2xs cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all';
+      badge.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><div><span id="asistencia-sync-text" class="block font-bold">SEA Fuera de Línea • Modo Local Seguro</span><span class="text-[10px] text-amber-600 dark:text-amber-400 font-normal block">Nómina disponible en navegador (clic para reintentar)</span></div>';
     } else if (mode === 'online_empty') {
-      badge.className = 'px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span><span id="asistencia-sync-text">SEA en línea (0 inscritos)</span>';
+      badge.className = 'px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800 font-bold text-xs flex items-center gap-2.5 shadow-2xs';
+      badge.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><div><span id="asistencia-sync-text" class="block font-bold">SEA en Línea (0 matriculados)</span><span class="text-[10px] text-blue-600 dark:text-blue-400 font-normal block">Materia sin estudiantes registrados</span></div>';
     } else {
-      badge.className = 'px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span><span id="asistencia-sync-text">🔴 Desconectado (SEA Gateway)</span><i data-lucide="refresh-cw" class="w-3 h-3 ml-1"></i>';
+      badge.className = 'px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-bold text-xs flex items-center gap-2.5 shadow-2xs cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all';
+      badge.innerHTML = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span><div><span id="asistencia-sync-text" class="block font-bold">SEA Desconectado</span><span class="text-[10px] text-rose-600 dark:text-rose-400 font-normal flex items-center gap-1">Servidor central inalcanzable (reintentar) <i data-lucide="refresh-cw" class="w-3 h-3"></i></span></div>';
     }
     if (window.lucide) window.lucide.createIcons();
   };
@@ -13713,7 +13710,7 @@ document.addEventListener('change', (e) => {
               <th class="py-3 px-3 w-28 text-center">Carrera</th>
               <th class="py-3 px-4 text-center w-64">Marcación de Asistencia</th>
               <th class="py-3 px-4">Observaciones / Justificación</th>
-              <th class="py-3 px-3 w-36 text-center">Regla 80% (Semestre)</th>
+              <th class="py-3 px-3 w-44 text-center" title="Cumplimiento de asistencia mínima requerida para rendir evaluaciones finales (Art. 42 Reglamento UNITEPC)">Estado Regla 80% (Habilitación)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -13756,15 +13753,22 @@ document.addEventListener('change', (e) => {
         const obs = rec.observacion || '';
 
         const cum = cumulativeAttendanceMetrics[s.code];
-        let cumBadgeHtml = `
-          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1">
-            <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Regular
-          </span>
-        `;
-        if (cum && cum.cumpleNormativa80Pct === false) {
+        const pct = (cum && typeof cum.porcentajeAsistencia === 'number') ? cum.porcentajeAsistencia : 100;
+        const isHabilitado = (cum && cum.cumpleNormativa80Pct !== undefined) ? cum.cumpleNormativa80Pct : (pct >= 80);
+
+        let cumBadgeHtml = '';
+        if (isHabilitado) {
           cumBadgeHtml = `
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 animate-pulse flex items-center justify-center gap-1" title="Asistencia acumulada: ${cum.porcentajeAsistencia}% (< 80%)">
-              <i data-lucide="alert-triangle" class="w-3 h-3 text-rose-600"></i> En Riesgo (${cum.porcentajeAsistencia}%)
+            <span class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs" title="Asistencia acumulada: ${pct}% (Mínimo requerido: 80% según Reglamento UNITEPC) • Estudiante habilitado a evaluaciones">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Habilitado (${pct}%)</span>
+            </span>
+          `;
+        } else {
+          cumBadgeHtml = `
+            <span class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 flex items-center justify-center gap-1.5 animate-pulse shadow-2xs" title="Asistencia acumulada: ${pct}% (< 80% requerido por UNITEPC) • Estudiante inhabilitado por inasistencias">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>Inhabilitado (${pct}%)</span>
             </span>
           `;
         }

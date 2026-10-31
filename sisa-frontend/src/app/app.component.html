@@ -2719,27 +2719,14 @@
                   </div>
 
                   <div class="flex items-center gap-2.5 flex-wrap">
-                    <!-- Data Source Synchronization Indicator Badge -->
-                    <div id="asistencia-sync-badge" onclick="window.retrySeaGatewayConnection()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all">
-                      <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                      <span id="asistencia-sync-text">Comprobando SEA Gateway...</span>
+                    <!-- Data Source Synchronization Indicator Badge (Vista Administrativa SEA) -->
+                    <div id="asistencia-sync-badge" onclick="window.retrySeaGatewayConnection()" class="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-bold text-xs flex items-center gap-2.5 shadow-2xs cursor-pointer transition-all hover:bg-slate-200 dark:hover:bg-slate-700" title="Estado de comunicación con el SEA Central UNITEPC (clic para comprobar conectividad)">
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                      <div>
+                        <span id="asistencia-sync-text" class="block font-bold">Comprobando SEA Gateway...</span>
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal block">Servidor Central UNITEPC</span>
+                      </div>
                     </div>
-
-                    <!-- Direct Action Buttons -->
-                    <button type="button" id="btn-marcar-todos-presentes" onclick="window.markAllStudentsPresent()" class="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Marcar a todos los estudiantes de la nómina como presentes">
-                      <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                      <span>⚡ Marcar Todos Presentes</span>
-                    </button>
-
-                    <button type="button" id="btn-guardar-asistencia" onclick="window.saveAttendanceSession()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Guardar asistencia de la sesión actual en el sistema institucional">
-                      <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                      <span id="btn-guardar-asistencia-text">💾 Guardar Asistencia</span>
-                    </button>
-
-                    <button type="button" id="btn-exportar-asistencia-xlsx" onclick="window.exportAttendanceExcel()" class="px-3.5 py-1.5 bg-white text-teal-700 border border-teal-300 dark:border-teal-700 dark:bg-slate-800 dark:text-teal-300 font-bold rounded-lg text-xs hover:bg-teal-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Exportar Registro de Asistencia Oficial a Excel (.xlsx)">
-                      <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-teal-600"></i>
-                      <span>📊 Exportar Excel</span>
-                    </button>
                   </div>
                 </div>
 
@@ -3112,7 +3099,7 @@
                   </div>
                 </div>
 
-                <!-- Career Cohort Filters Bar -->
+                <!-- Career Cohort Filters & Roll Call Action Toolbar -->
                 <div class="space-y-2 no-print">
                   <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                     <span class="flex items-center gap-1.5">
@@ -3122,8 +3109,29 @@
                       En asignaturas comunes, las carreras se segregan automáticamente por código y nómina
                     </span>
                   </div>
-                  <div id="asistencia-career-filters" class="flex items-center gap-2 flex-wrap">
-                    <!-- Populated dynamically by window.renderAttendanceCareerFilters() -->
+                  <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between flex-wrap gap-3">
+                    <!-- Left: Career Segregation Filter Buttons -->
+                    <div id="asistencia-career-filters" class="flex items-center gap-2 flex-wrap">
+                      <!-- Populated dynamically by window.renderAttendanceCareerFilters() -->
+                    </div>
+
+                    <!-- Right: Roll Call Direct Action Buttons (En el lugar de llamada de lista) -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <button type="button" id="btn-marcar-todos-presentes" onclick="window.markAllStudentsPresent()" class="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Marcar a todos los estudiantes de la nómina como presentes">
+                        <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>⚡ Marcar Todos Presentes</span>
+                      </button>
+
+                      <button type="button" id="btn-guardar-asistencia" onclick="window.saveAttendanceSession()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer" title="Guardar asistencia de la sesión actual en el sistema institucional">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                        <span id="btn-guardar-asistencia-text">💾 Guardar Asistencia</span>
+                      </button>
+
+                      <button type="button" id="btn-exportar-asistencia-xlsx" onclick="window.exportAttendanceExcel()" class="px-3.5 py-1.5 bg-white text-teal-700 border border-teal-300 dark:border-teal-700 dark:bg-slate-800 dark:text-teal-300 font-bold rounded-lg text-xs hover:bg-teal-50 dark:hover:bg-slate-700 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer" title="Exportar Registro de Asistencia Oficial a Excel (.xlsx)">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-teal-600"></i>
+                        <span>📊 Exportar Excel</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
