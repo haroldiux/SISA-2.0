@@ -13400,6 +13400,7 @@ document.addEventListener('change', (e) => {
     observaciones: '',
     estudiantes: {} // studentCode -> { estado: 'PRESENTE'|'FALTA'|'ATRASO'|'LICENCIA', observacion: string, name: string, careerCode: string, careerName: string }
   };
+  window.currentAttendanceSession = currentAttendanceSession;
   let activeAttendanceCareerFilter = 'ALL';
   let activeRosterStudents = [];
   let cumulativeAttendanceMetrics = {}; // studentCode -> AsistenciaEstudianteResumenDto
@@ -13526,6 +13527,7 @@ document.addEventListener('change', (e) => {
 
     if (cached && Array.isArray(cached) && cached.length > 0) {
       activeRosterStudents = cached;
+      window.activeRosterStudents = activeRosterStudents;
       window.renderAttendanceCareerFilters();
       window.renderAttendanceRoster(activeRosterStudents);
       window.updateAttendanceSyncBadge(gatewayOnline ? 'cached' : 'offline_cached');
@@ -13594,6 +13596,7 @@ document.addEventListener('change', (e) => {
       const map = new Map();
       fetchedStudents.filter(s => s.code && s.code !== 'null').forEach(s => map.set(s.code, s));
       activeRosterStudents = Array.from(map.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
+      window.activeRosterStudents = activeRosterStudents;
       localStorage.setItem(storageKey, JSON.stringify(activeRosterStudents));
       window.renderAttendanceCareerFilters();
       window.renderAttendanceRoster(activeRosterStudents);
@@ -14079,9 +14082,12 @@ document.addEventListener('change', (e) => {
   window.loadAttendanceForDate = async function() {
     const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
     const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
-    const fecha = document.getElementById('asistencia-fecha-input')?.value || new Date().toISOString().split('T')[0];
+    const fecha = currentAttendanceSession.fecha || document.getElementById('asistencia-fecha-input')?.value || new Date().toISOString().split('T')[0];
     const tipoClase = currentAttendanceSession.tipoClase || 'TEORICA';
-    const comision = document.getElementById('asistencia-comision-select')?.value || 'TA-01';
+    const comision = currentAttendanceSession.comision || document.getElementById('asistencia-comision-select')?.value || 'TA-01';
+
+    // 1. Clear session student marks map immediately to eliminate cross-session bleeding
+    currentAttendanceSession.estudiantes = {};
 
     const cacheKey = `sisa_attendance_${mKey}_${fecha}_${tipoClase}_${comision}`;
     let cached = null;
@@ -14090,9 +14096,10 @@ document.addEventListener('change', (e) => {
       if (raw) cached = JSON.parse(raw);
     } catch (e) {}
 
-    if (cached && cached.estudiantes) {
+    if (cached && cached.estudiantes && cached.estudiantes.length > 0) {
       if (cached.tema && document.getElementById('asistencia-tema-input')) {
         document.getElementById('asistencia-tema-input').value = cached.tema;
+        currentAttendanceSession.tema = cached.tema;
       }
       cached.estudiantes.forEach(e => {
         currentAttendanceSession.estudiantes[e.estudianteCodigo] = {
@@ -14101,6 +14108,20 @@ document.addEventListener('change', (e) => {
         };
       });
       window.renderAttendanceRoster(activeRosterStudents);
+    } else {
+      // 2. Initialize clean student marks (default PRESENTE) for this specific session
+      const roster = (activeRosterStudents && activeRosterStudents.length > 0)
+        ? activeRosterStudents
+        : (window.activeRosterStudents || []);
+      if (roster && roster.length > 0) {
+        roster.forEach(s => {
+          currentAttendanceSession.estudiantes[s.code] = {
+            estado: 'PRESENTE',
+            observacion: ''
+          };
+        });
+        window.renderAttendanceRoster(roster);
+      }
     }
 
     try {
@@ -14114,9 +14135,10 @@ document.addEventListener('change', (e) => {
       if (res.ok) {
         const json = await res.json();
         const ses = json.data || json;
-        if (ses && ses.estudiantes) {
+        if (ses && ses.estudiantes && ses.estudiantes.length > 0) {
           if (ses.tema && document.getElementById('asistencia-tema-input')) {
             document.getElementById('asistencia-tema-input').value = ses.tema;
+            currentAttendanceSession.tema = ses.tema;
           }
           ses.estudiantes.forEach(e => {
             currentAttendanceSession.estudiantes[e.estudianteCodigo] = {
@@ -14316,15 +14338,19 @@ document.addEventListener('change', (e) => {
     slots.sort((a, b) => (a.dayInfo.offset - b.dayInfo.offset) || a.startTime.localeCompare(b.startTime));
 
     // Retrieve real Cronograma Teórico (Matriz 7)
+    const lookupKeys = [...new Set([mKey, 'SIS-113', window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
     let matriz7 = [];
-    const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
-    if (savedPac) {
-      try {
-        const parsed = JSON.parse(savedPac);
-        if (parsed && Array.isArray(parsed.matriz7) && parsed.matriz7.length > 0) {
-          matriz7 = parsed.matriz7;
-        }
-      } catch (e) {}
+    for (const k of lookupKeys) {
+      const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + k) || localStorage.getItem('sisa_saved_pac_' + k);
+      if (savedPac) {
+        try {
+          const parsed = JSON.parse(savedPac);
+          if (parsed && Array.isArray(parsed.matriz7) && parsed.matriz7.length > 0) {
+            matriz7 = parsed.matriz7;
+            break;
+          }
+        } catch (e) {}
+      }
     }
     if (matriz7.length === 0 && window.activePacGralData && Array.isArray(window.activePacGralData.matriz7) && window.activePacGralData.matriz7.length > 0) {
       matriz7 = window.activePacGralData.matriz7;
@@ -14336,16 +14362,20 @@ document.addEventListener('change', (e) => {
 
     // Retrieve real Cronograma Práctico (Sección 8 del PAC Práctico)
     let pracMatriz = [];
-    const savedPacPrac = localStorage.getItem('sisa_saved_pac_prac_' + mKey);
-    if (savedPacPrac) {
-      try {
-        const parsedPrac = JSON.parse(savedPacPrac);
-        if (parsedPrac && Array.isArray(parsedPrac.matriz7) && parsedPrac.matriz7.length > 0) {
-          pracMatriz = parsedPrac.matriz7;
-        } else if (parsedPrac && Array.isArray(parsedPrac.pacPracticas) && parsedPrac.pacPracticas.length > 0) {
-          pracMatriz = parsedPrac.pacPracticas;
-        }
-      } catch (e) {}
+    for (const k of lookupKeys) {
+      const savedPacPrac = localStorage.getItem('sisa_saved_pac_prac_' + k);
+      if (savedPacPrac) {
+        try {
+          const parsedPrac = JSON.parse(savedPacPrac);
+          if (parsedPrac && Array.isArray(parsedPrac.matriz7) && parsedPrac.matriz7.length > 0) {
+            pracMatriz = parsedPrac.matriz7;
+            break;
+          } else if (parsedPrac && Array.isArray(parsedPrac.pacPracticas) && parsedPrac.pacPracticas.length > 0) {
+            pracMatriz = parsedPrac.pacPracticas;
+            break;
+          }
+        } catch (e) {}
+      }
     }
     if (pracMatriz.length === 0 && window.activePacPracData) {
       pracMatriz = (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0)
@@ -14446,6 +14476,7 @@ document.addEventListener('change', (e) => {
   window.initCourseAttendanceSessions = function(mKey) {
     const data = materiasData[mKey] || (Object.values(materiasData)[0] || {});
     courseOfficialSessions = window.buildCourseSessionsFromSea(data, mKey);
+    window.courseOfficialSessions = courseOfficialSessions;
 
     const select = document.getElementById('asistencia-sesion-select');
     if (!select) return;
@@ -14477,13 +14508,10 @@ document.addEventListener('change', (e) => {
       `;
     }).join('');
 
-    // Explicit native change event binding to ensure execution across browser environments
+    // Native change event binding to ensure execution across browser environments
     select.onchange = function() {
       window.onAttendanceSessionSelect(this.value, this.selectedIndex);
     };
-    select.addEventListener('change', function() {
-      window.onAttendanceSessionSelect(this.value, this.selectedIndex);
-    });
 
     if (selectedSession) {
       window.applySelectedSession(selectedSession);
@@ -14491,12 +14519,19 @@ document.addEventListener('change', (e) => {
   };
 
   window.onAttendanceSessionSelect = function(sessionKey, sessionIndex) {
+    const list = window.courseOfficialSessions || courseOfficialSessions || [];
     let ses = null;
     if (sessionKey) {
-      ses = courseOfficialSessions.find(s => s.key === sessionKey || String(s.number) === String(sessionKey));
+      ses = list.find(s => s.key === sessionKey || String(s.number) === String(sessionKey));
     }
-    if (!ses && typeof sessionIndex === 'number' && courseOfficialSessions[sessionIndex]) {
-      ses = courseOfficialSessions[sessionIndex];
+    if (!ses && typeof sessionIndex === 'number' && sessionIndex >= 0 && list[sessionIndex]) {
+      ses = list[sessionIndex];
+    }
+    if (!ses) {
+      const select = document.getElementById('asistencia-sesion-select');
+      if (select && select.selectedIndex >= 0 && list[select.selectedIndex]) {
+        ses = list[select.selectedIndex];
+      }
     }
     if (!ses) return;
 
@@ -14509,6 +14544,7 @@ document.addEventListener('change', (e) => {
   };
 
   window.applySelectedSession = function(ses) {
+    if (!ses) return;
     currentAttendanceSession.fecha = ses.fecha;
     currentAttendanceSession.tipoClase = ses.tipoClase;
     currentAttendanceSession.comision = ses.comision;
@@ -14665,11 +14701,6 @@ document.addEventListener('change', (e) => {
     window.initCourseAttendanceSessions(mKey);
     window.loadAttendanceResumen(data.codigo || mKey);
     window.loadAttendanceHistory();
-    if (courseOfficialSessions && courseOfficialSessions.length > 0 && typeof window.syncSeguimientoFromActiveSession === 'function') {
-      const todayIso = new Date().toISOString().split('T')[0];
-      const match = courseOfficialSessions.find(s => s.fecha === todayIso) || courseOfficialSessions[0];
-      window.syncSeguimientoFromActiveSession(match);
-    }
   };
 
   // =========================================================================
@@ -14703,6 +14734,7 @@ document.addEventListener('change', (e) => {
     const docenteCi = (typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? currentDocenteCi : '4892104';
     const carreraCodigo = (materia && materia.career) ? materia.career : 'CARSIS';
     const isPractica = (ses.tipoClase === 'PRACTICA');
+    const keysToCheck = [...new Set([materiaKey, 'SIS-113', window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
 
     let unidadOficial = ses.unidadTematica || '';
     let temaOficial = ses.tema || '';
@@ -14717,12 +14749,15 @@ document.addEventListener('change', (e) => {
     if (isPractica) {
       // PAC Práctico (Sección 8 - Laboratorio / Simulación)
       let pracList = [];
-      const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + materiaKey);
-      if (savedPrac) {
-        try {
-          const p = JSON.parse(savedPrac);
-          pracList = (p.matriz7 && p.matriz7.length > 0) ? p.matriz7 : (p.pacPracticas || []);
-        } catch(e) {}
+      for (const k of keysToCheck) {
+        const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + k);
+        if (savedPrac) {
+          try {
+            const p = JSON.parse(savedPrac);
+            if (p && Array.isArray(p.matriz7) && p.matriz7.length > 0) { pracList = p.matriz7; break; }
+            if (p && Array.isArray(p.pacPracticas) && p.pacPracticas.length > 0) { pracList = p.pacPracticas; break; }
+          } catch(e) {}
+        }
       }
       if (pracList.length === 0 && window.activePacPracData) {
         pracList = (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0)
@@ -14757,12 +14792,14 @@ document.addEventListener('change', (e) => {
     } else {
       // Matriz 7 (Teórica - Plan Semestral Oficial)
       let teoList = [];
-      const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + materiaKey) || localStorage.getItem('sisa_saved_pac_' + materiaKey);
-      if (savedPac) {
-        try {
-          const p = JSON.parse(savedPac);
-          if (p && Array.isArray(p.matriz7) && p.matriz7.length > 0) teoList = p.matriz7;
-        } catch(e) {}
+      for (const k of keysToCheck) {
+        const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + k) || localStorage.getItem('sisa_saved_pac_' + k);
+        if (savedPac) {
+          try {
+            const p = JSON.parse(savedPac);
+            if (p && Array.isArray(p.matriz7) && p.matriz7.length > 0) { teoList = p.matriz7; break; }
+          } catch(e) {}
+        }
       }
       if (teoList.length === 0 && window.activePacGralData && Array.isArray(window.activePacGralData.matriz7) && window.activePacGralData.matriz7.length > 0) {
         teoList = window.activePacGralData.matriz7;
@@ -14777,7 +14814,7 @@ document.addEventListener('change', (e) => {
 
       if (teoList.length > 0) {
         matchedRow = teoList.find(m => (m.nroSesion && Number(m.nroSesion) === ses.number) || (m.semana && Number(m.semana) === ses.week))
-          || teoList[(ses.week - 1) % teoList.length];
+          || teoList[(ses.number - 1) % teoList.length];
       }
 
       if (matchedRow) {
@@ -14805,6 +14842,27 @@ document.addEventListener('change', (e) => {
         instrumentoEvaluacion = 'RÚBRICA / REGISTRO DE SEGUIMIENTO EN AULA';
         evidencias = 'Ejercicios de aula y control formativo.';
       }
+    }
+
+    // Fail-safe synchronization of toolbar metadata badges
+    const badgeTipo = document.getElementById('badge-sesion-tipo-text');
+    const badgeTipoWrap = document.getElementById('badge-sesion-tipo');
+    const badgeHorario = document.getElementById('badge-sesion-horario-text');
+    const badgeAula = document.getElementById('badge-sesion-aula-text');
+
+    if (badgeTipo) {
+      badgeTipo.innerText = `${isPractica ? 'Práctica / Lab' : 'Teórica'} (${ses.comision})`;
+    }
+    if (badgeTipoWrap) {
+      badgeTipoWrap.className = isPractica
+        ? 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1'
+        : 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1';
+    }
+    if (badgeHorario) {
+      badgeHorario.innerText = `${ses.dayName} ${ses.startTime} - ${ses.endTime}`;
+    }
+    if (badgeAula) {
+      badgeAula.innerText = ses.classroom;
     }
 
     // Update DOM: Headers & Badges
