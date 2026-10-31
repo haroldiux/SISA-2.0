@@ -18,6 +18,12 @@ export class AppComponent implements AfterViewInit {
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
     }
+    // Ensure active view, subject, and document tab are restored immediately after Angular renders the template into DOM
+    setTimeout(() => {
+      if (typeof (window as any).checkInitialAuth === 'function') {
+        (window as any).checkInitialAuth();
+      }
+    }, 20);
   }
 
   public onDocenteSelectorChange(event: Event): void {

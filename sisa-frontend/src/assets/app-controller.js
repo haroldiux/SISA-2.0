@@ -504,6 +504,20 @@
         try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
         const returnBar = document.getElementById('director-supervision-return-bar');
         if (returnBar) returnBar.classList.add('hidden');
+      } else {
+        const auditCourse = localStorage.getItem('sisa_supervision_audit_course');
+        if (auditCourse) {
+          window.__SUPERVISION_AUDIT_COURSE_CODE__ = auditCourse;
+          const returnBar = document.getElementById('director-supervision-return-bar');
+          const returnCourse = document.getElementById('director-supervision-return-course');
+          if (returnBar) {
+            returnBar.classList.remove('hidden');
+            if (returnCourse) {
+              const docName = window.__ACTIVE_DOCENTE__ ? window.__ACTIVE_DOCENTE__.nombreCompleto : '';
+              returnCourse.textContent = `• Asignatura: ${auditCourse} | Docente: ${docName}`;
+            }
+          }
+        }
       }
 
       if (viewId === 'view-dashboard') {
@@ -2404,6 +2418,7 @@
         activeMateriaKey = keys.length > 0 ? keys[0] : '';
       }
       localStorage.setItem('sisa_active_materia_key', activeMateriaKey);
+      localStorage.setItem('sisa_active_docente_materia', activeMateriaKey);
       const data = materiasData[activeMateriaKey] || (Object.values(materiasData)[0] || {});
       activeAsignacionId = data.asignacionId || 1;
       
@@ -2506,8 +2521,11 @@
         window.renderMateriaSchedulesDetail(data);
       }
 
-      // If Attendance tab is currently active, refresh attendance roster and session
-      if (activeTabId === 'tab-asistencia' && typeof window.loadAttendanceForCurrentSelection === 'function') {
+      // Restore active document tab for this course
+      const savedDocTab = localStorage.getItem('sisa_active_doc_tab') || activeTabId || 'tab-analitico';
+      if (typeof window.switchDocMainTab === 'function') {
+        window.switchDocMainTab(savedDocTab);
+      } else if (activeTabId === 'tab-asistencia' && typeof window.loadAttendanceForCurrentSelection === 'function') {
         window.loadAttendanceForCurrentSelection();
       }
 
@@ -7439,7 +7457,8 @@ document.addEventListener('change', (e) => {
             : '3065087';
         }
         selector.value = defaultCi;
-        window.selectDocenteFromApi(defaultCi, true);
+        const savedAuditCourse = localStorage.getItem('sisa_supervision_audit_course');
+        window.selectDocenteFromApi(defaultCi, true, savedAuditCourse);
       }
     } catch (err) {
       console.warn('Could not load docentes from API:', err);
@@ -8712,6 +8731,13 @@ document.addEventListener('change', (e) => {
           const itPrim = String(it.primaryName || '').toUpperCase();
           return itCode.includes(cleanTarget) || itName.includes(cleanTarget) || itPrim.includes(cleanTarget);
         });
+      }
+    }
+    // Also check saved active subject key if targetItem is still null
+    if (!targetItem) {
+      const savedMKey = localStorage.getItem('sisa_active_materia_key') || localStorage.getItem('sisa_active_docente_materia');
+      if (savedMKey) {
+        targetItem = items.find(it => it.key === savedMKey);
       }
     }
     const itemToSelect = targetItem || items[0];
@@ -12320,18 +12346,26 @@ document.addEventListener('change', (e) => {
     if (currentUser && typeof window.updateSidebarNavForRole === 'function') {
       window.updateSidebarNavForRole(currentUser.role);
     }
+    const savedActiveView = localStorage.getItem('sisa_active_view_id');
+    if ((!targetViewId || targetViewId === 'view-dashboard') && savedActiveView) {
+      targetViewId = savedActiveView;
+    }
+
     if (currentUser && currentUser.role === 'ROLE_DOCENTE' && targetViewId !== 'view-dashboard' && targetViewId !== 'view1') {
       targetViewId = 'view-dashboard';
     } else if (currentUser && currentUser.role === 'ROLE_DIR_CARRERA' && (!targetViewId || targetViewId === 'view-dashboard')) {
-      targetViewId = 'view2';
+      targetViewId = savedActiveView || 'view2';
     }
 
     if (typeof window.switchView === 'function') {
       window.switchView(targetViewId);
     }
 
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, '', '/dashboard');
+    if (targetViewId === 'view1') {
+      const savedDocTab = localStorage.getItem('sisa_active_doc_tab');
+      if (savedDocTab && typeof window.switchDocMainTab === 'function') {
+        window.switchDocMainTab(savedDocTab);
+      }
     }
     if (window.lucide) window.lucide.createIcons();
   };
@@ -13305,6 +13339,16 @@ document.addEventListener('change', (e) => {
       return;
     }
 
+    const shell = document.getElementById('sp-shell');
+    if (!shell) {
+      setTimeout(() => {
+        if (typeof window.checkInitialAuth === 'function') {
+          window.checkInitialAuth();
+        }
+      }, 25);
+      return;
+    }
+
     // 1. Immediate synchronous UI hydration to prevent any reload login flicker
     try {
       const savedView = localStorage.getItem('sisa_active_view_id');
@@ -13317,7 +13361,7 @@ document.addEventListener('change', (e) => {
       if (targetInitView === 'view1') {
         const savedTab = localStorage.getItem('sisa_active_doc_tab');
         if (savedTab && typeof window.switchDocMainTab === 'function') {
-          setTimeout(() => window.switchDocMainTab(savedTab), 30);
+          window.switchDocMainTab(savedTab);
         }
       }
     } catch (e) {}
