@@ -5,17 +5,17 @@
 -- ============================================================================
 
 -- 1. USUARIOS Y CREDENCIALES OFICIALES (Idempotente)
--- Contraseña 'Unitepc2026!': $2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO
+-- Contraseña 'Unitepc2026!': $2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2
 -- Contraseña '3065087':     $2a$10$abUv3EYKaXVH4V67p.sL3ukf0jpdP7SBV.CMtkOFWN7V4bYhGUyQu
 -- Contraseña '9465510':     $2a$10$FT.TNinH86ZJ2KcSwRPKV.T4AvlaPjbL5XwCffiGNsfod6kVU/P/K
 
 INSERT INTO usuarios (sede_id, username, email, password_hash, rol, nombres, apellidos, ci, must_change_password, activo)
 VALUES
     -- Administrador Nacional (Acceso total a todas las sedes y carreras)
-    (NULL, 'admin', 'admin@unitepc.edu.bo', '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO', 'ROLE_ADMIN', 'Administrador', 'Nacional UNITEPC', '1000001', FALSE, TRUE),
+    (NULL, 'admin', 'admin@unitepc.edu.bo', '$2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2', 'ROLE_ADMIN', 'Administrador', 'Nacional UNITEPC', '1000001', FALSE, TRUE),
     
     -- Directora de Carrera Multicarrera (Sistemas + Medicina en Cochabamba)
-    (1, 'dir.carrera.sis', 'dir.sistemas@unitepc.edu.bo', '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO', 'ROLE_DIR_CARRERA', 'Mariana', 'Rios Vargas', '2000001', FALSE, TRUE),
+    (1, 'dir.carrera.sis', 'dir.sistemas@unitepc.edu.bo', '$2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2', 'ROLE_DIR_CARRERA', 'Mariana', 'Rios Vargas', '2000001', FALSE, TRUE),
     
     -- Docente Oficial: Rosmery Luizaga (Usuario = CI = 3065087)
     (1, '3065087', 'rosmery.luizaga@unitepc.edu.bo', '$2a$10$abUv3EYKaXVH4V67p.sL3ukf0jpdP7SBV.CMtkOFWN7V4bYhGUyQu', 'ROLE_DOCENTE', 'Rosmery', 'Luizaga', '3065087', FALSE, TRUE),
@@ -24,13 +24,13 @@ VALUES
     (1, '9465510', 'docente.9465510@unitepc.edu.bo', '$2a$10$FT.TNinH86ZJ2KcSwRPKV.T4AvlaPjbL5XwCffiGNsfod6kVU/P/K', 'ROLE_DOCENTE', 'Docente', 'SEA', '9465510', FALSE, TRUE),
     
     -- Director Académico de Sede Cochabamba
-    (1, 'dir.academica.cbb', 'dir.academica.cbb@unitepc.edu.bo', '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO', 'ROLE_DIR_ACADEMICA', 'Gonzalo', 'Gutiérrez Morales', '2000002', FALSE, TRUE),
+    (1, 'dir.academica.cbb', 'dir.academica.cbb@unitepc.edu.bo', '$2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2', 'ROLE_DIR_ACADEMICA', 'Gonzalo', 'Gutiérrez Morales', '2000002', FALSE, TRUE),
     
     -- Vicerrector de Sede Cochabamba
-    (1, 'vicerrector.cbb', 'vicerrector.cbb@unitepc.edu.bo', '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO', 'ROLE_VICERRECTOR_SEDE', 'Rodrigo', 'Vallejos Salinas', '2000003', FALSE, TRUE),
+    (1, 'vicerrector.cbb', 'vicerrector.cbb@unitepc.edu.bo', '$2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2', 'ROLE_VICERRECTOR_SEDE', 'Rodrigo', 'Vallejos Salinas', '2000003', FALSE, TRUE),
     
     -- Vicerrector Nacional
-    (NULL, 'vicerrector.nacional', 'vicerrector.nacional@unitepc.edu.bo', '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/4g3/tV01Yf/c/z8P23kK63S1N6cO', 'ROLE_VICERRECTOR_NACIONAL', 'Hernán', 'García Romero', '2000004', FALSE, TRUE)
+    (NULL, 'vicerrector.nacional', 'vicerrector.nacional@unitepc.edu.bo', '$2a$10$ce.mGCxMRCKnnDZiSfypBe441TCEpgbAbfZfApdA07eoujwZGwhZ2', 'ROLE_VICERRECTOR_NACIONAL', 'Hernán', 'García Romero', '2000004', FALSE, TRUE)
 ON CONFLICT (username) DO UPDATE SET
     password_hash = EXCLUDED.password_hash,
     email = EXCLUDED.email,
