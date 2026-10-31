@@ -1,7 +1,7 @@
 # SISA 2.0 — Contexto Integral y Arquitectura del Sistema
 **Sistema Integral de Seguimiento Académico y Supervisión Curricular**  
 **Universidad Técnica Privada Cosmos (UNITEPC)**  
-*Fecha de corte: 30 de Octubre de 2026*
+*Fecha de corte: 31 de Octubre de 2026*
 
 ---
 
@@ -12,8 +12,8 @@
 El sistema resuelve la desconexión histórica entre la oferta de grupos en el sistema de registro central (**SEA - Sistema de Educación Académica**) y el seguimiento pedagógico en aula, proporcionando:
 - **Desacoplamiento y Resiliencia**: Consumo del catálogo académico vía Gateway institucional (`UnitepcGatewayClient`) con almacenamiento y caché local en PostgreSQL para disponibilidad 100% ante caídas del servidor central.
 - **Doble Flujo Operativo**:
-  1. **Carpeta Docente**: Entorno de trabajo para docentes donde elaboran y gestionan los 4 documentos oficiales de planificación didáctica.
-  2. **Supervisión Curricular**: Entorno de control para Directores de Carrera, Directores Académicos y Vicerrectores para auditar, observar o visar la planificación semestral de todas las materias.
+  1. **Carpeta Docente**: Entorno de trabajo para docentes donde elaboran y gestionan los 5 documentos oficiales de planificación didáctica y control de aula.
+  2. **Supervisión Curricular**: Entorno de control para Directores de Carrera, Directores Académicos y Vicerrectores para auditar, observar o visar la planificación semestral de todas las materias y monitorear el semáforo curricular en tiempo real.
 - **Cobertura Nacional Multi-Sede y Multi-Carrera**: Soporte para las **9 sedes universitarias** y las **24 carreras vigentes** en UNITEPC con gobernanza de acceso según el perfil del usuario.
 
 ---
@@ -30,13 +30,15 @@ El sistema resuelve la desconexión histórica entre la oferta de grupos en el s
 │              sisa-backend (Spring Boot 3.3.3)          │
 │  - Seguridad: Spring Security 6 + JJWT + RBAC          │
 │  - Negocio: Planificaciones, PAC, Microplanificación   │
+│  - Asistencias: Control Semestral + Regla 80% UNITEPC  │
+│  - Seguimiento en Aula: 5 Momentos Didácticos Oficiales │
 │  - Reportes: Apache POI (Word .docx y Excel .xlsx)     │
 │  - Gateway Client: WebClient reactivo hacia SEA        │
 └─────────────┬────────────────────────────┬─────────────┘
               │ JDBC (HikariCP)            │ HTTPS
 ┌─────────────▼─────────────┐ ┌────────────▼─────────────┐
 │   PostgreSQL 16 (sisa_db) │ │    UNITEPC Gateway       │
-│  - 25 tablas relacionales │ │  - Sedes, Carreras,      │
+│  - 28 tablas relacionales │ │  - Sedes, Carreras,      │
 │  - Migraciones Flyway     │ │    Grupos, Horarios      │
 └───────────────────────────┘ └──────────────────────────┘
 ```
@@ -45,19 +47,21 @@ El sistema resuelve la desconexión histórica entre la oferta de grupos en el s
 - **Runtime**: Java 17 LTS / OpenJDK 17.
 - **Framework**: Spring Boot 3.3.3 con Spring Data JPA y Hibernate 6.
 - **Seguridad**: Autenticación JWT stateless con caducidad configurada, control de acceso basado en roles institucionalizados y expiración forzada en cambios de contraseña.
-- **Migraciones**: Flyway (`V1__init_sisa_schema.sql` a `V6__user_management_and_academic_assignments.sql`).
+- **Migraciones**: Flyway (`V1__init_sisa_schema.sql` a `V9__attendance_and_session_tracking.sql`).
 - **Motor de Documentos Oficiales**:
   - Apache POI OOXML (`XWPFDocument`): Importación y exportación de Programas Analíticos en Word (.docx) respetando formato institucional de 14 puntos.
-  - Apache POI HSSF/XSSF (`XSSFWorkbook`): Exportación multi-hoja de Planes de Clase (Teóricos y Prácticos) en formato Excel (.xlsx).
+  - Apache POI HSSF/XSSF (`XSSFWorkbook`): Exportación multi-hoja de Planes de Clase (Teóricos y Prácticos) y Planilla Oficial de Asistencia en formato Excel (.xlsx).
 - **Contenedor**: `sisa-backend` expuesto en puerto `8080`.
 
 ### 2.2 Frontend (`sisa-frontend`)
 - **Framework**: Angular 15 compilado en modo producción y servido a través de NGINX 1.27 Alpine.
 - **Componentes & Estilos**: PrimeNG 15, TailwindCSS, PrimeIcons y Lucide Icons.
 - **Capa Reactiva Híbrida**: Controlador centralizado de interfaz en `assets/app-controller.js` con soporte para:
-  - Caché instantánea de grupos y planes en `localStorage` (0ms flash al navegar).
-  - Normalizador y balanceador curricular universal en tiempo de ejecución.
-  - Sincronización bidireccional entre eventos de la UI y comandos HTTP del backend.
+  - Persistencia de vista, asignatura y pestaña activa ante recarga (F5).
+  - Sincronización instantánea de sesiones SEA (fechas, comisiones, aulas y modalidad).
+  - Aislamiento estricto de nómina de asistencia por sesión y cohorte de carrera.
+  - Conmutación automática de macroplanificación teórica (Matriz 7) vs práctica (Sección 8 del PAC Práctico).
+  - Caché instantánea en `localStorage` con respaldo transparente contra el backend.
 - **Contenedor**: `sisa-frontend` expuesto en puerto `4200`.
 
 ### 2.3 Base de Datos (`sisa-postgres`)
@@ -67,7 +71,9 @@ El sistema resuelve la desconexión histórica entre la oferta de grupos en el s
   - `usuarios`, `usuario_asignaciones_academicas`: Identidad institucional y relaciones de gobernanza por sede, carrera y cátedra.
   - `programas_analiticos`, `unidades_aprendizaje`, `bibliografia`: Macroplanificación oficial.
   - `pacs`, `sesiones_matriz7`: Mesoplanificación y cronograma de 20 semanas / guías prácticas.
-  - `planes_clase`, `momentos_pedagogicos`: Microplanificación didáctica por sesión de 90 minutos (Inicio, Desarrollo, Cierre).
+  - `planes_clase`, `momentos_pedagogicos`: Microplanificación didáctica por sesión de 90 minutos (Secuencia Didáctica Oficial de 5 Momentos).
+  - `sesiones_asistencia`, `estudiantes_asistencia_sesion`: Registro histórico y diario de asistencia estudiantil.
+  - `seguimientos_clase_aula`: Trazabilidad pedagógica en aula por docente, sesión y recursos empleados.
   - `sea_sedes`, `sea_carreras`, `sea_materias`, `sea_grupos`: Espejo local de datos sincronizados desde el Gateway.
 
 ---
@@ -122,42 +128,58 @@ El sistema reconoce y resuelve de forma nativa los identificadores UUID oficiale
 ## 4. Módulos y Flujos Funcionales
 
 ### 4.1 Carpeta Docente (Vista 1)
-Estructurada en torno a los 4 documentos pedagógicos oficiales:
+Estructurada en torno a los 5 documentos pedagógicos y de control oficiales:
 
 1. **Documento 1: Programa Analítico (Macroplanificación)**
    - Formato oficial UNITEPC de 14 puntos (Fundamentación, Competencias, Unidades Temáticas, Metodología, Evaluación, Bibliografía).
    - Validador integrado de normas APA 7ma Edición para referencias bibliográficas.
-   - Importador bidireccional Word (.docx): Lee tablas, estilos y unidades desde documentos Word oficiales y los persiste en base de datos.
+   - Importador bidireccional Word (.docx): Extrae tablas, unidades de aprendizaje y temas persistiendo en base de datos.
    - Gobernanza institucional: Solo editable por la Dirección de Carrera Líder o administradores; docentes visualizan en modo solo lectura con autorización para exportar carátula oficial.
 
-2. **Documento 2: PAC Teórico (Mesoplanificación de Aula)**
-   - Matriz didáctica de 7 columnas oficiales a lo largo de 20 semanas lectivas.
+2. **Documento 2: PAC Teórico (Mesoplanificación Pedagógica)**
    - Define objetivos de aprendizaje, contenidos analíticos, metodologías activas, recursos y sistemas de evaluación continua.
+   - Puntos 1 a 14 articulados con los elementos de competencia del Programa Analítico.
 
-3. **Documento 3: PAC Práctico (Mesoplanificación de Talleres / Laboratorios)**
-   - Diseñado específicamente para asignaturas con carga práctica o clínica.
-   - Contiene guías de laboratorio, rúbricas de desempeño procedimental y cronograma de prácticas in situ.
+3. **Documento 3: Cronograma Semestral de 20 Semanas (Matriz 7 y PAC Práctico)**
+   - **Modalidad Teórica (Matriz 7)**: Planificación sesión por sesión (Semana, Sesión #, Unidad Temática, Contenido Específico, Saberes Conceptuales/Procedimentales/Actitudinales, Criterio de Desempeño e Instrumento de Evaluación).
+   - **Modalidad Práctica (Sección 8 del PAC Práctico)**: Planificación semestral de prácticas de laboratorio, escenarios de aprendizaje, actividades, desempeño procedimental, evidencias e instrumentos de evaluación (Rúbricas/Listas de cotejo).
+   - Importadores dedicados desde Excel (.xlsx) con auto-completado de semanas y sesiones.
 
 4. **Documento 4: Planes de Clase / Microplanificación Didáctica**
-   - Microplanificación sesión por sesión (hasta 40 sesiones: 20 teóricas + 20 prácticas).
-   - Estructura obligatoria de **3 Momentos Pedagógicos**:
-     - **Inicio (15 min)**: Motivación, exploración de conocimientos previos y presentación del objetivo.
-     - **Desarrollo (60 min)**: Construcción del conocimiento, actividades prácticas, interacción docente-estudiante.
-     - **Cierre (15 min)**: Metacognición, retroalimentación, síntesis y evaluación formativa.
-   - Validación estricta de tiempo: Cada sesión debe sumar exactamente los minutos asignados (90 min estándar).
-   - Exportador oficial a Excel multi-hoja (.xlsx): Genera un libro con una pestaña dedicada por sesión didáctica.
+   - Microplanificación detallada por tema y sesión didáctica (hasta 40 sesiones: 20 teóricas + 20 prácticas).
+   - Selector por pestañas de Unidades de Aprendizaje y conmutación entre *Plan Teórico (TA)* y *Guía Práctica (PL/PA)*.
+   - Generación dinámica articulada desde el Programa Analítico.
+   - Exportador oficial a Excel multi-hoja (.xlsx) con libro descargable por asignatura.
 
-### 4.2 Supervisión Curricular (Vista 2)
-Herramienta de auditoría para autoridades académicas:
+5. **Documento 5: Lista Oficial y Control de Asistencia Semestral**
+   - Selector inteligente de sesiones sincronizado con las comisiones oficiales del SEA (fechas, horarios, aulas y tipo de clase).
+   - **Aislamiento estricto de asistencia por sesión**: Cada sesión mantiene su propio estado de marcación (`P` Presente, `F` Falta, `A` Atraso, `L` Licencia) y justificación sin arrastrar marcas entre clases.
+   - **Cálculo de la Regla del 80% (UNITEPC)**: Semáforo de habilitación en tiempo real (`Habilitado (>= 80%)` vs `Inhabilitado (< 80%)`).
+   - **Segregación automática por cohorte/carrera**: En cátedras comunes, clasifica automáticamente a los estudiantes según su carrera de origen (ej. Ing. de Sistemas vs Ing. Electrónica).
+   - **Seguimiento Pedagógico de Sesión en Aula (Fase 3)**:
+     - **Secuencia Didáctica Oficial UNITEPC (5 Momentos)**:
+       1. Introducción (15 min): Motivación y encuadre inicial.
+       2. Resultados de Aprendizaje / Logros Esperados (10 min): Logros esperados de clase.
+       3. Contenidos de la Clase (15 min): Mapa temático y saberes.
+       4. Cuerpo de Contenidos (40 min): Construcción y desarrollo activo.
+       5. Conclusión o Cierre (10 min): Síntesis plenaria y evaluación.
+     - Cumplimiento temático cualitativo: *Totalmente Cumplido*, *Parcialmente Cumplido*, *No Cumplido*.
+     - Conmutación automática de Macroplanificación: Despliega Matriz 7 para clases teóricas y Sección 8 para laboratorios.
+     - Registro ágil en aula (< 5 segundos) con persistencia en PostgreSQL y localStorage.
+   - Exportador oficial de Asistencia a Excel (.xlsx).
 
+### 4.2 Supervisión Curricular y Semáforo Directivo (Vista 2)
+Herramienta de auditoría para autoridades académicas (Directores de Carrera, Directores Académicos y Vicerrectores):
+
+- **Semáforo Curricular de Avance en Tiempo Real**:
+  - Indicador porcentual de avance pedagógico planificado vs ejecutado en aula.
+  - Codificación por colores: **Verde** (Cumplimiento óptimo >= 80%), **Amarillo** (Alerta preventiva 60-79%), **Rojo** (Retraso crítico < 60%).
+- **Auditoría de Secuencia Didáctica y Recursos**:
+  - Trazabilidad del cumplimiento de los 5 momentos didácticos por docente.
+  - Métricas de uso de recursos pedagógicos (Pizarra acrílica, proyector, guías de laboratorio, IDEs/código, plataformas virtuales).
 - **Malla Curricular Interactiva por Semestre**:
   - Semestres dinámicos (hasta 10 para carreras de salud; hasta 8 para ingenierías/sociales; 4 para complementarias).
-  - Indicadores en tiempo real: asignaturas en revisión, aprobadas, observadas, horas acumuladas y porcentaje de cumplimiento.
-- **Desglose de Dossier por Asignatura**:
-  - Detección automática de modalidad:
-    - **Teórica Pura**: Exige Programa Analítico, PAC Teórico y Planes de Clase Teóricos. Marca PAC Práctico como `N/A`.
-    - **Práctica Pura**: Exige Programa Analítico, PAC Práctico y Planes de Clase Prácticos. Marca PAC Teórico como `N/A`.
-    - **Teórico-Práctica**: Exige el dossier completo (Programa, PAC Teórico, PAC Práctico, Planes Teóricos 0/20 y Planes Prácticos 0/20).
+  - Estado de dossier por materia: Programa Analítico, PAC General, PAC Práctico, Planes de Clase y Asistencias.
 - **Aprobación en Lote y Dictamen Semestral**:
   - Modal para emisión de resolución curricular y certificación de semestre completo.
   - Registro de observaciones docentes con trazabilidad histórica.
@@ -179,7 +201,7 @@ El sistema aplica un modelo RBAC estricto que restringe qué información puede 
 
 ### 5.2 Soporte para Docentes Multi-Sede
 Para casos donde un docente dicta cátedra en dos o más sedes universitarias (ej. La Paz y El Alto, o Cochabamba e Ivirgarzama):
-- La consulta de grupos al Gateway ya no aplica filtro fijo de sede para docentes (`/api/v1/catalogo-academico/groups?term=2-2026&teacherCi=${ci}`).
+- La consulta de grupos al Gateway no aplica filtro fijo de sede para docentes (`/api/v1/catalogo-academico/groups?term=2-2026&teacherCi=${ci}`).
 - El sistema agrupa y presenta todas sus materias en una sola vista.
 - Cada tarjeta de asignatura y registro en el menú lateral muestra explícitamente su distintivo de campus y sede (`📍 CBA • Campus Juan Pablo II`, `📍 IVI • Sede Ivirgarzama`), permitiendo al docente elaborar sus planificaciones sin tener que cerrar sesión ni cambiar de usuario.
 
@@ -217,10 +239,43 @@ Para evitar que materias de carreras sin plan estático se acumulen erróneament
 | **HTTP 415 en Login con Gateway** | El token endpoint del Gateway requería `application/x-www-form-urlencoded` en vez de JSON. | Centralización del ciclo de vida del token dentro de `UnitepcGatewayClient` de Spring Boot con caché de token Bearer. |
 | **CARRERA select invisible** | Si el usuario era Director y `careersToShow` filtraba a 0 resultados, el `<select>` quedaba sin `<option>` y colapsaba. | Fallback resiliente: Si el filtrado resulta en vacío, restaura las carreras de respaldo o el catálogo completo para que el selector nunca desaparezca. |
 | **Cambio de Sede no actualizaba grupos** | En `renderSupervisionCurricular` el `branchId` estaba hardcodeado al UUID de Cochabamba. | Lookup dinámico del UUID de la sede desde `window.__SUPERVISION_SEDES_MAP__` y clave de caché independiente `sisa_cache_supervision_groups_${sede}_${career}`. |
+| **Recarga (F5) reseteaba a Dashboard** | No se persistía la vista activa, la asignatura en auditoría ni la pestaña en `localStorage`. | Persistencia en tiempo real de `sisa_active_view`, `sisa_active_materia_key` y `sisa_active_doc_tab` con restauración automática en `initSisaDashboard()`. |
+| **Desincronización de Sesiones en Tab 5** | `loadAttendanceForCurrentSelection` forzaba `match = courseOfficialSessions[0]`, dejando las insignias desincronizadas con la macroplanificación. | Eliminación del forzado arbitrario, exposición global de `courseOfficialSessions` y sincronización unificada en `onAttendanceSessionSelect` y `applySelectedSession`. |
+| **Arrastre de Asistencia entre Clases** | `currentAttendanceSession.estudiantes` no se reseteaba al conmutar sesión, heredando marcas previas en sesiones no tomadas. | Reseteo estricto del mapa de estudiantes en `loadAttendanceForDate` con inicialización limpia (`PRESENTE`) por sesión y cohorte. |
+| **Estructura Estática Teórica vs Práctica** | La tarjeta de Macroplanificación no conmutaba los campos según la modalidad de la sesión. | Conmutación dinámica: Despliega Matriz 7 (Saberes) en clases teóricas y Sección 8 (Actividad, Desempeño, Evidencias, Rúbrica) en clases de laboratorio. |
 
 ---
 
-## 8. Guía de Ejecución y Despliegue Rápido
+## 8. Estado del Proyecto: Lo que Tenemos vs Lo que Falta
+
+### 8.1 Lo que Tenemos (Implementado al 100%)
+
+| Módulo / Capacidad | Estado | Descripción Funcional |
+|:---|:---:|:---|
+| **Arquitectura Docker Universal** | ✅ 100% | Despliegue de Postgres, Spring Boot backend y Angular frontend con Nginx. Base de datos con seeder universal demo V9. |
+| **Gobernanza RBAC y Catálogo Nacional** | ✅ 100% | 9 sedes, 24 carreras, soporte docente multisede, candados por rol directivo y balanceador heurístico universal. |
+| **Documento 1: Programa Analítico** | ✅ 100% | Estructura oficial de 14 puntos, validación APA 7ma, importación bidireccional desde Word (.docx) y bloqueo de cátedra. |
+| **Documento 2: PAC Pedagógico** | ✅ 100% | Puntos 1 a 14 articulados con los elementos de competencia del Programa Analítico. |
+| **Documento 3: Cronograma Semestral (20 Semanas)** | ✅ 100% | Cronograma Teórico (Matriz 7) y Cronograma Práctico (Sección 8 del PAC Práctico) con importadores Excel (.xlsx). |
+| **Documento 4: Planes de Clase** | ✅ 100% | Microdidáctica modular por Unidad de Aprendizaje, planes teóricos y guías prácticas, exportación Excel multi-hoja. |
+| **Documento 5: Lista Oficial y Asistencia** | ✅ 100% | Selector reactivo según horario SEA, cálculo de Regla del 80%, segregación por carrera en cátedras comunes y exportación Excel. |
+| **Seguimiento Pedagógico en Aula** | ✅ 100% | Secuencia didáctica de 5 momentos oficiales UNITEPC, macroplanificación dinámica teórica/práctica, registro ágil (< 5 seg). |
+| **Supervisión Curricular y Semáforo** | ✅ 100% | Tablero directivo con semáforo porcentual por colores, auditoría de momentos didácticos, visado en lote y actas de semestre. |
+| **Persistencia y Resiliencia de Navegación** | ✅ 100% | Cero reseteos al presionar F5; tolerancia offline a caídas del SEA Gateway con almacenamiento local seguro. |
+
+### 8.2 Lo que Nos Falta (Roadmap Institucional Pendiente)
+
+| Requerimiento / Hito Pendiente | Prioridad | Impacto / Alcance Institucional |
+|:---|:---:|:---|
+| **1. Módulo de Firma Digital Criptográfica** | Alta | Firma digital con certificado de Directores de Carrera sobre los reportes PDF de planes de clase y planillas de asistencia para validez legal ante el Viceministerio de Educación Superior. |
+| **2. Bloqueo Automatizado de Actas en el SEA** | Alta | Enlace directo del cálculo del 80% de asistencia para bloquear automáticamente la carga de notas del 1º y 2º Parcial a estudiantes inhabilitados en el sistema central. |
+| **3. Sistema de Notificaciones Tempranas y Alertas** | Media | Disparador de alertas automáticas (vía WhatsApp API / Correo institucional) a estudiantes con 2 o más faltas consecutivas y avisos al docente sobre rezago en la Matriz 7. |
+| **4. App Móvil PWA con Marcación QR de Aula** | Media | Aplicación progresiva offline-first para docentes que permita tomar lista en el laboratorio o aula escaneando la credencial digital o carnet del estudiante desde el celular. |
+| **5. Tablero Comparativo Multisede para Vicerrectorado** | Baja | Vista analítica nacional que compare en un solo gráfico el avance porcentual y cumplimiento pedagógico de la misma cátedra entre las 9 sedes de UNITEPC. |
+
+---
+
+## 9. Guía de Ejecución y Despliegue Rápido
 
 Para levantar el entorno completo desde cero:
 
@@ -241,5 +296,5 @@ docker compose ps
 - **Credenciales Rápidas de Prueba**:
   - `admin` / `Unitepc2026!` (Administrador Nacional)
   - `dir.carrera.sis` / `Unitepc2026!` (Directora Multicarrera: Sistemas + Medicina)
-  - `3065087` / `3065087` (Docente Rosmery Luizaga)
-  - `9465510` / `9465510` (Docente)
+  - `3065087` / `3065087` (Docente Rosmery Luizaga - Programación I)
+  - `9465510` / `9465510` (Docente - Cátedras Teórico-Prácticas)
