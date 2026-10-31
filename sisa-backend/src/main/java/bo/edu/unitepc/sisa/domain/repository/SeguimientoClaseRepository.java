@@ -46,7 +46,9 @@ public interface SeguimientoClaseRepository extends JpaRepository<SeguimientoCla
             COALESCE(SUM(CASE WHEN s.momento_desarrollo_cumplido THEN 1 ELSE 0 END), 0) AS countDesarrollo,
             COALESCE(SUM(CASE WHEN s.momento_cierre_cumplido THEN 1 ELSE 0 END), 0) AS countCierre
         FROM seguimientos_clases s
-        WHERE s.carrera_codigo = :carreraCodigo
+        WHERE (s.carrera_codigo = :carreraCodigo 
+           OR (:carreraCodigo = 'SIS' AND s.carrera_codigo = 'CARSIS')
+           OR (:carreraCodigo = 'CARSIS' AND s.carrera_codigo = 'SIS'))
         GROUP BY s.materia_codigo
         """, nativeQuery = true)
     List<MateriaSeguimientoAggregation> aggregateByCarrera(@Param("carreraCodigo") String carreraCodigo);
