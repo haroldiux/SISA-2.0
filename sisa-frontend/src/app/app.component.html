@@ -2751,7 +2751,7 @@
                     <label for="asistencia-sesion-select" class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 whitespace-nowrap">
                       <i data-lucide="calendar-clock" class="w-4 h-4 text-teal-600"></i> Sesión Oficial SEA:
                     </label>
-                    <select id="asistencia-sesion-select" class="w-full px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 text-slate-900 dark:text-white font-bold text-xs focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer" onchange="window.onAttendanceSessionSelect(this.value)">
+                    <select id="asistencia-sesion-select" class="w-full px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 text-slate-900 dark:text-white font-bold text-xs focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer" (change)="onSessionSelectChange($event)" onchange="window.onAttendanceSessionSelect(this.value, this.selectedIndex)">
                       <option value="">Cargando sesiones según horario SEA...</option>
                     </select>
                   </div>
@@ -2812,31 +2812,90 @@
                   <!-- Grid 2 Tarjetas: Macroplanificación vs Planificación Personal de Aula -->
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                    <!-- Tarjeta 1: Macroplanificación Oficial (Matriz 7) -->
+                    <!-- Tarjeta 1: Macroplanificación Oficial (Matriz 7 / PAC Práctico Sec 8) -->
                     <div class="p-4 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                           <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                            <i data-lucide="landmark" class="w-4 h-4 text-slate-500"></i> Macroplanificación Oficial (Matriz 7)
+                            <i data-lucide="landmark" id="seg-macro-icon" class="w-4 h-4 text-slate-500"></i>
+                            <span id="seg-macro-header-title">Macroplanificación Oficial (Matriz 7)</span>
                           </span>
                         </div>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                        <span id="seg-macro-badge-tipo" class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 uppercase tracking-wide">
                           Normativo (Solo Lectura)
                         </span>
                       </div>
 
-                      <div class="space-y-2 text-xs">
+                      <div class="space-y-2.5 text-xs">
                         <div>
-                          <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Unidad Temática:</span>
+                          <span id="seg-macro-label-unidad" class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Unidad Temática:</span>
                           <div id="seg-macro-unidad" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-slate-800 dark:text-slate-100">
                             Cargando unidad temática oficial...
                           </div>
                         </div>
 
                         <div>
-                          <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Tema Oficial del Día:</span>
+                          <span id="seg-macro-label-tema" class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Tema Oficial del Día:</span>
                           <div id="seg-macro-tema" class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
                             Cargando tema del cronograma institucional...
+                          </div>
+                        </div>
+
+                        <!-- Bloque Dinámico 1: Saberes Curriculares para Sesión TEÓRICA (Matriz 7) -->
+                        <div id="seg-macro-teorica-fields" class="space-y-2">
+                          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase text-blue-600 dark:text-blue-400 block mb-0.5">Saber Conceptual:</span>
+                              <div id="seg-macro-conceptual" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 min-h-[46px] leading-relaxed">
+                                -
+                              </div>
+                            </div>
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 block mb-0.5">Saber Procedimental:</span>
+                              <div id="seg-macro-procedimental" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 min-h-[46px] leading-relaxed">
+                                -
+                              </div>
+                            </div>
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400 block mb-0.5">Saber Actitudinal:</span>
+                              <div id="seg-macro-actitudinal" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 min-h-[46px] leading-relaxed">
+                                -
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Bloque Dinámico 2: Actividades y Desempeño para Sesión PRÁCTICA (PAC Práctico Sección 8) -->
+                        <div id="seg-macro-practica-fields" class="space-y-2 hidden">
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase text-purple-600 dark:text-purple-400 block mb-0.5">Desempeño Procedimental en Laboratorio:</span>
+                              <div id="seg-macro-prac-desempeno" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-900/60 text-xs text-purple-900 dark:text-purple-200 min-h-[46px] leading-relaxed">
+                                -
+                              </div>
+                            </div>
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 block mb-0.5">Evidencias Requeridas de la Práctica:</span>
+                              <div id="seg-macro-prac-evidencias" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 min-h-[46px] leading-relaxed">
+                                -
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Bloque Compartido: Criterio de Desempeño e Instrumento Oficial -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Criterio de Desempeño:</span>
+                            <div id="seg-macro-criterio" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 min-h-[38px] leading-relaxed">
+                              -
+                            </div>
+                          </div>
+                          <div>
+                            <span class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Instrumento de Evaluación:</span>
+                            <div id="seg-macro-instrumento" class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-teal-700 dark:text-teal-400 min-h-[38px] flex items-center">
+                              -
+                            </div>
                           </div>
                         </div>
 
@@ -2844,11 +2903,11 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                           <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                             <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Semana</span>
-                            <span id="seg-macro-semana" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">Sem 13</span>
+                            <span id="seg-macro-semana" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">Sem 1</span>
                           </div>
                           <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                             <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Sesión N°</span>
-                            <span id="seg-macro-sesion" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">#--</span>
+                            <span id="seg-macro-sesion" class="text-xs font-black text-slate-800 dark:text-slate-200 font-mono">#1</span>
                           </div>
                           <div class="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                             <span class="text-[9px] font-extrabold uppercase text-slate-400 block">Horario</span>

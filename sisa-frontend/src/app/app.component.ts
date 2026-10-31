@@ -31,6 +31,13 @@ export class AppComponent implements AfterViewInit {
     }
   }
 
+  public onSessionSelectChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (select && typeof (window as any).onAttendanceSessionSelect === 'function') {
+      (window as any).onAttendanceSessionSelect(select.value, select.selectedIndex);
+    }
+  }
+
   public handlePasswordSubmit(event: Event): void {
     if (event) {
       event.preventDefault();

@@ -14417,26 +14417,46 @@ document.addEventListener('change', (e) => {
       }
     }
 
-    select.innerHTML = courseOfficialSessions.map(s => {
+    select.innerHTML = courseOfficialSessions.map((s, idx) => {
       const isToday = (s.fecha === todayIso);
       const isSelected = (selectedSession && s.key === selectedSession.key);
       const todayTag = isToday ? ' • ⭐ HOY' : '';
       const typeLabel = s.tipoClase === 'TEORICA' ? 'Teórica' : 'Práctica';
       return `
-        <option value="${s.key}" ${isSelected ? 'selected' : ''}>
+        <option value="${s.key}" data-index="${idx}" ${isSelected ? 'selected' : ''}>
           Sesión ${s.number}: ${s.dayName} ${s.dateFormatted} • ${s.startTime}-${s.endTime} • ${s.comision} (${typeLabel}) - ${s.classroom}${todayTag}
         </option>
       `;
     }).join('');
+
+    // Explicit native change event binding to ensure execution across browser environments
+    select.onchange = function() {
+      window.onAttendanceSessionSelect(this.value, this.selectedIndex);
+    };
+    select.addEventListener('change', function() {
+      window.onAttendanceSessionSelect(this.value, this.selectedIndex);
+    });
 
     if (selectedSession) {
       window.applySelectedSession(selectedSession);
     }
   };
 
-  window.onAttendanceSessionSelect = function(sessionKey) {
-    const ses = courseOfficialSessions.find(s => s.key === sessionKey);
+  window.onAttendanceSessionSelect = function(sessionKey, sessionIndex) {
+    let ses = null;
+    if (sessionKey) {
+      ses = courseOfficialSessions.find(s => s.key === sessionKey || String(s.number) === String(sessionKey));
+    }
+    if (!ses && typeof sessionIndex === 'number' && courseOfficialSessions[sessionIndex]) {
+      ses = courseOfficialSessions[sessionIndex];
+    }
     if (!ses) return;
+
+    const select = document.getElementById('asistencia-sesion-select');
+    if (select && select.value !== ses.key) {
+      select.value = ses.key;
+    }
+
     window.applySelectedSession(ses);
   };
 
@@ -14475,7 +14495,7 @@ document.addEventListener('change', (e) => {
       badgeAula.innerText = ses.classroom;
     }
 
-    // Pre-fill topic
+    // Pre-fill topic unconditionally
     const topicInput = document.getElementById('asistencia-tema-input');
     if (topicInput) {
       topicInput.value = ses.tema;
@@ -14484,7 +14504,7 @@ document.addEventListener('change', (e) => {
     // Load marks for this session from backend or cache
     window.loadAttendanceForDate();
 
-    // Synchronize Seguimiento Pedagógico de Sesión (Fase 3)
+    // Synchronize Seguimiento Pedagógico de Sesión (Fase 3 & 4)
     if (typeof window.syncSeguimientoFromActiveSession === 'function') {
       window.syncSeguimientoFromActiveSession(ses);
     }
@@ -14630,39 +14650,120 @@ document.addEventListener('change', (e) => {
   window.syncSeguimientoFromActiveSession = function(ses) {
     if (!ses) return;
 
-    const materiaKey = window.activeMateriaKey || (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : 'SIS-213');
+    const materiaKey = window.activeMateriaKey || (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : 'SIS-113');
     const materia = (typeof materiasData !== 'undefined' && materiasData[materiaKey]) ? materiasData[materiaKey] : {};
     const docenteCi = (typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? currentDocenteCi : '4892104';
     const carreraCodigo = (materia && materia.career) ? materia.career : 'CARSIS';
+    const isPractica = (ses.tipoClase === 'PRACTICA');
 
-    let unidadOficial = ses.unidadTematica || 'Unidad Temática Curricular';
-    let temaOficial = ses.tema || 'Contenido temático de la sesión';
+    let unidadOficial = ses.unidadTematica || '';
+    let temaOficial = ses.tema || '';
+    let saberConceptual = '';
+    let saberProcedimental = '';
+    let saberActitudinal = '';
+    let criterioDesempeno = '';
+    let instrumentoEvaluacion = '';
+    let evidencias = '';
+    let matchedRow = null;
 
-    if (temaOficial.includes(' - ')) {
-      const parts = temaOficial.split(' - ');
-      unidadOficial = parts[0].trim();
-      temaOficial = parts.slice(1).join(' - ').trim();
-    } else if (ses.tipoClase === 'PRACTICA') {
+    if (isPractica) {
+      // PAC Práctico (Sección 8 - Laboratorio / Simulación)
+      let pracList = [];
       const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + materiaKey);
       if (savedPrac) {
         try {
           const p = JSON.parse(savedPrac);
-          const pList = p.matriz7 || p.pacPracticas || [];
-          const match = pList.find(m => (m.semana && Number(m.semana) === ses.week)) || pList[(ses.week - 1) % pList.length];
-          if (match) {
-            unidadOficial = match.unidadTematica || match.titulo || ('Práctica Semana ' + ses.week);
-            temaOficial = match.contenidoEspecifico || match.actividad || ses.tema;
-          }
+          pracList = (p.matriz7 && p.matriz7.length > 0) ? p.matriz7 : (p.pacPracticas || []);
         } catch(e) {}
       }
-    } else if (materia && materia.matriz7 && materia.matriz7.length > 0) {
-      const match = materia.matriz7.find(m => (m.nroSesion && Number(m.nroSesion) === ses.number) || (m.semana && Number(m.semana) === ses.week));
-      if (match) {
-        if (match.unidadTematica) unidadOficial = match.unidadTematica;
-        if (match.contenidoEspecifico) temaOficial = match.contenidoEspecifico;
+      if (pracList.length === 0 && window.activePacPracData) {
+        pracList = (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0)
+          ? window.activePacPracData.matriz7
+          : (window.activePacPracData.pacPracticas || []);
+      }
+      if (pracList.length === 0 && typeof window.extractCurrentCronogramaPracticoFromDom === 'function') {
+        const live = window.extractCurrentCronogramaPracticoFromDom();
+        if (live && live.length > 0) pracList = live;
+      }
+
+      if (pracList.length > 0) {
+        matchedRow = pracList.find(m => (m.semana && Number(m.semana) === ses.week) || (m.nroPractica && Number(m.nroPractica) === ses.week))
+          || pracList[(ses.week - 1) % pracList.length];
+      }
+
+      if (matchedRow) {
+        unidadOficial = (matchedRow.titulo || matchedRow.unidadTematica || ('Práctica Semana ' + ses.week)).trim();
+        temaOficial = (matchedRow.actividad || matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema).trim();
+        saberProcedimental = (matchedRow.desempeno || matchedRow.saberProcedimental || matchedRow.criterioDesempeno || '').trim();
+        criterioDesempeno = (matchedRow.criterioDesempeno || matchedRow.desempeno || 'Ejecuta el protocolo técnico con rigor y apego al estándar institucional.').trim();
+        instrumentoEvaluacion = (matchedRow.instrumento || matchedRow.instrumentoEvaluacion || 'RÚBRICA DE LABORATORIO').trim();
+        evidencias = (matchedRow.evidencias || matchedRow.evidenciaAprendizaje || 'Guía de laboratorio cumplimentada y reporte evaluado.').trim();
+      } else {
+        unidadOficial = ses.unidadTematica || ('Práctica N° ' + ses.week);
+        temaOficial = ses.tema || 'Ejecución de actividades prácticas y protocolos de laboratorio';
+        saberProcedimental = 'Desarrollo procedimental guiado en entorno computacional y manejo de herramientas.';
+        criterioDesempeno = 'Ejecuta con rigor técnico y precisión lógica la guía de práctica.';
+        instrumentoEvaluacion = 'LISTA DE COTEJO / RÚBRICA';
+        evidencias = 'Guía de práctica resuelta y código fuente (.cpp) evaluado.';
+      }
+    } else {
+      // Matriz 7 (Teórica - Plan Semestral Oficial)
+      let teoList = [];
+      const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + materiaKey) || localStorage.getItem('sisa_saved_pac_' + materiaKey);
+      if (savedPac) {
+        try {
+          const p = JSON.parse(savedPac);
+          if (p && Array.isArray(p.matriz7) && p.matriz7.length > 0) teoList = p.matriz7;
+        } catch(e) {}
+      }
+      if (teoList.length === 0 && window.activePacGralData && Array.isArray(window.activePacGralData.matriz7) && window.activePacGralData.matriz7.length > 0) {
+        teoList = window.activePacGralData.matriz7;
+      }
+      if (teoList.length === 0 && typeof window.extractCurrentCronogramaFromDom === 'function') {
+        const live = window.extractCurrentCronogramaFromDom();
+        if (live && live.length > 0) teoList = live;
+      }
+      if (teoList.length === 0 && materia && Array.isArray(materia.matriz7) && materia.matriz7.length > 0) {
+        teoList = materia.matriz7;
+      }
+
+      if (teoList.length > 0) {
+        matchedRow = teoList.find(m => (m.nroSesion && Number(m.nroSesion) === ses.number) || (m.semana && Number(m.semana) === ses.week))
+          || teoList[(ses.week - 1) % teoList.length];
+      }
+
+      if (matchedRow) {
+        unidadOficial = (matchedRow.unidadTematica || 'Unidad Temática Curricular').trim();
+        temaOficial = (matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema).trim();
+        saberConceptual = (matchedRow.saberConceptual || matchedRow.saberesConceptual || 'Fundamentos conceptuales y marcos teóricos de la sesión.').trim();
+        saberProcedimental = (matchedRow.saberProcedimental || matchedRow.saberesProcedimental || 'Modelación guiada, resolución analítica y aplicación técnica.').trim();
+        saberActitudinal = (matchedRow.saberActitudinal || matchedRow.saberesActitudinal || 'Rigor metodológico, responsabilidad ética y trabajo colaborativo.').trim();
+        criterioDesempeno = (matchedRow.criterioDesempeno || 'Demuestra solvencia cognitiva y procedimental en los contenidos planificados.').trim();
+        instrumentoEvaluacion = (matchedRow.instrumentoEvaluacion || matchedRow.instrumento || 'RÚBRICA DE EVALUACIÓN CONTINUA').trim();
+        evidencias = (matchedRow.evidenciaAprendizaje || matchedRow.evidencias || 'Prácticas formativas de aula y registro de seguimiento.').trim();
+      } else {
+        if (temaOficial.includes(' - ')) {
+          const parts = temaOficial.split(' - ');
+          unidadOficial = parts[0].trim();
+          temaOficial = parts.slice(1).join(' - ').trim();
+        } else {
+          unidadOficial = ses.unidadTematica || 'Unidad Temática Curricular';
+          temaOficial = ses.tema || 'Contenido temático de la sesión';
+        }
+        saberConceptual = 'Conceptos clave, definiciones formales y fundamentos de la sesión.';
+        saberProcedimental = 'Resolución de problemas de aula, análisis algorítmico y ejercicios guiados.';
+        saberActitudinal = 'Participación responsable, pensamiento crítico y puntualidad.';
+        criterioDesempeno = 'Estructura soluciones correctas aplicando los conceptos fundamentales.';
+        instrumentoEvaluacion = 'RÚBRICA / REGISTRO DE SEGUIMIENTO EN AULA';
+        evidencias = 'Ejercicios de aula y control formativo.';
       }
     }
 
+    // Update DOM: Headers & Badges
+    const elHeaderTitle = document.getElementById('seg-macro-header-title');
+    const elBadgeTipo = document.getElementById('seg-macro-badge-tipo');
+    const elLabelUnidad = document.getElementById('seg-macro-label-unidad');
+    const elLabelTema = document.getElementById('seg-macro-label-tema');
     const elUnidad = document.getElementById('seg-macro-unidad');
     const elTema = document.getElementById('seg-macro-tema');
     const elSemana = document.getElementById('seg-macro-semana');
@@ -14670,17 +14771,62 @@ document.addEventListener('change', (e) => {
     const elHorario = document.getElementById('seg-macro-horario');
     const elAula = document.getElementById('seg-macro-aula');
 
+    if (elHeaderTitle) {
+      elHeaderTitle.textContent = isPractica
+        ? 'Macroplanificación Oficial (PAC Práctico Sección 8)'
+        : 'Macroplanificación Oficial (Matriz 7)';
+    }
+    if (elBadgeTipo) {
+      elBadgeTipo.className = isPractica
+        ? 'px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 uppercase tracking-wide'
+        : 'px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 uppercase tracking-wide';
+      elBadgeTipo.textContent = isPractica ? 'Práctica • Laboratorio' : 'Teórica • Aula';
+    }
+    if (elLabelUnidad) elLabelUnidad.textContent = isPractica ? 'Título de la Práctica:' : 'Unidad Temática:';
+    if (elLabelTema) elLabelTema.textContent = isPractica ? 'Actividad de la Práctica / Laboratorio:' : 'Tema Oficial del Día:';
     if (elUnidad) elUnidad.textContent = unidadOficial;
     if (elTema) elTema.textContent = temaOficial;
     if (elSemana) elSemana.textContent = `Sem ${ses.week || 1}`;
     if (elSesion) elSesion.textContent = `#${ses.number || 1}`;
     if (elHorario) elHorario.textContent = `${ses.startTime || '08:15'} - ${ses.endTime || '09:45'}`;
-    if (elAula) elAula.textContent = ses.classroom || 'Aula 204';
+    if (elAula) elAula.textContent = ses.classroom || (isPractica ? 'INFORMATICA' : 'C 103');
 
-    // Synchronize top input with detected official topic
+    // Dynamic field toggle: Teórica vs Práctica
+    const teoricaFields = document.getElementById('seg-macro-teorica-fields');
+    const practicaFields = document.getElementById('seg-macro-practica-fields');
+    const elConceptual = document.getElementById('seg-macro-conceptual');
+    const elProcedimental = document.getElementById('seg-macro-procedimental');
+    const elActitudinal = document.getElementById('seg-macro-actitudinal');
+    const elPracDesempeno = document.getElementById('seg-macro-prac-desempeno');
+    const elPracEvidencias = document.getElementById('seg-macro-prac-evidencias');
+    const elCriterio = document.getElementById('seg-macro-criterio');
+    const elInstrumento = document.getElementById('seg-macro-instrumento');
+
+    if (isPractica) {
+      if (teoricaFields) teoricaFields.classList.add('hidden');
+      if (practicaFields) practicaFields.classList.remove('hidden');
+      if (elPracDesempeno) elPracDesempeno.textContent = saberProcedimental || 'Ejecución guiada de protocolos de laboratorio.';
+      if (elPracEvidencias) elPracEvidencias.textContent = evidencias || 'Guía de laboratorio firmada y evaluada.';
+    } else {
+      if (teoricaFields) teoricaFields.classList.remove('hidden');
+      if (practicaFields) practicaFields.classList.add('hidden');
+      if (elConceptual) elConceptual.textContent = saberConceptual || 'Conceptos fundamentales del tema.';
+      if (elProcedimental) elProcedimental.textContent = saberProcedimental || 'Resolución de problemas y modelación.';
+      if (elActitudinal) elActitudinal.textContent = saberActitudinal || 'Rigor procedimental y responsabilidad.';
+    }
+
+    if (elCriterio) elCriterio.textContent = criterioDesempeno || 'Aplica con rigor los contenidos planificados.';
+    if (elInstrumento) elInstrumento.textContent = instrumentoEvaluacion || 'RÚBRICA DE EVALUACIÓN CONTINUA';
+
+    // Synchronize top input with exact active topic
     const topicInput = document.getElementById('asistencia-tema-input');
-    if (topicInput && (!topicInput.value || topicInput.value.includes('Cargando') || topicInput.value === 'Tema o contenido')) {
+    if (topicInput) {
       topicInput.value = temaOficial;
+    }
+
+    // Refresh lucide icons if available
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
     }
 
     const state = window.__ACTIVE_SEGUIMIENTO_STATE__;
@@ -14731,7 +14877,9 @@ document.addEventListener('change', (e) => {
 
       window.setSeguimientoCumplimiento(data.estadoCumplimiento || 'TOTALMENTE_CUMPLIDO', false);
 
-      const recursos = data.recursosUtilizados || ['Pizarra Acrílica', 'Diapositivas', 'Proyector Multimedia'];
+      const recursos = data.recursosUtilizados || (isPractica
+        ? ['Guía de Laboratorio / Taller', 'Código Fuente / IDE', 'Proyector Multimedia']
+        : ['Pizarra Acrílica', 'Diapositivas', 'Proyector Multimedia']);
       document.querySelectorAll('#seg-recursos-container .seg-recurso-cb').forEach(cb => {
         cb.checked = recursos.some(r => r.toLowerCase().includes(cb.value.toLowerCase()) || cb.value.toLowerCase().includes(r.toLowerCase()));
       });
@@ -14762,7 +14910,9 @@ document.addEventListener('change', (e) => {
         momentoCierreCumplido: true,
         estadoCumplimiento: 'TOTALMENTE_CUMPLIDO',
         cumplimientoScore: 1.0,
-        recursosUtilizados: ['Pizarra Acrílica', 'Diapositivas', 'Proyector Multimedia'],
+        recursosUtilizados: isPractica
+          ? ['Guía de Laboratorio / Taller', 'Código Fuente / IDE', 'Proyector Multimedia']
+          : ['Pizarra Acrílica', 'Diapositivas', 'Proyector Multimedia'],
         observacionesDocente: '',
         isPersisted: false
       });
