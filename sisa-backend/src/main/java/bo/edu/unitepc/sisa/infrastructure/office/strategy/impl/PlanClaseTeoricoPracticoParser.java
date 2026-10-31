@@ -223,15 +223,21 @@ public class PlanClaseTeoricoPracticoParser implements PlanClaseParserStrategy {
             TipoMomentoPedagogico tipo = null;
             String nombre = null;
 
-            if (upper.contains("INTRODUCCION") || upper.contains("INICIO") || upper.contains("APERTURA")) {
-                tipo = TipoMomentoPedagogico.INICIO;
-                nombre = "1. INICIO";
+            if (upper.contains("RESULTADOS") || upper.contains("LOGROS")) {
+                tipo = TipoMomentoPedagogico.RESULTADOS_LOGROS;
+                nombre = "2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS";
+            } else if (upper.contains("CONTENIDOS DE LA CLASE") || (upper.contains("CONTENIDOS") && !upper.contains("CUERPO"))) {
+                tipo = TipoMomentoPedagogico.CONTENIDOS;
+                nombre = "3. CONTENIDOS DE LA CLASE";
             } else if (upper.contains("CUERPO") || upper.contains("DESARROLLO") || upper.contains("PROCESO")) {
-                tipo = TipoMomentoPedagogico.DESARROLLO;
-                nombre = "2. DESARROLLO";
+                tipo = TipoMomentoPedagogico.CUERPO;
+                nombre = "4. CUERPO DE CONTENIDOS";
             } else if (upper.contains("CONCLUSION") || upper.contains("CIERRE") || upper.contains("SINTESIS")) {
-                tipo = TipoMomentoPedagogico.CIERRE;
-                nombre = "3. CIERRE";
+                tipo = TipoMomentoPedagogico.CONCLUSION;
+                nombre = "5. CONCLUSIÓN O CIERRE";
+            } else if (upper.contains("INTRODUCCION") || upper.contains("INICIO") || upper.contains("APERTURA")) {
+                tipo = TipoMomentoPedagogico.INTRODUCCION;
+                nombre = "1. INTRODUCCIÓN";
             }
 
             if (tipo == null) continue;
@@ -248,7 +254,12 @@ public class PlanClaseTeoricoPracticoParser implements PlanClaseParserStrategy {
 
             int duracion = parseDuracion(durStr);
             if (duracion == 0) {
-                duracion = (tipo == TipoMomentoPedagogico.INICIO) ? 25 : ((tipo == TipoMomentoPedagogico.DESARROLLO) ? 100 : 55);
+                if (tipo == TipoMomentoPedagogico.INTRODUCCION || tipo == TipoMomentoPedagogico.INICIO) duracion = 15;
+                else if (tipo == TipoMomentoPedagogico.RESULTADOS_LOGROS) duracion = 10;
+                else if (tipo == TipoMomentoPedagogico.CONTENIDOS) duracion = 15;
+                else if (tipo == TipoMomentoPedagogico.CUERPO || tipo == TipoMomentoPedagogico.DESARROLLO) duracion = 40;
+                else if (tipo == TipoMomentoPedagogico.CONCLUSION || tipo == TipoMomentoPedagogico.CIERRE) duracion = 10;
+                else duracion = 15;
             }
 
             list.add(ScuMomentoPedagogicoDto.builder()

@@ -101,14 +101,26 @@ public class ScuSaveSeguimientoClaseCmd {
         seguimiento.setRecursosPlanificados(recPlan);
         seguimiento.setRecursosUtilizados(recUtil);
 
+        boolean secIntro = request.secuenciaIntroduccion() != null ? request.secuenciaIntroduccion() : Boolean.TRUE;
+        boolean secRes = request.secuenciaResultados() != null ? request.secuenciaResultados() : Boolean.TRUE;
+        boolean secCont = request.secuenciaContenidos() != null ? request.secuenciaContenidos() : Boolean.TRUE;
+        boolean secCuer = request.secuenciaCuerpo() != null ? request.secuenciaCuerpo() : Boolean.TRUE;
+        boolean secCier = request.secuenciaCierre() != null ? request.secuenciaCierre() : Boolean.TRUE;
+
+        seguimiento.setSecuenciaIntroduccion(secIntro);
+        seguimiento.setSecuenciaResultados(secRes);
+        seguimiento.setSecuenciaContenidos(secCont);
+        seguimiento.setSecuenciaCuerpo(secCuer);
+        seguimiento.setSecuenciaCierre(secCier);
+
         seguimiento.setMomentoInicioCumplido(
-                request.momentoInicioCumplido() != null ? request.momentoInicioCumplido() : Boolean.TRUE
+                request.momentoInicioCumplido() != null ? request.momentoInicioCumplido() : (secIntro && secRes)
         );
         seguimiento.setMomentoDesarrolloCumplido(
-                request.momentoDesarrolloCumplido() != null ? request.momentoDesarrolloCumplido() : Boolean.TRUE
+                request.momentoDesarrolloCumplido() != null ? request.momentoDesarrolloCumplido() : (secCont && secCuer)
         );
         seguimiento.setMomentoCierreCumplido(
-                request.momentoCierreCumplido() != null ? request.momentoCierreCumplido() : Boolean.TRUE
+                request.momentoCierreCumplido() != null ? request.momentoCierreCumplido() : secCier
         );
 
         seguimiento.setEstadoCumplimiento(request.estadoCumplimiento());
@@ -154,6 +166,11 @@ public class ScuSaveSeguimientoClaseCmd {
                 s.getMomentoInicioCumplido(),
                 s.getMomentoDesarrolloCumplido(),
                 s.getMomentoCierreCumplido(),
+                s.getSecuenciaIntroduccion(),
+                s.getSecuenciaResultados(),
+                s.getSecuenciaContenidos(),
+                s.getSecuenciaCuerpo(),
+                s.getSecuenciaCierre(),
                 s.getEstadoCumplimiento(),
                 s.getCumplimientoScore(),
                 s.getObservacionesDocente(),

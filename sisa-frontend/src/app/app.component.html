@@ -2875,33 +2875,51 @@
                         </span>
                       </div>
 
-                      <!-- Momentos Pedagógicos -->
+                      <!-- Momentos Pedagógicos (Secuencia Didáctica Oficial UNITEPC - 5 Momentos) -->
                       <div class="space-y-1.5">
                         <label class="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                          <i data-lucide="clock" class="w-3.5 h-3.5 text-teal-600"></i> Momentos Pedagógicos Desarrollados:
+                          <i data-lucide="clock" class="w-3.5 h-3.5 text-teal-600"></i> Secuencia Didáctica (5 Momentos Oficiales):
                         </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                           <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
-                            <input type="checkbox" id="seg-momento-inicio" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <input type="checkbox" id="seg-sec-intro" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
                             <div class="min-w-0">
-                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Inicio (15')</span>
-                              <span class="text-[9px] text-slate-500 block truncate">Motivación / encuadre</span>
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Introducción (15')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Motivación y encuadre inicial</span>
                             </div>
                           </label>
                           <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
-                            <input type="checkbox" id="seg-momento-desarrollo" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <input type="checkbox" id="seg-sec-resultados" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
                             <div class="min-w-0">
-                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Desarrollo (60')</span>
-                              <span class="text-[9px] text-slate-500 block truncate">Construcción activa</span>
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Resultados / Logros (10')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Logros esperados de clase</span>
                             </div>
                           </label>
                           <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
-                            <input type="checkbox" id="seg-momento-cierre" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <input type="checkbox" id="seg-sec-contenidos" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
                             <div class="min-w-0">
-                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Cierre (15')</span>
-                              <span class="text-[9px] text-slate-500 block truncate">Síntesis y retro</span>
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Contenidos de la Clase (15')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Mapa temático y saberes</span>
                             </div>
                           </label>
+                          <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none">
+                            <input type="checkbox" id="seg-sec-cuerpo" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <div class="min-w-0">
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Cuerpo de Contenidos (40')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Construcción y desarrollo activo</span>
+                            </div>
+                          </label>
+                          <label class="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-400 transition-colors cursor-pointer text-xs select-none sm:col-span-2 lg:col-span-1">
+                            <input type="checkbox" id="seg-sec-cierre" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700">
+                            <div class="min-w-0">
+                              <span class="font-bold text-slate-800 dark:text-slate-200 block text-[11px]">Conclusión o Cierre (10')</span>
+                              <span class="text-[9px] text-slate-500 block truncate">Síntesis plenaria y evaluación</span>
+                            </div>
+                          </label>
+                          <!-- Hidden backward compatibility checkboxes for legacy scripts -->
+                          <input type="checkbox" id="seg-momento-inicio" class="hidden" checked>
+                          <input type="checkbox" id="seg-momento-desarrollo" class="hidden" checked>
+                          <input type="checkbox" id="seg-momento-cierre" class="hidden" checked>
                         </div>
                       </div>
 
@@ -2913,15 +2931,15 @@
                         <div class="grid grid-cols-3 gap-2" role="group">
                           <button type="button" id="seg-btn-total" onclick="window.setSeguimientoCumplimiento('TOTALMENTE_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-xs transition-all cursor-pointer">
                             <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                            <span>Total (+1.0)</span>
+                            <span>Totalmente Cumplido</span>
                           </button>
                           <button type="button" id="seg-btn-parcial" onclick="window.setSeguimientoCumplimiento('PARCIALMENTE_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-all cursor-pointer">
                             <i data-lucide="minus" class="w-3.5 h-3.5"></i>
-                            <span>Parcial (+0.5)</span>
+                            <span>Parcialmente Cumplido</span>
                           </button>
                           <button type="button" id="seg-btn-no" onclick="window.setSeguimientoCumplimiento('NO_CUMPLIDO')" class="px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-all cursor-pointer">
                             <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                            <span>No (0.0)</span>
+                            <span>No Cumplido</span>
                           </button>
                         </div>
                       </div>

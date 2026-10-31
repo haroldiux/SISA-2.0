@@ -1468,7 +1468,17 @@
     window.renderCronogramaPracticoTable = function(sessions) {
       const tbody = document.getElementById('cronograma-practico-table-body');
       if (!tbody) return;
-      const list = sessions || (window.activePacPracData && (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0 ? window.activePacPracData.matriz7 : window.activePacPracData.pacPracticas)) || window.pacPracticasList || [];
+      let list = sessions || (window.activePacPracData && (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0 ? window.activePacPracData.matriz7 : window.activePacPracData.pacPracticas)) || window.pacPracticasList;
+      if (!list || list.length === 0) {
+        const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + (activeMateriaKey || 'SIS-113'));
+        if (savedPrac) {
+          try {
+            const p = JSON.parse(savedPrac);
+            list = (p.matriz7 && p.matriz7.length > 0) ? p.matriz7 : p.pacPracticas;
+          } catch(e) {}
+        }
+      }
+      list = list || [];
       if (!Array.isArray(list) || list.length === 0) {
         tbody.innerHTML = `
           <tr>
@@ -1675,7 +1685,8 @@
     };
 
     window.importCronogramaExcel = function() {
-      window.importPacExcel(true);
+      const isPrac = (window.activeCronogramaType === 'PRACTICO');
+      window.importPacExcel(true, isPrac ? 'PRACTICO' : 'GRAL');
     };
 
     // ── TASK 5.3 & 5.4: DYNAMIC PLAN DE CLASES & SHARED/PERSONAL UI SEPARATION ──
@@ -6193,6 +6204,18 @@ window.generateDefaultPlanesList = function(mKey, isPractical) {
   const defData = (mKey && materiasData[mKey]) ? materiasData[mKey] : (Object.values(materiasData)[0] || {});
   
   if (!activeAnaliticoUnidades || !Array.isArray(activeAnaliticoUnidades) || activeAnaliticoUnidades.length === 0) {
+    const savedP = localStorage.getItem('sisa_saved_programa_analitico_' + mKey);
+    if (savedP) {
+      try {
+        const parsed = JSON.parse(savedP);
+        if (parsed && Array.isArray(parsed.unidades) && parsed.unidades.length > 0) {
+          activeAnaliticoUnidades = parsed.unidades;
+        }
+      } catch(e) {}
+    }
+  }
+
+  if (!activeAnaliticoUnidades || !Array.isArray(activeAnaliticoUnidades) || activeAnaliticoUnidades.length === 0) {
     return [];
   }
 
@@ -6208,7 +6231,7 @@ window.generateDefaultPlanesList = function(mKey, isPractical) {
   activeAnaliticoUnidades.forEach((u, uIdx) => {
     const unitNum = u.numeroUnidad || (uIdx + 1);
     const unitTitle = u.titulo 
-      ? (u.titulo.startsWith('Unidad') ? u.titulo : `Unidad ${unitNum}: ${u.titulo}`) 
+      ? (u.titulo.startsWith('Unidad') || u.titulo.startsWith('UNIDAD') ? u.titulo : `Unidad ${unitNum}: ${u.titulo}`) 
       : `Unidad ${unitNum}`;
     
     let elemComp = '';
@@ -6234,23 +6257,74 @@ window.generateDefaultPlanesList = function(mKey, isPractical) {
 
         const sheet = {
           sesionId: list.length + 1,
-          nombreHoja: `UA-${unitNum}: Tema ${temaNum}`,
+          nombreHoja: `UA-${unitNum}: ${temaTitle}`,
           unidadTitulo: unitTitle,
           contenidoTema: temaTitle,
           elementoCompetencia: elemComp,
-          objetivoSesion: t.objetivo || t.criterioDesempeno || '',
-          logrosEsperados: t.logrosEsperados || t.criterioDesempeno || '',
+          objetivoSesion: t.objetivo || t.criterioDesempeno || `Desarrollar competencias conceptuales y prácticas en ${temaTitle}.`,
+          logrosEsperados: t.logrosEsperados || t.criterioDesempeno || `Aplica con precisión y criterio técnico los fundamentos de ${temaTitle}.`,
           indicadoresLogro: t.indicadoresLogro || (temaTitle ? `Demuestra dominio en la aplicación de los conceptos de ${temaTitle}.` : ''),
-          saberConceptual: t.saberConceptual || t.contenido || '',
-          saberProcedimental: t.saberProcedimental || '',
-          saberActitudinal: t.saberActitudinal || '',
-          nivelBloom: t.nivelBloom || u.nivelBloom || '',
+          saberConceptual: t.saberConceptual || t.contenido || temaTitle,
+          saberProcedimental: t.saberProcedimental || `Implementación guiada y resolución estructurada de ejercicios sobre ${temaTitle}.`,
+          saberActitudinal: t.saberActitudinal || 'Rigor metodológico, pensamiento analítico y responsabilidad ética',
+          nivelBloom: t.nivelBloom || u.nivelBloom || 'Aplicar',
           planType: planType,
           referenciasBibliograficas: biblio,
+          recursosEnsenanza: 'Pizarra Acrílica, Diapositivas, Proyector Multimedia, IDE / Código Fuente',
+          estrategiaEnsenanza: 'Aprendizaje Basado en Problemas (ABP) y clase dialogada interactiva',
+          estrategiaAprendizaje: 'Resolución de casos aplicativos, análisis guiado y trabajo colaborativo',
+          evaluacionFormativaActividad: 'Preguntas diagnósticas e intervención formativa en pizarra',
+          evaluacionFormativaInstrumento: 'Lista de cotejo procedimental',
+          evaluacionFormativaEvidencia: 'Ejercicios resueltos en clase',
+          evaluacionSumativaActividad: 'Prueba práctica de desarrollo conceptual',
+          evaluacionSumativaInstrumento: 'Rúbrica analítica',
+          evaluacionSumativaEvidencia: 'Producto evaluado de sesión',
           nombreDocente: docenteNombre,
           nombreAsignatura: defData.nombre || '',
           carrera: defData.carrera || '',
-          fecha: new Date().toISOString().split('T')[0]
+          fecha: new Date().toISOString().split('T')[0],
+          momentos: [
+            {
+              tipoMomento: 'INTRODUCCION',
+              nombreMomento: '1. INTRODUCCIÓN',
+              duracionMin: 15,
+              actividadesDocente: `Activación cognitiva, motivación y encuadre inicial de ${temaTitle}`,
+              actividadesEstudiante: 'Participación activa en preguntas orientadoras y reflexión inicial',
+              indicadorEvaluacion: 'Identificación de saberes previos y pertinencia'
+            },
+            {
+              tipoMomento: 'RESULTADOS_LOGROS',
+              nombreMomento: '2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS',
+              duracionMin: 10,
+              actividadesDocente: `Presentación de los resultados de aprendizaje y logros esperados en ${temaTitle}`,
+              actividadesEstudiante: 'Comprensión de expectativas y metas formativas de la clase',
+              indicadorEvaluacion: 'Claridad en los objetivos curriculares'
+            },
+            {
+              tipoMomento: 'CONTENIDOS',
+              nombreMomento: '3. CONTENIDOS DE LA CLASE',
+              duracionMin: 15,
+              actividadesDocente: `Esquematización del mapa conceptual y saberes teóricos de ${temaTitle}`,
+              actividadesEstudiante: 'Estructuración visual y asimilación del temario temático',
+              indicadorEvaluacion: 'Apropiación del esquema temático y conceptos clave'
+            },
+            {
+              tipoMomento: 'CUERPO',
+              nombreMomento: '4. CUERPO DE CONTENIDOS',
+              duracionMin: 40,
+              actividadesDocente: `Construcción y desarrollo activo de contenidos, demostración práctica y modelado de ${temaTitle}`,
+              actividadesEstudiante: 'Construcción activa del aprendizaje, resolución de problemas y ejercicios guiados',
+              indicadorEvaluacion: 'Dominio operativo y conceptual de los temas desarrollados'
+            },
+            {
+              tipoMomento: 'CONCLUSION',
+              nombreMomento: '5. CONCLUSIÓN O CIERRE',
+              duracionMin: 10,
+              actividadesDocente: 'Síntesis plenaria, retroalimentación formativa y evaluación formativa de cierre',
+              actividadesEstudiante: 'Conclusiones individuales, resolución de dudas y autoevaluación',
+              indicadorEvaluacion: 'Síntesis integral y transferencia de lo aprendido'
+            }
+          ]
         };
         list.push(sheet);
       });
@@ -6263,23 +6337,74 @@ window.generateDefaultPlanesList = function(mKey, isPractical) {
 
       const sheet = {
         sesionId: list.length + 1,
-        nombreHoja: `UA-${unitNum}`,
+        nombreHoja: `UA-${unitNum}: ${u.titulo || ('Unidad ' + unitNum)}`,
         unidadTitulo: unitTitle,
         contenidoTema: u.titulo || `Unidad ${unitNum}`,
         elementoCompetencia: elemComp,
-        objetivoSesion: u.objetivo || '',
-        logrosEsperados: u.logrosEsperados || '',
+        objetivoSesion: u.objetivo || `Desarrollar competencias conceptuales y prácticas en ${unitTitle}.`,
+        logrosEsperados: u.logrosEsperados || `Aplica con rigor técnico los fundamentos de ${unitTitle}.`,
         indicadoresLogro: u.indicadoresLogro || '',
-        saberConceptual: u.saberConceptual || '',
-        saberProcedimental: u.saberProcedimental || '',
-        saberActitudinal: u.saberActitudinal || '',
-        nivelBloom: u.nivelBloom || '',
+        saberConceptual: u.saberConceptual || unitTitle,
+        saberProcedimental: u.saberProcedimental || `Desarrollo de problemas y actividades formativas de ${unitTitle}.`,
+        saberActitudinal: u.saberActitudinal || 'Rigor procedimental y trabajo colaborativo',
+        nivelBloom: u.nivelBloom || 'Aplicar',
         planType: planType,
         referenciasBibliograficas: biblio,
+        recursosEnsenanza: 'Pizarra Acrílica, Diapositivas, Proyector Multimedia',
+        estrategiaEnsenanza: 'Aprendizaje Basado en Problemas (ABP) y clase dialogada interactiva',
+        estrategiaAprendizaje: 'Resolución de casos aplicativos y análisis guiado',
+        evaluacionFormativaActividad: 'Preguntas diagnósticas e intervención formativa',
+        evaluacionFormativaInstrumento: 'Lista de cotejo',
+        evaluacionFormativaEvidencia: 'Ejercicios resueltos',
+        evaluacionSumativaActividad: 'Prueba práctica',
+        evaluacionSumativaInstrumento: 'Rúbrica analítica',
+        evaluacionSumativaEvidencia: 'Producto evaluado',
         nombreDocente: docenteNombre,
         nombreAsignatura: defData.nombre || '',
         carrera: defData.carrera || '',
-        fecha: new Date().toISOString().split('T')[0]
+        fecha: new Date().toISOString().split('T')[0],
+        momentos: [
+          {
+            tipoMomento: 'INTRODUCCION',
+            nombreMomento: '1. INTRODUCCIÓN',
+            duracionMin: 15,
+            actividadesDocente: `Activación cognitiva, motivación y encuadre inicial de ${unitTitle}`,
+            actividadesEstudiante: 'Participación activa en preguntas iniciales',
+            indicadorEvaluacion: 'Identificación de saberes previos'
+          },
+          {
+            tipoMomento: 'RESULTADOS_LOGROS',
+            nombreMomento: '2. RESULTADOS DE APRENDIZAJE / LOGROS ESPERADOS',
+            duracionMin: 10,
+            actividadesDocente: `Presentación de resultados y metas de ${unitTitle}`,
+            actividadesEstudiante: 'Comprensión de expectativas',
+            indicadorEvaluacion: 'Claridad en metas curriculares'
+          },
+          {
+            tipoMomento: 'CONTENIDOS',
+            nombreMomento: '3. CONTENIDOS DE LA CLASE',
+            duracionMin: 15,
+            actividadesDocente: `Presentación del mapa temático de la sesión`,
+            actividadesEstudiante: 'Estructuración visual de contenidos',
+            indicadorEvaluacion: 'Apropiación de esquema conceptual'
+          },
+          {
+            tipoMomento: 'CUERPO',
+            nombreMomento: '4. CUERPO DE CONTENIDOS',
+            duracionMin: 40,
+            actividadesDocente: `Construcción y desarrollo activo de contenidos de ${unitTitle}`,
+            actividadesEstudiante: 'Construcción activa del aprendizaje y resolución guiada',
+            indicadorEvaluacion: 'Dominio operativo y conceptual'
+          },
+          {
+            tipoMomento: 'CONCLUSION',
+            nombreMomento: '5. CONCLUSIÓN O CIERRE',
+            duracionMin: 10,
+            actividadesDocente: 'Síntesis plenaria y evaluación formativa de cierre',
+            actividadesEstudiante: 'Conclusiones y autoevaluación',
+            indicadorEvaluacion: 'Síntesis y transferencia del aprendizaje'
+          }
+        ]
       };
       list.push(sheet);
     }
@@ -6294,6 +6419,11 @@ window.syncPlanesFromAnalitico = function(showToastAlert = false) {
 
   const currentType = window.activePlanType || 'TEORICO';
   const isPrac = (currentType === 'PRACTICO');
+
+  // Purge any stale cache to ensure full analytical reload
+  localStorage.removeItem('sisa_saved_planes_teorico_' + mKey);
+  localStorage.removeItem('sisa_saved_planes_' + mKey);
+  localStorage.removeItem('sisa_saved_planes_prac_' + mKey);
 
   const newPlanesTeo = window.generateDefaultPlanesList(mKey, false);
   const newPlanesPrac = window.generateDefaultPlanesList(mKey, true);
@@ -6317,7 +6447,7 @@ window.syncPlanesFromAnalitico = function(showToastAlert = false) {
 
   if (showToastAlert) {
     if (activePlanesList.length > 0) {
-      window.showToast(`🔄 Se sincronizaron ${activePlanesList.length} temas/hojas articulados desde el Programa Analítico.`);
+      window.showToast(`🔄 Se sincronizaron ${activePlanesList.length} planes de clase articulados (todas las Unidades y Temas) desde el Programa Analítico.`);
     } else {
       window.showToast('ℹ️ No hay unidades cargadas en el Programa Analítico para generar hojas.');
     }
@@ -6870,9 +7000,28 @@ window.importPacExcel = function(goToCronograma, forcedType) {
       }, 50);
 
       if (currentPacType === 'PRACTICO') {
-        const pracCount = (data.pacPracticas && Array.isArray(data.pacPracticas)) ? data.pacPracticas.length : 0;
-        window.showToast(`✅ ¡PAC Práctico importado con éxito! (${pracCount} prácticas de laboratorio registradas)`);
-        window.switchDocMainTab('tab-pac-matrix');
+        const pracRows = (data.matriz7 && Array.isArray(data.matriz7) && data.matriz7.length > 0)
+          ? data.matriz7
+          : (data.pacPracticas || []);
+        data.pacPracticas = pracRows;
+        data.matriz7 = pracRows;
+        window.activePacPracData = data;
+        localStorage.setItem('sisa_saved_pac_prac_' + activeMateriaKey, JSON.stringify(data));
+        window.showToast(`✅ ¡PAC Práctico importado con éxito! (${pracRows.length} prácticas de laboratorio registradas)`);
+
+        if (typeof window.initCourseAttendanceSessions === 'function') {
+          window.initCourseAttendanceSessions(activeMateriaKey);
+        }
+
+        if (goToCronograma || activeTabId === 'tab-cronograma-semanas' || window.activeCronogramaType === 'PRACTICO') {
+          window.switchDocMainTab('tab-cronograma-semanas');
+          window.switchActiveCronogramaType('PRACTICO');
+          if (typeof window.renderCronogramaPracticoTable === 'function') {
+            window.renderCronogramaPracticoTable(pracRows);
+          }
+        } else {
+          window.switchDocMainTab('tab-pac-matrix');
+        }
       } else {
         const sesCount = (data.matriz7 && Array.isArray(data.matriz7)) ? data.matriz7.length : 0;
         if (goToCronograma || activeTabId === 'tab-cronograma-semanas') {
@@ -6951,7 +7100,10 @@ window.importPlanesExcel = function(forcedType) {
 // Aliases for direct UI tab buttons
 window.triggerDocxUpload = function() { window.importProgramaDocx(); };
 window.triggerPacUpload = function() { window.importPacExcel(false); };
-window.triggerCronogramaUpload = function() { window.importPacExcel(true); };
+window.triggerCronogramaUpload = function() {
+  const isPrac = (window.activeCronogramaType === 'PRACTICO');
+  window.importPacExcel(true, isPrac ? 'PRACTICO' : 'GRAL');
+};
 window.triggerPlanesUpload = function() { window.importPlanesExcel(); };
 
 // 5. Real Export Endpoints
@@ -14115,7 +14267,7 @@ document.addEventListener('change', (e) => {
     slots = Array.from(uniqueSlotsMap.values());
     slots.sort((a, b) => (a.dayInfo.offset - b.dayInfo.offset) || a.startTime.localeCompare(b.startTime));
 
-    // Retrieve real Cronograma (Matriz 7) strictly from user data or DOM
+    // Retrieve real Cronograma Teórico (Matriz 7)
     let matriz7 = [];
     const savedPac = localStorage.getItem('sisa_saved_pac_gral_' + mKey) || localStorage.getItem('sisa_saved_pac_' + mKey);
     if (savedPac) {
@@ -14132,6 +14284,25 @@ document.addEventListener('change', (e) => {
     if (matriz7.length === 0 && typeof window.extractCurrentCronogramaFromDom === 'function') {
       const live = window.extractCurrentCronogramaFromDom();
       if (live && live.length > 0) matriz7 = live;
+    }
+
+    // Retrieve real Cronograma Práctico (Sección 8 del PAC Práctico)
+    let pracMatriz = [];
+    const savedPacPrac = localStorage.getItem('sisa_saved_pac_prac_' + mKey);
+    if (savedPacPrac) {
+      try {
+        const parsedPrac = JSON.parse(savedPacPrac);
+        if (parsedPrac && Array.isArray(parsedPrac.matriz7) && parsedPrac.matriz7.length > 0) {
+          pracMatriz = parsedPrac.matriz7;
+        } else if (parsedPrac && Array.isArray(parsedPrac.pacPracticas) && parsedPrac.pacPracticas.length > 0) {
+          pracMatriz = parsedPrac.pacPracticas;
+        }
+      } catch (e) {}
+    }
+    if (pracMatriz.length === 0 && window.activePacPracData) {
+      pracMatriz = (window.activePacPracData.matriz7 && window.activePacPracData.matriz7.length > 0)
+        ? window.activePacPracData.matriz7
+        : (window.activePacPracData.pacPracticas || []);
     }
 
     const baseMonday = new Date(2026, 7, 3); // August 3, 2026
@@ -14152,9 +14323,22 @@ document.addEventListener('change', (e) => {
         const isoDate = `${yyyy}-${mm}-${dd}`;
         const formattedDate = `${dd}/${mm}/${yyyy}`;
 
-        // Strictly resolve topic from real cronograma (Matriz 7)
+        // Strictly resolve topic from real cronograma (Teórico o Práctico según corresponda)
         let topicText = '';
-        if (matriz7.length > 0) {
+        let unitText = '';
+
+        if (slot.tipoClase === 'PRACTICA' && pracMatriz.length > 0) {
+          const pracMatch = pracMatriz.find(r => {
+            const rSem = r.semana || r.sem;
+            return rSem && Number(rSem) === w;
+          }) || pracMatriz[(w - 1) % pracMatriz.length];
+
+          if (pracMatch) {
+            unitText = (pracMatch.unidadTematica || pracMatch.titulo || ('Práctica Semana ' + w)).trim();
+            const spec = (pracMatch.contenidoEspecifico || pracMatch.actividad || '').trim();
+            topicText = spec ? (unitText + ' - ' + spec) : unitText;
+          }
+        } else if (matriz7.length > 0) {
           const cronMatch = matriz7.find(r => {
             const rSes = r.nroSesion || r.sesion;
             const rSem = r.semana || r.sem;
@@ -14163,13 +14347,30 @@ document.addEventListener('change', (e) => {
             return false;
           });
           if (cronMatch) {
+            unitText = (cronMatch.unidadTematica || '').trim();
             const spec = (cronMatch.contenidoEspecifico || cronMatch.tema || '').trim();
-            const unit = (cronMatch.unidadTematica || '').trim();
-            if (spec && unit && !spec.toLowerCase().includes(unit.toLowerCase())) {
-              topicText = `${unit} - ${spec}`;
+            if (spec && unitText && !spec.toLowerCase().includes(unitText.toLowerCase())) {
+              topicText = `${unitText} - ${spec}`;
             } else {
-              topicText = spec || unit;
+              topicText = spec || unitText;
             }
+          }
+        }
+
+        // Fallback to activeAnaliticoUnidades if not matched
+        if (!topicText && activeAnaliticoUnidades && activeAnaliticoUnidades.length > 0) {
+          let allTemas = [];
+          activeAnaliticoUnidades.forEach(u => {
+            if (u.temas && u.temas.length > 0) {
+              u.temas.forEach(t => allTemas.push({ unit: u.titulo, tema: t.titulo }));
+            } else {
+              allTemas.push({ unit: u.titulo, tema: u.titulo });
+            }
+          });
+          if (allTemas.length > 0) {
+            const matchedTema = allTemas[(sessionNumber - 1) % allTemas.length];
+            unitText = matchedTema.unit;
+            topicText = `${matchedTema.unit} - ${matchedTema.tema}`;
           }
         }
 
@@ -14184,7 +14385,8 @@ document.addEventListener('change', (e) => {
           tipoClase: slot.tipoClase,
           comision: slot.comision,
           classroom: slot.classroom,
-          tema: topicText,
+          unidadTematica: unitText || 'Unidad Temática Curricular',
+          tema: topicText || (slot.tipoClase === 'TEORICA' ? `Sesión Teórica ${sessionNumber - 1}` : `Práctica de Laboratorio ${sessionNumber - 1}`),
           key: `${isoDate}_${slot.tipoClase}_${slot.comision}`
         });
       });
@@ -14433,13 +14635,26 @@ document.addEventListener('change', (e) => {
     const docenteCi = (typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? currentDocenteCi : '4892104';
     const carreraCodigo = (materia && materia.career) ? materia.career : 'CARSIS';
 
-    let unidadOficial = 'Unidad Temática Curricular';
+    let unidadOficial = ses.unidadTematica || 'Unidad Temática Curricular';
     let temaOficial = ses.tema || 'Contenido temático de la sesión';
 
     if (temaOficial.includes(' - ')) {
       const parts = temaOficial.split(' - ');
       unidadOficial = parts[0].trim();
       temaOficial = parts.slice(1).join(' - ').trim();
+    } else if (ses.tipoClase === 'PRACTICA') {
+      const savedPrac = localStorage.getItem('sisa_saved_pac_prac_' + materiaKey);
+      if (savedPrac) {
+        try {
+          const p = JSON.parse(savedPrac);
+          const pList = p.matriz7 || p.pacPracticas || [];
+          const match = pList.find(m => (m.semana && Number(m.semana) === ses.week)) || pList[(ses.week - 1) % pList.length];
+          if (match) {
+            unidadOficial = match.unidadTematica || match.titulo || ('Práctica Semana ' + ses.week);
+            temaOficial = match.contenidoEspecifico || match.actividad || ses.tema;
+          }
+        } catch(e) {}
+      }
     } else if (materia && materia.matriz7 && materia.matriz7.length > 0) {
       const match = materia.matriz7.find(m => (m.nroSesion && Number(m.nroSesion) === ses.number) || (m.semana && Number(m.semana) === ses.week));
       if (match) {
@@ -14457,10 +14672,16 @@ document.addEventListener('change', (e) => {
 
     if (elUnidad) elUnidad.textContent = unidadOficial;
     if (elTema) elTema.textContent = temaOficial;
-    if (elSemana) elSemana.textContent = `Sem ${ses.week || 13}`;
+    if (elSemana) elSemana.textContent = `Sem ${ses.week || 1}`;
     if (elSesion) elSesion.textContent = `#${ses.number || 1}`;
-    if (elHorario) elHorario.textContent = `${ses.startTime || '08:00'} - ${ses.endTime || '10:15'}`;
+    if (elHorario) elHorario.textContent = `${ses.startTime || '08:15'} - ${ses.endTime || '09:45'}`;
     if (elAula) elAula.textContent = ses.classroom || 'Aula 204';
+
+    // Synchronize top input with detected official topic
+    const topicInput = document.getElementById('asistencia-tema-input');
+    if (topicInput && (!topicInput.value || topicInput.value.includes('Cargando') || topicInput.value === 'Tema o contenido')) {
+      topicInput.value = temaOficial;
+    }
 
     const state = window.__ACTIVE_SEGUIMIENTO_STATE__;
     state.sesionMatriz7Id = ses.id || ses.number || null;
@@ -14481,12 +14702,32 @@ document.addEventListener('change', (e) => {
     } catch (e) {}
 
     const applyStateToUi = (data) => {
+      // 5 official moments checkboxes
+      const cbIntro = document.getElementById('seg-sec-intro');
+      const cbRes = document.getElementById('seg-sec-resultados');
+      const cbCont = document.getElementById('seg-sec-contenidos');
+      const cbCuer = document.getElementById('seg-sec-cuerpo');
+      const cbCier = document.getElementById('seg-sec-cierre');
+
+      const introVal = (data.secuenciaIntroduccion !== undefined ? data.secuenciaIntroduccion : (data.momentoInicioCumplido !== undefined ? data.momentoInicioCumplido : true));
+      const resVal = (data.secuenciaResultados !== undefined ? data.secuenciaResultados : (data.momentoInicioCumplido !== undefined ? data.momentoInicioCumplido : true));
+      const contVal = (data.secuenciaContenidos !== undefined ? data.secuenciaContenidos : (data.momentoDesarrolloCumplido !== undefined ? data.momentoDesarrolloCumplido : true));
+      const cuerVal = (data.secuenciaCuerpo !== undefined ? data.secuenciaCuerpo : (data.momentoDesarrolloCumplido !== undefined ? data.momentoDesarrolloCumplido : true));
+      const cierVal = (data.secuenciaCierre !== undefined ? data.secuenciaCierre : (data.momentoCierreCumplido !== undefined ? data.momentoCierreCumplido : true));
+
+      if (cbIntro) cbIntro.checked = introVal;
+      if (cbRes) cbRes.checked = resVal;
+      if (cbCont) cbCont.checked = contVal;
+      if (cbCuer) cbCuer.checked = cuerVal;
+      if (cbCier) cbCier.checked = cierVal;
+
+      // Backward compatibility elements
       const cbInicio = document.getElementById('seg-momento-inicio');
       const cbDes = document.getElementById('seg-momento-desarrollo');
       const cbCierre = document.getElementById('seg-momento-cierre');
-      if (cbInicio) cbInicio.checked = (data.momentoInicioCumplido !== undefined ? data.momentoInicioCumplido : true);
-      if (cbDes) cbDes.checked = (data.momentoDesarrolloCumplido !== undefined ? data.momentoDesarrolloCumplido : true);
-      if (cbCierre) cbCierre.checked = (data.momentoCierreCumplido !== undefined ? data.momentoCierreCumplido : true);
+      if (cbInicio) cbInicio.checked = (introVal && resVal);
+      if (cbDes) cbDes.checked = (contVal && cuerVal);
+      if (cbCierre) cbCierre.checked = cierVal;
 
       window.setSeguimientoCumplimiento(data.estadoCumplimiento || 'TOTALMENTE_CUMPLIDO', false);
 
@@ -14501,8 +14742,9 @@ document.addEventListener('change', (e) => {
       const badge = document.getElementById('badge-seguimiento-status');
       if (badge) {
         if (data.isPersisted) {
+          const labelEstado = data.estadoCumplimiento === 'NO_CUMPLIDO' ? 'No Cumplido' : (data.estadoCumplimiento === 'PARCIALMENTE_CUMPLIDO' ? 'Parcialmente Cumplido' : 'Totalmente Cumplido');
           badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5';
-          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Registrado (+${(data.cumplimientoScore !== undefined ? data.cumplimientoScore : 1.0).toFixed(1)} pts)</span>`;
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Registrado (${labelEstado})</span>`;
         } else {
           badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5';
           badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Pendiente de Registro</span>`;
@@ -14576,15 +14818,25 @@ document.addEventListener('change', (e) => {
     const state = window.__ACTIVE_SEGUIMIENTO_STATE__;
     if (!state) return;
 
-    const cbInicio = document.getElementById('seg-momento-inicio');
-    const cbDes = document.getElementById('seg-momento-desarrollo');
-    const cbCierre = document.getElementById('seg-momento-cierre');
+    const cbIntro = document.getElementById('seg-sec-intro');
+    const cbRes = document.getElementById('seg-sec-resultados');
+    const cbCont = document.getElementById('seg-sec-contenidos');
+    const cbCuer = document.getElementById('seg-sec-cuerpo');
+    const cbCier = document.getElementById('seg-sec-cierre');
+
+    state.secuenciaIntroduccion = cbIntro ? cbIntro.checked : true;
+    state.secuenciaResultados = cbRes ? cbRes.checked : true;
+    state.secuenciaContenidos = cbCont ? cbCont.checked : true;
+    state.secuenciaCuerpo = cbCuer ? cbCuer.checked : true;
+    state.secuenciaCierre = cbCier ? cbCier.checked : true;
+
+    state.momentoInicioCumplido = state.secuenciaIntroduccion && state.secuenciaResultados;
+    state.momentoDesarrolloCumplido = state.secuenciaContenidos && state.secuenciaCuerpo;
+    state.momentoCierreCumplido = state.secuenciaCierre;
+
     const obsInput = document.getElementById('seg-observaciones-input');
     const topicInput = document.getElementById('asistencia-tema-input');
 
-    state.momentoInicioCumplido = cbInicio ? cbInicio.checked : true;
-    state.momentoDesarrolloCumplido = cbDes ? cbDes.checked : true;
-    state.momentoCierreCumplido = cbCierre ? cbCierre.checked : true;
     state.observacionesDocente = obsInput ? obsInput.value.trim() : '';
     if (topicInput && topicInput.value.trim()) {
       state.temaEjecutado = topicInput.value.trim();
@@ -14612,6 +14864,11 @@ document.addEventListener('change', (e) => {
       momentoInicioCumplido: state.momentoInicioCumplido,
       momentoDesarrolloCumplido: state.momentoDesarrolloCumplido,
       momentoCierreCumplido: state.momentoCierreCumplido,
+      secuenciaIntroduccion: state.secuenciaIntroduccion,
+      secuenciaResultados: state.secuenciaResultados,
+      secuenciaContenidos: state.secuenciaContenidos,
+      secuenciaCuerpo: state.secuenciaCuerpo,
+      secuenciaCierre: state.secuenciaCierre,
       estadoCumplimiento: state.estadoCumplimiento,
       observacionesDocente: state.observacionesDocente
     };

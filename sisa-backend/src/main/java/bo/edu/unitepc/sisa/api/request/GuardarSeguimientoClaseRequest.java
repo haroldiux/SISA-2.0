@@ -28,6 +28,11 @@ public record GuardarSeguimientoClaseRequest(
         Boolean momentoInicioCumplido,
         Boolean momentoDesarrolloCumplido,
         Boolean momentoCierreCumplido,
+        Boolean secuenciaIntroduccion,
+        Boolean secuenciaResultados,
+        Boolean secuenciaContenidos,
+        Boolean secuenciaCuerpo,
+        Boolean secuenciaCierre,
         @NotNull EstadoCumplimientoTema estadoCumplimiento,
         String observacionesDocente
 ) {}

@@ -85,6 +85,21 @@ public class SeguimientoClase {
     @Column(name = "momento_cierre_cumplido", nullable = false)
     private Boolean momentoCierreCumplido = Boolean.TRUE;
 
+    @Column(name = "secuencia_introduccion", nullable = false)
+    private Boolean secuenciaIntroduccion = Boolean.TRUE;
+
+    @Column(name = "secuencia_resultados", nullable = false)
+    private Boolean secuenciaResultados = Boolean.TRUE;
+
+    @Column(name = "secuencia_contenidos", nullable = false)
+    private Boolean secuenciaContenidos = Boolean.TRUE;
+
+    @Column(name = "secuencia_cuerpo", nullable = false)
+    private Boolean secuenciaCuerpo = Boolean.TRUE;
+
+    @Column(name = "secuencia_cierre", nullable = false)
+    private Boolean secuenciaCierre = Boolean.TRUE;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_cumplimiento", nullable = false, length = 30)
     private EstadoCumplimientoTema estadoCumplimiento = EstadoCumplimientoTema.TOTALMENTE_CUMPLIDO;
