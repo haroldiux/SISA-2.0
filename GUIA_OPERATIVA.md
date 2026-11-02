@@ -1,186 +1,275 @@
-# SISA 2.0 — Guía Operativa Institucional
+# SISA 2.0 — Guía Operativa y Manual de Evaluación Directiva
 **Sistema Integral de Seguimiento Académico y Supervisión Curricular**  
 **Universidad Técnica Privada Cosmos (UNITEPC)**  
-*Manual de Usuario y Operación para Docentes y Directores de Carrera*
+*Manual Oficial de Instalación, Siembra de Datos (Seeder) y Guía de Pruebas para Directores de Carrera*
 
 ---
 
-## 1. Introducción y Acceso al Sistema
+## 1. Requisitos Previos del Sistema
 
-**SISA 2.0** unifica el trabajo docente de aula y la supervisión directiva en una sola plataforma web, conectada en tiempo real con las cátedras y horarios oficiales del **Sistema de Educación Académica (SEA)** de UNITEPC.
-
-- **URL de Acceso Local**: [http://localhost:4200](http://localhost:4200)
-- **API Backend**: [http://localhost:8080/api/v1](http://localhost:8080/api/v1)
-
-### Perfiles de Acceso:
-| Perfil | Rol en SISA | Flujo Principal | Credenciales Demo |
-|:---|:---|:---|:---|
-| **Docente** | `ROLE_DOCENTE` | Carpeta Docente (5 Documentos) | CI: `3065087` / `3065087` (Ing. Rosmery Luizaga) |
-| **Director de Carrera** | `ROLE_DIR_CARRERA` | Supervisión Curricular y Semáforo | `dir.carrera.sis` / `Unitepc2026!` |
-| **Administrador / Vicerrector** | `ROLE_ADMIN` | Control Nacional (9 Sedes, 24 Carreras) | `admin` / `Unitepc2026!` |
+Antes de iniciar, la computadora (Windows, Linux o macOS) debe contar con:
+1. **Docker Desktop** (con soporte WSL2 en Windows) o **Docker Engine + Docker Compose** en Linux.
+   - Asegúrate de que Docker Desktop esté abierto y en ejecución.
+2. **Git** para clonar el repositorio.
+3. **Puertos Libres Requeridos**:
+   - `4200`: Frontend Web Angular / Nginx.
+   - `8080`: Backend API Spring Boot.
+   - `5432`: Base de Datos PostgreSQL.
+   *(Si tienes un PostgreSQL local instalado en tu máquina ocupando el puerto 5432, detén el servicio local temporalmente o cámbialo en `docker-compose.yml`)*.
 
 ---
 
-## 2. Guía Paso a Paso para el Docente (Carpeta Docente)
+## 2. Instalación y Puesta en Marcha (Paso a Paso)
 
-Al iniciar sesión como docente, accedes directamente a la **Carpeta Docente (Vista 1)**. En el panel lateral izquierdo verás tus asignaturas asignadas oficialmente por el SEA con su distintivo de sede, campus y comisiones asignadas (ej. `SIS-113 PROGRAMACIÓN I • 2 Comisiones: TA-01 Teoría • PL-01 Práctica`).
-
-La carpeta docente se compone de **5 pestañas secuenciales**:
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ [1. Prog. Analítico] [2. PAC Pedagógico] [3. Cronograma] [4. Planes Clase] [5. Lista]  │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-### Paso 1: Documento 1 — Programa Analítico (.docx)
-1. Haz clic en la pestaña **1. Programa Analítico .docx**.
-2. **Estructura Oficial de 14 Puntos**:
-   - Visualiza la Caracterización de la Asignatura, Competencias, Unidades de Aprendizaje, Metodología y Bibliografía bajo normas APA 7ma Edición.
-3. **Importación Inteligente desde Word**:
-   - Si tu carrera ya cuenta con el Programa Analítico oficial en formato Word, haz clic en **"Importar Prog. Analítico (.docx)"**.
-   - Selecciona el archivo Word (`.docx`). El sistema extraerá automáticamente las Unidades Temáticas, Temas Específicos y Elementos de Competencia, guardándolos en base de datos.
-4. **Exportar Carátula Oficial**:
-   - Presiona el botón verde **"Exportar Word (.docx)"** para descargar el documento institucional listo para impresión o firma.
-
----
-
-### Paso 2: Documento 2 — PAC Pedagógico (Puntos 1 a 14)
-1. Haz clic en la pestaña **2. PAC - Pedagógico Ptos 1-14**.
-2. Revisa la articulación pedagógica de la asignatura:
-   - Objetivos holísticos, metodologías activas y criterios de evaluación.
-3. Si la materia tiene componente práctico, el selector superior te permite alternar entre el **PAC General (Teórico)** y el **PAC Práctico**.
-4. Haz clic en **"Guardar PAC"** para preservar cualquier observación o enriquecimiento didáctico.
-
----
-
-### Paso 3: Documento 3 — Cronograma Semestral de 20 Semanas (Matriz 7)
-1. Haz clic en la pestaña **3. Cronograma (20 Semanas) Matriz 7**.
-2. **Modalidad Teórica (Matriz 7 de Aula)**:
-   - Muestra el cronograma oficial de 20 semanas lectivas con sus columnas reglamentarias:
-     `Semana | N° Sesión | Unidad Temática | Contenido Específico | Saberes (Conceptual, Procedimental, Actitudinal) | Criterio de Desempeño | Instrumento de Evaluación`
-   - Para cargar el cronograma oficial desde la planilla Excel de la cátedra, presiona **"Cargar desde PAC General (.xlsx)"**.
-3. **Modalidad Práctica (Sección 8 del PAC Práctico)**:
-   - Haz clic en el botón verde **"Cronograma Práctico (Laboratorio / Simulación)"**.
-   - Visualiza la programación de guías de laboratorio:
-     `Semana | N° Práctica | Título de la Práctica | Actividad de Laboratorio | Desempeño Procedimental | Instrumento | Evidencias`
-   - Carga la programación práctica con el botón **"Cargar desde PAC Práctico (.xlsx)"**.
-
----
-
-### Paso 4: Documento 4 — Planes de Clase Teóricos y Prácticos
-1. Haz clic en la pestaña **4. Planes de Clase .xlsx**.
-2. **Navegación por Unidades de Aprendizaje**:
-   - Utiliza los botones superiores de Unidad (ej. `UA-1: CONCEPTOS FUNDAMENTALES`, `UA-2: ESTRUCTURAS SELECTIVAS`, `UA-3: MATRICES`) para alternar rápidamente entre los bloques temáticos.
-3. **Conmutación Teórico / Práctico**:
-   - Alterna entre **"Plan Teórico (TA)"** y **"Guía Práctica (PL/PA)"**.
-4. **Sincronización con el Programa Analítico**:
-   - Presiona el botón **"Sincronizar con Programa"** para que los planes de clase se deriven automáticamente a partir de los temas y saberes del Programa Analítico.
-5. **Exportación Oficial Multi-Hoja**:
-   - Haz clic en **"Exportar Plan Teórico (.xlsx)"** o **"Exportar Plan Práctico (.xlsx)"** para descargar el libro Excel institucional con una pestaña dedicada por sesión didáctica.
-
----
-
-### Paso 5: Documento 5 — Lista Oficial y Control de Asistencia en Aula
-Esta es la herramienta operativa diaria del docente en clase. Diseñada para un **registro ultra-rápido en menos de 5 segundos**:
-
-1. **Selección Inteligente de la Sesión Oficial**:
-   - En el menú desplegable **"Sesión Oficial SEA"**, selecciona la clase que estás impartiendo (ej. `Sesión 1: Lunes 03/08/2026 • 11:15-12:45 • TA-01`).
-   - Las insignias contiguas se sincronizan de inmediato:
-     - **Modalidad**: Insignia azul para *Teórica (TA-01)* o púrpura para *Práctica / Lab (PL-01)*.
-     - **Horario**: Día y franja horaria oficial asignada por el SEA.
-     - **Aula**: Aula o Laboratorio físico (ej. *C 103* o *INFORMATICA*).
-   - El campo **Tema / Contenido** se auto-completa con el tema planificado en la Matriz 7 o Sección 8.
-
-2. **Panel de Macroplanificación Oficial (Sincronización Automática)**:
-   - **En Sesión Teórica**: Despliega la Matriz 7 con los Saberes Conceptual, Procedimental y Actitudinal, Criterio de Desempeño e Instrumento reglamentario.
-   - **En Sesión Práctica**: Conmuta automáticamente al PAC Práctico, mostrando la Actividad de Laboratorio, Desempeño Procedimental, Evidencias requeridas y Rúbrica de Laboratorio.
-
-3. **Panel de Seguimiento Pedagógico (5 Momentos Oficiales UNITEPC)**:
-   - Confirma el desarrollo de la **Secuencia Didáctica Oficial**:
-     - `[✓] Introducción (15')` — Motivación y encuadre inicial.
-     - `[✓] Resultados / Logros (10')` — Logros esperados de clase.
-     - `[✓] Contenidos de la Clase (15')` — Mapa temático y saberes.
-     - `[✓] Cuerpo de Contenidos (40')` — Construcción y desarrollo activo.
-     - `[✓] Conclusión o Cierre (10')` — Síntesis plenaria y evaluación formativa.
-   - Selecciona el nivel de cumplimiento: **Totalmente Cumplido**, **Parcialmente Cumplido** o **No Cumplido**.
-   - Marca los recursos didácticos empleados (Pizarra, Proyector, Guía Lab, IDE / Código, Moodle).
-   - Presiona **"Guardar Seguimiento de Clase"**.
-
-4. **Llamada de Lista y Regla del 80% (UNITEPC)**:
-   - Justo encima de la lista de estudiantes cuentas con los botones de acción rápida:
-     - **"⚡ Marcar Todos Presentes"**: Marca la asistencia de toda la nómina en un solo clic.
-     - **Botones individuales**: Para cada estudiante puedes alternar entre `P` (Presente), `F` (Falta), `A` (Atraso) o `L` (Licencia). Si marcas Falta o Licencia, puedes escribir una breve justificación en el campo contiguo.
-   - **Segregación por Carrera en Cátedras Comunes**:
-     - Los estudiantes aparecen agrupados automáticamente por su carrera de origen (ej. *Licenciatura en Ing. de Sistemas* y *Licenciatura en Ing. Electrónica*). Puedes filtrar por carrera mediante los botones de cohorte superiores.
-   - **Semáforo de Cumplimiento (Regla del 80%)**:
-     - La última columna evalúa en tiempo real si el estudiante mantiene el >= 80% de asistencia obligatoria para habilitación a exámenes finales (`✓ Habilitado (100%)` o `⚠️ Inhabilitado (< 80%)`).
-   - Presiona **"Guardar Asistencia"** para persistir la nómina en PostgreSQL y el almacenamiento local seguro.
-   - Puedes descargar la planilla oficial en cualquier momento con **"Exportar Excel"**.
-
----
-
-## 3. Guía Paso a Paso para el Director de Carrera (Supervisión Curricular)
-
-Al iniciar sesión como Director de Carrera (`dir.carrera.sis`), el sistema te sitúa en la **Supervisión Curricular (Vista 2)**.
-
-### Paso 1: Selección de Sede y Carrera en Auditoría
-1. En la barra superior, si administras varias carreras (ej. *Ingeniería de Sistemas* e *Ingeniería Electrónica*), utiliza el selector para alternar entre tus programas académicos.
-2. Si tienes sedes asignadas, el selector de sede te permite fiscalizar cada campus universitario.
-
-### Paso 2: Semáforo Curricular de Avance
-1. En el encabezado verás el **Semáforo Curricular de la Carrera**:
-   - **Verde (>= 80%)**: Cátedras con avance pedagógico y registro de aula óptimo.
-   - **Amarillo (60% - 79%)**: Cátedras con desfase preventivo o pendientes de registro.
-   - **Rojo (< 60%)**: Cátedras en alerta crítica por retraso en la Matriz 7 o falta de registro de clases.
-2. El tablero muestra la trazabilidad del cumplimiento de los **5 momentos pedagógicos** por docente y los recursos didácticos más utilizados.
-
-### Paso 3: Auditoría del Dossier por Asignatura
-1. En la **Malla Curricular por Semestres**, haz clic sobre cualquier asignatura para auditar su estado:
-   - Detección automática de componentes:
-     - **Teórica Pura**: Exige Programa Analítico, PAC Teórico y Planes de Clase Teóricos (PAC Práctico queda en `N/A`).
-     - **Teórico-Práctica**: Exige el dossier completo (Programa, PAC Teórico, PAC Práctico, Planes Teóricos y Guías Prácticas de Laboratorio).
-2. Haz clic en **"Auditar Cátedra"** para ingresar en modo auditor y revisar los contenidos específicos elaborados por el docente.
-
-### Paso 4: Aprobación en Lote y Dictamen Semestral
-1. Puedes aprobar individualmente un documento con el botón **"Visar Documento"**.
-2. Para visar la planificación de todo el semestre de una vez, presiona **"Aprobar Semestre Completo en Lote"**.
-3. Presiona **"Imprimir / Descargar Reporte Curricular PDF"** para generar el acta oficial con firmas y estado de cumplimiento de todas las asignaturas de la carrera.
-
----
-
-## 4. Despliegue, Operación Técnica y Troubleshooting
-
-### Comandos de Ejecución con Docker:
+### Paso 1: Clonar el Repositorio
+Abre tu terminal (PowerShell, CMD, Git Bash o Terminal de Linux/Mac) y ejecuta:
 
 ```bash
-# 1. Iniciar base de datos y backend
-docker compose up -d postgres backend
+git clone https://github.com/haroldiux/SISA-2.0.git
+cd "SISA 2.0"
+# (o el nombre de la carpeta clonada: cd SISA-2.0)
+```
 
-# 2. Reconstruir frontend con los últimos cambios y levantarlo
-docker compose build frontend
-docker compose up -d --no-deps frontend
+---
 
-# 3. Comprobar estado de los servicios
+### Paso 2: Levantar el Stack Completo con Docker Compose
+Ejecuta el siguiente comando para construir y desplegar los 3 contenedores:
+
+```bash
+docker compose up -d --build
+```
+
+> **¿Qué hace este comando?**
+> 1. Descarga y levanta **PostgreSQL 16** (`sisa-postgres`) creando la base de datos `sisa_db`.
+> 2. Compila el backend en **Spring Boot 3.3.3** (`sisa-backend`), conectándose automáticamente a Postgres y ejecutando **Flyway**, que aplica las migraciones de esquema `V1` a `V10` y el **Seeder Universal V9** con todos los datos institucionales de prueba.
+> 3. Compila el frontend en **Angular 15** en modo producción (`sisa-frontend`) y lo sirve con **Nginx** de alto rendimiento en el puerto `4200`.
+
+---
+
+### Paso 3: Verificar el Estado de los Contenedores
+Verifica que los tres servicios estén arriba y saludables:
+
+```bash
 docker compose ps
 ```
 
-### Comprobaciones Rápidas:
-- **Verificar Frontend**:
+Deberías ver una salida similar a:
+```text
+NAME            IMAGE                  COMMAND                  SERVICE      STATUS                    PORTS
+sisa-backend    sisa2-backend:latest   "java -jar /app/app.…"   backend      Up (healthy)              0.0.0.0:8080->8080/tcp
+sisa-frontend   sisa2-frontend:latest  "/docker-entrypoint.…"   frontend     Up                        0.0.0.0:4200->80/tcp
+sisa-postgres   postgres:16-alpine     "docker-entrypoint.s…"   postgres     Up (healthy)              0.0.0.0:5432->5432/tcp
+```
+
+---
+
+## 3. Ejecución y Verificación del Seeder Universal (V9 / V10)
+
+### ¿Cómo funciona la siembra de datos?
+Al levantar los contenedores, **Flyway** inyecta automáticamente el seeder maestro contenido en:
+- `sisa-backend/src/main/resources/db/migration/V9__portable_demo_seeder.sql`:
+  - Crea a la Directora de Carrera de Sistemas y Medicina (`dir.carrera.sis`).
+  - Crea a los docentes oficiales (ej. Ing. Rosmery Luizaga con CI `3065087`).
+  - Asigna las cátedras oficiales (`SIS-213`, `SIS-311`, `MAT-101`, etc.).
+  - Siembra el historial de sesiones de aula para alimentar el **Semáforo Curricular** (mostrando materias en verde, amarillo y rojo).
+- `sisa-backend/src/main/resources/db/migration/V10__secuencia_didactica_cinco_momentos.sql`:
+  - Registra las columnas oficiales para la **Secuencia Didáctica de 5 Momentos**.
+
+---
+
+### ¿Cómo re-ejecutar o forzar el Seeder manualmente?
+
+Si en algún momento deseas reiniciar o re-sembrar la base de datos a su estado original de evaluación, tienes dos opciones muy sencillas:
+
+#### Opción A (Recomendada con script incluido de 1 clic):
+- **En Windows (PowerShell)**:
   ```powershell
-  Invoke-WebRequest -Uri "http://localhost:4200" -UseBasicParsing
+  powershell -ExecutionPolicy Bypass -File .\seed-db.ps1
   ```
-- **Verificar API Backend**:
-  ```powershell
-  Invoke-WebRequest -Uri "http://localhost:8080/api/v1/catalogo-academico/status" -UseBasicParsing
+- **En Linux / macOS / Git Bash**:
+  ```bash
+  chmod +x seed-db.sh && ./seed-db.sh
   ```
 
-### Solución de Problemas Frecuentes:
-1. **La página no refleja los últimos cambios de diseño**:
-   - Presiona `Ctrl + F5` (o `Cmd + Shift + R`) en el navegador para forzar la recarga del caché de Nginx.
-2. **El SEA Gateway central está caído o fuera de línea**:
-   - SISA 2.0 cuenta con **Modo Local Seguro**. Si el servidor central responde con HTTP 504 o está desconectado, el sistema conmuta automáticamente al almacenamiento local y te permite seguir pasando lista y guardando el seguimiento sin perder ningún dato.
-3. **Persistencia tras recargar la página**:
-   - Al presionar `F5`, SISA 2.0 conserva exactamente la vista (Carpeta Docente vs Supervisión), la materia que estabas auditando y la pestaña activa (Documento 1 al 5).
+#### Opción B (Limpia total desde cero eliminando volúmenes):
+Si deseas borrar toda la base de datos y recrearla completamente limpia:
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+---
+
+## 4. Credenciales Oficiales de Evaluación
+
+Abre tu navegador web en: **[http://localhost:4200](http://localhost:4200)**
+
+| Perfil de Evaluación | Usuario | Contraseña | Nombre y Rol Institucional |
+|:---|:---:|:---:|:---|
+| **Director de Carrera (EVALUADOR PRINCIPAL)** | `dir.carrera.sis` | `Unitepc2026!` | **Lic. Mariana Ríos Vargas**<br>Directora Multicarrera (Sistemas y Medicina, Sede Cochabamba, Campus Juan Pablo II) |
+| **Docente de Aula** | `3065087` | `3065087` | **Ing. Rosmery Luizaga**<br>Docente de Programación I, Programación III y Base de Datos I |
+| **Administrador Nacional** | `admin` | `Unitepc2026!` | **Administrador Nacional UNITEPC**<br>Acceso irrestricto a las 9 Sedes y 24 Carreras |
+
+---
+
+## 5. Ruta de Evaluación Paso a Paso para el Director de Carrera
+
+Sigue esta secuencia para auditar todas las funcionalidades pedagógicas y de gobernanza de **SISA 2.0**:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        FLUJO DEL DIRECTOR DE CARRERA                   │
+│                                                                        │
+│  1. Iniciar Sesión como Director (`dir.carrera.sis`)                   │
+│  2. Supervisión Curricular (Vista 2) → Semáforo por Colores            │
+│  3. Auditoría de los 5 Momentos Pedagógicos y Recursos en Aula         │
+│  4. Malla Semestral → Detección Teórica vs Práctica y Aprobación Lote │
+│  5. Auditoría de Cátedra → Microplanificación y 20 Semanas             │
+│  6. Control de Asistencia → Regla del 80% y Aislamiento por Sesión     │
+│  7. Prueba de Contraste → Iniciar sesión como Docente (`3065087`)      │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Prueba 1: Ingreso a la Supervisión Curricular (Vista 2)
+1. Ingresa a [http://localhost:4200](http://localhost:4200) con:
+   - **Usuario**: `dir.carrera.sis`
+   - **Contraseña**: `Unitepc2026!`
+2. Observa la pantalla principal: el sistema reconoce automáticamente a la **Directora de Carrera** y la sitúa en la **Supervisión Curricular (Vista 2)**.
+3. En la barra superior, comprueba la gobernanza multicarrera:
+   - Despliega el selector de **Carrera**: verás que solo puedes alternar entre **Licenciatura en Ingeniería de Sistemas** y **Licenciatura en Medicina** (aislamiento estricto por gobernanza RBAC).
+   - El selector de **Sede** se encuentra bloqueado con candado en `CBA • Sede Cochabamba (Campus Juan Pablo II)`.
+
+---
+
+### Prueba 2: Auditoría del Semáforo Curricular en Tiempo Real
+En la parte superior de la Vista 2 encontrarás el **Semáforo Curricular de la Carrera**:
+
+1. **Indicadores de Cumplimiento por Cátedra**:
+   - `SIS-213 PROGRAMACIÓN III` (Docente: Rosmery Luizaga): **Color VERDE** (Avance pedagógico óptimo >= 80% conforme a lo planificado).
+   - `SIS-311 BASE DE DATOS I` (Docente: Rosmery Luizaga): **Color AMARILLO** (Alerta preventiva, avance entre 60% y 79%).
+   - `MAT-101 CÁLCULO I`: **Color ROJO** (Retraso crítico < 60%, alerta de intervención directiva).
+2. **Métricas de la Secuencia Didáctica (5 Momentos Oficiales)**:
+   - Comprueba las barras estadísticas que auditan el cumplimiento en aula de los 5 momentos normativos de UNITEPC:
+     1. *Inicio / Motivación* (15 min)
+     2. *Resultados de Aprendizaje / Logros* (10 min)
+     3. *Contenidos de la Clase* (15 min)
+     4. *Cuerpo de Contenidos* (40 min)
+     5. *Conclusión o Cierre* (10 min)
+3. **Métricas de Recursos Didácticos**:
+   - Observa la frecuencia de uso de recursos: Pizarra Acrílica, Diapositivas, Proyector Multimedia, Guías de Laboratorio, IDE/Código Fuente y Moodle.
+
+---
+
+### Prueba 3: Malla Curricular Semestral y Dictamen en Lote
+1. En la tabla central, navega por los semestres de la carrera (1º al 8º Semestre en Sistemas; 1º al 10º Semestre en Medicina).
+2. **Detección Automática de Modalidad**:
+   - Comprueba cómo el motor curricular analiza los grupos del SEA:
+     - Asignaturas teóricas puras marcan el PAC Práctico en `N/A`.
+     - Asignaturas de especialidad con carga de laboratorio exigen el dossier completo (Programa Analítico, PAC Teórico, PAC Práctico, Planes Teóricos y Guías Prácticas).
+3. **Aprobación Semestral en Lote**:
+   - Haz clic en **"Aprobar Semestre Completo en Lote"**.
+   - Se abrirá el modal directivo para emitir la resolución curricular del semestre.
+4. **Descargar Reporte PDF**:
+   - Presiona **"Imprimir / Descargar Reporte Curricular PDF"** para obtener el acta curricular de la carrera con fechas de corte y firmas institucionales.
+
+---
+
+### Prueba 4: Auditoría en Modo Cátedra (Carpeta Docente)
+Como Director de Carrera, puedes auditar cualquier materia haciendo clic en **"Auditar Cátedra"** o seleccionándola en el menú lateral:
+
+1. Selecciona la materia `SIS-113 PROGRAMACIÓN I`.
+2. **Pestaña 1 (Programa Analítico)**:
+   - Observa el formato oficial de 14 puntos, las 6 Unidades de Aprendizaje y los 9 temas específicos.
+   - Verifica que como Director tienes la insignia dorada `Consenso Cátedra`.
+3. **Pestaña 2 (PAC Pedagógico)**:
+   - Revisa la articulación pedagógica de los puntos 1 al 14.
+4. **Pestaña 3 (Cronograma 20 Semanas)**:
+   - Alterna entre **"Cronograma Teórico (Matriz 7)"** y **"Cronograma Práctico (Laboratorio / Simulación)"**.
+   - Comprueba que la Matriz 7 desglosa los saberes (conceptual, procedimental, actitudinal) y la sección práctica desglosa las actividades de laboratorio y evidencias.
+5. **Pestaña 4 (Planes de Clase)**:
+   - Alterna por las Unidades de Aprendizaje (`UA-1`, `UA-2`, `UA-3: MATRICES`).
+   - Alterna entre el **Plan Teórico (TA)** y la **Guía Práctica (PL/PA)**.
+   - Prueba el botón **"Exportar Plan Teórico (.xlsx)"** para descargar el Excel multi-hoja.
+
+---
+
+### Prueba 5: Control de Asistencia y Seguimiento en Aula (Pestaña 5)
+Entra en la pestaña **5. Lista y Asistencia**:
+
+1. **Prueba de Conmutación Dinámica de Sesiones**:
+   - En el desplegable **"Sesión Oficial SEA"**:
+     - Selecciona una **Sesión Teórica** (ej. `Sesión 1: Lunes 03/08/2026 • 11:15-12:45 • TA-01` o `Sesión 7`):
+       - Observa cómo la insignia cambia instantáneamente a azul `Teórica (TA-01)`.
+       - Observa cómo el aula cambia a `C 103` y el horario a `Lunes 11:15 - 12:45`.
+       - En la tarjeta **Macroplanificación Oficial**, observa cómo se despliega la **Matriz 7** con sus saberes conceptual, procedimental y actitudinal.
+     - Selecciona una **Sesión Práctica** (ej. `Sesión 3: Viernes 07/08/2026 • 08:15-09:45 • PL-01` o `Sesión 26`):
+       - Observa cómo la insignia cambia instantáneamente a púrpura `Práctica / Lab (PL-01)`.
+       - Observa cómo el aula cambia a `INFORMATICA`.
+       - En la tarjeta **Macroplanificación Oficial**, observa cómo conmuta automáticamente a la **Sección 8 del PAC Práctico**, mostrando la Actividad de Laboratorio, Desempeño Procedimental, Evidencias y Rúbrica de Laboratorio.
+2. **Prueba de Aislamiento Estricto de Asistencias (Cero Arrastre)**:
+   - En la Sesión 1, marca a un estudiante con `F` (Falta) o `A` (Atraso).
+   - Presiona **"Guardar Asistencia"**.
+   - Ahora cambia el desplegable a la **Sesión 3** (o Sesión 7):
+     - **Verifica que la nómina inicia limpia (todos en PRESENTE)** y **NO hereda las marcas de la Sesión 1**.
+   - Vuelve a la Sesión 1:
+     - **Verifica que recupera fielmente la falta guardada**.
+3. **Prueba de la Regla del 80% (UNITEPC)**:
+   - En la columna de la derecha (`ESTADO REGLA 80%`), observa la insignia en tiempo real:
+     - `✓ Habilitado (100%)` para estudiantes regulares.
+     - Cambia a `⚠️ Inhabilitado` cuando el estudiante acumula faltas por debajo del umbral del 80%.
+4. **Segregación Automática por Carrera en Materias Comunes**:
+   - Observa cómo la nómina segrega a los estudiantes de **Ing. de Sistemas** (`CARSIS`) y de **Ing. Electrónica** (`CARELE`). Puedes usar los botones superiores de filtro de carrera.
+5. **Seguimiento Pedagógico de Aula en < 5 segundos**:
+   - Marca los 5 momentos didácticos desarrollados, selecciona *Totalmente Cumplido* y presiona **"Guardar Seguimiento de Clase"**.
+6. **Exportación a Excel**:
+   - Haz clic en **"Exportar Excel"** para descargar la planilla oficial de asistencia semestral.
+
+---
+
+### Prueba 6: Prueba de Contraste con Perfil Docente
+Para comprobar que el sistema bloquea el acceso no autorizado a los docentes:
+1. Haz clic en el botón de salida / cerrar sesión (o abre una pestaña en modo incógnito).
+2. Ingresa con credenciales de docente:
+   - **Usuario**: `3065087`
+   - **Contraseña**: `3065087`
+3. Comprueba que el docente:
+   - Solo ve sus asignaturas en la **Carpeta Docente (Vista 1)**.
+   - **No tiene acceso a la Supervisión Curricular (Vista 2)** ni a la aprobación en lote ni a los semáforos directivos.
+
+---
+
+## 6. Solución de Problemas Frecuentes (Troubleshooting)
+
+### 1. "Docker no se puede conectar o daemon no está corriendo"
+- Abre la aplicación **Docker Desktop** en tu computadora y espera a que el icono en la barra de tareas se ponga en color verde (*Engine running*).
+- En Windows con WSL2, abre PowerShell como Administrador y ejecuta: `wsl --status`.
+
+### 2. "Error de puerto ocupado (5432, 8080 o 4200)"
+- Si tienes PostgreSQL instalado localmente en tu sistema operativo:
+  - En Windows: Abre `services.msc`, busca `postgresql-x64-XX` y ponlo en *Detenido*.
+  - En Linux: `sudo systemctl stop postgresql`.
+- Luego vuelve a ejecutar: `docker compose up -d`.
+
+### 3. "La página muestra datos antiguos o estilos desalineados"
+- El navegador puede haber guardado en caché versiones anteriores de scripts o estilos.
+- Presiona `Ctrl + Shift + R` (o `Ctrl + F5`) en Windows/Linux, o `Cmd + Shift + R` en Mac para forzar una recarga limpia.
+
+### 4. "¿Qué significa el indicador SEA en la barra de asistencia?"
+- **SEA en Línea (Verde)**: Comunicación fluida con el Gateway central.
+- **SEA Fuera de Línea / Modo Local Seguro (Ámbar)**: El servidor central del SEA está inaccesible o en mantenimiento; SISA 2.0 activa el almacenamiento local seguro y permite seguir pasando lista y guardando planificaciones sin interrupciones.
+
+---
+
+## 7. Resumen de Comandos Rápidos
+
+| Acción | Comando |
+|:---|:---|
+| **Iniciar todo el sistema** | `docker compose up -d --build` |
+| **Ver estado de servicios** | `docker compose ps` |
+| **Ver logs del backend** | `docker compose logs -f backend` |
+| **Re-sembrar base de datos (Windows)** | `powershell -ExecutionPolicy Bypass -File .\seed-db.ps1` |
+| **Re-sembrar base de datos (Linux/Mac)** | `./seed-db.sh` |
+| **Reinicio total limpio (Borra volúmenes)** | `docker compose down -v && docker compose up -d --build` |
+| **Detener el sistema** | `docker compose down` |
