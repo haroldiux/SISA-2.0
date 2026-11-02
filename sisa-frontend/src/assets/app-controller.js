@@ -7352,14 +7352,66 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.toggleSeaGatewaySimulation = function() {
-    const next = (currentSeaStatus === 'online') ? 'offline' : 'online';
-    window.updateSeaGatewayStatus(next);
+  window.triggerSeaSync = async function(branchOfficeCode = 'CBA', term = '2-2026') {
     if (typeof window.showToast === 'function') {
-      window.showToast(next === 'online'
-        ? '🟢 SEA Gateway: Conectado (UNITEPC Live)'
-        : '🔴 SEA Gateway: Desconectado (Modo Fallback Offline Activo)');
+      window.showToast('⏳ Sincronizando catálogo con el Gateway SEA (UNITEPC)...');
     }
+    const syncBtn = document.getElementById('btn-sync-sea-header');
+    if (syncBtn) {
+      syncBtn.disabled = true;
+      syncBtn.classList.add('opacity-70');
+      const icon = syncBtn.querySelector('i');
+      if (icon) icon.classList.add('animate-spin');
+    }
+
+    try {
+      const resp = await fetch(`/api/v1/catalogo-academico/sync?branchOfficeCode=${encodeURIComponent(branchOfficeCode)}&term=${encodeURIComponent(term)}`, {
+        method: 'POST'
+      });
+      const data = await resp.json();
+
+      if (resp.ok && data.status === 'success') {
+        if (typeof window.showToast === 'function') {
+          window.showToast(`🟢 SEA Sincronizado: ${data.carrerasSynced} carreras, ${data.materiasSynced} materias, ${data.gruposSynced} grupos, ${data.docentesProvisioned} docentes.`);
+        }
+        window.updateSeaGatewayStatus('online');
+
+        // Refresh docentes list in UI
+        if (typeof window.loadDocentesFromApi === 'function') {
+          await window.loadDocentesFromApi();
+        }
+
+        // Refresh current subject roster if viewing Tab 5
+        const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
+        if (typeof window.loadSubjectRoster === 'function') {
+          await window.loadSubjectRoster(mKey);
+        }
+      } else {
+        const msg = data.message || 'No se pudo conectar con el Gateway Central SEA';
+        if (typeof window.showToast === 'function') {
+          window.showToast(`⚠️ ${msg}`);
+        }
+        window.updateSeaGatewayStatus('offline');
+      }
+    } catch (err) {
+      console.warn('Error syncing with SEA:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast('🔴 Error de red al sincronizar con SEA Gateway.');
+      }
+      window.updateSeaGatewayStatus('offline');
+    } finally {
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.classList.remove('opacity-70');
+        const icon = syncBtn.querySelector('i');
+        if (icon) icon.classList.remove('animate-spin');
+      }
+      if (window.lucide) window.lucide.createIcons();
+    }
+  };
+
+  window.toggleSeaGatewaySimulation = function() {
+    window.triggerSeaSync();
   };
 
   window.checkSeaGatewayHealth = function() {
@@ -13479,9 +13531,7 @@ document.addEventListener('change', (e) => {
   };
 
   window.retrySeaGatewayConnection = function() {
-    window.showToast('🔄 Comprobando estado de conexión con SEA Gateway...');
-    const mKey = activeMateriaKey || (Object.keys(materiasData)[0] || '');
-    window.loadSubjectRoster(mKey);
+    window.triggerSeaSync();
   };
 
   window.loadSubjectRoster = async function(mKey) {

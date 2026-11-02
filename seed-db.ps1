@@ -1,10 +1,14 @@
 # ==============================================================================
-# SISA 2.0 — Script de Inicialización y Re-Siembra de Base de Datos (Seeder)
+# SISA 2.0 — Espejo Local de Respaldo y Simulación Offline (Sandbox Fixture)
 # Universidad Técnica Privada Cosmos (UNITEPC)
+# NOTA: En producción/evaluación con internet, el flujo OFICIAL es sincronizar
+# directamente del SEA usando: .\sync-sea.ps1
+# Este script se utiliza solo como fallback offline o para calibrar semáforos.
 # ==============================================================================
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " SISA 2.0: Inicializando Seeder Universal Portatil (V9/V10)" -ForegroundColor Cyan
+Write-Host " SISA 2.0: Espejo Local de Respaldo Offline (Fallback Sandbox)" -ForegroundColor Cyan
+Write-Host " (Para sincronización en vivo del SEA use: .\sync-sea.ps1)" -ForegroundColor DarkGray
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Verificar si el contenedor postgres esta activo

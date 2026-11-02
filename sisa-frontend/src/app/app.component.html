@@ -609,13 +609,12 @@
             <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
           </button>
 
-          <!-- SEA Gateway Status Indicator -->
-          <div id="sea-gateway-status-container" class="cursor-pointer" onclick="window.toggleSeaGatewaySimulation()" title="Click para simular estado Gateway Online/Offline">
-            <span id="sea-status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-              <span id="sea-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="sea-status-text">SEA Live</span>
-            </span>
-          </div>
+          <!-- SEA Gateway Status Indicator & Live Sync Button -->
+          <button id="btn-sync-sea-header" onclick="window.triggerSeaSync()" class="px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Sincronizar catálogo, carreras, materias, grupos y docentes desde el Gateway Central SEA (UNITEPC)">
+            <span id="sea-status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+            <span id="sea-status-text" class="hidden sm:inline">Sincronizar SEA</span>
+          </button>
 
           <!-- User Profile Header Dropdown -->
           <div class="relative" id="user-profile-header-dropdown">

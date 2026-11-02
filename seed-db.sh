@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# SISA 2.0 — Script de Inicialización y Re-Siembra de Base de Datos (Seeder)
+# SISA 2.0 — Espejo Local de Respaldo y Simulación Offline (Sandbox Fixture)
 # Universidad Técnica Privada Cosmos (UNITEPC)
+# NOTA: En evaluación oficial con internet, sincronice en vivo con: ./sync-sea.sh
 # ==============================================================================
 
 set -e
 
 echo -e "\033[1;36m==========================================================\033[0m"
-echo -e "\033[1;36m SISA 2.0: Inicializando Seeder Universal Portátil (V9/V10)\033[0m"
+echo -e "\033[1;36m SISA 2.0: Espejo Local de Respaldo Offline (Fallback Sandbox)\033[0m"
+echo -e "\033[0;37m (Para sincronización en vivo del SEA use: ./sync-sea.sh)\033[0m"
 echo -e "\033[1;36m==========================================================\033[0m"
 
 # 1. Verificar si sisa-postgres esta activo

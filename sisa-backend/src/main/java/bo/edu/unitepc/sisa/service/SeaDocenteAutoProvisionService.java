@@ -153,8 +153,26 @@ public class SeaDocenteAutoProvisionService {
 
     private boolean provisionSingleDocente(String ci, String nombreCompleto) {
         // Check if user already exists by username or CI
-        if (this.usuarioRepository.findByUsername(ci).isPresent() ||
-                this.usuarioRepository.findByCi(ci).isPresent()) {
+        var userOpt = this.usuarioRepository.findByUsername(ci);
+        if (userOpt.isEmpty()) {
+            userOpt = this.usuarioRepository.findByCi(ci);
+        }
+
+        if (userOpt.isPresent()) {
+            Usuario user = userOpt.get();
+            boolean changed = false;
+            if (StringUtils.hasText(nombreCompleto) && ("DOCENTE UNITEPC".equalsIgnoreCase(user.getNombreCompleto()) || !StringUtils.hasText(user.getNombres()))) {
+                parseAndSetNames(user, nombreCompleto);
+                changed = true;
+            }
+            if (user.getActivo() == null || !user.getActivo()) {
+                user.setActivo(true);
+                changed = true;
+            }
+            if (changed) {
+                this.usuarioRepository.save(user);
+                log.debug("Updated existing SEA Docente user: CI={}, Name={}", ci, user.getNombreCompleto());
+            }
             return false;
         }
 

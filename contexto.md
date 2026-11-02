@@ -243,6 +243,7 @@ Para evitar que materias de carreras sin plan estático se acumulen erróneament
 | **Desincronización de Sesiones en Tab 5** | `loadAttendanceForCurrentSelection` forzaba `match = courseOfficialSessions[0]`, dejando las insignias desincronizadas con la macroplanificación. | Eliminación del forzado arbitrario, exposición global de `courseOfficialSessions` y sincronización unificada en `onAttendanceSessionSelect` y `applySelectedSession`. |
 | **Arrastre de Asistencia entre Clases** | `currentAttendanceSession.estudiantes` no se reseteaba al conmutar sesión, heredando marcas previas en sesiones no tomadas. | Reseteo estricto del mapa de estudiantes en `loadAttendanceForDate` con inicialización limpia (`PRESENTE`) por sesión y cohorte. |
 | **Estructura Estática Teórica vs Práctica** | La tarjeta de Macroplanificación no conmutaba los campos según la modalidad de la sesión. | Conmutación dinámica: Despliega Matriz 7 (Saberes) en clases teóricas y Sección 8 (Actividad, Desempeño, Evidencias, Rúbrica) en clases de laboratorio. |
+| **Dependencia de Seeder Estático vs SEA SSOT** | Se percibía el seeder SQL V9 como la fuente primaria de datos, cuando el SEA es la única autoridad de docentes, materias y grupos. | Implementación del Sincronizador Activo (`POST /api/v1/catalogo-academico/sync`), botón web "Sincronizar SEA", scripts `sync-sea.ps1` / `sync-sea.sh` y reclasificación del seeder como simple espejo sandbox offline. |
 
 ---
 
@@ -253,6 +254,7 @@ Para evitar que materias de carreras sin plan estático se acumulen erróneament
 | Módulo / Capacidad | Estado | Descripción Funcional |
 |:---|:---:|:---|
 | **Arquitectura Docker Universal** | ✅ 100% | Despliegue de Postgres, Spring Boot backend y Angular frontend con Nginx. Base de datos con seeder universal demo V9. |
+| **Sincronización en Vivo SEA Gateway (SSOT)** | ✅ 100% | Consumo directo del Gateway Central UNITEPC (Sedes, Carreras, Materias, Grupos, Aulas, Docentes y Nóminas) vía OAuth2 M2M (`POST /sync`), botón en encabezado web y autoprovisión por CI. |
 | **Gobernanza RBAC y Catálogo Nacional** | ✅ 100% | 9 sedes, 24 carreras, soporte docente multisede, candados por rol directivo y balanceador heurístico universal. |
 | **Documento 1: Programa Analítico** | ✅ 100% | Estructura oficial de 14 puntos, validación APA 7ma, importación bidireccional desde Word (.docx) y bloqueo de cátedra. |
 | **Documento 2: PAC Pedagógico** | ✅ 100% | Puntos 1 a 14 articulados con los elementos de competencia del Programa Analítico. |

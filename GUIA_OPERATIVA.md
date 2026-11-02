@@ -63,40 +63,54 @@ sisa-postgres   postgres:16-alpine     "docker-entrypoint.s…"   postgres     U
 
 ---
 
-## 3. Ejecución y Verificación del Seeder Universal (V9 / V10)
+## 3. Arquitectura de Datos: Sincronización Oficial con el SEA (SSOT) vs Espejo Local
 
-### ¿Cómo funciona la siembra de datos?
-Al levantar los contenedores, **Flyway** inyecta automáticamente el seeder maestro contenido en:
-- `sisa-backend/src/main/resources/db/migration/V9__portable_demo_seeder.sql`:
-  - Crea a la Directora de Carrera de Sistemas y Medicina (`dir.carrera.sis`).
-  - Crea a los docentes oficiales (ej. Ing. Rosmery Luizaga con CI `3065087`).
-  - Asigna las cátedras oficiales (`SIS-213`, `SIS-311`, `MAT-101`, etc.).
-  - Siembra el historial de sesiones de aula para alimentar el **Semáforo Curricular** (mostrando materias en verde, amarillo y rojo).
-- `sisa-backend/src/main/resources/db/migration/V10__secuencia_didactica_cinco_momentos.sql`:
-  - Registra las columnas oficiales para la **Secuencia Didáctica de 5 Momentos**.
+### Principio Arquitectónico Fundamental (UNITEPC):
+> **El SEA (Sistema de Educación / Académico de UNITEPC) es la Fuente Única de la Verdad (Single Source of Truth - SSOT).**  
+> SISA 2.0 **NO** es un ERP administrativo ni crea docentes, materias, grupos ni estudiantes por su cuenta. SISA es el **Sistema de Seguimiento Académico y Supervisión Curricular**: consume y sincroniza en tiempo real todo el catálogo institucional desde el Gateway Central del SEA (`https://gw-dev.unitepc.solutions`), autoprovisiona los accesos de los docentes según su CI y gestiona lo que el SEA no contiene: la Secuencia Didáctica de 5 Momentos, las auditorías de aula, los planes de clase (PAC / Programa Analítico) y el Semáforo Curricular.
 
 ---
 
-### ¿Cómo re-ejecutar o forzar el Seeder manualmente?
+### Flujo Oficial 1: Sincronización en Vivo desde el Servidor Central SEA
 
-Si en algún momento deseas reiniciar o re-sembrar la base de datos a su estado original de evaluación, tienes dos opciones muy sencillas:
+Al iniciar el backend, SISA se conecta automáticamente mediante **OAuth 2.0 M2M** con el Gateway central de UNITEPC. Si deseas forzar o actualizar la sincronización de sedes, carreras, asignaturas del pensum, grupos, horarios, nóminas de alumnos y docentes en cualquier momento, dispones de tres vías inmediatas:
 
-#### Opción A (Recomendada con script incluido de 1 clic):
+#### Opción A (Desde la Interfaz Web - 1 Clic):
+En el encabezado superior de la aplicación web ([http://localhost:4200](http://localhost:4200)), presiona el botón:  
+**`🟢 Sincronizar SEA`**  
+El sistema contactará al Gateway, actualizará los registros locales y mostrará la notificación con el total de carreras, materias, grupos y docentes sincronizados.
+
+#### Opción B (Script de Sincronización Oficial por Terminal):
 - **En Windows (PowerShell)**:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File .\seed-db.ps1
+  powershell -ExecutionPolicy Bypass -File .\sync-sea.ps1
   ```
 - **En Linux / macOS / Git Bash**:
   ```bash
-  chmod +x seed-db.sh && ./seed-db.sh
+  chmod +x sync-sea.sh && ./sync-sea.sh
   ```
 
-#### Opción B (Limpia total desde cero eliminando volúmenes):
-Si deseas borrar toda la base de datos y recrearla completamente limpia:
+#### Opción C (Endpoint REST API):
 ```bash
-docker compose down -v
-docker compose up -d --build
+curl -X POST "http://localhost:8080/api/v1/catalogo-academico/sync?branchOfficeCode=CBA&term=2-2026"
 ```
+
+---
+
+### Flujo Oficial 2: Espejo Local de Respaldo y Simulación Offline (Fallback Sandbox)
+
+¿Cuándo se utiliza el script `seed-db.ps1` / `seed-db.sh`?  
+Únicamente en dos escenarios muy específicos:
+1. **Evaluación Offline / Sin Conexión a Internet**: Si la computadora donde se prueba el sistema no tiene salida a internet hacia `https://gw-dev.unitepc.solutions`, o el Gateway central está en ventana de mantenimiento. SISA activa su patrón de resiliencia **Cache-Aside / Local Mirroring** para permitir que el evaluador siga navegando sin interrupciones.
+2. **Calibración del Semáforo Curricular**: El SEA administra matrículas y docentes, pero **no** almacena el seguimiento minuto a minuto de los 5 momentos ni el histórico de clases impartidas. Este script inyecta sesiones históricas simuladas para que el Semáforo de la Carrera muestre inmediatamente los estados Verde, Amarillo y Rojo.
+
+- **Para ejecutar el espejo local de respaldo**:
+  - En Windows: `powershell -ExecutionPolicy Bypass -File .\seed-db.ps1`
+  - En Linux/Mac: `./seed-db.sh`
+- **Reinicio total limpio (Borra volúmenes)**:
+  ```bash
+  docker compose down -v && docker compose up -d --build
+  ```
 
 ---
 
@@ -267,9 +281,11 @@ Para comprobar que el sistema bloquea el acceso no autorizado a los docentes:
 | Acción | Comando |
 |:---|:---|
 | **Iniciar todo el sistema** | `docker compose up -d --build` |
+| **Sincronizar en vivo con SEA (Windows)** | `powershell -ExecutionPolicy Bypass -File .\sync-sea.ps1` |
+| **Sincronizar en vivo con SEA (Linux/Mac)** | `./sync-sea.sh` |
 | **Ver estado de servicios** | `docker compose ps` |
 | **Ver logs del backend** | `docker compose logs -f backend` |
-| **Re-sembrar base de datos (Windows)** | `powershell -ExecutionPolicy Bypass -File .\seed-db.ps1` |
-| **Re-sembrar base de datos (Linux/Mac)** | `./seed-db.sh` |
+| **Espejo local / Fallback offline (Windows)** | `powershell -ExecutionPolicy Bypass -File .\seed-db.ps1` |
+| **Espejo local / Fallback offline (Linux/Mac)** | `./seed-db.sh` |
 | **Reinicio total limpio (Borra volúmenes)** | `docker compose down -v && docker compose up -d --build` |
 | **Detener el sistema** | `docker compose down` |

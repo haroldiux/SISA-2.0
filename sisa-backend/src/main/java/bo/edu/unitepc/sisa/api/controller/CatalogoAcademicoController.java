@@ -11,7 +11,10 @@ import bo.edu.unitepc.sisa.domain.repository.SeaSedeRepository;
 import bo.edu.unitepc.sisa.infrastructure.gateway.UnitepcGatewayClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +40,9 @@ public class CatalogoAcademicoController {
     private final SeaMateriaRepository seaMateriaRepository;
     private final SeaGrupoRepository seaGrupoRepository;
     private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
+
+    @Autowired(required = false)
+    private CacheManager cacheManager;
 
     public CatalogoAcademicoController(
             UnitepcGatewayClient gatewayClient,
@@ -64,6 +70,108 @@ public class CatalogoAcademicoController {
                 "timestamp", Instant.now().toString(),
                 "gateway", "UNITEPC Central Gateway (gw-dev.unitepc.solutions)"
         ));
+    }
+
+    /**
+     * Sincronización activa y explícita desde el Gateway SEA Central (UNITEPC).
+     * Consume sedes, carreras, materias del pensum, grupos, horarios, aulas y auto-aprovisiona docentes.
+     */
+    @PostMapping("/sync")
+    public ResponseEntity<Map<String, Object>> syncFromSea(
+            @RequestParam(required = false, defaultValue = "CBA") String branchOfficeCode,
+            @RequestParam(required = false, defaultValue = "2-2026") String term) {
+
+        log.info("Iniciando sincronización activa con el Gateway SEA (Sede: {}, Gestión: {})...", branchOfficeCode, term);
+
+        if (!this.gatewayClient.isOnline()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                    "status", "error",
+                    "code", "SEA_GATEWAY_OFFLINE",
+                    "message", "El Gateway Central SEA (gw-dev.unitepc.solutions) no está accesible. Se mantiene el espejo local seguro.",
+                    "timestamp", Instant.now().toString()
+            ));
+        }
+
+        int sedesCount = 0;
+        int carrerasCount = 0;
+        int materiasCount = 0;
+        int gruposCount = 0;
+        int docentesCount = 0;
+
+        try {
+            // 1. Sincronizar Sedes
+            List<BranchOfficeDto> sedes = this.gatewayClient.getBranchOffices();
+            if (sedes != null && !sedes.isEmpty()) {
+                updateLocalSedesCache(sedes);
+                sedesCount = sedes.size();
+            }
+
+            // 2. Sincronizar Carreras
+            List<CareerDto> carreras = this.gatewayClient.getCareers(branchOfficeCode);
+            if (carreras != null && !carreras.isEmpty()) {
+                updateLocalCareersCache(carreras);
+                carrerasCount = carreras.size();
+
+                // 3. Sincronizar Materias de las carreras encontradas
+                for (CareerDto car : carreras) {
+                    try {
+                        List<CourseDto> courses = this.gatewayClient.getCourses(branchOfficeCode, car.code());
+                        if (courses != null && !courses.isEmpty()) {
+                            updateLocalCoursesCache(courses);
+                            materiasCount += courses.size();
+                        }
+                    } catch (Exception ex) {
+                        log.debug("No se pudieron cargar materias para carrera {}: {}", car.code(), ex.getMessage());
+                    }
+                }
+            }
+
+            // 4. Sincronizar Grupos, Aulas, Horarios y Asignaciones
+            List<GroupItemDto> grupos = this.gatewayClient.getGroups(term, branchOfficeCode, null, null);
+            if (grupos != null && !grupos.isEmpty()) {
+                updateLocalGroupsCache(grupos);
+                gruposCount = grupos.size();
+            }
+
+            // 5. Auto-aprovisionar y actualizar Docentes en usuarios
+            docentesCount = this.seaDocenteAutoProvisionService.syncAllSeaDocentes();
+
+            // 6. Limpiar cachés en memoria para reflejar cambios frescos
+            if (this.cacheManager != null) {
+                for (String cacheName : this.cacheManager.getCacheNames()) {
+                    var cache = this.cacheManager.getCache(cacheName);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                }
+            }
+
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("status", "success");
+            resp.put("source", "UNITEPC Central Gateway (https://gw-dev.unitepc.solutions)");
+            resp.put("branchOfficeCode", branchOfficeCode);
+            resp.put("term", term);
+            resp.put("sedesSynced", sedesCount);
+            resp.put("carrerasSynced", carrerasCount);
+            resp.put("materiasSynced", materiasCount);
+            resp.put("gruposSynced", gruposCount);
+            resp.put("docentesProvisioned", docentesCount);
+            resp.put("timestamp", Instant.now().toString());
+            resp.put("message", "Sincronización completa con SEA realizada con éxito.");
+
+            log.info("Sincronización SEA finalizada con éxito: {} sedes, {} carreras, {} materias, {} grupos, {} docentes.",
+                    sedesCount, carrerasCount, materiasCount, gruposCount, docentesCount);
+
+            return ResponseEntity.ok(resp);
+
+        } catch (Exception ex) {
+            log.error("Error durante la sincronización activa con el SEA: {}", ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "error",
+                    "message", "Fallo durante la sincronización con el SEA: " + ex.getMessage(),
+                    "timestamp", Instant.now().toString()
+            ));
+        }
     }
 
     /**
@@ -249,7 +357,7 @@ public class CatalogoAcademicoController {
                                 nombre,
                                 email,
                                 "CBA",
-                                primerGrupo.careerCode() != null ? primerGrupo.careerCode() : "Facultad de Tecnología",
+                                primerGrupo.careerCode() != null ? primerGrupo.careerCode() : "Facultad de TecnologÃ­a",
                                 materiasNombres,
                                 gruposDocente
                         );
@@ -304,7 +412,7 @@ public class CatalogoAcademicoController {
                             nombre,
                             email,
                             "CBBA",
-                            "Facultad de Ingeniería y Tecnología",
+                            "Facultad de IngenierÃ­a y TecnologÃ­a",
                             materiasNombres,
                             groupDtos
                     );
@@ -455,7 +563,7 @@ public class CatalogoAcademicoController {
         } catch (Exception ex) {
             log.warn("Gateway timeFrames unreachable ({}), returning default active timeframe", ex.getMessage());
             return ResponseEntity.ok(List.of(
-                    new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true)
+                    new TimeFrameDto("tf-2026-2", "GestiÃ³n II-2026", "2026", "II", true)
             ));
         }
     }
@@ -473,7 +581,7 @@ public class CatalogoAcademicoController {
         } catch (Exception ex) {
             log.warn("Gateway timeFrames/active unreachable ({}), returning fallback active timeframe", ex.getMessage());
         }
-        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true));
+        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "GestiÃ³n II-2026", "2026", "II", true));
     }
 
     /**
@@ -489,7 +597,7 @@ public class CatalogoAcademicoController {
         } catch (Exception ex) {
             log.warn("Gateway timeFrameCareers unreachable ({}), returning default timeframe for career", ex.getMessage());
             return ResponseEntity.ok(List.of(
-                    new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true, branchOfficeCode, careerCode)
+                    new TimeFrameDto("tf-2026-2", "GestiÃ³n II-2026", "2026", "II", true, branchOfficeCode, careerCode)
             ));
         }
     }
@@ -509,7 +617,7 @@ public class CatalogoAcademicoController {
         } catch (Exception ex) {
             log.warn("Gateway timeFrameCareers/active unreachable ({}), returning fallback", ex.getMessage());
         }
-        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "Gestión II-2026", "2026", "II", true, branchOfficeCode, careerCode));
+        return ResponseEntity.ok(new TimeFrameDto("tf-2026-2", "GestiÃ³n II-2026", "2026", "II", true, branchOfficeCode, careerCode));
     }
 
     /**
@@ -526,7 +634,7 @@ public class CatalogoAcademicoController {
         }
         return ResponseEntity.ok(Map.of(
                 "status", "on-hold",
-                "message", "El programa analítico central está temporalmente en pausa en la pasarela SEA.",
+                "message", "El programa analÃ­tico central estÃ¡ temporalmente en pausa en la pasarela SEA.",
                 "courseCode", courseCode,
                 "branchOfficeCode", branchOfficeCode,
                 "careerCode", careerCode
@@ -597,6 +705,17 @@ public class CatalogoAcademicoController {
                             dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen"
                     );
                     this.seaGrupoRepository.save(nuevo);
+                } else {
+                    var g = existing.get();
+                    if (dto.name() != null) g.setCodigoGrupo(dto.name());
+                    if (dto.classType() != null) g.setTipoClase(dto.classType());
+                    if (dto.teacherName() != null) g.setDocenteNombre(dto.teacherName());
+                    if (dto.teacherCi() != null) g.setDocenteCi(dto.teacherCi());
+                    if (dto.schedule() != null) g.setHorario(dto.schedule());
+                    if (dto.classroom() != null) g.setAula(dto.classroom());
+                    if (dto.campus() != null) g.setCampus(dto.campus());
+                    if (dto.syllabusCourseId() != null) g.setMateriaId(dto.syllabusCourseId());
+                    this.seaGrupoRepository.save(g);
                 }
             }
         } catch (Exception e) {
