@@ -47,7 +47,11 @@ El sistema resuelve la desconexión histórica entre la oferta de grupos en el s
 - **Runtime**: Java 17 LTS / OpenJDK 17.
 - **Framework**: Spring Boot 3.3.3 con Spring Data JPA y Hibernate 6.
 - **Seguridad**: Autenticación JWT stateless con caducidad configurada, control de acceso basado en roles institucionalizados y expiración forzada en cambios de contraseña.
-- **Migraciones**: Flyway (`V1__init_sisa_schema.sql` a `V9__attendance_and_session_tracking.sql`).
+- **Migraciones**: Flyway (`V1__init_sisa_schema.sql` a `V11__sea_sync_audit_logs.sql`).
+- **Motor de Aprovisionamiento Estructural y Sincronización SEA**:
+  - Auto-detección y creación en cascada de `sedes`, `carreras`, `asignaturas` y `usuario_asignaciones_academicas` en arranque y bajo demanda.
+  - Generación de cuentas docentes iniciales (CI / BCrypt, `must_change_password=true`, rol `ROLE_DOCENTE`).
+  - Auditoría persistente de sincronizaciones en tabla dedicada `sea_sync_audit_logs`.
 - **Motor de Documentos Oficiales**:
   - Apache POI OOXML (`XWPFDocument`): Importación y exportación de Programas Analíticos en Word (.docx) respetando formato institucional de 14 puntos.
   - Apache POI HSSF/XSSF (`XSSFWorkbook`): Exportación multi-hoja de Planes de Clase (Teóricos y Prácticos) y Planilla Oficial de Asistencia en formato Excel (.xlsx).
@@ -75,6 +79,7 @@ El sistema resuelve la desconexión histórica entre la oferta de grupos en el s
   - `sesiones_asistencia`, `estudiantes_asistencia_sesion`: Registro histórico y diario de asistencia estudiantil.
   - `seguimientos_clase_aula`: Trazabilidad pedagógica en aula por docente, sesión y recursos empleados.
   - `sea_sedes`, `sea_carreras`, `sea_materias`, `sea_grupos`: Espejo local de datos sincronizados desde el Gateway.
+  - `sea_sync_audit_logs`: Trazabilidad completa de auditoría para sincronizaciones globales, por lotes e individuales de SEA.
 
 ---
 
@@ -263,6 +268,9 @@ Para evitar que materias de carreras sin plan estático se acumulen erróneament
 | **Documento 5: Lista Oficial y Asistencia** | ✅ 100% | Selector reactivo según horario SEA, cálculo de Regla del 80%, segregación por carrera en cátedras comunes y exportación Excel. |
 | **Seguimiento Pedagógico en Aula** | ✅ 100% | Secuencia didáctica de 5 momentos oficiales UNITEPC, macroplanificación dinámica teórica/práctica, registro ágil (< 5 seg). |
 | **Supervisión Curricular y Semáforo** | ✅ 100% | Tablero directivo con semáforo porcentual por colores, auditoría de momentos didácticos, visado en lote y actas de semestre. |
+| **Módulo de Usuarios y Accesos Institucional** | ✅ 100% | Top KPIs de cuentas, tabla institucional con alcance multisede/multicarrera, pestaña 'Docentes SEA' con 5 métricas de paridad, modal de comparativa 'SISA vs Gateway SEA', sincronización individual y en lote, y matriz de 8 roles institucionales. |
+| **Aprovisionamiento Estructural en Cascada** | ✅ 100% | Autocreación/enlace automático en arranque y sincronización de sedes, carreras, asignaturas y usuario_asignaciones_academicas (1.700+ asignaciones con 0 discrepancias). |
+| **Auditoría de Sincronización SEA** | ✅ 100% | Registro persistente en sea_sync_audit_logs y endpoints protegidos para ROLE_ADMIN. |
 | **Persistencia y Resiliencia de Navegación** | ✅ 100% | Cero reseteos al presionar F5; tolerancia offline a caídas del SEA Gateway con almacenamiento local seguro. |
 
 ### 8.2 Lo que Nos Falta (Roadmap Institucional Pendiente)

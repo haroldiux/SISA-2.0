@@ -46,6 +46,29 @@ docker compose up -d --build
 
 ---
 
+
+---
+
+## 2.1 Continuar en Otra PC (Guía de Traspaso Inmediato)
+
+Si vas a clonar o continuar en otra computadora:
+1. **Actualizar el código**:
+   `ash
+   git pull origin main
+   `
+2. **Levantar el stack completo**:
+   `ash
+   docker compose up -d --build
+   `
+3. **Monitorear el arranque inicial**:
+   `ash
+   docker logs -f sisa-backend
+   `
+   *El evento ApplicationReadyEvent se conectará automáticamente al Gateway oficial SEA (gw-dev.unitepc.solutions), descargará el catálogo de la gestión vigente y auto-aprovisionará en cascada todas las sedes, carreras, asignaturas, docentes y asignaciones académicas.*
+4. **Abrir en el navegador**:
+   - http://localhost:4200
+   - Iniciar sesión como dmin (clave: Unitepc2026!).
+
 ### Paso 3: Verificar el Estado de los Contenedores
 Verifica que los tres servicios estén arriba y saludables:
 
