@@ -336,17 +336,22 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div class="space-y-1">
               <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">SEDE</label>
-              <select id="admin-asignacion-sede" onchange="window.onAdminAsignacionSedeChange()" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+              <select id="admin-asignacion-sede" onchange="if(typeof window.onAdminAsignacionSedeChange==='function'){window.onAdminAsignacionSedeChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
                 <option value="">Seleccionar sede...</option>
-                <option value="1" data-code="CBB">Sede Central Cochabamba</option>
-                <option value="2" data-code="LPZ">Sede Regional La Paz</option>
-                <option value="3" data-code="EAL">Sede Regional El Alto</option>
-                <option value="4" data-code="CBJ">Sede Regional Cobija</option>
+                <option value="1" data-code="CBA">CBA • Sede Central Cochabamba</option>
+                <option value="2" data-code="LPZ">LPZ • Sede Regional La Paz</option>
+                <option value="3" data-code="EAL">EAL • Sede Regional El Alto</option>
+                <option value="4" data-code="CBJ">CBJ • Sede Regional Cobija</option>
+                <option value="5" data-code="IVI">IVI • Sede Trópico Ivirgarzama</option>
+                <option value="6" data-code="STC">STC • Sede Regional Santa Cruz</option>
+                <option value="7" data-code="CVI">CVI • Sede Nor Yungas Caranavi</option>
+                <option value="8" data-code="GUA">GUA • Sede Regional Guayaramerín</option>
+                <option value="9" data-code="PTO">PTO • Sede Fronteriza Puerto Quijarro</option>
               </select>
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">CARRERA</label>
-              <select id="admin-asignacion-carrera" disabled onchange="window.onAdminAsignacionCarreraChange()" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer">
+              <select id="admin-asignacion-carrera" disabled onchange="if(typeof window.onAdminAsignacionCarreraChange==='function'){window.onAdminAsignacionCarreraChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer">
                 <option value="">Seleccionar carrera...</option>
               </select>
             </div>
@@ -384,6 +389,145 @@
 
     </div>
   </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: COMPARADOR DIFF SEA VS SISA (VISTA 6 - ADMIN)                     -->
+  <!-- ========================================================================= -->
+  <div id="modal-sea-diff" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-4xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto custom-scrollbar">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/10 text-indigo-600 border border-indigo-500/20 flex items-center justify-center font-bold text-lg font-display">
+            <i data-lucide="git-compare" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              AUDITORÍA DE INTEGRACIÓN Y SINCRONIZACIÓN SEA
+            </div>
+            <h3 id="sea-diff-modal-title" class="text-base font-bold text-slate-900 dark:text-white font-display mt-0.5">
+              Comparativa SISA vs Gateway Oficial SEA
+            </h3>
+            <p id="sea-diff-modal-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Inspección de paridad entre la base de datos local SISA y el catálogo central de la Universidad (UNITEPC)
+            </p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeSeaDiffModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Cerrar modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Status Alert Banner -->
+      <div id="sea-diff-status-banner" class="p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Split View: SISA Local vs SEA Oficial -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Left Card: Local SISA -->
+        <div class="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">Local en SISA</span>
+            </div>
+            <span id="sea-diff-sisa-role-badge" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300">
+              DOCENTE
+            </span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div><span class="text-slate-400">CI / Identificador:</span> <strong id="sea-diff-sisa-ci" class="font-mono text-slate-900 dark:text-white">--</strong></div>
+            <div><span class="text-slate-400">Nombre registrado:</span> <strong id="sea-diff-sisa-nombre" class="text-slate-900 dark:text-white">--</strong></div>
+            <div><span class="text-slate-400">Estado de cuenta:</span> <span id="sea-diff-sisa-estado" class="font-bold">--</span></div>
+            <div><span class="text-slate-400">Asignaciones en SISA:</span> <span id="sea-diff-sisa-asignaciones-count" class="font-mono font-bold text-indigo-600 dark:text-indigo-400">0</span></div>
+          </div>
+        </div>
+
+        <!-- Right Card: Oficial SEA -->
+        <div class="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200">Oficial en SEA Central</span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300">
+              CATÁLOGO VIGENTE
+            </span>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div><span class="text-slate-400">CI Verificado:</span> <strong id="sea-diff-sea-ci" class="font-mono text-slate-900 dark:text-white">--</strong></div>
+            <div><span class="text-slate-400">Nombre en catálogo:</span> <strong id="sea-diff-sea-nombre" class="text-slate-900 dark:text-white">--</strong></div>
+            <div><span class="text-slate-400">Estado en Gateway:</span> <span class="font-bold text-emerald-600 dark:text-emerald-400">CONECTADO / ACTIVO</span></div>
+            <div><span class="text-slate-400">Grupos reportados:</span> <span id="sea-diff-sea-grupos-count" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Differences Breakdown Section -->
+      <div class="space-y-3">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <span>Desglose de Asignaturas y Cursos:</span>
+          <div class="flex items-center gap-2 text-[10px]">
+            <span class="inline-flex items-center gap-1 text-emerald-600"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nuevas en SEA</span>
+            <span class="inline-flex items-center gap-1 text-blue-600"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Coincidentes</span>
+            <span class="inline-flex items-center gap-1 text-amber-600"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Solo en SISA</span>
+          </div>
+        </div>
+
+        <!-- Categories Container -->
+        <div class="space-y-2 max-h-56 overflow-y-auto custom-scrollbar p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+          <!-- Nuevas en SEA -->
+          <div id="sea-diff-nuevas-section">
+            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 mb-1 flex items-center gap-1">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>Nuevas en SEA (Se sincronizarán al aplicar):</span>
+            </div>
+            <div id="sea-diff-nuevas-list" class="space-y-1 pl-4">
+              <!-- Items -->
+            </div>
+          </div>
+
+          <!-- Coincidencias -->
+          <div id="sea-diff-coincidencias-section" class="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-bold text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+              <span>Materias Sincronizadas (En ambos sistemas):</span>
+            </div>
+            <div id="sea-diff-coincidencias-list" class="space-y-1 pl-4">
+              <!-- Items -->
+            </div>
+          </div>
+
+          <!-- Solo en SISA -->
+          <div id="sea-diff-solosisa-section" class="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-bold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+              <span>Asignadas solo en SISA (No presentes en catálogo SEA actual):</span>
+            </div>
+            <div id="sea-diff-solosisa-list" class="space-y-1 pl-4">
+              <!-- Items -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <button type="button" onclick="window.closeSeaDiffModal()" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          Cerrar
+        </button>
+        <button id="btn-apply-sync-diff" onclick="window.applySyncFromDiffModal()" type="button" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>⚡ Aplicar Sincronización Ahora</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 
   <!-- ========================================================================= -->
   <!-- ROOT CANONICAL PORTAL SHELL (sea-portal-ui)                               -->
@@ -610,7 +754,7 @@
           </button>
 
           <!-- SEA Gateway Status Indicator & Live Sync Button -->
-          <button id="btn-sync-sea-header" onclick="window.triggerSeaSync()" class="px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Sincronizar catálogo, carreras, materias, grupos y docentes desde el Gateway Central SEA (UNITEPC)">
+          <button id="btn-sync-sea-header" data-roles="ROLE_ADMIN" onclick="window.triggerSeaSync()" class="px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Sincronizar catálogo, carreras, materias, grupos y docentes desde el Gateway Central SEA (UNITEPC)">
             <span id="sea-status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
             <span id="sea-status-text" class="hidden sm:inline">Sincronizar SEA</span>
@@ -4050,27 +4194,28 @@
     <div id="view6" class="frame-view w-full min-h-[920px] bg-slate-50 dark:bg-[#0B0F19] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden relative hidden transition-colors duration-200">
       
       <!-- Top Header of Admin View -->
-      <header class="h-[72px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-purple-600/10 text-purple-600 border border-purple-500/20 flex items-center justify-center font-bold text-lg font-display">
-            <i data-lucide="shield-check" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h2 class="text-base font-bold font-display text-slate-900 dark:text-white flex items-center gap-2">
-              ADMINISTRACIÓN DE USUARIOS Y ACCESOS
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800">RBAC ACTIVO</span>
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Control de credenciales, roles institucionales y asignaciones académicas multisede</p>
-          </div>
+      <header class="h-[76px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between flex-shrink-0">
+        <div>
+          <h2 class="text-xl font-bold font-display text-slate-900 dark:text-white">
+            Usuarios y accesos
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Registra cuentas institucionales y define su alcance académico.
+          </p>
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- Refresh Button -->
-          <button onclick="window.loadAdminUsers()" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer" title="Recargar listado">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-            <span>Actualizar</span>
+          <!-- Button Plantilla Excel -->
+          <button id="btn-plantilla-excel" onclick="window.downloadUserExcelTemplate()" class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
+            <span>Plantilla Excel</span>
           </button>
-          <!-- Register User Button -->
+          <!-- Button Importar lote -->
+          <button id="btn-importar-lote" onclick="window.openBatchImportModal()" class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+            <span>Importar lote</span>
+          </button>
+          <!-- Button Registrar usuario -->
           <button onclick="window.openRegisterUserModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center gap-2 transition-all cursor-pointer" style="background-color: #4F46E5;">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
             <span>+ Registrar usuario</span>
@@ -4078,52 +4223,513 @@
         </div>
       </header>
 
-      <!-- Admin Toolbar: Search & Role Filter -->
-      <div class="p-6 pb-2 bg-slate-50/50 dark:bg-slate-900/30 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-3 flex-1 max-w-xl">
-          <!-- Search input -->
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input id="admin-search-input" type="text" placeholder="Buscar por CI, nombre, apellidos o usuario..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.onAdminSearchInput()">
+      <!-- 4 Top Metric KPI Cards -->
+      <div class="px-8 py-5 bg-white/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1: Usuarios registrados -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-xs flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Usuarios registrados</div>
+              <div id="admin-kpi-total-users" class="text-2xl font-bold font-display text-slate-900 dark:text-white mt-1">0</div>
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">cuentas internas</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
           </div>
 
-          <!-- Role Filter -->
-          <div class="flex items-center gap-2">
-            <select id="admin-role-filter" onchange="window.onAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-              <option value="">Todos los roles</option>
-              <option value="ROLE_ADMIN">Admin</option>
-              <option value="ROLE_VICERRECTOR_NACIONAL">Vicerrectorado nal</option>
-              <option value="ROLE_VICERRECTOR_SEDE">Vicerrectorado sede</option>
-              <option value="ROLE_DIR_ACADEMICA">Director académico sede</option>
-              <option value="ROLE_DIR_CARRERA">Director de carrera</option>
-              <option value="ROLE_DOCENTE">Docente</option>
-            </select>
+          <!-- KPI 2: Activos -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-xs flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Activos</div>
+              <div id="admin-kpi-active-users" class="text-2xl font-bold font-display text-emerald-600 dark:text-emerald-400 mt-1">0</div>
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">con acceso habilitado</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </div>
           </div>
-        </div>
 
-        <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span id="admin-users-counter" class="font-bold text-slate-800 dark:text-slate-200">0</span> usuarios registrados
+          <!-- KPI 3: Por cambiar clave -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-xs flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Por cambiar clave</div>
+              <div id="admin-kpi-must-change" class="text-2xl font-bold font-display text-amber-600 dark:text-amber-400 mt-1">0</div>
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">primer ingreso pendiente</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <i data-lucide="key" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <!-- KPI 4: Roles disponibles -->
+          <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 shadow-xs flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">Roles disponibles</div>
+              <div id="admin-kpi-roles-count" class="text-2xl font-bold font-display text-purple-600 dark:text-purple-400 mt-1">8</div>
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">perfiles institucionales</div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <i data-lucide="shield" class="w-5 h-5"></i>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Users Table Container -->
-      <div class="flex-1 p-6 overflow-y-auto custom-scrollbar">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <th class="py-3.5 px-6">CI / Usuario</th>
-                <th class="py-3.5 px-6">Nombre Completo</th>
-                <th class="py-3.5 px-6">Rol Institucional</th>
-                <th class="py-3.5 px-6">Asignaciones Académicas</th>
-                <th class="py-3.5 px-6 text-center">Estado</th>
-                <th class="py-3.5 px-6 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="admin-users-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-              <!-- Rendered dynamically by window.renderAdminUsersTable -->
-            </tbody>
-          </table>
+      <!-- Pill Tabs Navigation -->
+      <div class="px-8 pt-4 pb-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 flex-shrink-0">
+        <button id="tab-btn-admin-users" onclick="window.switchAdminTab('users')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 shadow-xs">
+          <i data-lucide="user" class="w-4 h-4"></i>
+          <span>Usuarios del sistema</span>
+          <span id="tab-count-admin-users" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-200/60 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">0</span>
+        </button>
+
+        <button id="tab-btn-admin-sea" onclick="window.switchAdminTab('sea')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Docentes SEA</span>
+          <span id="tab-count-admin-sea" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">0</span>
+        </button>
+
+        <button id="tab-btn-admin-roles" onclick="window.switchAdminTab('roles')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent">
+          <i data-lucide="shield" class="w-4 h-4"></i>
+          <span>Roles y permisos</span>
+          <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">8</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: Directorio de Usuarios del sistema -->
+      <div id="admin-view6-tab-users" class="flex-1 flex flex-col overflow-hidden">
+        <!-- Filter Toolbar -->
+        <div class="p-6 pb-3 bg-slate-50/50 dark:bg-slate-900/30 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3 flex-1 max-w-3xl">
+            <!-- Search input -->
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+              <input id="admin-search-input" type="text" placeholder="Buscar por CI, nombre o rol..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.onAdminSearchInput()">
+            </div>
+
+            <!-- Role Dropdown Filter -->
+            <div class="flex items-center gap-2">
+              <select id="admin-role-filter" onchange="window.onAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                <option value="">Todos los roles</option>
+                <option value="ROLE_ADMIN">Administrador del sistema</option>
+                <option value="ROLE_VICERRECTOR_NACIONAL">Vicerrector nacional</option>
+                <option value="ROLE_VICERRECTOR_SEDE">Vicerrector de sede</option>
+                <option value="ROLE_DIR_ACADEMICA">Director académico sede</option>
+                <option value="ROLE_DIR_CARRERA">Director de carrera</option>
+                <option value="ROLE_DOCENTE">Docente</option>
+                <option value="ROLE_RESPONSABLE_EVALUACIONES">Resp. evaluaciones</option>
+                <option value="ROLE_PERSONAL_EVALUACIONES">Personal evaluaciones</option>
+              </select>
+            </div>
+
+            <!-- Status / Sede Dropdown Filter -->
+            <div class="flex items-center gap-2">
+              <select id="admin-status-filter" onchange="window.onAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                <option value="">Todos los estados / Sedes</option>
+                <option value="ACTIVO">Activos</option>
+                <option value="INACTIVO">Inactivos</option>
+                <option value="MUST_CHANGE">Por cambiar clave</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span id="admin-users-counter" class="font-bold text-slate-800 dark:text-slate-200 font-mono">0</span> usuarios registrados
+          </div>
+        </div>
+
+        <!-- Users Table Container -->
+        <div class="flex-1 p-6 pt-2 overflow-y-auto custom-scrollbar">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th class="py-3.5 px-5">USUARIO / CI</th>
+                  <th class="py-3.5 px-5">NOMBRE COMPLETO SEA</th>
+                  <th class="py-3.5 px-5">ROL</th>
+                  <th class="py-3.5 px-5">ALCANCE</th>
+                  <th class="py-3.5 px-5 text-center">ESTADO</th>
+                  <th class="py-3.5 px-5 text-right">ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+                <!-- Rendered dynamically by window.renderAdminUsersTable -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Docentes SEA (Sincronización y Comparación) -->
+      <div id="admin-view6-tab-sea" class="flex-1 flex flex-col hidden overflow-hidden">
+        
+        <!-- Subheader -->
+        <div class="p-6 pb-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                FUENTE OFICIAL SEA
+              </span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white font-display">
+                Sincronización de docentes
+              </h3>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+              Analiza la nómina docente de SEA, compara quién tiene acceso y sincroniza cuentas nuevas o ausentes sin eliminar registros históricos.
+            </p>
+          </div>
+
+          <!-- Right controls: GESTIÓN SEA + Analizar SEA -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">GESTIÓN SEA</span>
+              <input id="admin-sea-term-input" type="text" value="2-2026" class="w-20 text-center font-bold font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <button onclick="window.analyzeSeaCatalog()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-indigo-500/20" style="background-color: #4F46E5;">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Analizar SEA</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row of 5 SEA KPI Cards -->
+        <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-200 dark:border-slate-800">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <!-- 1. Docentes en SEA -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Docentes en SEA</div>
+              <div id="sea-kpi-total" class="text-xl font-extrabold font-display text-slate-900 dark:text-white mt-1">0</div>
+              <div id="sea-kpi-term-sub" class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">gestión 2-2026</div>
+            </div>
+
+            <!-- 2. Con acceso -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Con acceso</div>
+              <div id="sea-kpi-con-acceso" class="text-xl font-extrabold font-display text-emerald-600 dark:text-emerald-400 mt-1">0</div>
+              <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">cuenta docente activa</div>
+            </div>
+
+            <!-- 3. Nuevos -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400">Nuevos</div>
+              <div id="sea-kpi-nuevos" class="text-xl font-extrabold font-display text-amber-600 dark:text-amber-400 mt-1">0</div>
+              <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">sin cuenta registrada</div>
+            </div>
+
+            <!-- 4. Sin acceso -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div class="text-[11px] font-bold text-slate-600 dark:text-slate-400">Sin acceso</div>
+              <div id="sea-kpi-sin-acceso" class="text-xl font-extrabold font-display text-slate-700 dark:text-slate-300 mt-1">0</div>
+              <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">inactivos o rol distinto</div>
+            </div>
+
+            <!-- 5. Ya no están -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <div class="text-[11px] font-bold text-rose-600 dark:text-rose-400">Ya no están</div>
+              <div id="sea-kpi-ya-no-estan" class="text-xl font-extrabold font-display text-rose-600 dark:text-rose-400 mt-1">0</div>
+              <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">cuentas para desactivar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div class="px-6 py-3 bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-2.5 text-xs text-blue-900 dark:text-blue-200 flex-1 min-w-[280px]">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0"></i>
+            <span>Las cuentas nuevas se crean con el CI como clave temporal y deberán cambiarla en su primer ingreso. Las ausencias se desactivan de forma lógica.</span>
+          </div>
+
+          <!-- Banner Action Buttons -->
+          <div class="flex items-center gap-2.5">
+            <button id="btn-select-without-access" onclick="window.selectSeaWithoutAccess()" class="px-3 py-1.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 text-blue-800 dark:text-blue-200 hover:bg-blue-50 dark:hover:bg-slate-700 text-xs font-semibold transition-colors cursor-pointer">
+              Seleccionar sin acceso
+            </button>
+            <button id="btn-sync-sea-selection" onclick="window.syncSeaSelection()" disabled class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+              <span>Sincronizar selección (<span id="sea-selected-count">0</span>)</span>
+            </button>
+            <button id="btn-sync-sea-all" onclick="window.syncSeaAll()" class="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+              <span>Sincronizar todo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+          <div class="relative flex-1 max-w-md">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input id="sea-search-input" type="text" placeholder="Buscar docente por CI o nombre..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.onSeaSearchInput()">
+          </div>
+          <div id="sea-records-counter" class="text-xs text-slate-500 dark:text-slate-400 font-mono">
+            0 registros mostrados
+          </div>
+        </div>
+
+        <!-- SEA Teachers Table -->
+        <div class="flex-1 p-6 pt-2 overflow-y-auto custom-scrollbar">
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th class="py-3 px-4 text-center w-12">
+                    <input type="checkbox" id="sea-select-all" onchange="window.onSeaSelectAll(this)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                  </th>
+                  <th class="py-3 px-4">CI</th>
+                  <th class="py-3 px-4">DOCENTE OFICIAL SEA</th>
+                  <th class="py-3 px-4 text-center">GRUPOS</th>
+                  <th class="py-3 px-4 text-center">ESTADO DE ACCESO</th>
+                  <th class="py-3 px-4 text-right">ACCIÓN</th>
+                </tr>
+              </thead>
+              <tbody id="sea-teachers-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: Roles y Permisos (Catálogo Institucional) -->
+      <div id="admin-view6-tab-roles" class="flex-1 flex flex-col hidden overflow-hidden">
+        <!-- Subheader -->
+        <div class="p-6 pb-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+              CATÁLOGO INSTITUCIONAL • CONSULTA OCASIONAL
+            </span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white font-display">
+              Roles y permisos
+            </h3>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Consulta qué puede hacer cada perfil y el alcance académico que limita sus operaciones.
+          </p>
+        </div>
+
+        <!-- 3-Column Responsive Grid with 8 institutional role cards -->
+        <div class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            
+            <!-- Card 1: ADMINISTRADOR_SISTEMA -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-purple-600 dark:text-purple-400">ADMINISTRADOR_SISTEMA</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Administrador del sistema</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Acceso total al sistema</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Toda la institución
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Administrar usuarios, roles y alcances académicos.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Configurar parámetros y catálogos operativos.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Gestionar supervisión curricular, carpetas y auditoría.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Consultar reportes y trazabilidad de las operaciones.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: VICERRECTOR_NACIONAL -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">VICERRECTOR_NACIONAL</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Vicerrector nacional</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="globe" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Supervisión curricular y académica nacional</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> 9 Sedes Universitarias y 24 Carreras
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Auditoría global de expedientes a nivel nacional.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Dictamen curricular nacional y aprobación final.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Supervisión estadística de avance académico multi-sede.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: VICERRECTOR_SEDE -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400">VICERRECTOR_SEDE</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Vicerrector de sede</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="building-2" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Gobernanza regional de sede universitaria</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Sede académica asignada
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Supervisión de carreras locales de la sede.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Semáforo curricular y estado de cumplimiento regional.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Visado regional y seguimiento de auditorías in situ.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4: DIR_ACADEMICA -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-sky-600 dark:text-sky-400">DIR_ACADEMICA</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Director académico de sede</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="briefcase" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Control curricular operativo de la sede</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Carreras de la sede asignada
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Validación de PACs y planes de aula analíticos.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Control de avance de 5 momentos didácticos.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Visado en lote y dictamen operativo regional.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 5: DIRECTOR_CARRERA -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400">DIRECTOR_CARRERA</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Director de carrera</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Liderazgo curricular y pedagógico de la carrera</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Carreras asignadas (Multicarrera)
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Auditoría de 5 documentos oficiales del docente.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Semáforo curricular y avance pedagógico por materia.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Dictamen semestral en lote y observaciones didácticas.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 6: DOCENTE -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-teal-600 dark:text-teal-400">DOCENTE</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Docente de aula</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/70 text-teal-600 dark:text-teal-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Planificación didáctica y seguimiento pedagógico en aula</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Materias y comisiones asignadas
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Registro de los 5 momentos didácticos por sesión.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Control de asistencia 80% y libro pedagógico digital.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>PAC, microplanificación didáctica y evidencias.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 7: RESPONSABLE_EVALUACIONES -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-cyan-600 dark:text-cyan-400">RESPONSABLE_EVALUACIONES</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Responsable de evaluaciones</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-950/70 text-cyan-600 dark:text-cyan-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Gestión de campus, evaluaciones, tiempos y parámetros</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Evaluaciones institucionales autorizadas
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Programación de cronogramas y turnos de evaluación.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Validación de bancos de preguntas y rúbricas.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Generación y control de actas oficiales de notas.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 8: PERSONAL_EVALUACIONES -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold font-mono uppercase tracking-wider text-slate-600 dark:text-slate-400">PERSONAL_EVALUACIONES</span>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white font-display mt-0.5">Personal de evaluaciones</h4>
+                  </div>
+                  <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Operación de procesos de evaluación, impresión y digitalización</p>
+                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                  <span class="text-slate-400">Alcance:</span> Sedes y campus asignados
+                </div>
+                <div class="space-y-1.5 pt-1">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Permisos principales:</div>
+                  <ul class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Consulta de roles asignados y aulas de examen.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Entrega y recepción de instrumentos evaluativos.</span></li>
+                    <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5"></i><span>Lectura óptica, digitalización y control de asistencia.</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
 

@@ -55,6 +55,8 @@ public class AdminUsuarioControllerTest {
     private PasswordEncoder passwordEncoder;
 
     private ScuAdminUsuarioService adminUsuarioService;
+    private bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
+    private bo.edu.unitepc.sisa.domain.repository.SeaSyncAuditLogRepository seaSyncAuditLogRepository;
     private ScuAdminUsuarioController controller;
 
     private Sede sedeCbb;
@@ -69,6 +71,8 @@ public class AdminUsuarioControllerTest {
         this.carreraRepository = mock(CarreraRepository.class);
         this.asignaturaRepository = mock(AsignaturaRepository.class);
         this.passwordEncoder = new BCryptPasswordEncoder();
+        this.seaDocenteAutoProvisionService = mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class);
+        this.seaSyncAuditLogRepository = mock(bo.edu.unitepc.sisa.domain.repository.SeaSyncAuditLogRepository.class);
 
         this.adminUsuarioService = new ScuAdminUsuarioService(
                 this.usuarioRepository,
@@ -81,7 +85,8 @@ public class AdminUsuarioControllerTest {
 
         this.controller = new ScuAdminUsuarioController(
                 this.adminUsuarioService,
-                mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class)
+                this.seaDocenteAutoProvisionService,
+                this.seaSyncAuditLogRepository
         );
 
         this.sedeCbb = new Sede("CBB", "Sede Central Cochabamba", "Cochabamba");
@@ -363,5 +368,51 @@ public class AdminUsuarioControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(user.getActivo());
+    }
+
+    @Test
+    @DisplayName("10. Admin requests SEA catalog analysis for term")
+    void shouldAnalyzeSeaDocentes() {
+        Map<String, Object> mockAnalysis = Map.of(
+                "term", "2-2026",
+                "totalSeaDocentes", 1442,
+                "conAcceso", 1200,
+                "nuevos", 180,
+                "sinAcceso", 62,
+                "yaNoEstan", 15,
+                "docentes", List.of()
+        );
+        when(this.seaDocenteAutoProvisionService.analyzeSeaDocentes("2-2026")).thenReturn(mockAnalysis);
+
+        ResponseEntity<Map<String, Object>> response = this.controller.analyzeSeaDocentes("2-2026");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
+        assertEquals("2-2026", data.get("term"));
+        assertEquals(1442, data.get("totalSeaDocentes"));
+        assertEquals(1200, data.get("conAcceso"));
+        assertEquals(180, data.get("nuevos"));
+    }
+
+    @Test
+    @DisplayName("11. Admin requests SEA diff for a single teacher")
+    void shouldGetSeaDiffForDocente() {
+        Map<String, Object> mockDiff = Map.of(
+                "ci", "1234567",
+                "nombre", "JUAN PEREZ",
+                "statusMatch", "MATCH_EXACTO"
+        );
+        when(this.seaDocenteAutoProvisionService.getSeaDiffForDocente("1234567")).thenReturn(mockDiff);
+
+        ResponseEntity<Map<String, Object>> response = this.controller.getSeaDiffForDocente("1234567");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
+        assertEquals("1234567", data.get("ci"));
+        assertEquals("MATCH_EXACTO", data.get("statusMatch"));
     }
 }

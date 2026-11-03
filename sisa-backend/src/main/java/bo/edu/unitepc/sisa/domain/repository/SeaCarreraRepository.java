@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface SeaCarreraRepository extends JpaRepository<SeaCarrera, String> {
     List<SeaCarrera> findBySedeCodigo(String sedeCodigo);
     Optional<SeaCarrera> findByCodigoAndSedeCodigo(String codigo, String sedeCodigo);
-    Optional<SeaCarrera> findByCodigo(String codigo);
+    List<SeaCarrera> findByCodigo(String codigo);
+    Optional<SeaCarrera> findFirstByCodigo(String codigo);
 }

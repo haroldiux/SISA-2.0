@@ -14,4 +14,6 @@ import java.util.Optional;
 @Repository
 public interface CarreraRepository extends JpaRepository<Carrera, Long> {
     Optional<Carrera> findByCodigo(String codigo);
+    Optional<Carrera> findFirstByCodigo(String codigo);
+    Optional<Carrera> findFirstByNombreIgnoreCase(String nombre);
 }

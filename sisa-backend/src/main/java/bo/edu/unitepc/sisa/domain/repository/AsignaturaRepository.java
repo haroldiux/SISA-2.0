@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface AsignaturaRepository extends JpaRepository<Asignatura, Long> {
     Optional<Asignatura> findByCodigo(String codigo);
+    Optional<Asignatura> findFirstByCarreraIdAndNombreIgnoreCase(Long carreraId, String nombre);
+    Optional<Asignatura> findFirstByNombreIgnoreCase(String nombre);
     List<Asignatura> findByCarreraId(Long carreraId);
     List<Asignatura> findByCarreraIdAndSemestre(Long carreraId, Integer semestre);
 }

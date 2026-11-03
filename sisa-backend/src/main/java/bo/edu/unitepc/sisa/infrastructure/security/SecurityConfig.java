@@ -50,12 +50,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Role-restricted SEA catalog sync endpoints (ROLE_ADMIN or ROLE_VICERRECTOR_NACIONAL)
+                        .requestMatchers(
+                                "/api/v1/catalogo-academico/sync",
+                                "/api/v1/system/catalogo-academico/sync"
+                        ).hasAnyRole("ADMIN", "VICERRECTOR_NACIONAL")
+                        // 2. Public academic catalog and auth endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/system/auth/**",
                                 "/api/v1/academic/**",
                                 "/api/v1/auditorias/**",
                                 "/api/v1/catalogo-academico/**",
+                                "/api/v1/system/catalogo-academico/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

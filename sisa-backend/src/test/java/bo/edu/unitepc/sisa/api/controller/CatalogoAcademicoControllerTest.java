@@ -53,7 +53,8 @@ public class CatalogoAcademicoControllerTest {
                 this.seaCarreraRepository,
                 this.seaMateriaRepository,
                 this.seaGrupoRepository,
-                mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class)
+                mock(bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService.class),
+                mock(bo.edu.unitepc.sisa.domain.repository.SeaSyncAuditLogRepository.class)
         );
     }
 
@@ -121,7 +122,7 @@ public class CatalogoAcademicoControllerTest {
     @DisplayName("Should fallback to local sea_materias when gateway fails")
     void shouldFallbackToLocalCoursesOnGatewayFailure() {
         when(this.gatewayClient.getCourses("CBBA", "SIS")).thenThrow(new RuntimeException("Connection error"));
-        when(this.seaCarreraRepository.findByCodigo("SIS")).thenReturn(Optional.of(
+        when(this.seaCarreraRepository.findFirstByCodigo("SIS")).thenReturn(Optional.of(
                 new SeaCarrera("car-sis", "SIS", "Ingeniería de Sistemas", "CBBA")
         ));
         when(this.seaMateriaRepository.findByCarreraId("car-sis")).thenReturn(List.of(

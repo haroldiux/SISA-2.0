@@ -6,7 +6,10 @@ import bo.edu.unitepc.sisa.api.response.ScuUserDetailResponse;
 import bo.edu.unitepc.sisa.builder.ResourceBuilder;
 import bo.edu.unitepc.sisa.builder.ResourcesBuilder;
 import bo.edu.unitepc.sisa.domain.enums.RolUsuario;
+import bo.edu.unitepc.sisa.domain.model.SeaSyncAuditLog;
+import bo.edu.unitepc.sisa.domain.repository.SeaSyncAuditLogRepository;
 import bo.edu.unitepc.sisa.service.ScuAdminUsuarioService;
+import java.security.Principal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +32,15 @@ public class ScuAdminUsuarioController {
 
     private final ScuAdminUsuarioService adminUsuarioService;
     private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
+    private final SeaSyncAuditLogRepository seaSyncAuditLogRepository;
 
     public ScuAdminUsuarioController(
             ScuAdminUsuarioService adminUsuarioService,
-            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService) {
+            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService,
+            SeaSyncAuditLogRepository seaSyncAuditLogRepository) {
         this.adminUsuarioService = adminUsuarioService;
         this.seaDocenteAutoProvisionService = seaDocenteAutoProvisionService;
+        this.seaSyncAuditLogRepository = seaSyncAuditLogRepository;
     }
 
     @GetMapping
@@ -121,6 +127,63 @@ public class ScuAdminUsuarioController {
         return ResponseEntity.ok(
                 ResourceBuilder.of(Map.of("syncedCount", synced))
                         .message("Sincronización de docentes completada: " + synced + " nuevos docentes aprovisionados")
+                        .build()
+        );
+    }
+
+    @GetMapping("/{ci}/sea-diff")
+    public ResponseEntity<Map<String, Object>> getSeaDiffForDocente(@PathVariable String ci) {
+        Map<String, Object> diff = this.seaDocenteAutoProvisionService.getSeaDiffForDocente(ci);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(diff)
+                        .message("Diferencias SEA vs SISA obtenidas exitosamente")
+                        .build()
+        );
+    }
+
+    @PostMapping("/{ci}/sync-sea")
+    public ResponseEntity<Map<String, Object>> syncSingleUserFromSea(
+            @PathVariable String ci,
+            Principal principal) {
+        String adminUser = (principal != null && principal.getName() != null) ? principal.getName() : "ADMIN";
+        Map<String, Object> result = this.seaDocenteAutoProvisionService.syncSingleDocente(ci, adminUser);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(result)
+                        .message("Docente sincronizado exitosamente desde el SEA")
+                        .build()
+        );
+    }
+
+    @PostMapping("/sync-sea-batch")
+    public ResponseEntity<Map<String, Object>> syncBatchUsersFromSea(
+            @RequestBody Map<String, List<String>> body,
+            Principal principal) {
+        String adminUser = (principal != null && principal.getName() != null) ? principal.getName() : "ADMIN";
+        List<String> cis = body != null ? body.get("cis") : List.of();
+        Map<String, Object> result = this.seaDocenteAutoProvisionService.syncBatchDocentes(cis, adminUser);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(result)
+                        .message("Sincronización en lote de docentes completada")
+                        .build()
+        );
+    }
+
+    @GetMapping("/sea-analysis")
+    public ResponseEntity<Map<String, Object>> analyzeSeaDocentes(@RequestParam(defaultValue = "2-2026") String term) {
+        Map<String, Object> analysis = this.seaDocenteAutoProvisionService.analyzeSeaDocentes(term);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(analysis)
+                        .message("Análisis de nómina docente SEA completado exitosamente")
+                        .build()
+        );
+    }
+
+    @GetMapping("/sync-logs")
+    public ResponseEntity<Map<String, Object>> getSyncLogs() {
+        List<SeaSyncAuditLog> logs = this.seaSyncAuditLogRepository.findTop50ByOrderByCreadoEnDesc();
+        return ResponseEntity.ok(
+                ResourcesBuilder.of(logs)
+                        .message("Historial de auditoría de sincronizaciones SEA")
                         .build()
         );
     }

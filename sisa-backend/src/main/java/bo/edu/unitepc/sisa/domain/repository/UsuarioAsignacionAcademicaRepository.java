@@ -18,6 +18,8 @@ public interface UsuarioAsignacionAcademicaRepository extends JpaRepository<Usua
 
     List<UsuarioAsignacionAcademica> findByUsuarioId(Long usuarioId);
 
+    java.util.Optional<UsuarioAsignacionAcademica> findFirstByUsuarioIdAndAsignaturaId(Long usuarioId, Long asignaturaId);
+
     @Modifying
     @Transactional
     void deleteByUsuarioId(Long usuarioId);

@@ -4,6 +4,11 @@ import bo.edu.unitepc.sisa.api.dto.gateway.*;
 import bo.edu.unitepc.sisa.domain.model.SeaCarrera;
 import bo.edu.unitepc.sisa.domain.model.SeaMateria;
 import bo.edu.unitepc.sisa.domain.model.SeaSede;
+import bo.edu.unitepc.sisa.domain.model.SeaSyncAuditLog;
+import bo.edu.unitepc.sisa.domain.repository.SeaSyncAuditLogRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
+import java.security.Principal;
+import java.time.OffsetDateTime;
 import bo.edu.unitepc.sisa.domain.repository.SeaCarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeaGrupoRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeaMateriaRepository;
@@ -40,6 +45,7 @@ public class CatalogoAcademicoController {
     private final SeaMateriaRepository seaMateriaRepository;
     private final SeaGrupoRepository seaGrupoRepository;
     private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
+    private final SeaSyncAuditLogRepository seaSyncAuditLogRepository;
 
     @Autowired(required = false)
     private CacheManager cacheManager;
@@ -50,13 +56,15 @@ public class CatalogoAcademicoController {
             SeaCarreraRepository seaCarreraRepository,
             SeaMateriaRepository seaMateriaRepository,
             SeaGrupoRepository seaGrupoRepository,
-            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService) {
+            bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService,
+            SeaSyncAuditLogRepository seaSyncAuditLogRepository) {
         this.gatewayClient = gatewayClient;
         this.seaSedeRepository = seaSedeRepository;
         this.seaCarreraRepository = seaCarreraRepository;
         this.seaMateriaRepository = seaMateriaRepository;
         this.seaGrupoRepository = seaGrupoRepository;
         this.seaDocenteAutoProvisionService = seaDocenteAutoProvisionService;
+        this.seaSyncAuditLogRepository = seaSyncAuditLogRepository;
     }
 
     /**
@@ -76,14 +84,31 @@ public class CatalogoAcademicoController {
      * Sincronización activa y explícita desde el Gateway SEA Central (UNITEPC).
      * Consume sedes, carreras, materias del pensum, grupos, horarios, aulas y auto-aprovisiona docentes.
      */
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ADMIN', 'ROLE_VICERRECTOR_NACIONAL', 'VICERRECTOR_NACIONAL')")
     @PostMapping("/sync")
     public ResponseEntity<Map<String, Object>> syncFromSea(
             @RequestParam(required = false, defaultValue = "CBA") String branchOfficeCode,
-            @RequestParam(required = false, defaultValue = "2-2026") String term) {
+            @RequestParam(required = false, defaultValue = "2-2026") String term,
+            Principal principal) {
+
+        String ejecutor = (principal != null && principal.getName() != null) ? principal.getName() : "ADMIN_SYSTEM";
 
         log.info("Iniciando sincronización activa con el Gateway SEA (Sede: {}, Gestión: {})...", branchOfficeCode, term);
 
         if (!this.gatewayClient.isOnline()) {
+            try {
+                this.seaSyncAuditLogRepository.save(SeaSyncAuditLog.builder()
+                        .tipoSync("GLOBAL")
+                        .ejecutadoPor(ejecutor)
+                        .ciObjetivo("TODOS")
+                        .estado("FALLIDO")
+                        .detalle("El Gateway Central SEA (gw-dev.unitepc.solutions) no está accesible. Se mantiene el espejo local seguro.")
+                        .creadoEn(OffsetDateTime.now())
+                        .build());
+            } catch (Exception auditEx) {
+                log.warn("No se pudo guardar log de auditoría SEA offline: {}", auditEx.getMessage());
+            }
+
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
                     "status", "error",
                     "code", "SEA_GATEWAY_OFFLINE",
@@ -146,6 +171,24 @@ public class CatalogoAcademicoController {
                 }
             }
 
+            try {
+                this.seaSyncAuditLogRepository.save(SeaSyncAuditLog.builder()
+                        .tipoSync("GLOBAL")
+                        .ejecutadoPor(ejecutor)
+                        .ciObjetivo("TODOS")
+                        .sedesCount(sedesCount)
+                        .carrerasCount(carrerasCount)
+                        .materiasCount(materiasCount)
+                        .gruposCount(gruposCount)
+                        .docentesCount(docentesCount)
+                        .estado("EXITOSO")
+                        .detalle("Sincronización global completada con éxito. Sedes: " + sedesCount + ", Carreras: " + carrerasCount + ", Materias: " + materiasCount + ", Grupos: " + gruposCount + ", Docentes: " + docentesCount)
+                        .creadoEn(OffsetDateTime.now())
+                        .build());
+            } catch (Exception auditEx) {
+                log.warn("No se pudo guardar log de auditoría SEA global: {}", auditEx.getMessage());
+            }
+
             Map<String, Object> resp = new LinkedHashMap<>();
             resp.put("status", "success");
             resp.put("source", "UNITEPC Central Gateway (https://gw-dev.unitepc.solutions)");
@@ -166,6 +209,25 @@ public class CatalogoAcademicoController {
 
         } catch (Exception ex) {
             log.error("Error durante la sincronización activa con el SEA: {}", ex.getMessage(), ex);
+
+            try {
+                this.seaSyncAuditLogRepository.save(SeaSyncAuditLog.builder()
+                        .tipoSync("GLOBAL")
+                        .ejecutadoPor(ejecutor)
+                        .ciObjetivo("TODOS")
+                        .sedesCount(sedesCount)
+                        .carrerasCount(carrerasCount)
+                        .materiasCount(materiasCount)
+                        .gruposCount(gruposCount)
+                        .docentesCount(docentesCount)
+                        .estado("FALLIDO")
+                        .detalle("Fallo durante la sincronización con el SEA: " + ex.getMessage())
+                        .creadoEn(OffsetDateTime.now())
+                        .build());
+            } catch (Exception auditEx) {
+                log.warn("No se pudo guardar log de auditoría SEA con error: {}", auditEx.getMessage());
+            }
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "error",
                     "message", "Fallo durante la sincronización con el SEA: " + ex.getMessage(),
@@ -245,7 +307,10 @@ public class CatalogoAcademicoController {
         // Local mirror fallback
         List<SeaMateria> list;
         if (careerCode != null && !careerCode.isBlank()) {
-            Optional<SeaCarrera> carreraOpt = this.seaCarreraRepository.findByCodigo(careerCode);
+            Optional<SeaCarrera> carreraOpt = (branchOfficeCode != null && !branchOfficeCode.isBlank()) ? this.seaCarreraRepository.findByCodigoAndSedeCodigo(careerCode, branchOfficeCode) : this.seaCarreraRepository.findFirstByCodigo(careerCode);
+            if (carreraOpt.isEmpty()) {
+                carreraOpt = this.seaCarreraRepository.findFirstByCodigo(careerCode);
+            }
             if (carreraOpt.isPresent()) {
                 list = this.seaMateriaRepository.findByCarreraId(carreraOpt.get().getId());
             } else {
@@ -691,6 +756,23 @@ public class CatalogoAcademicoController {
         try {
             for (GroupItemDto dto : remoteGroups) {
                 if (dto.id() == null) continue;
+                String matId = dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen";
+                if (this.seaMateriaRepository != null && !this.seaMateriaRepository.existsById(matId)) {
+                    String matName = dto.courseName() != null ? dto.courseName() : "Materia " + matId;
+                    String matCode = matId.length() <= 30 ? matId : "MAT-" + matId.substring(0, 10);
+                    String seaCarreraId = null;
+                    if (this.seaCarreraRepository != null && dto.careerCode() != null) {
+                        var scOpt = this.seaCarreraRepository.findFirstByCodigo(dto.careerCode());
+                        if (scOpt.isPresent()) {
+                            seaCarreraId = scOpt.get().getId();
+                        }
+                    }
+                    try {
+                        this.seaMateriaRepository.save(new SeaMateria(matId, matCode, matName, (short) 1, matId, seaCarreraId));
+                    } catch (Exception mEx) {
+                        log.debug("Materia mirror already created: {}", mEx.getMessage());
+                    }
+                }
                 var existing = this.seaGrupoRepository.findById(dto.id());
                 if (existing.isEmpty()) {
                     var nuevo = new bo.edu.unitepc.sisa.domain.model.SeaGrupo(
