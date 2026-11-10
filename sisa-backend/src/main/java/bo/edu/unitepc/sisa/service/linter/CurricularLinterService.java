@@ -284,7 +284,7 @@ public class CurricularLinterService {
 
     // ── PRIVATE AUDIT LOGIC FOR DOCX ─────────────────────────────────────────
 
-    private void auditHeaderMismatch(XWPFDocument doc, CurricularValidationReport report, String expectedCode, String expectedName) {
+    private void auditHeaderMismatch(XWPFDocument doc, CurricularValidationReport report, String expectedCourseCode, String expectedCourseName) {
         List<XWPFTable> tables = doc.getTables();
         if (tables.isEmpty()) {
             report.addDiscrepancia(CurricularDiscrepancy.builder()
@@ -490,7 +490,7 @@ public class CurricularLinterService {
                     .sugerencia("Asegurate de que los títulos de unidad tengan el formato 'UNIDAD 1: [Título]' o 'UNIDAD I.- [Título]'")
                     .build());
         } else if (totalTopicsCount == 0) {
-            report.addDiscrepancia(CurricularDiscrepancia.builder()
+            report.addDiscrepancia(CurricularDiscrepancy.builder()
                     .severidad(CurricularSeverity.BLOQUEANTE)
                     .codigoRegla("CERO_TEMAS_DETECTADOS")
                     .seccion("Contenidos Analíticos")
