@@ -28,8 +28,17 @@ public record ResumenMateriaSeguimientoResponse(
     public record MomentosStatsDto(
             BigDecimal inicioPorcentaje,
             BigDecimal desarrolloPorcentaje,
-            BigDecimal cierrePorcentaje
-    ) {}
+            BigDecimal cierrePorcentaje,
+            BigDecimal introduccionPorcentaje,
+            BigDecimal resultadosPorcentaje,
+            BigDecimal contenidosPorcentaje,
+            BigDecimal cuerpoPorcentaje,
+            BigDecimal cierreSecuenciaPorcentaje
+    ) {
+        public MomentosStatsDto(BigDecimal inicio, BigDecimal desarrollo, BigDecimal cierre) {
+            this(inicio, desarrollo, cierre, inicio, inicio, desarrollo, desarrollo, cierre);
+        }
+    }
 
     public record RecursoHistogramaDto(
             String recurso,
@@ -50,6 +59,11 @@ public record ResumenMateriaSeguimientoResponse(
             Boolean momentoCierreCumplido,
             EstadoCumplimientoTema estadoCumplimiento,
             BigDecimal cumplimientoScore,
-            String observacionesDocente
+            String observacionesDocente,
+            Boolean secuenciaIntroduccion,
+            Boolean secuenciaResultados,
+            Boolean secuenciaContenidos,
+            Boolean secuenciaCuerpo,
+            Boolean secuenciaCierre
     ) {}
 }

@@ -61,7 +61,7 @@ public class ScuGetMateriaAuditoriaCmd {
         String docenteCi = seguimientos.isEmpty() ? "" : seguimientos.get(0).getDocenteCi();
         String docenteNombre = resolveDocenteNombre(docenteCi);
 
-        // 4. Calcular metricas longitudinales de momentos pedagogicos
+        // 4. Calcular metricas longitudinales de momentos pedagogicos (3 legacy + 5 oficiales)
         long countInicio = seguimientos.stream()
                 .filter(s -> Boolean.TRUE.equals(s.getMomentoInicioCumplido()))
                 .count();
@@ -72,17 +72,42 @@ public class ScuGetMateriaAuditoriaCmd {
                 .filter(s -> Boolean.TRUE.equals(s.getMomentoCierreCumplido()))
                 .count();
 
-        BigDecimal inicioPct = totalSesionesRegistradas > 0
-                ? BigDecimal.valueOf(countInicio * 100.0 / totalSesionesRegistradas).setScale(2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal desarrolloPct = totalSesionesRegistradas > 0
-                ? BigDecimal.valueOf(countDesarrollo * 100.0 / totalSesionesRegistradas).setScale(2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal cierrePct = totalSesionesRegistradas > 0
-                ? BigDecimal.valueOf(countCierre * 100.0 / totalSesionesRegistradas).setScale(2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        long countIntro = seguimientos.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getSecuenciaIntroduccion()))
+                .count();
+        long countRes = seguimientos.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getSecuenciaResultados()))
+                .count();
+        long countCont = seguimientos.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getSecuenciaContenidos()))
+                .count();
+        long countCuer = seguimientos.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getSecuenciaCuerpo()))
+                .count();
+        long countCier = seguimientos.stream()
+                .filter(s -> Boolean.TRUE.equals(s.getSecuenciaCierre()))
+                .count();
 
-        MomentosStatsDto momentos = new MomentosStatsDto(inicioPct, desarrolloPct, cierrePct);
+        BigDecimal inicioPct = calcPct(countInicio, totalSesionesRegistradas);
+        BigDecimal desarrolloPct = calcPct(countDesarrollo, totalSesionesRegistradas);
+        BigDecimal cierrePct = calcPct(countCierre, totalSesionesRegistradas);
+
+        BigDecimal introPct = calcPct(countIntro, totalSesionesRegistradas);
+        BigDecimal resPct = calcPct(countRes, totalSesionesRegistradas);
+        BigDecimal contPct = calcPct(countCont, totalSesionesRegistradas);
+        BigDecimal cuerPct = calcPct(countCuer, totalSesionesRegistradas);
+        BigDecimal cierPct = calcPct(countCier, totalSesionesRegistradas);
+
+        MomentosStatsDto momentos = new MomentosStatsDto(
+                inicioPct,
+                desarrolloPct,
+                cierrePct,
+                introPct,
+                resPct,
+                contPct,
+                cuerPct,
+                cierPct
+        );
 
         // 5. Calcular puntaje real acumulado
         BigDecimal puntajeTotal = seguimientos.stream()
@@ -113,7 +138,12 @@ public class ScuGetMateriaAuditoriaCmd {
                         s.getMomentoCierreCumplido(),
                         s.getEstadoCumplimiento(),
                         s.getCumplimientoScore(),
-                        s.getObservacionesDocente()
+                        s.getObservacionesDocente(),
+                        s.getSecuenciaIntroduccion(),
+                        s.getSecuenciaResultados(),
+                        s.getSecuenciaContenidos(),
+                        s.getSecuenciaCuerpo(),
+                        s.getSecuenciaCierre()
                 ))
                 .collect(Collectors.toList());
 
@@ -129,6 +159,13 @@ public class ScuGetMateriaAuditoriaCmd {
                 histograma,
                 sesionesItems
         );
+    }
+
+    private BigDecimal calcPct(long count, int total) {
+        if (total <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return BigDecimal.valueOf(count * 100.0 / total).setScale(2, RoundingMode.HALF_UP);
     }
 
     private String resolveDocenteNombre(String docenteCi) {

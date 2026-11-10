@@ -501,20 +501,27 @@
       // 4. View-specific lifecycle hooks
       if (viewId !== 'view1') {
         window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
-        try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+        window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
+        try {
+          localStorage.removeItem('sisa_supervision_audit_course');
+          localStorage.removeItem('sisa_supervision_audit_course_name');
+        } catch (e) {}
         const returnBar = document.getElementById('director-supervision-return-bar');
         if (returnBar) returnBar.classList.add('hidden');
       } else {
         const auditCourse = localStorage.getItem('sisa_supervision_audit_course');
+        const auditCourseName = localStorage.getItem('sisa_supervision_audit_course_name');
         if (auditCourse) {
           window.__SUPERVISION_AUDIT_COURSE_CODE__ = auditCourse;
+          window.__SUPERVISION_AUDIT_COURSE_NAME__ = auditCourseName || null;
           const returnBar = document.getElementById('director-supervision-return-bar');
           const returnCourse = document.getElementById('director-supervision-return-course');
           if (returnBar) {
             returnBar.classList.remove('hidden');
             if (returnCourse) {
               const docName = window.__ACTIVE_DOCENTE__ ? window.__ACTIVE_DOCENTE__.nombreCompleto : '';
-              returnCourse.textContent = `• Asignatura: ${auditCourse} | Docente: ${docName}`;
+              const nameSuffix = auditCourseName ? ` (${auditCourseName})` : '';
+              returnCourse.textContent = `• Asignatura: ${auditCourse}${nameSuffix} | Docente: ${docName}`;
             }
           }
         }
@@ -7502,7 +7509,11 @@ document.addEventListener('change', (e) => {
         selector.addEventListener('change', function() {
           const ci = this.value;
           window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
-          try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+          window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
+          try {
+            localStorage.removeItem('sisa_supervision_audit_course');
+            localStorage.removeItem('sisa_supervision_audit_course_name');
+          } catch (e) {}
           const returnBar = document.getElementById('director-supervision-return-bar');
           if (returnBar) returnBar.classList.add('hidden');
           if (typeof window.selectDocenteFromApi === 'function') {
@@ -8159,9 +8170,13 @@ document.addEventListener('change', (e) => {
         }
       }
 
-      const officialCodes = directCode ? [directCode] : carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc]));
-      let officialCode = [...new Set(officialCodes.flat())].filter(Boolean).join(' / ') || resolveOfficialCourseCode(primaryName, carrerasArr) || 'UNITEPC';
-      let codesList = [...new Set(officialCodes.flat().filter(Boolean))];
+      const curriculumCodes = carrerasArr.map(cc => resolveOfficialCourseCode(primaryName, [cc])).flat().filter(Boolean);
+      if (curriculumCodes.length === 0 && dirCareerCode) {
+        const fallbackCurr = resolveOfficialCourseCode(primaryName, [dirCareerCode]);
+        if (fallbackCurr) curriculumCodes.push(...[fallbackCurr].flat());
+      }
+      let officialCode = directCode || curriculumCodes[0] || resolveOfficialCourseCode(primaryName, carrerasArr) || 'UNITEPC';
+      let codesList = [...new Set([directCode, ...curriculumCodes].flat().filter(Boolean))];
 
       let isScopedDirectorForThis = false;
       let otherCareersNames = '';
@@ -8186,8 +8201,12 @@ document.addEventListener('change', (e) => {
             const matchC = courses.find(c => (c.syllabusCourseId === dirGroup.syllabusCourseId || c.id === dirGroup.syllabusCourseId) && c.code);
             if (matchC && matchC.code) scopedCode = matchC.code;
           }
-          if (!scopedCode && typeof resolveOfficialCourseCode === 'function') {
-            scopedCode = resolveOfficialCourseCode(scopedCourseName, [dirCareerCode]);
+          let syllabusCode = null;
+          if (typeof resolveOfficialCourseCode === 'function') {
+            syllabusCode = resolveOfficialCourseCode(scopedCourseName, [dirCareerCode]);
+          }
+          if (!scopedCode && syllabusCode) {
+            scopedCode = Array.isArray(syllabusCode) ? syllabusCode[0] : syllabusCode;
           }
           if (!scopedCode) {
             const carPrefix = dirCareerCode.length > 3 ? dirCareerCode.substring(3) : dirCareerCode;
@@ -8201,7 +8220,8 @@ document.addEventListener('change', (e) => {
           displayName = scopedCourseName;
           primaryName = scopedCourseName;
           officialCode = scopedCode;
-          codesList = [scopedCode];
+          const syllabusCodesArr = Array.isArray(syllabusCode) ? syllabusCode : (syllabusCode ? [syllabusCode] : []);
+          codesList = [...new Set([scopedCode, ...syllabusCodesArr, directCode].filter(Boolean))];
           allCarrerasNames = dirCareerInfo.name;
           allCarrerasTags = isCommon 
             ? (otherCareersNames ? `⚡ Materia común (Compartida con ${otherCareersNames})` : `⚡ Materia común con otras carreras`)
@@ -8524,16 +8544,51 @@ document.addEventListener('change', (e) => {
     });
 
     let targetItem = null;
-    if (auditTargetCode) {
-      const cleanTarget = String(auditTargetCode).trim().toUpperCase();
+    const auditTargetName = !isDocente ? (window.__SUPERVISION_AUDIT_COURSE_NAME__ || localStorage.getItem('sisa_supervision_audit_course_name')) : null;
+
+    if (auditTargetCode || auditTargetName) {
+      const cleanTarget = auditTargetCode ? String(auditTargetCode).trim().toUpperCase() : '';
+      const cleanTargetName = auditTargetName ? String(auditTargetName).trim().toUpperCase() : '';
+
       // First pass: exact code match or codesList
-      targetItem = items.find(it => {
-        const codesList = (it.codesList || []).map(c => String(c).trim().toUpperCase());
-        const itCode = String(it.code || '').toUpperCase();
-        return codesList.includes(cleanTarget) || itCode.split('/').map(s => s.trim()).includes(cleanTarget) || itCode === cleanTarget;
-      });
-      // Second pass: name / primaryName / title contains cleanTarget
-      if (!targetItem) {
+      if (cleanTarget) {
+        targetItem = items.find(it => {
+          const codesList = (it.codesList || []).map(c => String(c).trim().toUpperCase());
+          const itCode = String(it.code || '').toUpperCase();
+          return codesList.includes(cleanTarget) || itCode.split('/').map(s => s.trim()).includes(cleanTarget) || itCode === cleanTarget;
+        });
+      }
+
+      // Second pass: by exact or partial course name / primaryName
+      if (!targetItem && cleanTargetName) {
+        targetItem = items.find(it => {
+          const itName = String(it.name || '').toUpperCase();
+          const itPrim = String(it.primaryName || '').toUpperCase();
+          return itName === cleanTargetName || itPrim === cleanTargetName || itName.includes(cleanTargetName) || cleanTargetName.includes(itName);
+        });
+      }
+
+      // Third pass: reverse map code to courseName via __SUPERVISION_DATA__
+      if (!targetItem && cleanTarget && window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+        let mappedName = null;
+        for (const sem of Object.values(window.__SUPERVISION_DATA__.semesters)) {
+          const found = (sem.courses || []).find(c => c.code === cleanTarget);
+          if (found && (found.courseName || found.name)) {
+            mappedName = String(found.courseName || found.name).trim().toUpperCase();
+            break;
+          }
+        }
+        if (mappedName) {
+          targetItem = items.find(it => {
+            const itName = String(it.name || '').toUpperCase();
+            const itPrim = String(it.primaryName || '').toUpperCase();
+            return itName === mappedName || itPrim === mappedName || itName.includes(mappedName) || mappedName.includes(itName);
+          });
+        }
+      }
+
+      // Fourth pass: code in name/primaryName or vice versa
+      if (!targetItem && cleanTarget) {
         targetItem = items.find(it => {
           const itCode = String(it.code || '').toUpperCase();
           const itName = String(it.name || '').toUpperCase();
@@ -8543,7 +8598,7 @@ document.addEventListener('change', (e) => {
       }
     }
 
-    const isAuditMode = !isDocente && Boolean(window.__SUPERVISION_AUDIT_COURSE_CODE__ || localStorage.getItem('sisa_supervision_audit_course')) && Boolean(targetItem);
+    const isAuditMode = !isDocente && Boolean(auditTargetCode || auditTargetName) && Boolean(targetItem);
 
     if (isAuditMode && targetItem) {
       items = [targetItem];
@@ -8553,26 +8608,31 @@ document.addEventListener('change', (e) => {
     const uniqueCarreras = [...new Set(items.flatMap(it => it.carrerasResolved.map(cr => cr.name)))];
     const totalWeeklyHours = items.reduce((sum, it) => sum + it.totalHours, 0);
 
-    // Update Profile Footer & Top Summary Badges
-    const initials = docente.nombreCompleto
-      .replace(/(Ing\.|Lic\.|Dr\.|Dra\.|Msc\.)/gi, '')
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map(p => p.charAt(0).toUpperCase())
-      .join('') || 'UN';
+    // Update Profile Footer ONLY if the authenticated user is a teacher viewing their own folder
+    if (isDocente) {
+      const initials = docente.nombreCompleto
+        .replace(/(Ing\.|Lic\.|Dr\.|Dra\.|Msc\.)/gi, '')
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(p => p.charAt(0).toUpperCase())
+        .join('') || 'UN';
 
-    const avatarEl = document.getElementById('user-profile-avatar');
-    if (avatarEl) avatarEl.textContent = initials;
+      const avatarEl = document.getElementById('user-profile-avatar');
+      if (avatarEl) avatarEl.textContent = initials;
 
-    const profileNameEl = document.getElementById('user-profile-name');
-    if (profileNameEl) profileNameEl.textContent = docente.nombreCompleto;
+      const profileNameEl = document.getElementById('user-profile-name');
+      if (profileNameEl) profileNameEl.textContent = docente.nombreCompleto;
 
-    const profileInfoEl = document.getElementById('user-profile-info');
-    if (profileInfoEl) {
-      profileInfoEl.textContent = isAuditMode
-        ? `${totalWeeklyHours}h • 1 Materia (Modo Auditoría)`
-        : `${totalWeeklyHours}h • ${items.length} Materia(s)`;
+      const profileInfoEl = document.getElementById('user-profile-info');
+      if (profileInfoEl) {
+        profileInfoEl.textContent = `${totalWeeklyHours}h • ${items.length} Materia(s)`;
+      }
+    } else {
+      // In audit mode or director view, preserve the director's user profile in the sidebar!
+      if (currentUser && typeof window.renderAuthenticatedUser === 'function') {
+        window.renderAuthenticatedUser(currentUser);
+      }
     }
 
     const summaryBadgeEl = document.getElementById('docente-summary-badge');
@@ -9258,8 +9318,10 @@ document.addEventListener('change', (e) => {
 
   window.logoutUser = function() {
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+    window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
     try {
       localStorage.removeItem('sisa_supervision_audit_course');
+      localStorage.removeItem('sisa_supervision_audit_course_name');
       localStorage.removeItem('sisa_active_view_id');
       localStorage.removeItem('sisa_active_doc_tab');
       document.documentElement.classList.remove('sisa-authenticated');
@@ -10713,7 +10775,7 @@ document.addEventListener('change', (e) => {
                           <button type="button" onclick="window.openPacReviewModal('${item.code}', ${sem.number})" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Auditar Expediente y Emitir Dictamen Curricular">
                             <i data-lucide="file-check-2" class="w-4 h-4"></i>
                           </button>
-                          <button type="button" onclick="window.openTeacherFolderFromSupervision('${item.code}', '${teacher.ci}')" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Ver Carpeta Docente en Sistema">
+                          <button type="button" onclick="window.openTeacherFolderFromSupervision('${item.code}', '${teacher.ci}', null, '${(item.courseName || '').replace(/'/g, "\\'")}')" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Ver Carpeta Docente en Sistema">
                             <i data-lucide="folder-open" class="w-4 h-4"></i>
                           </button>
                           <button type="button" onclick="window.showToast('Asignatura ${item.code} sincronizada con catálogo')" class="p-1 rounded text-slate-500 hover:text-[#4f39f6] hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Sincronización SEA">
@@ -10771,13 +10833,18 @@ document.addEventListener('change', (e) => {
 
   window.returnToSupervisionFromTeacher = function() {
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
-    try { localStorage.removeItem('sisa_supervision_audit_course'); } catch (e) {}
+    window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
+    try {
+      localStorage.removeItem('sisa_supervision_audit_course');
+      localStorage.removeItem('sisa_supervision_audit_course_name');
+    } catch (e) {}
     const returnBar = document.getElementById('director-supervision-return-bar');
     if (returnBar) returnBar.classList.add('hidden');
     if (typeof window.switchView === 'function') {
       window.switchView('view2');
     }
   };
+  window.returnToSupervisionFromDocente = window.returnToSupervisionFromTeacher;
 
   window.descargarMallaCurricular = function() {
     const data = window.__SUPERVISION_DATA__;
@@ -11070,11 +11137,13 @@ document.addEventListener('change', (e) => {
   window.setSupervisionActiveTab = function(tab) {
     window.__SUPERVISION_DOC_TAB__ = tab || 'TODOS';
     const isSemaforo = (tab === 'SEMAFORO');
+    const isHub = (tab === 'HUB_CARGA');
 
-    ['todos', 'analitico', 'pac', 'practico', 'clases', 'semaforo'].forEach(t => {
+    ['todos', 'analitico', 'pac', 'practico', 'clases', 'semaforo', 'hub-carga'].forEach(t => {
       const btn = document.getElementById('supervision-tab-' + t);
       if (btn) {
-        if (t.toUpperCase() === (tab || 'TODOS').toUpperCase()) {
+        const isMatch = (t === 'hub-carga' && isHub) || (t.toUpperCase() === (tab || 'TODOS').toUpperCase());
+        if (isMatch) {
           btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer';
         } else {
           btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer';
@@ -11084,20 +11153,583 @@ document.addEventListener('change', (e) => {
 
     const kpiRibbon = document.getElementById('semaforo-kpi-ribbon');
     const stdMetrics = document.getElementById('supervision-metrics-standard');
+    const semestersContainer = document.getElementById('supervision-semesters-container');
+    const hubContainer = document.getElementById('supervision-hub-carga-container');
 
-    if (isSemaforo) {
+    if (isHub) {
+      if (kpiRibbon) kpiRibbon.classList.add('hidden');
+      if (stdMetrics) stdMetrics.classList.add('hidden');
+      if (semestersContainer) semestersContainer.classList.add('hidden');
+      if (hubContainer) hubContainer.classList.remove('hidden');
+      window.renderSupervisionHubCarga();
+    } else if (isSemaforo) {
+      if (hubContainer) hubContainer.classList.add('hidden');
+      if (semestersContainer) semestersContainer.classList.remove('hidden');
       if (kpiRibbon) kpiRibbon.classList.remove('hidden');
       if (stdMetrics) stdMetrics.classList.add('hidden');
       if (typeof window.loadSupervisionSemaforoData === 'function') {
         window.loadSupervisionSemaforoData();
       }
     } else {
+      if (hubContainer) hubContainer.classList.add('hidden');
+      if (semestersContainer) semestersContainer.classList.remove('hidden');
       if (kpiRibbon) kpiRibbon.classList.add('hidden');
       if (stdMetrics) stdMetrics.classList.remove('hidden');
       window.renderSupervisionAccordions();
     }
 
     if (window.lucide) window.lucide.createIcons();
+  };
+
+  // =========================================================================
+  // CENTRO DE CARGA MASIVA & LINTER CURRICULAR CONTROLLER (GENTLEAI SDD)
+  // =========================================================================
+  window.__ACTIVE_LINTER_UPLOAD__ = null;
+  window.__HUB_PENDING_ONLY__ = false;
+
+  window.toggleHubPendingOnly = function(checked) {
+    window.__HUB_PENDING_ONLY__ = !!checked;
+    window.renderSupervisionHubCarga();
+  };
+
+  window.renderSupervisionHubCarga = function() {
+    const container = document.getElementById('hub-matrix-content');
+    const badge = document.getElementById('hub-total-subjects-badge');
+    if (!container) return;
+
+    if (!window.__SUPERVISION_DATA__ || !window.__SUPERVISION_DATA__.semesters) {
+      container.innerHTML = `
+        <div class="p-8 text-center text-slate-400 text-xs">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-[#4f39f6]"></i>
+          <span>Cargando catálogo de asignaturas para el Hub de Ingesta...</span>
+        </div>`;
+      if (badge) badge.textContent = 'Cargando...';
+      if (typeof window.loadSupervisionData === 'function') window.loadSupervisionData();
+      return;
+    }
+
+    const allCourses = [];
+    Object.values(window.__SUPERVISION_DATA__.semesters).forEach(s => {
+      (s.courses || []).forEach(c => allCourses.push({ ...c, semesterNumber: s.number }));
+    });
+
+    // Sort by semester then code
+    allCourses.sort((a, b) => {
+      if (a.semesterNumber !== b.semesterNumber) return a.semesterNumber - b.semesterNumber;
+      return (a.code || '').localeCompare(b.code || '');
+    });
+
+    const pendingOnly = !!window.__HUB_PENDING_ONLY__;
+    const coursesToRender = allCourses.filter(c => {
+      if (!pendingOnly) return true;
+      const doc1Done = (c.docs && c.docs.analitico && c.docs.analitico.state === 'COMPLETO');
+      const doc2Done = (!c.tieneTeoria) || (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.state === 'COMPLETO');
+      return (!doc1Done || !doc2Done);
+    });
+
+    if (badge) {
+      badge.textContent = `${coursesToRender.length} de ${allCourses.length} asignaturas`;
+    }
+
+    if (coursesToRender.length === 0) {
+      container.innerHTML = `
+        <div class="p-12 text-center text-slate-500 text-xs space-y-2">
+          <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
+            <i data-lucide="check-check" class="w-6 h-6"></i>
+          </div>
+          <div class="font-bold text-slate-700 dark:text-slate-200 text-sm">¡Todas las asignaturas tienen su documentación al día!</div>
+          <p class="text-slate-400 text-[11px]">No hay materias con documentos pendientes según los filtros actuales.</p>
+        </div>`;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    const rowsHtml = coursesToRender.map(c => {
+      const teacher = (c.teachers && c.teachers[0]) ? c.teachers[0] : { name: 'Por Designar', ci: '' };
+      const isAssigned = teacher.name && teacher.name !== 'Por Designar';
+      const safeCourseName = (c.courseName || c.name || c.code || '').replace(/'/g, "\\'");
+      const asigId = c.asignacionId || c.id || 1;
+
+      // Status Doc 1 (Programa Analítico)
+      const doc1State = (c.docs && c.docs.analitico && c.docs.analitico.state) ? c.docs.analitico.state : 'VACIO';
+      const doc1Units = (c.docs && c.docs.analitico && c.docs.analitico.unidades) ? c.docs.analitico.unidades : 0;
+      let doc1Badge = '';
+      if (doc1State === 'COMPLETO') {
+        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc1Units || 4} Unid.)</span>`;
+      } else if (doc1State === 'INCOMPLETO') {
+        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc1Units} Unid.)</span>`;
+      } else {
+        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`;
+      }
+
+      // Status Doc 2/3 (PAC & Matriz 7)
+      const doc2State = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.state) ? c.docs.pacTeorico.state : 'VACIO';
+      const doc2Weeks = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.semanas) ? c.docs.pacTeorico.semanas : 0;
+      let doc2Badge = '';
+      if (c.tieneTeoria === false) {
+        doc2Badge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">N/A (Práctica Pura)</span>`;
+      } else if (doc2State === 'COMPLETO') {
+        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc2Weeks || 20} Sem.)</span>`;
+      } else if (doc2State === 'INCOMPLETO') {
+        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc2Weeks} Sem.)</span>`;
+      } else {
+        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`;
+      }
+
+      return `
+        <div class="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <!-- Col 1: Course Info -->
+          <div class="min-w-[220px] max-w-sm">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-xs text-[#4f39f6] bg-indigo-50 dark:bg-indigo-950/70 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/40">
+                ${c.code}
+              </span>
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                ${c.semesterNumber}º Semestre
+              </span>
+              ${c.isCommon ? `<span class="text-[9px] font-black bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 px-1.5 py-0.5 rounded">Común</span>` : ''}
+            </div>
+            <div class="font-bold text-slate-900 dark:text-white text-xs mt-1 truncate" title="${c.courseName || c.name}">
+              ${c.courseName || c.name}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+              <i data-lucide="user" class="w-3 h-3 ${isAssigned ? 'text-indigo-500' : 'text-slate-400'}"></i>
+              <span class="${isAssigned ? 'font-medium text-slate-700 dark:text-slate-300' : 'italic text-amber-600'}">
+                ${teacher.name}
+              </span>
+            </div>
+          </div>
+
+          <!-- Col 2: Doc 1 (Programa Analítico .docx) -->
+          <div class="flex-1 min-w-[200px] border-l border-slate-100 dark:border-slate-800/60 pl-3">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-[10px] font-extrabold uppercase text-slate-400">1. Programa Analítico (.docx)</span>
+              ${doc1Badge}
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="cursor-pointer px-3 py-1.5 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 hover:border-[#4f39f6] bg-white dark:bg-slate-800 text-[#4f39f6] hover:bg-indigo-50/70 text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-2xs">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>Subir .docx</span>
+                <input type="file" accept=".docx" class="hidden" onchange="if(this.files[0]) window.auditAndUploadCurricularFile(this.files[0], 'PROGRAMA_ANALITICO', ${asigId}, '${c.code}', '${safeCourseName}')" />
+              </label>
+              <div 
+                ondragover="event.preventDefault(); this.classList.add('border-[#4f39f6]', 'bg-indigo-50/50');"
+                ondragleave="this.classList.remove('border-[#4f39f6]', 'bg-indigo-50/50');"
+                ondrop="event.preventDefault(); this.classList.remove('border-[#4f39f6]', 'bg-indigo-50/50'); if(event.dataTransfer.files[0]) window.auditAndUploadCurricularFile(event.dataTransfer.files[0], 'PROGRAMA_ANALITICO', ${asigId}, '${c.code}', '${safeCourseName}');"
+                class="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[10px] text-slate-400 font-medium hidden sm:block select-none"
+                title="Arrastrá el archivo .docx aquí">
+                o arrastrá acá
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 3: Doc 2/3 (PAC & Matriz 7 .xlsx) -->
+          <div class="flex-1 min-w-[200px] border-l border-slate-100 dark:border-slate-800/60 pl-3">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="text-[10px] font-extrabold uppercase text-slate-400">2/3. PAC & Matriz 7 (.xlsx)</span>
+              ${doc2Badge}
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="cursor-pointer px-3 py-1.5 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 hover:border-emerald-600 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-2xs">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                <span>Subir .xlsx</span>
+                <input type="file" accept=".xlsx" class="hidden" onchange="if(this.files[0]) window.auditAndUploadCurricularFile(this.files[0], 'PAC_TEORICO', ${asigId}, '${c.code}', '${safeCourseName}')" />
+              </label>
+              <div 
+                ondragover="event.preventDefault(); this.classList.add('border-emerald-500', 'bg-emerald-50/50');"
+                ondragleave="this.classList.remove('border-emerald-500', 'bg-emerald-50/50');"
+                ondrop="event.preventDefault(); this.classList.remove('border-emerald-500', 'bg-emerald-50/50'); if(event.dataTransfer.files[0]) window.auditAndUploadCurricularFile(event.dataTransfer.files[0], 'PAC_TEORICO', ${asigId}, '${c.code}', '${safeCourseName}');"
+                class="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[10px] text-slate-400 font-medium hidden sm:block select-none"
+                title="Arrastrá el archivo .xlsx aquí">
+                o arrastrá acá
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 4: Action: Ver Carpeta Docente Oficial -->
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="window.openTeacherFolderFromSupervision('${c.code}', '${teacher.ci}', null, '${safeCourseName}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-[#4f39f6] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Ver en Carpeta Docente oficial">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>Ver en Carpeta</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = rowsHtml;
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.auditAndUploadCurricularFile = async function(file, tipoDoc, asignacionId, courseCode, courseName) {
+    if (!file) return;
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`🔍 Auditando estructura curricular de ${courseCode} con el Linter...`);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tipoDoc', tipoDoc);
+    if (asignacionId) formData.append('asignacionId', String(asignacionId));
+    if (courseCode) formData.append('codigoEsperado', courseCode);
+    if (courseName) formData.append('materiaEsperada', courseName);
+
+    window.__ACTIVE_LINTER_UPLOAD__ = {
+      file: file,
+      tipoDoc: tipoDoc,
+      asignacionId: asignacionId || 1,
+      courseCode: courseCode,
+      courseName: courseName,
+      report: null
+    };
+
+    try {
+      const headers = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
+      const resp = await fetch('/api/v1/curriculo/ingesta/auditar', {
+        method: 'POST',
+        headers: headers,
+        body: formData
+      });
+
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        throw new Error(errJson.message || `HTTP ${resp.status} al auditar`);
+      }
+
+      const json = await resp.json();
+      const report = json.data || json;
+      window.__ACTIVE_LINTER_UPLOAD__.report = report;
+      window.openLinterModalWithReport(report, file, tipoDoc, courseCode, courseName);
+
+    } catch (err) {
+      console.error('Error during Linter audit:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`⚠️ Error al auditar archivo: ${err.message}`);
+      }
+    }
+  };
+
+  window.openLinterModalWithReport = function(report, file, tipoDoc, courseCode, courseName) {
+    const modal = document.getElementById('modal-linter-curricular');
+    if (!modal) return;
+
+    // Header info
+    const titleEl = document.getElementById('linter-modal-title');
+    const badgeEl = document.getElementById('linter-modal-doctype-badge');
+    const filenameEl = document.getElementById('linter-modal-filename');
+
+    if (titleEl) titleEl.textContent = `${courseCode} • ${courseName}`;
+    if (badgeEl) badgeEl.textContent = (tipoDoc === 'PROGRAMA_ANALITICO') ? '1. Programa Analítico (.docx)' : '2/3. PAC & Matriz 7 (.xlsx)';
+    if (filenameEl) filenameEl.textContent = `${file.name} • ${(file.size / 1024).toFixed(1)} KB`;
+
+    // Status Banner & Diagnostics
+    const banner = document.getElementById('linter-status-banner');
+    const iconEl = document.getElementById('linter-status-icon');
+    const headlineEl = document.getElementById('linter-status-headline');
+    const subtextEl = document.getElementById('linter-status-subtext');
+    const metricsBadge = document.getElementById('linter-badge-metrics');
+    const errorsCountBadge = document.getElementById('linter-tab-errors-count');
+    const confirmBtn = document.getElementById('btn-linter-confirm-persist');
+    const confirmLabel = document.getElementById('btn-linter-confirm-label');
+
+    const totalBlockers = report.totalErroresBloqueantes || 0;
+    const totalWarnings = report.totalAdvertencias || 0;
+    const totalDiscrepancies = (report.discrepancias || []).length;
+    if (errorsCountBadge) errorsCountBadge.textContent = totalDiscrepancies;
+
+    if (report.estado === 'APROBADO' || (report.puedePersistir === true && totalBlockers === 0 && totalWarnings === 0)) {
+      if (banner) banner.className = 'p-4 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800/60 flex flex-wrap items-center justify-between gap-3 text-xs';
+      if (iconEl) { iconEl.className = 'w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-xs'; iconEl.textContent = '✓'; }
+      if (headlineEl) { headlineEl.className = 'font-black text-emerald-800 dark:text-emerald-300 text-sm'; headlineEl.textContent = 'Formato Institucional Conforme'; }
+      if (subtextEl) subtextEl.textContent = 'Estructura oficial UNITEPC verificada exitosamente. Listo para persistir en base de datos.';
+      if (metricsBadge) { metricsBadge.className = 'px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold'; metricsBadge.textContent = '100% Conforme'; }
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.className = 'px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer';
+      }
+      if (confirmLabel) confirmLabel.textContent = 'Confirmar y Guardar Oficialmente';
+    } else if (report.estado === 'CON_ADVERTENCIAS' || (report.puedePersistir === true && totalBlockers === 0)) {
+      if (banner) banner.className = 'p-4 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/60 flex flex-wrap items-center justify-between gap-3 text-xs';
+      if (iconEl) { iconEl.className = 'w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-xs'; iconEl.textContent = '!'; }
+      if (headlineEl) { headlineEl.className = 'font-black text-amber-800 dark:text-amber-300 text-sm'; headlineEl.textContent = 'Conforme con Advertencias Menores'; }
+      if (subtextEl) subtextEl.textContent = `Se detectaron ${totalWarnings} observaciones no bloqueantes. Puede persistir, pero se sugiere revisarlas.`;
+      if (metricsBadge) { metricsBadge.className = 'px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-bold'; metricsBadge.textContent = `${totalWarnings} Obs.`; }
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.className = 'px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer';
+      }
+      if (confirmLabel) confirmLabel.textContent = 'Confirmar y Guardar de Todos Modos';
+    } else {
+      // Bloqueado
+      if (banner) banner.className = 'p-4 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-200 dark:border-rose-800/60 flex flex-wrap items-center justify-between gap-3 text-xs';
+      if (iconEl) { iconEl.className = 'w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-black text-xs'; iconEl.textContent = '✕'; }
+      if (headlineEl) { headlineEl.className = 'font-black text-rose-800 dark:text-rose-300 text-sm'; headlineEl.textContent = 'Discrepancias Bloqueantes Detectadas'; }
+      if (subtextEl) subtextEl.textContent = `El documento contiene ${totalBlockers} error(es) estructural(es). Debe corregir el archivo antes de guardar.`;
+      if (metricsBadge) { metricsBadge.className = 'px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300 font-bold'; metricsBadge.textContent = `${totalBlockers} Bloqueantes`; }
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.className = 'px-5 py-2 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold transition-colors shadow-none flex items-center gap-1.5 cursor-not-allowed opacity-60';
+      }
+      if (confirmLabel) confirmLabel.textContent = 'Guardado Bloqueado (Corregir Archivo)';
+    }
+
+    // Panel 1: Discrepancies list
+    const discListEl = document.getElementById('linter-discrepancies-list');
+    if (discListEl) {
+      if (!report.discrepancias || report.discrepancias.length === 0) {
+        discListEl.innerHTML = `
+          <div class="p-8 text-center text-emerald-600 space-y-1">
+            <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto"></i>
+            <div class="font-bold text-sm">¡Estructura impecable!</div>
+            <p class="text-xs text-slate-500">No se detectaron saltos numéricos, omisiones ni inconsistencias de formato.</p>
+          </div>`;
+      } else {
+        discListEl.innerHTML = report.discrepancias.map(d => {
+          const isBlocker = (d.severidad === 'BLOQUEANTE');
+          const isWarn = (d.severidad === 'ADVERTENCIA');
+          const borderClass = isBlocker ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/30' : (isWarn ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/30' : 'border-blue-200 dark:border-blue-900/60 bg-blue-50/30');
+          const badgeClass = isBlocker ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300' : (isWarn ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300');
+          
+          return `
+            <div class="p-3.5 rounded-xl border ${borderClass} space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${badgeClass}">
+                    ${d.severidad}
+                  </span>
+                  <span class="font-mono text-[10px] text-slate-400 font-bold">${d.codigoRegla || ''}</span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-bold">${d.seccion || ''} • ${d.ubicacion || ''}</span>
+              </div>
+              <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+                ${d.descripcion}
+              </div>
+              ${d.sugerenciaCorreccion ? `
+                <div class="p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                  <span class="text-amber-500 shrink-0 font-bold">💡 Corrección sugerida:</span>
+                  <span>${d.sugerenciaCorreccion}</span>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Panel 2: Previsualización de Contenido Extraído
+    const previewEl = document.getElementById('linter-preview-content');
+    if (previewEl) {
+      if (tipoDoc === 'PROGRAMA_ANALITICO') {
+        previewEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+            <div class="font-bold text-xs uppercase text-slate-500 tracking-wider">Resumen de Extracción del Programa Analítico:</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-[#4f39f6]">${report.totalUnidadesDetectadas || 0}</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Unidades de Aprendizaje</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-indigo-600">${report.totalTemasDetectados || 0}</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Temas / Contenidos</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-emerald-600">${report.cumpleBibliografiaApa ? 'Sí' : 'No'}</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Norma APA 7ma</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-slate-700 dark:text-slate-200">${report.totalPuntosEstructurales || 14} / 14</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Puntos Estructurales</div>
+              </div>
+            </div>
+            ${report.resumenEstructuraExtraida ? `
+              <div class="mt-3 p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+                ${report.resumenEstructuraExtraida}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        previewEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
+            <div class="font-bold text-xs uppercase text-slate-500 tracking-wider">Resumen de Extracción del Cronograma Matriz 7:</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-emerald-600">${report.totalSemanasDetectadas || 0} / 20</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Semanas Académicas</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-indigo-600">${report.totalSesionesDetectadas || 0} / 40</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Sesiones de Clase</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-[#4f39f6]">${report.totalSaberesCompletos || 0}</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Saberes Registrados</div>
+              </div>
+              <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div class="text-lg font-black text-teal-600">${report.totalCriteriosCompletos || 0}</div>
+                <div class="text-[10px] font-extrabold uppercase text-slate-400">Criterios de Desempeño</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Default to diagnostico tab
+    window.switchLinterTab('diagnostico');
+    modal.classList.remove('hidden');
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.confirmLinterPersistence = async function() {
+    if (!window.__ACTIVE_LINTER_UPLOAD__) return;
+    const { file, tipoDoc, asignacionId, courseCode, courseName, report } = window.__ACTIVE_LINTER_UPLOAD__;
+
+    if (report && (!report.puedePersistir || report.totalErroresBloqueantes > 0)) {
+      if (typeof window.showToast === 'function') {
+        window.showToast('⛔ No se puede guardar: Existen discrepancias bloqueantes que deben ser corregidas.');
+      }
+      return;
+    }
+
+    const confirmBtn = document.getElementById('btn-linter-confirm-persist');
+    const confirmLabel = document.getElementById('btn-linter-confirm-label');
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (confirmLabel) confirmLabel.textContent = 'Guardando oficialmente...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tipoDoc', tipoDoc);
+    formData.append('asignacionId', String(asignacionId || 1));
+    if (courseCode) formData.append('codigoEsperado', courseCode);
+    if (courseName) formData.append('materiaEsperada', courseName);
+
+    try {
+      const headers = (typeof window.getAuthHeaders === 'function') ? window.getAuthHeaders() : {};
+      const resp = await fetch('/api/v1/curriculo/ingesta/confirmar', {
+        method: 'POST',
+        headers: headers,
+        body: formData
+      });
+
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        throw new Error(errJson.message || `HTTP ${resp.status}`);
+      }
+
+      // Success! Update local state
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🎉 ¡Documento de ${courseCode} guardado y registrado exitosamente en Carpeta Docente!`);
+      }
+
+      // Update in __SUPERVISION_DATA__
+      if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+        Object.values(window.__SUPERVISION_DATA__.semesters).forEach(s => {
+          (s.courses || []).forEach(c => {
+            if (c.code === courseCode) {
+              if (tipoDoc === 'PROGRAMA_ANALITICO') {
+                if (!c.docs) c.docs = {};
+                c.docs.analitico = { state: 'COMPLETO', estado: 'APROBADO', unidades: (report ? report.totalUnidadesDetectadas : 4) };
+              } else {
+                if (!c.docs) c.docs = {};
+                c.docs.pacTeorico = { state: 'COMPLETO', estado: 'APROBADO', semanas: (report ? report.totalSemanasDetectadas : 20) };
+              }
+            }
+          });
+        });
+      }
+
+      window.closeLinterModal();
+      window.renderSupervisionHubCarga();
+      if (typeof window.renderSupervisionAccordions === 'function') {
+        window.renderSupervisionAccordions();
+      }
+
+    } catch (err) {
+      console.error('Error persisting curricular document:', err);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`⚠️ Error al guardar oficialmente: ${err.message}`);
+      }
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (confirmLabel) confirmLabel.textContent = 'Confirmar y Guardar Oficialmente';
+    }
+  };
+
+  window.closeLinterModal = function() {
+    const modal = document.getElementById('modal-linter-curricular');
+    if (modal) modal.classList.add('hidden');
+    window.__ACTIVE_LINTER_UPLOAD__ = null;
+  };
+
+  window.switchLinterTab = function(tabName) {
+    const btnDiag = document.getElementById('btn-linter-tab-diagnostico');
+    const btnPrev = document.getElementById('btn-linter-tab-preview');
+    const panelDiag = document.getElementById('linter-panel-diagnostico');
+    const panelPrev = document.getElementById('linter-panel-preview');
+
+    if (tabName === 'diagnostico') {
+      if (btnDiag) btnDiag.className = 'px-3 py-1.5 rounded-t-lg font-bold text-xs bg-white dark:bg-slate-900 border-t border-x border-slate-200 dark:border-slate-800 text-[#4f39f6]';
+      if (btnPrev) btnPrev.className = 'px-3 py-1.5 rounded-t-lg font-bold text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white';
+      if (panelDiag) panelDiag.classList.remove('hidden');
+      if (panelPrev) panelPrev.classList.add('hidden');
+    } else {
+      if (btnPrev) btnPrev.className = 'px-3 py-1.5 rounded-t-lg font-bold text-xs bg-white dark:bg-slate-900 border-t border-x border-slate-200 dark:border-slate-800 text-[#4f39f6]';
+      if (btnDiag) btnDiag.className = 'px-3 py-1.5 rounded-t-lg font-bold text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white';
+      if (panelDiag) panelDiag.classList.add('hidden');
+      if (panelPrev) panelPrev.classList.remove('hidden');
+    }
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.handleHubBatchFiles = async function(files) {
+    if (!files || files.length === 0) return;
+
+    if (typeof window.showToast === 'function') {
+      window.showToast(`📦 Procesando lote de ${files.length} archivo(s)...`);
+    }
+
+    const fileList = Array.from(files);
+    const firstFile = fileList[0];
+    const fname = firstFile.name.toUpperCase();
+
+    // Determine type
+    const isDocx = fname.endsWith('.DOCX');
+    const isXlsx = fname.endsWith('.XLSX');
+    const tipoDoc = isDocx ? 'PROGRAMA_ANALITICO' : (isXlsx ? 'PAC_TEORICO' : '');
+
+    if (!tipoDoc) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`⚠️ Formato no reconocido: ${firstFile.name}. Solo .docx y .xlsx.`);
+      }
+      return;
+    }
+
+    // Try to match course code from filename
+    let matchedCourse = null;
+    if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      const allCourses = [];
+      Object.values(window.__SUPERVISION_DATA__.semesters).forEach(s => (s.courses || []).forEach(c => allCourses.push(c)));
+
+      for (const c of allCourses) {
+        const cleanCode = (c.code || '').replace(/[-_ ]/g, '').toUpperCase();
+        const cleanFname = fname.replace(/[-_ ]/g, '');
+        if (cleanFname.includes(cleanCode)) {
+          matchedCourse = c;
+          break;
+        }
+      }
+    }
+
+    if (matchedCourse) {
+      const asigId = matchedCourse.asignacionId || matchedCourse.id || 1;
+      const safeName = matchedCourse.courseName || matchedCourse.name || matchedCourse.code;
+      window.auditAndUploadCurricularFile(firstFile, tipoDoc, asigId, matchedCourse.code, safeName);
+    } else {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`ℹ️ Archivo ${firstFile.name}: Seleccioná la materia en la tabla para auditarlo.`);
+      }
+    }
   };
 
   window.switchModalReviewTab = function(tabName) {
@@ -11124,8 +11756,9 @@ document.addEventListener('change', (e) => {
     if (!window.__ACTIVE_PAC_REVIEW__) return;
     const { courseCode, course } = window.__ACTIVE_PAC_REVIEW__;
     const teacherCi = (course && course.teachers && course.teachers[0]) ? course.teachers[0].ci : '';
+    const courseName = (course && (course.courseName || course.name)) ? (course.courseName || course.name) : '';
     window.closePacReviewModal();
-    window.openTeacherFolderFromSupervision(courseCode, teacherCi, targetTab);
+    window.openTeacherFolderFromSupervision(courseCode, teacherCi, targetTab, courseName);
   };
 
   window.toggleSupervisionSemester = function(semNum) {
@@ -11183,7 +11816,7 @@ document.addEventListener('change', (e) => {
     window.renderSupervisionAccordions();
   };
 
-  window.openTeacherFolderFromSupervision = async function(courseCode, teacherCi, targetTab) {
+  window.openTeacherFolderFromSupervision = async function(courseCode, teacherCi, targetTab, courseName) {
     if (!teacherCi || teacherCi === 'Sin Asignar' || teacherCi === 'null' || teacherCi === 'undefined' || String(teacherCi).trim() === '') {
       if (typeof window.showToast === 'function') {
         window.showToast('⚠️ Esta asignatura aún no tiene docente asignado en el catálogo.');
@@ -11191,10 +11824,27 @@ document.addEventListener('change', (e) => {
       return;
     }
 
-    // Set supervision audit course code flag
+    // Resolve courseName if missing
+    if (!courseName && window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
+      for (const sem of Object.values(window.__SUPERVISION_DATA__.semesters)) {
+        const found = (sem.courses || []).find(c => c.code === courseCode);
+        if (found && (found.courseName || found.name)) {
+          courseName = found.courseName || found.name;
+          break;
+        }
+      }
+    }
+
+    // Set supervision audit course code and name flags
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = courseCode;
+    window.__SUPERVISION_AUDIT_COURSE_NAME__ = courseName || null;
     try {
       localStorage.setItem('sisa_supervision_audit_course', courseCode);
+      if (courseName) {
+        localStorage.setItem('sisa_supervision_audit_course_name', courseName);
+      } else {
+        localStorage.removeItem('sisa_supervision_audit_course_name');
+      }
     } catch (e) {}
 
     // 1. Switch or load teacher dynamically with preferred course pre-selected
@@ -11224,7 +11874,8 @@ document.addEventListener('change', (e) => {
       returnBar.classList.remove('hidden');
       if (returnCourse) {
         const docName = window.__ACTIVE_DOCENTE__ ? window.__ACTIVE_DOCENTE__.nombreCompleto : '';
-        returnCourse.textContent = `• Asignatura: ${courseCode || ''} | Docente: ${docName} (CI: ${teacherCi})`;
+        const nameSuffix = courseName ? ` (${courseName})` : '';
+        returnCourse.textContent = `• Asignatura: ${courseCode || ''}${nameSuffix} | Docente: ${docName} (CI: ${teacherCi})`;
       }
       if (window.lucide) window.lucide.createIcons();
     }
@@ -15691,10 +16342,10 @@ document.addEventListener('change', (e) => {
     const docenteCi = (typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? currentDocenteCi : '4892104';
     const carreraCodigo = (materia && materia.career) ? materia.career : 'CARSIS';
     const isPractica = (ses.tipoClase === 'PRACTICA');
-    const keysToCheck = [...new Set([materiaKey, 'SIS-113', window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
+    const keysToCheck = [...new Set([materiaKey, window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
 
-    let unidadOficial = ses.unidadTematica || '';
-    let temaOficial = ses.tema || '';
+    let unidadOficial = '';
+    let temaOficial = '';
     let saberConceptual = '';
     let saberProcedimental = '';
     let saberActitudinal = '';
@@ -15733,18 +16384,18 @@ document.addEventListener('change', (e) => {
 
       if (matchedRow) {
         unidadOficial = (matchedRow.titulo || matchedRow.unidadTematica || ('Práctica Semana ' + ses.week)).trim();
-        temaOficial = (matchedRow.actividad || matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema).trim();
-        saberProcedimental = (matchedRow.desempeno || matchedRow.saberProcedimental || matchedRow.criterioDesempeno || '').trim();
-        criterioDesempeno = (matchedRow.criterioDesempeno || matchedRow.desempeno || 'Ejecuta el protocolo técnico con rigor y apego al estándar institucional.').trim();
-        instrumentoEvaluacion = (matchedRow.instrumento || matchedRow.instrumentoEvaluacion || 'RÚBRICA DE LABORATORIO').trim();
-        evidencias = (matchedRow.evidencias || matchedRow.evidenciaAprendizaje || 'Guía de laboratorio cumplimentada y reporte evaluado.').trim();
+        temaOficial = (matchedRow.actividad || matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema || '').trim();
+        saberProcedimental = (matchedRow.desempeno || matchedRow.saberProcedimental || matchedRow.criterioDesempeno || '— (No planificado)').trim();
+        criterioDesempeno = (matchedRow.criterioDesempeno || matchedRow.desempeno || '— (No planificado)').trim();
+        instrumentoEvaluacion = (matchedRow.instrumento || matchedRow.instrumentoEvaluacion || '— (No asignado)').trim();
+        evidencias = (matchedRow.evidencias || matchedRow.evidenciaAprendizaje || '— (No asignado)').trim();
       } else {
-        unidadOficial = ses.unidadTematica || ('Práctica N° ' + ses.week);
-        temaOficial = ses.tema || 'Ejecución de actividades prácticas y protocolos de laboratorio';
-        saberProcedimental = 'Desarrollo procedimental guiado en entorno computacional y manejo de herramientas.';
-        criterioDesempeno = 'Ejecuta con rigor técnico y precisión lógica la guía de práctica.';
-        instrumentoEvaluacion = 'LISTA DE COTEJO / RÚBRICA';
-        evidencias = 'Guía de práctica resuelta y código fuente (.cpp) evaluado.';
+        unidadOficial = '— (Pendiente de planificación)';
+        temaOficial = (ses.tema && !ses.tema.toLowerCase().startsWith('sesión')) ? ses.tema : '— (Sin actividad práctica planificada)';
+        saberProcedimental = '— (Pendiente de planificación de laboratorio)';
+        criterioDesempeno = '— (Pendiente de planificación de laboratorio)';
+        instrumentoEvaluacion = '— (No asignado)';
+        evidencias = '— (No asignado)';
       }
     } else {
       // Matriz 7 (Teórica - Plan Semestral Oficial)
@@ -15775,29 +16426,33 @@ document.addEventListener('change', (e) => {
       }
 
       if (matchedRow) {
-        unidadOficial = (matchedRow.unidadTematica || 'Unidad Temática Curricular').trim();
-        temaOficial = (matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema).trim();
-        saberConceptual = (matchedRow.saberConceptual || matchedRow.saberesConceptual || 'Fundamentos conceptuales y marcos teóricos de la sesión.').trim();
-        saberProcedimental = (matchedRow.saberProcedimental || matchedRow.saberesProcedimental || 'Modelación guiada, resolución analítica y aplicación técnica.').trim();
-        saberActitudinal = (matchedRow.saberActitudinal || matchedRow.saberesActitudinal || 'Rigor metodológico, responsabilidad ética y trabajo colaborativo.').trim();
-        criterioDesempeno = (matchedRow.criterioDesempeno || 'Demuestra solvencia cognitiva y procedimental en los contenidos planificados.').trim();
-        instrumentoEvaluacion = (matchedRow.instrumentoEvaluacion || matchedRow.instrumento || 'RÚBRICA DE EVALUACIÓN CONTINUA').trim();
-        evidencias = (matchedRow.evidenciaAprendizaje || matchedRow.evidencias || 'Prácticas formativas de aula y registro de seguimiento.').trim();
+        unidadOficial = (matchedRow.unidadTematica || '— (Sin unidad)').trim();
+        temaOficial = (matchedRow.contenidoEspecifico || matchedRow.tema || ses.tema || '').trim();
+        saberConceptual = (matchedRow.saberConceptual || matchedRow.saberesConceptual || '— (No planificado)').trim();
+        saberProcedimental = (matchedRow.saberProcedimental || matchedRow.saberesProcedimental || '— (No planificado)').trim();
+        saberActitudinal = (matchedRow.saberActitudinal || matchedRow.saberesActitudinal || '— (No planificado)').trim();
+        criterioDesempeno = (matchedRow.criterioDesempeno || '— (No planificado)').trim();
+        instrumentoEvaluacion = (matchedRow.instrumentoEvaluacion || matchedRow.instrumento || '— (No asignado)').trim();
+        evidencias = (matchedRow.evidenciaAprendizaje || matchedRow.evidencias || '— (No asignado)').trim();
       } else {
-        if (temaOficial.includes(' - ')) {
-          const parts = temaOficial.split(' - ');
-          unidadOficial = parts[0].trim();
-          temaOficial = parts.slice(1).join(' - ').trim();
-        } else {
-          unidadOficial = ses.unidadTematica || 'Unidad Temática Curricular';
-          temaOficial = ses.tema || 'Contenido temático de la sesión';
-        }
-        saberConceptual = 'Conceptos clave, definiciones formales y fundamentos de la sesión.';
-        saberProcedimental = 'Resolución de problemas de aula, análisis algorítmico y ejercicios guiados.';
-        saberActitudinal = 'Participación responsable, pensamiento crítico y puntualidad.';
-        criterioDesempeno = 'Estructura soluciones correctas aplicando los conceptos fundamentales.';
-        instrumentoEvaluacion = 'RÚBRICA / REGISTRO DE SEGUIMIENTO EN AULA';
-        evidencias = 'Ejercicios de aula y control formativo.';
+        unidadOficial = '— (Pendiente de planificación)';
+        temaOficial = (ses.tema && !ses.tema.toLowerCase().startsWith('sesión')) ? ses.tema : '— (Sin contenido planificado)';
+        saberConceptual = '— (Pendiente de planificación teórica)';
+        saberProcedimental = '— (Pendiente de planificación teórica)';
+        saberActitudinal = '— (Pendiente de planificación teórica)';
+        criterioDesempeno = '— (Pendiente de planificación teórica)';
+        instrumentoEvaluacion = '— (No asignado)';
+        evidencias = '— (No asignado)';
+      }
+    }
+
+    // Toggle alerta institucional de planificación no registrada
+    const alertNoPlan = document.getElementById('seg-macro-no-plan-alert');
+    if (alertNoPlan) {
+      if (matchedRow) {
+        alertNoPlan.classList.add('hidden');
+      } else {
+        alertNoPlan.classList.remove('hidden');
       }
     }
 
@@ -15868,23 +16523,26 @@ document.addEventListener('change', (e) => {
     if (isPractica) {
       if (teoricaFields) teoricaFields.classList.add('hidden');
       if (practicaFields) practicaFields.classList.remove('hidden');
-      if (elPracDesempeno) elPracDesempeno.textContent = saberProcedimental || 'Ejecución guiada de protocolos de laboratorio.';
-      if (elPracEvidencias) elPracEvidencias.textContent = evidencias || 'Guía de laboratorio firmada y evaluada.';
+      if (elPracDesempeno) elPracDesempeno.textContent = saberProcedimental;
+      if (elPracEvidencias) elPracEvidencias.textContent = evidencias;
     } else {
       if (teoricaFields) teoricaFields.classList.remove('hidden');
       if (practicaFields) practicaFields.classList.add('hidden');
-      if (elConceptual) elConceptual.textContent = saberConceptual || 'Conceptos fundamentales del tema.';
-      if (elProcedimental) elProcedimental.textContent = saberProcedimental || 'Resolución de problemas y modelación.';
-      if (elActitudinal) elActitudinal.textContent = saberActitudinal || 'Rigor procedimental y responsabilidad.';
+      if (elConceptual) elConceptual.textContent = saberConceptual;
+      if (elProcedimental) elProcedimental.textContent = saberProcedimental;
+      if (elActitudinal) elActitudinal.textContent = saberActitudinal;
     }
 
-    if (elCriterio) elCriterio.textContent = criterioDesempeno || 'Aplica con rigor los contenidos planificados.';
-    if (elInstrumento) elInstrumento.textContent = instrumentoEvaluacion || 'RÚBRICA DE EVALUACIÓN CONTINUA';
+    if (elCriterio) elCriterio.textContent = criterioDesempeno;
+    if (elInstrumento) elInstrumento.textContent = instrumentoEvaluacion;
 
     // Synchronize top input with exact active topic
     const topicInput = document.getElementById('asistencia-tema-input');
     if (topicInput) {
-      topicInput.value = temaOficial;
+      topicInput.value = (matchedRow && temaOficial) ? temaOficial : '';
+      if (!matchedRow && ses.tema && !ses.tema.toLowerCase().startsWith('sesión')) {
+        topicInput.value = ses.tema;
+      }
     }
 
     // Refresh lucide icons if available
@@ -16450,54 +17108,6 @@ document.addEventListener('change', (e) => {
       if (window.lucide) window.lucide.createIcons();
     }
 
-    const fallbackSesiones = {
-      'SIS-213': {
-        materiaNombre: 'Programación III',
-        docenteNombre: 'Ing. Carlos Alberto Morales Siles',
-        colorSemaforo: 'VERDE',
-        momentos: { inicio: 95.5, desarrollo: 98.0, cierre: 91.0 },
-        recursos: [
-          { recurso: 'Pizarra Acrílica', usos: 22 },
-          { recurso: 'Proyector Multimedia', usos: 20 },
-          { recurso: 'IDE / Código Fuente', usos: 19 },
-          { recurso: 'Guía de Laboratorio / Taller', usos: 14 }
-        ],
-        sesiones: [
-          { fecha: '2026-10-28', nroSesion: 22, tema: 'Patrones Arquitectónicos: Microservicios y RabbitMQ', momentos: '100% (I/D/C)', estado: 'TOTALMENTE_CUMPLIDO', score: 1.0, obs: 'Excelente participación en el laboratorio.' },
-          { fecha: '2026-10-24', nroSesion: 21, tema: 'Spring Cloud Gateway y Service Registry', momentos: '100% (I/D/C)', estado: 'TOTALMENTE_CUMPLIDO', score: 1.0, obs: 'Pruebas de latencia ejecutadas.' },
-          { fecha: '2026-10-21', nroSesion: 20, tema: 'Seguridad JWT y OAuth2 en APIs', momentos: 'Parcial (I/D)', estado: 'PARCIALMENTE_CUMPLIDO', score: 0.5, obs: 'El cierre se extendió por resolución de dudas sobre tokens.' }
-        ]
-      },
-      'SIS-311': {
-        materiaNombre: 'Base de Datos I',
-        docenteNombre: 'Lic. Roberto Gómez Fernández',
-        colorSemaforo: 'AMARILLO',
-        momentos: { inicio: 88.0, desarrollo: 92.5, cierre: 85.0 },
-        recursos: [
-          { recurso: 'Pizarra Acrílica', usos: 18 },
-          { recurso: 'Proyector Multimedia', usos: 15 },
-          { recurso: 'Motor PostgreSQL', usos: 14 }
-        ],
-        sesiones: [
-          { fecha: '2026-10-27', nroSesion: 18, tema: 'Normalización de Datos (3FN y Forma Boyce-Codd)', momentos: '100% (I/D/C)', estado: 'TOTALMENTE_CUMPLIDO', score: 1.0, obs: 'Ejercicios prácticos de descomposición.' },
-          { fecha: '2026-10-20', nroSesion: 17, tema: 'Álgebra Relacional y Cálculo Tupla', momentos: 'Parcial (I/D)', estado: 'PARCIALMENTE_CUMPLIDO', score: 0.5, obs: 'Faltó tiempo para el cierre evaluativo.' }
-        ]
-      },
-      'MAT-101': {
-        materiaNombre: 'Cálculo I',
-        docenteNombre: 'Ing. Jaime Villarroel Soliz',
-        colorSemaforo: 'ROJO',
-        momentos: { inicio: 75.0, desarrollo: 80.0, cierre: 70.0 },
-        recursos: [
-          { recurso: 'Pizarra Acrílica', usos: 12 },
-          { recurso: 'Guía de Ejercicios', usos: 8 }
-        ],
-        sesiones: [
-          { fecha: '2026-10-26', nroSesion: 12, tema: 'Aplicaciones de la Derivada: Máximos y Mínimos', momentos: 'No cumplido', estado: 'NO_CUMPLIDO', score: 0.0, obs: 'Suspensión parcial por corte de suministro eléctrico.' }
-        ]
-      }
-    };
-
     const renderDetalle = (data) => {
       if (elTitle) elTitle.textContent = `${data.materiaNombre || materiaCodigo}`;
       if (elSub) elSub.textContent = `Docente: ${data.docenteNombre || 'Docente Asignado'} • Carrera: CARSIS`;
@@ -16516,13 +17126,27 @@ document.addEventListener('change', (e) => {
         }
       }
 
-      const mom = data.momentos || { inicio: 90, desarrollo: 95, cierre: 88 };
+      // Secuencia Didáctica Oficial UNITEPC (5 Momentos)
+      const mom = data.momentos || {};
+      const elIntro = document.getElementById('modal-seg-momento-intro-pct');
+      const elRes = document.getElementById('modal-seg-momento-res-pct');
+      const elCont = document.getElementById('modal-seg-momento-cont-pct');
+      const elCuer = document.getElementById('modal-seg-momento-cuer-pct');
+      const elCier = document.getElementById('modal-seg-momento-cier-pct');
+
+      if (elIntro) elIntro.textContent = `${(mom.intro || 0).toFixed(0)}%`;
+      if (elRes) elRes.textContent = `${(mom.res || 0).toFixed(0)}%`;
+      if (elCont) elCont.textContent = `${(mom.cont || 0).toFixed(0)}%`;
+      if (elCuer) elCuer.textContent = `${(mom.cuer || 0).toFixed(0)}%`;
+      if (elCier) elCier.textContent = `${(mom.cier || 0).toFixed(0)}%`;
+
+      // Compatibilidad con identificadores legados
       const elIni = document.getElementById('modal-seg-momento-inicio-pct');
       const elDes = document.getElementById('modal-seg-momento-des-pct');
       const elCie = document.getElementById('modal-seg-momento-cierre-pct');
-      if (elIni) elIni.textContent = `${(mom.inicio || 0).toFixed(0)}%`;
-      if (elDes) elDes.textContent = `${(mom.desarrollo || 0).toFixed(0)}%`;
-      if (elCie) elCie.textContent = `${(mom.cierre || 0).toFixed(0)}%`;
+      if (elIni) elIni.textContent = `${(mom.intro || 0).toFixed(0)}%`;
+      if (elDes) elDes.textContent = `${(mom.cuer || 0).toFixed(0)}%`;
+      if (elCie) elCie.textContent = `${(mom.cier || 0).toFixed(0)}%`;
 
       if (recursosCont) {
         const recList = data.recursos || [];
@@ -16535,7 +17159,7 @@ document.addEventListener('change', (e) => {
             </span>
           `).join('');
         } else {
-          recursosCont.innerHTML = `<span class="text-slate-400 italic text-[11px]">No hay registros de recursos aún.</span>`;
+          recursosCont.innerHTML = `<span class="text-slate-400 italic text-[11px]">No se han registrado recursos didácticos en aula aún.</span>`;
         }
       }
 
@@ -16546,7 +17170,13 @@ document.addEventListener('change', (e) => {
         if (sesList.length === 0) {
           tableBody.innerHTML = `
             <tr>
-              <td colspan="5" class="p-4 text-center text-slate-400 italic">No hay bitácora de clases registrada para esta materia.</td>
+              <td colspan="7" class="p-8 text-center text-slate-400">
+                <div class="max-w-md mx-auto space-y-2">
+                  <i data-lucide="calendar-x" class="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600"></i>
+                  <p class="font-bold text-slate-700 dark:text-slate-300 text-xs">Sin bitácora de clases en aula</p>
+                  <p class="text-[11px] text-slate-500">El docente aún no ha registrado sesiones dictadas para esta asignatura. La bitácora se alimentará conforme el docente registre su avance diario en la Carpeta Docente.</p>
+                </div>
+              </td>
             </tr>
           `;
         } else {
@@ -16560,25 +17190,48 @@ document.addEventListener('change', (e) => {
               statusPill = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">✕ No (0.0)</span>`;
             }
 
+            // Evaluación de concordancia entre lo planificado en Matriz 7 y lo dictado
+            let concordanciaBadge = '';
+            if (!s.temaOficial || s.temaOficial.trim() === '') {
+              concordanciaBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">No planif.</span>`;
+            } else {
+              const ofi = s.temaOficial.trim().toLowerCase();
+              const ejec = (s.temaEjecutado || s.tema || '').trim().toLowerCase();
+              const isMatch = ofi === ejec || ofi.includes(ejec) || ejec.includes(ofi);
+              if (isMatch) {
+                concordanciaBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">✓ Conforme</span>`;
+              } else {
+                concordanciaBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Ajustado</span>`;
+              }
+            }
+
+            // Conteo de momentos didácticos cumplidos en la sesión
+            const moms = [s.secuenciaIntroduccion, s.secuenciaResultados, s.secuenciaContenidos, s.secuenciaCuerpo, s.secuenciaCierre].filter(Boolean).length;
+            const momBadge = `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${moms === 5 ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300' : (moms >= 3 ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300')}">${moms}/5</span>`;
+
             return `
               <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                 <td class="p-2.5 font-mono whitespace-nowrap">
                   <div class="font-bold text-slate-800 dark:text-slate-200">${s.fecha}</div>
                   <span class="text-[10px] text-slate-400">Sesión #${s.nroSesion || '--'}</span>
                 </td>
-                <td class="p-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  ${s.tema || s.temaEjecutado || 'Tema desarrollado en aula'}
+                <td class="p-2.5 text-slate-600 dark:text-slate-400 text-xs">
+                  ${s.temaOficial ? s.temaOficial : '<span class="italic text-slate-400 font-normal">— (Sin Matriz 7)</span>'}
+                </td>
+                <td class="p-2.5 font-medium text-slate-800 dark:text-slate-200 text-xs">
+                  ${s.temaEjecutado || s.tema || 'Tema desarrollado en aula'}
                 </td>
                 <td class="p-2.5 text-center whitespace-nowrap">
-                  <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                    ${s.momentos || '100%'}
-                  </span>
+                  ${concordanciaBadge}
+                </td>
+                <td class="p-2.5 text-center whitespace-nowrap">
+                  ${momBadge}
                 </td>
                 <td class="p-2.5 text-center whitespace-nowrap">
                   ${statusPill}
                 </td>
                 <td class="p-2.5 text-slate-500 italic text-[11px]">
-                  ${s.obs || s.observacionesDocente || 'Sin observaciones adicionales.'}
+                  ${s.obs || s.observacionesDocente || '—'}
                 </td>
               </tr>
             `;
@@ -16589,15 +17242,15 @@ document.addEventListener('change', (e) => {
       if (window.lucide) window.lucide.createIcons();
     };
 
-    const seed = fallbackSesiones[materiaCodigo] || {
+    const initialPlaceholder = {
       materiaNombre: materiaCodigo,
-      docenteNombre: 'Docente Designado',
+      docenteNombre: 'Cargando información docente...',
       colorSemaforo: 'VERDE',
-      momentos: { inicio: 90, desarrollo: 90, cierre: 90 },
-      recursos: [{ recurso: 'Pizarra Acrílica', usos: 5 }],
+      momentos: { intro: 0, res: 0, cont: 0, cuer: 0, cier: 0 },
+      recursos: [],
       sesiones: []
     };
-    renderDetalle(seed);
+    renderDetalle(initialPlaceholder);
 
     const token = localStorage.getItem('scu_access_token');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -16605,23 +17258,31 @@ document.addEventListener('change', (e) => {
     fetch(`/api/v1/seguimiento/materia/${materiaCodigo}`, { headers })
       .then(res => res.ok ? res.json() : null)
       .then(json => {
-        if (json && (json.data || json.sesiones)) {
+        if (json) {
           const res = json.data || json;
+          const mom = res.momentos || res.momentosStats || {};
           const mapped = {
-            materiaNombre: res.materiaNombre || seed.materiaNombre,
-            docenteNombre: res.docenteNombre || seed.docenteNombre,
-            colorSemaforo: res.colorSemaforo || seed.colorSemaforo,
-            momentos: res.momentosStats ? {
-              inicio: res.momentosStats.inicioPorcentaje,
-              desarrollo: res.momentosStats.desarrolloPorcentaje,
-              cierre: res.momentosStats.cierrePorcentaje
-            } : seed.momentos,
-            recursos: res.recursosHistograma || seed.recursos,
+            materiaNombre: res.materiaNombre || materiaCodigo,
+            docenteNombre: res.docenteNombre || 'Docente Titular',
+            colorSemaforo: res.colorSemaforo || 'VERDE',
+            momentos: {
+              intro: mom.introduccionPorcentaje ?? mom.inicioPorcentaje ?? 0,
+              res: mom.resultadosPorcentaje ?? mom.inicioPorcentaje ?? 0,
+              cont: mom.contenidosPorcentaje ?? mom.desarrolloPorcentaje ?? 0,
+              cuer: mom.cuerpoPorcentaje ?? mom.desarrolloPorcentaje ?? 0,
+              cier: mom.cierreSecuenciaPorcentaje ?? mom.cierrePorcentaje ?? 0
+            },
+            recursos: res.recursosHistograma || [],
             sesiones: (res.sesiones || []).map(s => ({
               fecha: s.fechaEjecucion,
               nroSesion: s.nroSesion,
-              tema: s.temaEjecutado,
-              momentos: '100% (I/D/C)',
+              temaOficial: s.temaOficial,
+              temaEjecutado: s.temaEjecutado,
+              secuenciaIntroduccion: s.secuenciaIntroduccion ?? s.momentoInicioCumplido,
+              secuenciaResultados: s.secuenciaResultados ?? s.momentoInicioCumplido,
+              secuenciaContenidos: s.secuenciaContenidos ?? s.momentoDesarrolloCumplido,
+              secuenciaCuerpo: s.secuenciaCuerpo ?? s.momentoDesarrolloCumplido,
+              secuenciaCierre: s.secuenciaCierre ?? s.momentoCierreCumplido,
               estado: s.estadoCumplimiento,
               score: s.cumplimientoScore,
               obs: s.observacionesDocente

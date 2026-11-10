@@ -2956,6 +2956,21 @@
                         </span>
                       </div>
 
+                      <!-- Alerta institucional cuando no hay planificación oficial cargada -->
+                      <div id="seg-macro-no-plan-alert" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+                        <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+                          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+                          <span>Planificación no registrada en el sistema</span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-300/90">
+                          Esta sesión aún no cuenta con contenidos oficiales en la <strong>Matriz 7 / Cronograma de 20 Semanas</strong>.
+                        </p>
+                        <div class="flex items-start gap-1.5 text-[10px] text-amber-800 dark:text-amber-400 font-medium pt-0.5 leading-tight">
+                          <span class="font-bold">Responsable:</span>
+                          <span>El <strong>Docente</strong> debe cargar su cronograma en <em>Carpeta Docente (Documento 3)</em> y la <strong>Dirección de Carrera</strong> debe visar el PAC correspondiente.</span>
+                        </div>
+                      </div>
+
                       <div class="space-y-2.5 text-xs">
                         <div>
                           <span id="seg-macro-label-unidad" class="text-[10px] font-extrabold uppercase text-slate-400 block mb-0.5">Unidad Temática:</span>
@@ -3520,6 +3535,11 @@
                   <i data-lucide="traffic-cone" class="w-3.5 h-3.5"></i>
                   <span>🚦 Semáforo de Avance</span>
                 </button>
+
+                <button type="button" id="supervision-tab-hub-carga" onclick="window.setSupervisionActiveTab('HUB_CARGA')" class="font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-[#4f39f6] hover:text-white transition-colors cursor-pointer">
+                  <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                  <span>Centro de Carga & Linter</span>
+                </button>
               </div>
 
             </div>
@@ -3676,6 +3696,44 @@
             <div class="flex items-center justify-center p-12 text-slate-400 gap-3">
               <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-[#4f39f6]"></i>
               <span class="text-sm font-medium">Cargando malla curricular y oferta académica...</span>
+            </div>
+          </div>
+
+          <!-- Hub de Carga Masiva y Linter Curricular Container (GentleAI SDD) -->
+          <div id="supervision-hub-carga-container" class="space-y-6 hidden">
+            <!-- Smart Multi-file Dropzone -->
+            <div id="hub-smart-dropzone" class="border-2 border-dashed border-indigo-300 dark:border-indigo-800 hover:border-[#4f39f6] rounded-2xl p-6 bg-indigo-50/40 dark:bg-indigo-950/20 transition-all cursor-pointer text-center group relative">
+              <input type="file" id="hub-batch-file-input" multiple accept=".docx,.xlsx" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="window.handleHubBatchFiles(this.files)" />
+              <div class="flex flex-col items-center justify-center gap-2 pointer-events-none">
+                <div class="w-12 h-12 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4f39f6] flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                  <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <span class="text-sm font-black text-[#4f39f6]">Zona de Carga Inteligente en Lote (Drag & Drop):</span>
+                  <span class="text-xs text-slate-600 dark:text-slate-400 ml-1">Arrastrá varios archivos Word o Excel juntos. El sistema detecta la materia por el código, audita el formato con el Linter y los asigna automáticamente.</span>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-400">Patrón sugerido: <code class="bg-white dark:bg-slate-800 px-2 py-0.5 rounded font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">SIS-113_ProgAnalitico.docx</code> o <code class="bg-white dark:bg-slate-800 px-2 py-0.5 rounded font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">SIS-113_Matriz7.xlsx</code></span>
+              </div>
+            </div>
+
+            <!-- Hub Table of Subjects -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+              <div class="p-4 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-200 tracking-wider">Matriz de Ingesta y Calidad Curricular por Asignatura</span>
+                  <span id="hub-total-subjects-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">Cargando materias...</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs">
+                  <label class="flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900">
+                    <input type="checkbox" id="hub-filter-only-pending" onchange="window.toggleHubPendingOnly(this.checked)" class="rounded text-[#4f39f6]">
+                    <span class="text-xs font-semibold">Ver solo materias con documentos pendientes</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="hub-matrix-content" class="divide-y divide-slate-200 dark:divide-slate-800">
+                <!-- Dynamically rendered by renderSupervisionHubCarga() -->
+              </div>
             </div>
           </div>
 
@@ -5244,34 +5302,50 @@
     <!-- Body con scroll -->
     <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 custom-scrollbar text-xs">
       
-      <!-- Métricas de Momentos Pedagógicos -->
+      <!-- Métricas de Momentos Pedagógicos (Secuencia Didáctica Oficial UNITEPC - 5 Momentos) -->
       <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-            <i data-lucide="clock" class="w-4 h-4 text-teal-600"></i> Auditoría de Momentos Pedagógicos (Cumplimiento en Aula)
+            <i data-lucide="clock" class="w-4 h-4 text-teal-600"></i> Auditoría de la Secuencia Didáctica (5 Momentos Oficiales UNITEPC)
           </span>
-          <span class="text-[11px] text-slate-500">Promedio sobre sesiones registradas</span>
+          <span class="text-[11px] text-slate-500">Cumplimiento promedio en aula</span>
         </div>
-        <div class="grid grid-cols-3 gap-3">
-          <!-- Inicio -->
-          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400">Inicio (15')</span>
-            <div id="modal-seg-momento-inicio-pct" class="text-xl font-black text-teal-600 dark:text-teal-400 font-mono mt-1">0%</div>
-            <div class="text-[10px] text-slate-500">Motivación y encuadre</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          <!-- 1. Introducción -->
+          <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[9px] font-extrabold uppercase text-slate-400 block truncate">1. Introducción (15')</span>
+            <div id="modal-seg-momento-intro-pct" class="text-lg font-black text-teal-600 dark:text-teal-400 font-mono mt-0.5">0%</div>
+            <div class="text-[9px] text-slate-500 truncate">Motivación y encuadre</div>
           </div>
-          <!-- Desarrollo -->
-          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400">Desarrollo (60')</span>
-            <div id="modal-seg-momento-des-pct" class="text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono mt-1">0%</div>
-            <div class="text-[10px] text-slate-500">Construcción conceptual</div>
+          <!-- 2. Resultados -->
+          <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[9px] font-extrabold uppercase text-slate-400 block truncate">2. Resultados (10')</span>
+            <div id="modal-seg-momento-res-pct" class="text-lg font-black text-blue-600 dark:text-blue-400 font-mono mt-0.5">0%</div>
+            <div class="text-[9px] text-slate-500 truncate">Logros esperados</div>
           </div>
-          <!-- Cierre -->
-          <div class="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400">Cierre (15')</span>
-            <div id="modal-seg-momento-cierre-pct" class="text-xl font-black text-purple-600 dark:text-purple-400 font-mono mt-1">0%</div>
-            <div class="text-[10px] text-slate-500">Síntesis y evaluación</div>
+          <!-- 3. Contenidos -->
+          <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[9px] font-extrabold uppercase text-slate-400 block truncate">3. Contenidos (15')</span>
+            <div id="modal-seg-momento-cont-pct" class="text-lg font-black text-indigo-600 dark:text-indigo-400 font-mono mt-0.5">0%</div>
+            <div class="text-[9px] text-slate-500 truncate">Saberes previos</div>
+          </div>
+          <!-- 4. Cuerpo -->
+          <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[9px] font-extrabold uppercase text-slate-400 block truncate">4. Cuerpo (40')</span>
+            <div id="modal-seg-momento-cuer-pct" class="text-lg font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">0%</div>
+            <div class="text-[9px] text-slate-500 truncate">Construcción activa</div>
+          </div>
+          <!-- 5. Conclusión -->
+          <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+            <span class="text-[9px] font-extrabold uppercase text-slate-400 block truncate">5. Conclusión (10')</span>
+            <div id="modal-seg-momento-cier-pct" class="text-lg font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5">0%</div>
+            <div class="text-[9px] text-slate-500 truncate">Síntesis y evaluación</div>
           </div>
         </div>
+        <!-- Hidden backward-compatibility elements -->
+        <div id="modal-seg-momento-inicio-pct" class="hidden">0%</div>
+        <div id="modal-seg-momento-des-pct" class="hidden">0%</div>
+        <div id="modal-seg-momento-cierre-pct" class="hidden">0%</div>
       </div>
 
       <!-- Histograma de Recursos Didácticos -->
@@ -5300,15 +5374,17 @@
             <thead>
               <tr class="bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
                 <th class="p-2.5 whitespace-nowrap">Fecha / N°</th>
-                <th class="p-2.5 min-w-[200px]">Tema Impartido en Aula</th>
-                <th class="p-2.5 text-center whitespace-nowrap">Momentos (I/D/C)</th>
+                <th class="p-2.5 min-w-[170px]">Tema Planificado (Matriz 7)</th>
+                <th class="p-2.5 min-w-[170px]">Tema Dictado en Aula</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Concordancia</th>
+                <th class="p-2.5 text-center whitespace-nowrap">Secuencia (5 Mom.)</th>
                 <th class="p-2.5 text-center whitespace-nowrap">Cumplimiento</th>
-                <th class="p-2.5 min-w-[150px]">Observaciones</th>
+                <th class="p-2.5 min-w-[140px]">Observaciones</th>
               </tr>
             </thead>
             <tbody id="modal-seg-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
               <tr>
-                <td colspan="5" class="p-4 text-center text-slate-400 italic">No hay sesiones registradas aún.</td>
+                <td colspan="7" class="p-4 text-center text-slate-400 italic">No hay sesiones registradas aún.</td>
               </tr>
             </tbody>
           </table>
@@ -5322,6 +5398,91 @@
       <button type="button" onclick="window.closeModalSeguimientoDetalle()" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer">
         Cerrar
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: LINTER CURRICULAR Y CONTROL DE CALIDAD DE INGESTA (GentleAI SDD) -->
+<div id="modal-linter-curricular" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scaleIn">
+    
+    <!-- Modal Header -->
+    <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-[#4f39f6] text-lg">
+          <i data-lucide="shield-check" class="w-5 h-5"></i>
+        </span>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="linter-modal-title" class="font-black text-sm text-slate-900 dark:text-white">SIS-113 PROGRAMACIÓN I</h3>
+            <span id="linter-modal-doctype-badge" class="px-2 py-0.5 rounded text-[10px] font-black bg-[#4f39f6] text-white">Programa Analítico</span>
+          </div>
+          <div id="linter-modal-filename" class="text-xs text-slate-500 font-mono mt-0.5">archivo.docx • 0 KB</div>
+        </div>
+      </div>
+      <button type="button" onclick="window.closeLinterModal()" class="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-rose-500 hover:text-white transition-colors flex items-center justify-center font-bold text-xs cursor-pointer">
+        ✕
+      </button>
+    </div>
+
+    <!-- Diagnostic Banner (Dynamic: Green, Amber, Red) -->
+    <div id="linter-status-banner" class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2">
+        <span id="linter-status-icon" class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-xs">✓</span>
+        <div>
+          <span id="linter-status-headline" class="font-black text-emerald-800 dark:text-emerald-300 text-sm">Formato Institucional Conforme</span>
+          <p id="linter-status-subtext" class="text-xs text-slate-600 dark:text-slate-300">Estructura oficial UNITEPC verificada exitosamente por el Linter.</p>
+        </div>
+      </div>
+      <div id="linter-status-badges" class="flex items-center gap-2 font-mono text-xs">
+        <span id="linter-badge-metrics" class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold">100% Conforme</span>
+      </div>
+    </div>
+
+    <!-- Modal Tabs: Diagnóstico vs Previsualización -->
+    <div class="px-4 pt-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-800/40">
+      <button type="button" id="btn-linter-tab-diagnostico" onclick="window.switchLinterTab('diagnostico')" class="px-3 py-1.5 rounded-t-lg font-bold text-xs bg-white dark:bg-slate-900 border-t border-x border-slate-200 dark:border-slate-800 text-[#4f39f6]">
+        Observaciones y Discrepancias (<span id="linter-tab-errors-count">0</span>)
+      </button>
+      <button type="button" id="btn-linter-tab-preview" onclick="window.switchLinterTab('preview')" class="px-3 py-1.5 rounded-t-lg font-bold text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white">
+        Previsualización de Contenido Extraído
+      </button>
+    </div>
+
+    <!-- Modal Content Panels -->
+    <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs flex-1 max-h-[55vh]">
+      
+      <!-- Panel 1: Diagnóstico de Discrepancias -->
+      <div id="linter-panel-diagnostico" class="space-y-3">
+        <div id="linter-discrepancies-list" class="space-y-2.5">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Panel 2: Previsualización de Contenido -->
+      <div id="linter-panel-preview" class="space-y-4 hidden">
+        <div id="linter-preview-content" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div id="linter-modal-footer-note" class="text-slate-500 text-xs">
+        Auditoría en memoria (Sandbox de Calidad Curricular).
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="window.closeLinterModal()" class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-bold transition-colors">
+          Cerrar
+        </button>
+        <button type="button" id="btn-linter-confirm-persist" onclick="window.confirmLinterPersistence()" class="px-5 py-2 rounded-xl bg-[#4f39f6] hover:bg-[#432dd7] text-white font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+          <i data-lucide="check-check" class="w-4 h-4"></i>
+          <span id="btn-linter-confirm-label">Confirmar y Guardar Oficialmente</span>
+        </button>
+      </div>
     </div>
 
   </div>
