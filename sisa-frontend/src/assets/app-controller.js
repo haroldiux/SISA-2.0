@@ -81,33 +81,18 @@
 
     window.applyThemePreference = function() {
       const html = document.documentElement;
-      const savedTheme = localStorage.getItem('sisa_theme_preference') || (html.classList.contains('dark') ? 'dark' : 'light');
-      const isDark = (savedTheme === 'dark');
+      localStorage.setItem('sisa_theme_preference', 'light');
+      html.classList.remove('dark');
 
-      if (isDark) {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-
-      const icon = document.getElementById('theme-icon');
-      const label = document.getElementById('theme-label');
-      if (label) {
-        label.innerText = isDark ? 'Tema Claro' : 'Tema Oscuro';
-      }
-      if (icon) {
-        icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-        icon.className = isDark ? 'w-4 h-4 text-amber-400' : 'w-4 h-4 text-purple-300';
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) {
+        btn.classList.add('hidden');
       }
       if (window.lucide) window.lucide.createIcons();
     };
 
     window.toggleTheme = function() {
-      const html = document.documentElement;
-      const willBeDark = !html.classList.contains('dark');
-      localStorage.setItem('sisa_theme_preference', willBeDark ? 'dark' : 'light');
       window.applyThemePreference();
-      window.showToast(willBeDark ? 'Modo Oscuro activado' : 'Modo Claro activado');
     };
 
     // Apply immediately on controller load

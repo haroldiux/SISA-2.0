@@ -148,15 +148,6 @@
             <i data-lucide="lock" class="w-3.5 h-3.5 text-[#1F9FAD]"></i>
             <span>Sesión protegida para usuarios autorizados.</span>
           </div>
-
-          <!-- Development Demo Quick-Fill Shortcuts -->
-          <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-1.5 flex-wrap">
-            <span class="text-[10px] text-slate-400">Acceso rápido demo:</span>
-            <button type="button" onclick="window.fillDemoLogin('admin', 'Unitepc2026!')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 cursor-pointer">Admin</button>
-            <button type="button" onclick="window.fillDemoLogin('dir.carrera.sis', 'Unitepc2026!')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 cursor-pointer">Dir. Carrera</button>
-            <button type="button" onclick="window.fillDemoLogin('9465510', '9465510')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer">Docente (9465510)</button>
-            <button type="button" onclick="window.fillDemoLogin('3065087', '3065087')" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 cursor-pointer">Docente (3065087)</button>
-          </div>
         </div>
       </div>
 
@@ -754,8 +745,8 @@
           </div>
 
 
-          <!-- Theme Switcher Button -->
-          <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="p-2 rounded-xl border border-[var(--sp-border)] text-[var(--sp-ink-3)] hover:text-[var(--sp-ink)] hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer" title="Alternar tema claro/oscuro">
+          <!-- Theme Switcher Button (oculto: modo claro institucional por defecto) -->
+          <button id="theme-toggle-btn" onclick="window.toggleTheme()" class="hidden p-2 rounded-xl border border-[var(--sp-border)] text-[var(--sp-ink-3)] hover:text-[var(--sp-ink)] hover:bg-[var(--sp-surface-hover)] transition-colors cursor-pointer" title="Alternar tema claro/oscuro">
             <i id="theme-icon" data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
           </button>
 
