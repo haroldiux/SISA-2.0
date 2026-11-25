@@ -7,10 +7,12 @@ import bo.edu.unitepc.sisa.api.dto.SemaforoCarreraResponse.SemaforoMateriaDto;
 import bo.edu.unitepc.sisa.domain.enums.ColorSemaforo;
 import bo.edu.unitepc.sisa.domain.model.Asignatura;
 import bo.edu.unitepc.sisa.domain.model.Carrera;
+import bo.edu.unitepc.sisa.domain.model.SeaCarrera;
 import bo.edu.unitepc.sisa.domain.model.SeaMateria;
 import bo.edu.unitepc.sisa.domain.repository.AsignaturaRepository;
 import bo.edu.unitepc.sisa.domain.repository.CarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.PlanDeClaseRepository;
+import bo.edu.unitepc.sisa.domain.repository.SeaCarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeaMateriaRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeguimientoClaseRepository;
 import bo.edu.unitepc.sisa.domain.repository.projection.MateriaSeguimientoAggregation;
@@ -35,18 +37,24 @@ public class ScuGetSemaforoCarreraCmd {
     private final CarreraRepository carreraRepository;
     private final AsignaturaRepository asignaturaRepository;
     private final SeaMateriaRepository seaMateriaRepository;
+    private final SeaCarreraRepository seaCarreraRepository;
+    private final bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService;
 
     public ScuGetSemaforoCarreraCmd(
             SeguimientoClaseRepository seguimientoRepository,
             PlanDeClaseRepository planDeClaseRepository,
             CarreraRepository carreraRepository,
             AsignaturaRepository asignaturaRepository,
-            SeaMateriaRepository seaMateriaRepository) {
+            SeaMateriaRepository seaMateriaRepository,
+            SeaCarreraRepository seaCarreraRepository,
+            bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService) {
         this.seguimientoRepository = seguimientoRepository;
         this.planDeClaseRepository = planDeClaseRepository;
         this.carreraRepository = carreraRepository;
         this.asignaturaRepository = asignaturaRepository;
         this.seaMateriaRepository = seaMateriaRepository;
+        this.seaCarreraRepository = seaCarreraRepository;
+        this.parametroService = parametroService;
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +95,14 @@ public class ScuGetSemaforoCarreraCmd {
                 .multiply(new BigDecimal("100.00"))
                 .setScale(2, RoundingMode.HALF_UP);
 
-        // 5. Evaluar cada asignatura segun el modelo matematico institucional
+        // 5. Evaluar cada asignatura segun el modelo matematico institucional parametrizable
+        bo.edu.unitepc.sisa.api.dto.ParametroConfiguracionDto params =
+                this.parametroService.resolveEffectiveConfig(cleanCarrera, null);
+        BigDecimal umbralVerde = (params.semaforoVerdePct() != null)
+                ? params.semaforoVerdePct() : new BigDecimal("-10.00");
+        BigDecimal umbralAmarillo = (params.semaforoAmarilloPct() != null)
+                ? params.semaforoAmarilloPct() : new BigDecimal("-25.00");
+
         List<SemaforoMateriaDto> materiasDto = new ArrayList<>();
         int alDiaVerde = 0;
         int atencionAmarillo = 0;
@@ -97,7 +112,7 @@ public class ScuGetSemaforoCarreraCmd {
 
         for (MateriaDescriptor m : materiasCatalogo) {
             MateriaSeguimientoAggregation agg = aggMap.get(m.codigo.toUpperCase());
-            SemaforoMateriaDto dto = calcularSemaforoMateria(m, semanaCorte, avancePlaneado, agg);
+            SemaforoMateriaDto dto = calcularSemaforoMateria(m, semanaCorte, avancePlaneado, agg, umbralVerde, umbralAmarillo);
             materiasDto.add(dto);
 
             if (dto.colorSemaforo() == ColorSemaforo.VERDE) {
@@ -143,7 +158,9 @@ public class ScuGetSemaforoCarreraCmd {
             MateriaDescriptor m,
             int semanaCorte,
             BigDecimal planeado,
-            MateriaSeguimientoAggregation agg) {
+            MateriaSeguimientoAggregation agg,
+            BigDecimal umbralVerde,
+            BigDecimal umbralAmarillo) {
 
         int nTotal = (m.totalSesionesProgramadas > 0) ? m.totalSesionesProgramadas : 36;
         int totalSesionesRegistradas;
@@ -235,12 +252,12 @@ public class ScuGetSemaforoCarreraCmd {
         if (!tienePlanClase || totalPlanes == 0) {
             color = ColorSemaforo.ROJO;
             motivoAlerta = "Penalización crítica: Asignatura sin Plan de Clase registrado";
-        } else if (delta.compareTo(new BigDecimal("-25.00")) < 0) {
+        } else if (delta.compareTo(umbralAmarillo) < 0) {
             color = ColorSemaforo.ROJO;
-            motivoAlerta = String.format("Desfase grave (%s%%): retraso crítico en avance de contenidos", delta);
-        } else if (delta.compareTo(new BigDecimal("-10.00")) < 0) {
+            motivoAlerta = String.format("Desfase grave (%s%%): retraso crítico en avance de contenidos (umbral %s%%)", delta, umbralAmarillo);
+        } else if (delta.compareTo(umbralVerde) < 0) {
             color = ColorSemaforo.AMARILLO;
-            motivoAlerta = String.format("Desfase moderado (%s%%): requiere reprogramación de contenidos", delta);
+            motivoAlerta = String.format("Desfase moderado (%s%%): requiere reprogramación de contenidos (umbral %s%%)", delta, umbralVerde);
         } else {
             color = ColorSemaforo.VERDE;
             motivoAlerta = "Avance normal dentro del margen institucional tolerable";
@@ -281,11 +298,19 @@ public class ScuGetSemaforoCarreraCmd {
     }
 
     private String resolveCarreraNombre(String carreraCodigo) {
-        Optional<Carrera> carreraOpt = this.carreraRepository.findByCodigo(carreraCodigo);
-        if (carreraOpt.isPresent()) {
-            return carreraOpt.get().getNombre();
+        for (String code : resolveCandidateCareerCodes(carreraCodigo)) {
+            Optional<Carrera> carreraOpt = this.carreraRepository.findByCodigo(code);
+            if (carreraOpt.isPresent()) {
+                return carreraOpt.get().getNombre();
+            }
+            if (this.seaCarreraRepository != null) {
+                Optional<SeaCarrera> seaOpt = this.seaCarreraRepository.findFirstByCodigo(code);
+                if (seaOpt.isPresent()) {
+                    return seaOpt.get().getNombre();
+                }
+            }
         }
-        if (carreraCodigo.equalsIgnoreCase("CARSIS") || carreraCodigo.equalsIgnoreCase("SIS")) {
+        if (isSistemasCareer(carreraCodigo)) {
             return "Ingeniería de Sistemas";
         }
         return "Carrera " + carreraCodigo;
@@ -296,55 +321,77 @@ public class ScuGetSemaforoCarreraCmd {
             Set<String> codigosEnSeguimientos) {
 
         Map<String, MateriaDescriptor> map = new LinkedHashMap<>();
+        List<String> candidateCodes = resolveCandidateCareerCodes(carreraCodigo);
 
-        // Materias representativas base normativas
-        map.put("SIS-213", new MateriaDescriptor(
-                "SIS-213", "Programación III", 3,
-                "4892104", "Ing. Carlos Alberto Morales Siles", 36
-        ));
-        map.put("SIS-311", new MateriaDescriptor(
-                "SIS-311", "Base de Datos I", 4,
-                "3719024", "Lic. Roberto Gómez Fernández", 36
-        ));
-        map.put("MAT-101", new MateriaDescriptor(
-                "MAT-101", "Cálculo I", 1,
-                "5291038", "Ing. Jaime Villarroel Soliz", 36
-        ));
-        map.put("SIS-412", new MateriaDescriptor(
-                "SIS-412", "Sistemas Operativos", 5,
-                "6102941", "Ing. Fernando Morales Peñaranda", 36
-        ));
-
-        // Catalogo JPA Asignaturas
-        Optional<Carrera> carOpt = this.carreraRepository.findByCodigo(carreraCodigo);
-        if (carOpt.isPresent()) {
-            List<Asignatura> asignaturas = this.asignaturaRepository.findByCarreraId(carOpt.get().getId());
-            for (Asignatura a : asignaturas) {
-                map.putIfAbsent(a.getCodigo().toUpperCase(), new MateriaDescriptor(
-                        a.getCodigo(),
-                        a.getNombre(),
-                        a.getSemestre(),
-                        "4892104",
-                        "Docente Titular",
-                        36
-                ));
-            }
-        }
-
-        // Catalogo SEA Materias
-        List<SeaMateria> seaList = this.seaMateriaRepository.findAll();
-        for (SeaMateria sm : seaList) {
-            map.putIfAbsent(sm.getCodigo().toUpperCase(), new MateriaDescriptor(
-                    sm.getCodigo(),
-                    sm.getNombre(),
-                    (int) sm.getSemestre(),
-                    "4892104",
-                    "Docente Titular",
-                    36
+        // Materias representativas base normativas (solo para Ingeniería de Sistemas)
+        if (isSistemasCareer(carreraCodigo)) {
+            map.put("SIS-213", new MateriaDescriptor(
+                    "SIS-213", "Programación III", 3,
+                    "4892104", "Ing. Carlos Alberto Morales Siles", 36
+            ));
+            map.put("SIS-311", new MateriaDescriptor(
+                    "SIS-311", "Base de Datos I", 4,
+                    "3719024", "Lic. Roberto Gómez Fernández", 36
+            ));
+            map.put("MAT-101", new MateriaDescriptor(
+                    "MAT-101", "Cálculo I", 1,
+                    "5291038", "Ing. Jaime Villarroel Soliz", 36
+            ));
+            map.put("SIS-412", new MateriaDescriptor(
+                    "SIS-412", "Sistemas Operativos", 5,
+                    "6102941", "Ing. Fernando Morales Peñaranda", 36
             ));
         }
 
-        // Agregar codigos presentes en seguimientos que no esten en el mapa
+        // Catalogo JPA Asignaturas filtrado por carrera
+        for (String code : candidateCodes) {
+            Optional<Carrera> carOpt = this.carreraRepository.findByCodigo(code);
+            if (carOpt.isPresent()) {
+                List<Asignatura> asignaturas = this.asignaturaRepository.findByCarreraId(carOpt.get().getId());
+                for (Asignatura a : asignaturas) {
+                    map.putIfAbsent(a.getCodigo().toUpperCase(), new MateriaDescriptor(
+                            a.getCodigo(),
+                            a.getNombre(),
+                            a.getSemestre(),
+                            "4892104",
+                            "Docente Titular",
+                            36
+                    ));
+                }
+            }
+        }
+
+        // Catalogo SEA Materias filtrado estrictamente por la carrera solicitada
+        if (this.seaCarreraRepository != null) {
+            Set<String> seaCarreraIds = new LinkedHashSet<>();
+            for (String code : candidateCodes) {
+                List<SeaCarrera> seaCarreras = this.seaCarreraRepository.findByCodigo(code);
+                if (seaCarreras != null) {
+                    for (SeaCarrera sc : seaCarreras) {
+                        if (sc.getId() != null) {
+                            seaCarreraIds.add(sc.getId());
+                        }
+                    }
+                }
+            }
+            for (String seaCarreraId : seaCarreraIds) {
+                List<SeaMateria> seaList = this.seaMateriaRepository.findByCarreraId(seaCarreraId);
+                if (seaList != null) {
+                    for (SeaMateria sm : seaList) {
+                        map.putIfAbsent(sm.getCodigo().toUpperCase(), new MateriaDescriptor(
+                                sm.getCodigo(),
+                                sm.getNombre(),
+                                sm.getSemestre() != null ? (int) sm.getSemestre() : 1,
+                                "4892104",
+                                "Docente Titular",
+                                36
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Agregar codigos presentes en seguimientos de esta carrera que no esten en el mapa
         for (String cod : codigosEnSeguimientos) {
             map.putIfAbsent(cod.toUpperCase(), new MateriaDescriptor(
                     cod,
@@ -357,6 +404,39 @@ public class ScuGetSemaforoCarreraCmd {
         }
 
         return new ArrayList<>(map.values());
+    }
+
+    private boolean isSistemasCareer(String carreraCodigo) {
+        return "CARSIS".equalsIgnoreCase(carreraCodigo) || "SIS".equalsIgnoreCase(carreraCodigo);
+    }
+
+    /**
+     * Resolves equivalent legacy SISA and SEA Gateway career codes (e.g., CARSIS <-> SIS)
+     * so catalog lookups match regardless of which naming scheme persisted the records.
+     */
+    private List<String> resolveCandidateCareerCodes(String carreraCodigo) {
+        Set<String> codes = new LinkedHashSet<>();
+        String upper = carreraCodigo.trim().toUpperCase();
+        codes.add(upper);
+
+        Map<String, String> aliases = Map.ofEntries(
+                Map.entry("CARSIS", "SIS"),
+                Map.entry("SIS", "CARSIS"),
+                Map.entry("CARMED", "MED"),
+                Map.entry("MED", "CARMED"),
+                Map.entry("CARDER", "DER"),
+                Map.entry("DER", "CARDER"),
+                Map.entry("CARODO", "ODO"),
+                Map.entry("ODO", "CARODO"),
+                Map.entry("CARBYF", "FAR"),
+                Map.entry("FAR", "CARBYF"),
+                Map.entry("CARIND", "IND"),
+                Map.entry("IND", "CARIND")
+        );
+        if (aliases.containsKey(upper)) {
+            codes.add(aliases.get(upper));
+        }
+        return new ArrayList<>(codes);
     }
 
     private record MateriaDescriptor(

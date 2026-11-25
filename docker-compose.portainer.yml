@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sisa-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sisa_db}
+      POSTGRES_USER: ${POSTGRES_USER:-sisa_admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-sisa_secret_pass_2026}
+    volumes:
+      - sisa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sisa_admin} -d ${POSTGRES_DB:-sisa_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sisa-internal
+
+  backend:
+    build:
+      context: ./sisa-backend
+      dockerfile: Dockerfile
+    container_name: sisa-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-sisa_db}
+      DB_USER: ${POSTGRES_USER:-sisa_admin}
+      DB_PASS: ${DB_PASS:-sisa_secret_pass_2026}
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_OPTS: "-Xms256m -Xmx768m"
+    networks:
+      - sisa-internal
+
+  frontend:
+    build:
+      context: ./sisa-frontend
+      dockerfile: Dockerfile
+    container_name: sisa-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - sisa-internal
+      - proxy
+
+volumes:
+  sisa_pgdata:
+    driver: local
+
+networks:
+  sisa-internal:
+    driver: bridge
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-red-proxy}

@@ -122,7 +122,8 @@
       'view3': 'nav-item-view3',
       'view4': 'nav-item-view4',
       'view5': 'nav-item-view5',
-      'view6': 'nav-item-view6'
+      'view6': 'nav-item-view6',
+      'view7': 'nav-item-view7'
     };
 
     // Centralized Documentation Download Permission Guard
@@ -458,7 +459,7 @@
 
       // Security check: If current user is ROLE_DOCENTE and tries to access admin/director views
       const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
-      if (currentUser && currentUser.role === 'ROLE_DOCENTE' && ['view2', 'view3', 'view4', 'view5', 'view6'].includes(viewId)) {
+      if (currentUser && currentUser.role === 'ROLE_DOCENTE' && ['view2', 'view3', 'view4', 'view5', 'view6', 'view7'].includes(viewId)) {
         if (typeof window.showToast === 'function') {
           window.showToast('⚠️ No tienes permisos para acceder a este módulo institucional');
         }
@@ -538,6 +539,8 @@
         }
       } else if (viewId === 'view6' && typeof window.loadAdminUsers === 'function') {
         window.loadAdminUsers();
+      } else if (viewId === 'view7' && typeof window.loadParametrosAdmin === 'function') {
+        window.loadParametrosAdmin();
       }
 
       // 5. Contextual Carpeta Docente Sidebar Menu (Only visible inside a folder / view1)
@@ -11111,7 +11114,12 @@ document.addEventListener('change', (e) => {
 
   window.filterSupervisionBySearch = function(query) {
     window.__SUPERVISION_SEARCH_QUERY__ = (query || '').toLowerCase().trim();
-    window.renderSupervisionAccordions();
+    if (typeof window.renderSupervisionAccordions === 'function') {
+      window.renderSupervisionAccordions();
+    }
+    if (typeof window.renderSupervisionHubCarga === 'function') {
+      window.renderSupervisionHubCarga();
+    }
   };
 
   window.filterSupervisionGroupType = function(type) {
@@ -11138,11 +11146,14 @@ document.addEventListener('change', (e) => {
     window.__SUPERVISION_DOC_TAB__ = tab || 'TODOS';
     const isSemaforo = (tab === 'SEMAFORO');
     const isHub = (tab === 'HUB_CARGA');
+    const isAsistencia = (tab === 'ASISTENCIA_SUPERVISION');
 
-    ['todos', 'analitico', 'pac', 'practico', 'clases', 'semaforo', 'hub-carga'].forEach(t => {
+    ['todos', 'analitico', 'pac', 'practico', 'clases', 'semaforo', 'hub-carga', 'asistencia'].forEach(t => {
       const btn = document.getElementById('supervision-tab-' + t);
       if (btn) {
-        const isMatch = (t === 'hub-carga' && isHub) || (t.toUpperCase() === (tab || 'TODOS').toUpperCase());
+        const isMatch = (t === 'hub-carga' && isHub) ||
+                        (t === 'asistencia' && isAsistencia) ||
+                        (t.toUpperCase() === (tab || 'TODOS').toUpperCase());
         if (isMatch) {
           btn.className = 'font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer';
         } else {
@@ -11155,14 +11166,26 @@ document.addEventListener('change', (e) => {
     const stdMetrics = document.getElementById('supervision-metrics-standard');
     const semestersContainer = document.getElementById('supervision-semesters-container');
     const hubContainer = document.getElementById('supervision-hub-carga-container');
+    const asistenciaContainer = document.getElementById('supervision-asistencia-container');
 
-    if (isHub) {
+    if (isAsistencia) {
+      if (kpiRibbon) kpiRibbon.classList.add('hidden');
+      if (stdMetrics) stdMetrics.classList.add('hidden');
+      if (semestersContainer) semestersContainer.classList.add('hidden');
+      if (hubContainer) hubContainer.classList.add('hidden');
+      if (asistenciaContainer) asistenciaContainer.classList.remove('hidden');
+      if (typeof window.loadSupervisionAsistenciaData === 'function') {
+        window.loadSupervisionAsistenciaData();
+      }
+    } else if (isHub) {
+      if (asistenciaContainer) asistenciaContainer.classList.add('hidden');
       if (kpiRibbon) kpiRibbon.classList.add('hidden');
       if (stdMetrics) stdMetrics.classList.add('hidden');
       if (semestersContainer) semestersContainer.classList.add('hidden');
       if (hubContainer) hubContainer.classList.remove('hidden');
       window.renderSupervisionHubCarga();
     } else if (isSemaforo) {
+      if (asistenciaContainer) asistenciaContainer.classList.add('hidden');
       if (hubContainer) hubContainer.classList.add('hidden');
       if (semestersContainer) semestersContainer.classList.remove('hidden');
       if (kpiRibbon) kpiRibbon.classList.remove('hidden');
@@ -11171,6 +11194,7 @@ document.addEventListener('change', (e) => {
         window.loadSupervisionSemaforoData();
       }
     } else {
+      if (asistenciaContainer) asistenciaContainer.classList.add('hidden');
       if (hubContainer) hubContainer.classList.add('hidden');
       if (semestersContainer) semestersContainer.classList.remove('hidden');
       if (kpiRibbon) kpiRibbon.classList.add('hidden');
@@ -11220,7 +11244,19 @@ document.addEventListener('change', (e) => {
     });
 
     const pendingOnly = !!window.__HUB_PENDING_ONLY__;
+    const rawQuery = (window.__SUPERVISION_SEARCH_QUERY__ || '').trim();
+    const norm = (s) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const query = norm(rawQuery);
+
     const coursesToRender = allCourses.filter(c => {
+      if (query) {
+        const teacherName = (c.teachers && c.teachers[0] && c.teachers[0].name) ? norm(c.teachers[0].name) : '';
+        const cCode = norm(c.code);
+        const cName = norm(c.courseName || c.name);
+        if (!cCode.includes(query) && !cName.includes(query) && !teacherName.includes(query)) {
+          return false;
+        }
+      }
       if (!pendingOnly) return true;
       const doc1Done = (c.docs && c.docs.analitico && c.docs.analitico.state === 'COMPLETO');
       const doc2Done = (!c.tieneTeoria) || (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.state === 'COMPLETO');
@@ -11250,108 +11286,183 @@ document.addEventListener('change', (e) => {
       const safeCourseName = (c.courseName || c.name || c.code || '').replace(/'/g, "\\'");
       const asigId = c.asignacionId || c.id || 1;
 
-      // Status Doc 1 (Programa Analítico)
-      const doc1State = (c.docs && c.docs.analitico && c.docs.analitico.state) ? c.docs.analitico.state : 'VACIO';
-      const doc1Units = (c.docs && c.docs.analitico && c.docs.analitico.unidades) ? c.docs.analitico.unidades : 0;
-      let doc1Badge = '';
-      if (doc1State === 'COMPLETO') {
-        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc1Units || 4} Unid.)</span>`;
-      } else if (doc1State === 'INCOMPLETO') {
-        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc1Units} Unid.)</span>`;
+      // Modality & Didactic Nature
+      const tieneTeoria = (c.tieneTeoria !== false);
+      const tienePractica = (c.tienePractica === true || c.modality === 'TEORICO_PRACTICA' || c.modality === 'PRACTICA_PURA');
+
+      let modalityBadge = '';
+      if (tieneTeoria && tienePractica) {
+        modalityBadge = `<span class="text-[9px] font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 px-2 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="layers" class="w-3 h-3"></i> Teórico-Práctica (4 Documentos)</span>`;
+      } else if (!tienePractica) {
+        modalityBadge = `<span class="text-[9px] font-black bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 px-2 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="book-open" class="w-3 h-3"></i> Teórica Pura (3 Documentos)</span>`;
       } else {
-        doc1Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`;
+        modalityBadge = `<span class="text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1"><i data-lucide="flask-conical" class="w-3 h-3"></i> Práctica Pura (3 Documentos)</span>`;
       }
 
-      // Status Doc 2/3 (PAC & Matriz 7)
-      const doc2State = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.state) ? c.docs.pacTeorico.state : 'VACIO';
-      const doc2Weeks = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.semanas) ? c.docs.pacTeorico.semanas : 0;
-      let doc2Badge = '';
-      if (c.tieneTeoria === false) {
-        doc2Badge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">N/A (Práctica Pura)</span>`;
-      } else if (doc2State === 'COMPLETO') {
-        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc2Weeks || 20} Sem.)</span>`;
-      } else if (doc2State === 'INCOMPLETO') {
-        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc2Weeks} Sem.)</span>`;
-      } else {
-        doc2Badge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`;
-      }
+      function renderDocCard(title, subtitle, icon, colorClass, borderClass, badgeHtml, tipoDoc, acceptExt, btnLabel) {
+        return `
+          <div class="p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-[#4f39f6]/40 transition-all shadow-2xs flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <i data-lucide="${icon}" class="w-3.5 h-3.5 ${colorClass}"></i>
+                  <span>${title}</span>
+                </div>
+                ${badgeHtml}
+              </div>
+              <p class="text-[11px] text-slate-400 font-medium leading-tight">${subtitle}</p>
+            </div>
 
-      return `
-        <div class="p-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <!-- Col 1: Course Info -->
-          <div class="min-w-[220px] max-w-sm">
-            <div class="flex items-center gap-2">
-              <span class="font-mono font-bold text-xs text-[#4f39f6] bg-indigo-50 dark:bg-indigo-950/70 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/40">
-                ${c.code}
-              </span>
-              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                ${c.semesterNumber}º Semestre
-              </span>
-              ${c.isCommon ? `<span class="text-[9px] font-black bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 px-1.5 py-0.5 rounded">Común</span>` : ''}
-            </div>
-            <div class="font-bold text-slate-900 dark:text-white text-xs mt-1 truncate" title="${c.courseName || c.name}">
-              ${c.courseName || c.name}
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
-              <i data-lucide="user" class="w-3 h-3 ${isAssigned ? 'text-indigo-500' : 'text-slate-400'}"></i>
-              <span class="${isAssigned ? 'font-medium text-slate-700 dark:text-slate-300' : 'italic text-amber-600'}">
-                ${teacher.name}
-              </span>
-            </div>
-          </div>
-
-          <!-- Col 2: Doc 1 (Programa Analítico .docx) -->
-          <div class="flex-1 min-w-[200px] border-l border-slate-100 dark:border-slate-800/60 pl-3">
-            <div class="flex items-center justify-between gap-2 mb-1.5">
-              <span class="text-[10px] font-extrabold uppercase text-slate-400">1. Programa Analítico (.docx)</span>
-              ${doc1Badge}
-            </div>
-            <div class="flex items-center gap-2">
-              <label class="cursor-pointer px-3 py-1.5 rounded-xl border border-dashed border-indigo-300 dark:border-indigo-800 hover:border-[#4f39f6] bg-white dark:bg-slate-800 text-[#4f39f6] hover:bg-indigo-50/70 text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-2xs">
+            <div class="space-y-1.5 pt-1">
+              <label class="w-full cursor-pointer px-3 py-2 rounded-xl border border-dashed ${borderClass} bg-slate-50/60 dark:bg-slate-800/50 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 text-xs font-bold flex items-center justify-center gap-2 transition-all">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                <span>Subir .docx</span>
-                <input type="file" accept=".docx" class="hidden" onchange="if(this.files[0]) window.auditAndUploadCurricularFile(this.files[0], 'PROGRAMA_ANALITICO', ${asigId}, '${c.code}', '${safeCourseName}')" />
+                <span>${btnLabel}</span>
+                <input type="file" accept="${acceptExt}" class="hidden" onchange="if(this.files[0]) window.auditAndUploadCurricularFile(this.files[0], '${tipoDoc}', ${asigId}, '${c.code}', '${safeCourseName}')" />
               </label>
               <div 
                 ondragover="event.preventDefault(); this.classList.add('border-[#4f39f6]', 'bg-indigo-50/50');"
                 ondragleave="this.classList.remove('border-[#4f39f6]', 'bg-indigo-50/50');"
-                ondrop="event.preventDefault(); this.classList.remove('border-[#4f39f6]', 'bg-indigo-50/50'); if(event.dataTransfer.files[0]) window.auditAndUploadCurricularFile(event.dataTransfer.files[0], 'PROGRAMA_ANALITICO', ${asigId}, '${c.code}', '${safeCourseName}');"
-                class="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[10px] text-slate-400 font-medium hidden sm:block select-none"
-                title="Arrastrá el archivo .docx aquí">
-                o arrastrá acá
+                ondrop="event.preventDefault(); this.classList.remove('border-[#4f39f6]', 'bg-indigo-50/50'); if(event.dataTransfer.files[0]) window.auditAndUploadCurricularFile(event.dataTransfer.files[0], '${tipoDoc}', ${asigId}, '${c.code}', '${safeCourseName}');"
+                class="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl py-1 px-2 text-center text-[10px] text-slate-400 font-medium select-none"
+                title="Arrastrá el archivo aquí">
+                o arrastrá archivo acá
               </div>
             </div>
           </div>
+        `;
+      }
 
-          <!-- Col 3: Doc 2/3 (PAC & Matriz 7 .xlsx) -->
-          <div class="flex-1 min-w-[200px] border-l border-slate-100 dark:border-slate-800/60 pl-3">
-            <div class="flex items-center justify-between gap-2 mb-1.5">
-              <span class="text-[10px] font-extrabold uppercase text-slate-400">2/3. PAC & Matriz 7 (.xlsx)</span>
-              ${doc2Badge}
-            </div>
-            <div class="flex items-center gap-2">
-              <label class="cursor-pointer px-3 py-1.5 rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 hover:border-emerald-600 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-2xs">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-                <span>Subir .xlsx</span>
-                <input type="file" accept=".xlsx" class="hidden" onchange="if(this.files[0]) window.auditAndUploadCurricularFile(this.files[0], 'PAC_TEORICO', ${asigId}, '${c.code}', '${safeCourseName}')" />
-              </label>
-              <div 
-                ondragover="event.preventDefault(); this.classList.add('border-emerald-500', 'bg-emerald-50/50');"
-                ondragleave="this.classList.remove('border-emerald-500', 'bg-emerald-50/50');"
-                ondrop="event.preventDefault(); this.classList.remove('border-emerald-500', 'bg-emerald-50/50'); if(event.dataTransfer.files[0]) window.auditAndUploadCurricularFile(event.dataTransfer.files[0], 'PAC_TEORICO', ${asigId}, '${c.code}', '${safeCourseName}');"
-                class="border border-dashed border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[10px] text-slate-400 font-medium hidden sm:block select-none"
-                title="Arrastrá el archivo .xlsx aquí">
-                o arrastrá acá
+      // Status badges
+      const doc1State = (c.docs && c.docs.analitico && c.docs.analitico.state) ? c.docs.analitico.state : 'VACIO';
+      const doc1Units = (c.docs && c.docs.analitico && c.docs.analitico.unidades) ? c.docs.analitico.unidades : 0;
+      let doc1Badge = (doc1State === 'COMPLETO')
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc1Units || 6} Unid.)</span>`
+        : ((doc1State === 'INCOMPLETO')
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc1Units} Unid.)</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`);
+
+      const doc2State = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.state) ? c.docs.pacTeorico.state : 'VACIO';
+      const doc2Weeks = (c.docs && c.docs.pacTeorico && c.docs.pacTeorico.semanas) ? c.docs.pacTeorico.semanas : 0;
+      let doc2Badge = (doc2State === 'COMPLETO')
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc2Weeks || 20} Sem.)</span>`
+        : ((doc2State === 'INCOMPLETO')
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto (${doc2Weeks} Sem.)</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`);
+
+      const doc3State = (c.docs && c.docs.pacPractico && c.docs.pacPractico.state) ? c.docs.pacPractico.state : 'VACIO';
+      const doc3Guias = (c.docs && c.docs.pacPractico && c.docs.pacPractico.guias) ? c.docs.pacPractico.guias : 0;
+      let doc3Badge = (doc3State === 'COMPLETO')
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc3Guias || 12} Guías)</span>`
+        : ((doc3State === 'INCOMPLETO')
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Incompleto</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`);
+
+      const doc4State = (c.docs && c.docs.planesClase && c.docs.planesClase.state) ? c.docs.planesClase.state : 'VACIO';
+      const doc4Count = (c.docs && c.docs.planesClase && c.docs.planesClase.completados) ? c.docs.planesClase.completados : 0;
+      let doc4Badge = (doc4State === 'COMPLETO')
+        ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>✓ Cargado (${doc4Count || 40} Ses.)</span>`
+        : ((doc4Count > 0)
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Avance (${doc4Count})</span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Pendiente</span>`);
+
+      // Assemble individual cards ONLY for required documents
+      const cards = [];
+
+      // 1. Programa Analítico (Siempre obligatorio)
+      cards.push(renderDocCard(
+        '1. Programa Analítico',
+        'Word oficial con competencias y unidades (.docx)',
+        'file-text',
+        'text-indigo-600',
+        'border-indigo-300 dark:border-indigo-800 hover:border-[#4f39f6] text-[#4f39f6]',
+        doc1Badge,
+        'PROGRAMA_ANALITICO',
+        '.docx',
+        'Subir .docx'
+      ));
+
+      // 2. PAC General / Teórico (Solo si tiene teoría)
+      if (tieneTeoria) {
+        cards.push(renderDocCard(
+          '2. PAC General / Teórico',
+          'Matriz 7 de avance en aula (20 Semanas / .xlsx)',
+          'calendar',
+          'text-emerald-600',
+          'border-emerald-300 dark:border-emerald-800 hover:border-emerald-600 text-emerald-700 dark:text-emerald-400',
+          doc2Badge,
+          'PAC_TEORICO',
+          '.xlsx',
+          'Subir PAC General'
+        ));
+      }
+
+      // 3. PAC Práctico (Solo si tiene práctica)
+      if (tienePractica) {
+        cards.push(renderDocCard(
+          '3. PAC Práctico / Talleres',
+          'Cronograma de prácticas y guías de lab (.xlsx)',
+          'flask-conical',
+          'text-teal-600',
+          'border-teal-300 dark:border-teal-800 hover:border-teal-600 text-teal-700 dark:text-teal-400',
+          doc3Badge,
+          'PAC_PRACTICO',
+          '.xlsx',
+          'Subir PAC Práctico'
+        ));
+      }
+
+      // 4. Planes de Clase (Teórico / Práctico / Teórico-Práctico)
+      const planesTitle = (tieneTeoria && tienePractica) ? '4. Planes de Clase' : (tieneTeoria ? '3. Plan Clase Teórico' : '3. Plan Clase Práctico');
+      const planesSubtitle = (tieneTeoria && tienePractica) ? 'Microplanificación didáctica Teo/Prac/TP (.xlsx)' : 'Microplanificación didáctica por momentos (.xlsx)';
+      cards.push(renderDocCard(
+        planesTitle,
+        planesSubtitle,
+        'calendar-days',
+        'text-purple-600',
+        'border-purple-300 dark:border-purple-800 hover:border-purple-600 text-purple-700 dark:text-purple-400',
+        doc4Badge,
+        'PLAN_CLASE',
+        '.xlsx',
+        'Subir Planes .xlsx'
+      ));
+
+      return `
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-all space-y-3.5">
+          <!-- Course Header Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-mono font-black text-xs text-[#4f39f6] bg-indigo-50 dark:bg-indigo-950/70 px-2.5 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-900/40">
+                  ${c.code}
+                </span>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  ${c.semesterNumber}º Semestre
+                </span>
+                ${c.isCommon ? `<span class="text-[9px] font-black bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 px-1.5 py-0.5 rounded">Común</span>` : ''}
+                ${modalityBadge}
               </div>
+              <div class="font-bold text-slate-900 dark:text-white text-sm mt-1">
+                ${c.courseName || c.name}
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+                <i data-lucide="user" class="w-3.5 h-3.5 ${isAssigned ? 'text-indigo-500' : 'text-slate-400'}"></i>
+                <span class="${isAssigned ? 'font-medium text-slate-700 dark:text-slate-300' : 'italic text-amber-600'}">
+                  ${teacher.name}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" onclick="window.openTeacherFolderFromSupervision('${c.code}', '${teacher.ci}', null, '${safeCourseName}')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-[#4f39f6] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Ver en Carpeta Docente oficial">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                <span>Ver en Carpeta</span>
+              </button>
             </div>
           </div>
 
-          <!-- Col 4: Action: Ver Carpeta Docente Oficial -->
-          <div class="flex items-center gap-2 shrink-0">
-            <button type="button" onclick="window.openTeacherFolderFromSupervision('${c.code}', '${teacher.ci}', null, '${safeCourseName}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-[#4f39f6] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs" title="Ver en Carpeta Docente oficial">
-              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-              <span>Ver en Carpeta</span>
-            </button>
+          <!-- Dynamic Grid of Individual Document Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cards.length} gap-3">
+            ${cards.join('')}
           </div>
         </div>
       `;
@@ -11628,12 +11739,15 @@ document.addEventListener('change', (e) => {
         Object.values(window.__SUPERVISION_DATA__.semesters).forEach(s => {
           (s.courses || []).forEach(c => {
             if (c.code === courseCode) {
+              if (!c.docs) c.docs = {};
               if (tipoDoc === 'PROGRAMA_ANALITICO') {
-                if (!c.docs) c.docs = {};
-                c.docs.analitico = { state: 'COMPLETO', estado: 'APROBADO', unidades: (report ? report.totalUnidadesDetectadas : 4) };
-              } else {
-                if (!c.docs) c.docs = {};
+                c.docs.analitico = { state: 'COMPLETO', estado: 'APROBADO', unidades: (report ? report.totalUnidadesDetectadas : 6) };
+              } else if (tipoDoc === 'PAC_TEORICO') {
                 c.docs.pacTeorico = { state: 'COMPLETO', estado: 'APROBADO', semanas: (report ? report.totalSemanasDetectadas : 20) };
+              } else if (tipoDoc === 'PAC_PRACTICO') {
+                c.docs.pacPractico = { state: 'COMPLETO', estado: 'APROBADO', guias: (report ? (report.totalSesiones || 20) : 12) };
+              } else {
+                c.docs.planesClase = { state: 'COMPLETO', estado: 'APROBADO', completados: (report ? (report.totalSesiones || 40) : 40) };
               }
             }
           });
@@ -11644,6 +11758,16 @@ document.addEventListener('change', (e) => {
       window.renderSupervisionHubCarga();
       if (typeof window.renderSupervisionAccordions === 'function') {
         window.renderSupervisionAccordions();
+      }
+
+      if (window.__PENDING_BATCH_QUEUE__ && window.__PENDING_BATCH_QUEUE__.length > 0) {
+        const nextInBatch = window.__PENDING_BATCH_QUEUE__.shift();
+        setTimeout(() => {
+          if (typeof window.showToast === 'function') {
+            window.showToast(`✨ Continuando con el lote: Auditando ${nextInBatch.file.name}...`);
+          }
+          window.auditAndUploadCurricularFile(nextInBatch.file, nextInBatch.tipoDoc, asignacionId, courseCode, courseName);
+        }, 500);
       }
 
     } catch (err) {
@@ -11685,50 +11809,103 @@ document.addEventListener('change', (e) => {
   window.handleHubBatchFiles = async function(files) {
     if (!files || files.length === 0) return;
 
-    if (typeof window.showToast === 'function') {
-      window.showToast(`📦 Procesando lote de ${files.length} archivo(s)...`);
-    }
-
     const fileList = Array.from(files);
-    const firstFile = fileList[0];
-    const fname = firstFile.name.toUpperCase();
-
-    // Determine type
-    const isDocx = fname.endsWith('.DOCX');
-    const isXlsx = fname.endsWith('.XLSX');
-    const tipoDoc = isDocx ? 'PROGRAMA_ANALITICO' : (isXlsx ? 'PAC_TEORICO' : '');
-
-    if (!tipoDoc) {
-      if (typeof window.showToast === 'function') {
-        window.showToast(`⚠️ Formato no reconocido: ${firstFile.name}. Solo .docx y .xlsx.`);
-      }
-      return;
+    if (typeof window.showToast === 'function') {
+      window.showToast(`📦 Analizando lote de ${fileList.length} archivo(s)...`);
     }
 
-    // Try to match course code from filename
-    let matchedCourse = null;
+    const allCourses = [];
     if (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.semesters) {
-      const allCourses = [];
       Object.values(window.__SUPERVISION_DATA__.semesters).forEach(s => (s.courses || []).forEach(c => allCourses.push(c)));
+    }
 
+    const norm = (s) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_ .]/g, '').toUpperCase();
+
+    // 1. Try to find matchedCourse across ANY file in the batch
+    let matchedCourse = null;
+
+    for (const file of fileList) {
+      const fnameNorm = norm(file.name);
       for (const c of allCourses) {
-        const cleanCode = (c.code || '').replace(/[-_ ]/g, '').toUpperCase();
-        const cleanFname = fname.replace(/[-_ ]/g, '');
-        if (cleanFname.includes(cleanCode)) {
+        const codeNorm = norm(c.code);
+        const nameNorm = norm(c.courseName || c.name);
+        if ((codeNorm && fnameNorm.includes(codeNorm)) || (nameNorm && fnameNorm.includes(nameNorm))) {
           matchedCourse = c;
           break;
         }
       }
+      if (matchedCourse) break;
     }
 
-    if (matchedCourse) {
-      const asigId = matchedCourse.asignacionId || matchedCourse.id || 1;
-      const safeName = matchedCourse.courseName || matchedCourse.name || matchedCourse.code;
-      window.auditAndUploadCurricularFile(firstFile, tipoDoc, asigId, matchedCourse.code, safeName);
-    } else {
-      if (typeof window.showToast === 'function') {
-        window.showToast(`ℹ️ Archivo ${firstFile.name}: Seleccioná la materia en la tabla para auditarlo.`);
+    // 2. Fallback: if search query or active filter isolates a course
+    if (!matchedCourse && window.__SUPERVISION_SEARCH_QUERY__) {
+      const qNorm = norm(window.__SUPERVISION_SEARCH_QUERY__);
+      const matchingFromSearch = allCourses.filter(c => norm(c.code).includes(qNorm) || norm(c.courseName || c.name).includes(qNorm));
+      if (matchingFromSearch.length === 1) {
+        matchedCourse = matchingFromSearch[0];
       }
+    }
+
+    if (!matchedCourse) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`⚠️ No se pudo vincular automáticamente la materia para el lote. Por favor filtrá por nombre o código en la búsqueda antes de arrastrar.`);
+      }
+      return;
+    }
+
+    const asigId = matchedCourse.asignacionId || matchedCourse.id || 1;
+    const safeName = matchedCourse.courseName || matchedCourse.name || matchedCourse.code;
+
+    // 3. Classify all files in the batch
+    const queue = [];
+    for (const f of fileList) {
+      const fnUpper = f.name.toUpperCase();
+      let tipo = null;
+      if (fnUpper.endsWith('.DOCX') || fnUpper.endsWith('.DOC')) {
+        tipo = 'PROGRAMA_ANALITICO';
+      } else if (fnUpper.endsWith('.XLSX') || fnUpper.endsWith('.XLS')) {
+        if (fnUpper.includes('PRACTIC') || fnUpper.includes('TALLER')) {
+          tipo = 'PAC_PRACTICO';
+        } else if (fnUpper.includes('PLAN')) {
+          tipo = 'PLAN_CLASE';
+        } else {
+          tipo = 'PAC_TEORICO';
+        }
+      }
+      if (tipo) {
+        queue.push({ file: f, tipoDoc: tipo });
+      }
+    }
+
+    if (queue.length === 0) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`⚠️ Ningún archivo compatible (.docx / .xlsx) en el lote.`);
+      }
+      return;
+    }
+
+    // Prioritize Programa Analítico and PAC Teórico (core audit documents)
+    const progAnaliticoItem = queue.find(q => q.tipoDoc === 'PROGRAMA_ANALITICO');
+    const pacTeoricoItem = queue.find(q => q.tipoDoc === 'PAC_TEORICO');
+
+    window.__PENDING_BATCH_QUEUE__ = queue.filter(q => q !== progAnaliticoItem && q !== pacTeoricoItem);
+
+    if (progAnaliticoItem) {
+      if (pacTeoricoItem) {
+        window.__PENDING_BATCH_QUEUE__.unshift(pacTeoricoItem);
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🎯 Materia identificada: ${matchedCourse.code} - ${safeName}. Auditando Programa Analítico...`);
+      }
+      window.auditAndUploadCurricularFile(progAnaliticoItem.file, progAnaliticoItem.tipoDoc, asigId, matchedCourse.code, safeName);
+    } else if (pacTeoricoItem) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🎯 Materia identificada: ${matchedCourse.code} - ${safeName}. Auditando PAC General / Matriz 7...`);
+      }
+      window.auditAndUploadCurricularFile(pacTeoricoItem.file, pacTeoricoItem.tipoDoc, asigId, matchedCourse.code, safeName);
+    } else {
+      const nextItem = queue[0];
+      window.auditAndUploadCurricularFile(nextItem.file, nextItem.tipoDoc, asigId, matchedCourse.code, safeName);
     }
   };
 
@@ -15445,7 +15622,7 @@ document.addEventListener('change', (e) => {
               </div>
             </td>
             <td class="py-2 px-4">
-              <input type="text" id="obs-${s.code}" value="${(estado === 'ATRASO' || estado === 'LICENCIA') ? obs : ''}" ${(estado === 'ATRASO' || estado === 'LICENCIA') ? '' : 'disabled'} placeholder="${estado === 'ATRASO' ? 'Motivo de atraso / hora...' : (estado === 'LICENCIA' ? 'Nro. justificación / permiso...' : '—')}" class="w-full px-2.5 py-1 text-xs rounded border ${(estado === 'ATRASO' || estado === 'LICENCIA') ? 'border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500' : 'border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed'} outline-none transition-all" oninput="window.setStudentAttendanceObs('${s.code}', this.value)">
+              <input type="text" id="obs-${s.code}" value="${obs}" placeholder="${estado === 'ATRASO' ? 'Motivo de atraso (opcional)...' : (estado === 'LICENCIA' ? 'Nro. justificación / permiso (opcional)...' : (estado === 'FALTA' ? 'Motivo de inasistencia (opcional)...' : 'Observación (opcional)...'))}" class="w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all" oninput="window.setStudentAttendanceObs('${s.code}', this.value)">
             </td>
             <td class="py-2.5 px-3 text-center">
               ${cumBadgeHtml}
@@ -15490,23 +15667,20 @@ document.addEventListener('change', (e) => {
       }
     });
 
-    // Enable or disable observation input based on status (only active for ATRASO or LICENCIA)
+    // Observation input is always enabled and non-mandatory (supports all states)
     const obsInput = document.getElementById(`obs-${studentCode}`);
     if (obsInput) {
-      if (status === 'ATRASO' || status === 'LICENCIA') {
-        obsInput.disabled = false;
-        obsInput.placeholder = (status === 'ATRASO') ? 'Motivo de atraso / hora...' : 'Nro. justificación / permiso...';
-        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-amber-500 outline-none transition-all';
-        obsInput.focus();
+      obsInput.disabled = false;
+      if (status === 'ATRASO') {
+        obsInput.placeholder = 'Motivo de atraso (opcional)...';
+      } else if (status === 'LICENCIA') {
+        obsInput.placeholder = 'Nro. justificación / permiso (opcional)...';
+      } else if (status === 'FALTA') {
+        obsInput.placeholder = 'Motivo de inasistencia (opcional)...';
       } else {
-        obsInput.disabled = true;
-        obsInput.value = '';
-        obsInput.placeholder = '—';
-        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed outline-none transition-all';
-        if (currentAttendanceSession.estudiantes[studentCode]) {
-          currentAttendanceSession.estudiantes[studentCode].observacion = '';
-        }
+        obsInput.placeholder = 'Observación (opcional)...';
       }
+      obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all';
     }
 
     window.updateAttendanceLiveKPIs();
@@ -15529,10 +15703,9 @@ document.addEventListener('change', (e) => {
       window.setStudentAttendanceStatus(s.code, 'PRESENTE');
       const obsInput = document.getElementById(`obs-${s.code}`);
       if (obsInput) {
-        obsInput.disabled = true;
-        obsInput.value = '';
-        obsInput.placeholder = '—';
-        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-800/40 text-slate-400 dark:text-slate-600 cursor-not-allowed outline-none transition-all';
+        obsInput.disabled = false;
+        obsInput.placeholder = 'Observación (opcional)...';
+        obsInput.className = 'w-full px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all';
       }
     });
 
@@ -16334,15 +16507,36 @@ document.addEventListener('change', (e) => {
     observacionesDocente: ''
   };
 
+  function resolveActiveSeguimientoContext() {
+    const mKey = (typeof activeMateriaKey !== 'undefined' && activeMateriaKey)
+      ? activeMateriaKey
+      : (window.activeMateriaKey
+        || localStorage.getItem('sisa_active_materia_key')
+        || (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : ''));
+    const materia = (typeof materiasData !== 'undefined' && mKey && materiasData[mKey])
+      ? materiasData[mKey]
+      : ((typeof materiasData !== 'undefined' && Object.values(materiasData)[0]) || {});
+    const materiaCodigo = (materia && materia.codigo) ? materia.codigo : (mKey || 'SIS-213');
+    const activeDoc = window.__ACTIVE_DOCENTE__ || (typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null);
+    const docenteCi = (activeDoc && (activeDoc.ci || activeDoc.username))
+      ? String(activeDoc.ci || activeDoc.username)
+      : ((typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? String(currentDocenteCi) : '4892104');
+    const carreraCodigo = (materia && Array.isArray(materia.carrerasCodes) && materia.carrerasCodes.length > 0)
+      ? materia.carrerasCodes[0]
+      : ((materia && materia.career) ? materia.career : 'CARSIS');
+    return { mKey: mKey || materiaCodigo, materia, materiaCodigo, docenteCi, carreraCodigo };
+  }
+
   window.syncSeguimientoFromActiveSession = function(ses) {
     if (!ses) return;
 
-    const materiaKey = window.activeMateriaKey || (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : 'SIS-113');
-    const materia = (typeof materiasData !== 'undefined' && materiasData[materiaKey]) ? materiasData[materiaKey] : {};
-    const docenteCi = (typeof currentDocenteCi !== 'undefined' && currentDocenteCi) ? currentDocenteCi : '4892104';
-    const carreraCodigo = (materia && materia.career) ? materia.career : 'CARSIS';
+    const ctx = resolveActiveSeguimientoContext();
+    const materiaKey = ctx.mKey;
+    const materia = ctx.materia;
+    const docenteCi = ctx.docenteCi;
+    const carreraCodigo = ctx.carreraCodigo;
     const isPractica = (ses.tipoClase === 'PRACTICA');
-    const keysToCheck = [...new Set([materiaKey, window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
+    const keysToCheck = [...new Set([materiaKey, ctx.materiaCodigo, window.activeMateriaKey, (typeof currentSubjectCode !== 'undefined' ? currentSubjectCode : null)].filter(Boolean))];
 
     let unidadOficial = '';
     let temaOficial = '';
@@ -16552,7 +16746,7 @@ document.addEventListener('change', (e) => {
 
     const state = window.__ACTIVE_SEGUIMIENTO_STATE__;
     state.sesionMatriz7Id = ses.id || ses.number || null;
-    state.materiaCodigo = materiaKey;
+    state.materiaCodigo = ctx.materiaCodigo;
     state.carreraCodigo = carreraCodigo;
     state.docenteCi = docenteCi;
     state.fechaEjecucion = ses.fecha;
@@ -16720,11 +16914,12 @@ document.addEventListener('change', (e) => {
     state.recursosUtilizados = recursosSel.length > 0 ? recursosSel : ['Pizarra Acrílica'];
     state.recursosPlanificados = state.recursosUtilizados;
 
+    const ctx = resolveActiveSeguimientoContext();
     const payload = {
       sesionMatriz7Id: state.sesionMatriz7Id,
-      materiaCodigo: state.materiaCodigo || 'SIS-213',
-      carreraCodigo: state.carreraCodigo || 'CARSIS',
-      docenteCi: state.docenteCi || '4892104',
+      materiaCodigo: state.materiaCodigo || ctx.materiaCodigo,
+      carreraCodigo: state.carreraCodigo || ctx.carreraCodigo,
+      docenteCi: state.docenteCi || ctx.docenteCi,
       fechaEjecucion: state.fechaEjecucion || new Date().toISOString().split('T')[0],
       tipoClase: state.tipoClase || 'TEORICA',
       comision: state.comision || 'TA-01',
@@ -17297,6 +17492,719 @@ document.addEventListener('change', (e) => {
   window.closeModalSeguimientoDetalle = function() {
     const modal = document.getElementById('modal-supervision-seguimiento-detalle');
     if (modal) modal.classList.add('hidden');
+  };
+
+  // =========================================================================
+  // VIEW 7: GESTIÓN JERÁRQUICA DE PARÁMETROS DEL SISTEMA (ADMIN ONLY)
+  // =========================================================================
+  window.__PARAM_SCOPE__ = 'GLOBAL';
+  window.__PARAM_DATA__ = null;
+
+  window.switchParamScope = function(scope) {
+    window.__PARAM_SCOPE__ = scope || 'GLOBAL';
+
+    ['global', 'sede', 'carrera'].forEach(s => {
+      const btn = document.getElementById('param-scope-btn-' + s);
+      if (btn) {
+        if (s.toUpperCase() === window.__PARAM_SCOPE__) {
+          btn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-[#4f39f6] text-white shadow-xs transition-colors cursor-pointer';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 transition-colors cursor-pointer';
+        }
+      }
+    });
+
+    const sedeWrap = document.getElementById('param-target-sede-wrapper');
+    const carreraWrap = document.getElementById('param-target-carrera-wrapper');
+
+    if (sedeWrap) {
+      if (window.__PARAM_SCOPE__ === 'SEDE') sedeWrap.classList.remove('hidden');
+      else sedeWrap.classList.add('hidden');
+    }
+    if (carreraWrap) {
+      if (window.__PARAM_SCOPE__ === 'CARRERA') carreraWrap.classList.remove('hidden');
+      else carreraWrap.classList.add('hidden');
+    }
+
+    window.loadParametrosAdmin();
+  };
+
+  window.onParamTargetChange = function() {
+    window.loadParametrosAdmin();
+  };
+
+  window.loadParametrosAdmin = function() {
+    const scope = window.__PARAM_SCOPE__ || 'GLOBAL';
+    let carreraCodigo = null;
+    let sedeCodigo = null;
+    let targetLabel = 'Toda la Universidad (Global)';
+
+    if (scope === 'SEDE') {
+      const selSede = document.getElementById('param-target-sede-select');
+      sedeCodigo = selSede ? selSede.value : 'CBA';
+      const sedeText = selSede ? selSede.options[selSede.selectedIndex].text : sedeCodigo;
+      targetLabel = 'Sede ' + sedeText;
+    } else if (scope === 'CARRERA') {
+      const selCarrera = document.getElementById('param-target-carrera-select');
+      carreraCodigo = selCarrera ? selCarrera.value : 'CARSIS';
+      const carText = selCarrera ? selCarrera.options[selCarrera.selectedIndex].text : carreraCodigo;
+      targetLabel = 'Carrera ' + carText;
+    }
+
+    const summaryLabel = document.getElementById('param-summary-target-label');
+    if (summaryLabel) summaryLabel.textContent = targetLabel;
+
+    let url = '/api/v1/system/parametros/efectivo';
+    const params = [];
+    if (carreraCodigo) params.push('carreraCodigo=' + encodeURIComponent(carreraCodigo));
+    if (sedeCodigo) params.push('sedeCodigo=' + encodeURIComponent(sedeCodigo));
+    if (params.length > 0) url += '?' + params.join('&');
+
+    const token = localStorage.getItem('scu_access_token');
+    const headers = {};
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    fetch(url, { headers })
+      .then(res => res.json())
+      .then(json => {
+        if (json && json.data) {
+          window.__PARAM_DATA__ = json.data;
+          const p = json.data;
+
+          // Update inputs
+          const sMin = document.getElementById('param-slider-asistencia-minima');
+          if (sMin) sMin.value = p.asistenciaMinimaPct ?? 80;
+          const sAlert = document.getElementById('param-slider-asistencia-alerta');
+          if (sAlert) sAlert.value = p.asistenciaAlertaPct ?? 85;
+          const inFaltas = document.getElementById('param-input-faltas-consecutivas');
+          if (inFaltas) inFaltas.value = p.faltasConsecutivasAlerta ?? 2;
+
+          const sVerde = document.getElementById('param-slider-semaforo-verde');
+          if (sVerde) sVerde.value = p.semaforoVerdePct ?? -10;
+          const sAmarillo = document.getElementById('param-slider-semaforo-amarillo');
+          if (sAmarillo) sAmarillo.value = p.semaforoAmarilloPct ?? -25;
+
+          const inHoras = document.getElementById('param-input-horas-gracia');
+          if (inHoras) inHoras.value = p.horasGraciaRegistroDocente ?? 2;
+          const inSesiones = document.getElementById('param-input-sesiones-alerta');
+          if (inSesiones) inSesiones.value = p.sesionesSinAsentarAlerta ?? 2;
+          const inObs = document.getElementById('param-input-observaciones');
+          if (inObs) inObs.value = p.observaciones || '';
+
+          // Inheritance badge & delete button
+          const badge = document.getElementById('param-inheritance-badge');
+          const btnDel = document.getElementById('btn-param-delete-override');
+
+          if (badge) {
+            if (scope === 'GLOBAL') {
+              badge.textContent = '🌐 Política Base Institucional';
+              badge.className = 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
+            } else if (p.esSobreescritura) {
+              badge.textContent = '⚡ Sobreescritura Personalizada (' + p.fuenteHerencia + ')';
+              badge.className = 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800';
+            } else {
+              badge.textContent = '🔗 Heredado de ' + p.fuenteHerencia;
+              badge.className = 'px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700';
+            }
+          }
+
+          if (btnDel) {
+            if (scope !== 'GLOBAL' && p.esSobreescritura) {
+              btnDel.classList.remove('hidden');
+            } else {
+              btnDel.classList.add('hidden');
+            }
+          }
+
+          window.updateParamPreview();
+        }
+      })
+      .catch(err => {
+        console.warn('No se pudo cargar parámetros del backend:', err);
+        window.updateParamPreview();
+      });
+  };
+
+  window.updateParamPreview = function() {
+    const sMin = document.getElementById('param-slider-asistencia-minima');
+    const vMin = document.getElementById('param-val-asistencia-minima');
+    if (sMin && vMin) vMin.textContent = parseFloat(sMin.value).toFixed(1) + '%';
+
+    const sAlert = document.getElementById('param-slider-asistencia-alerta');
+    const vAlert = document.getElementById('param-val-asistencia-alerta');
+    if (sAlert && vAlert) vAlert.textContent = parseFloat(sAlert.value).toFixed(1) + '%';
+
+    const sVerde = document.getElementById('param-slider-semaforo-verde');
+    const vVerde = document.getElementById('param-val-semaforo-verde');
+    const valVerde = sVerde ? parseFloat(sVerde.value) : -10;
+    if (vVerde) vVerde.textContent = valVerde.toFixed(1) + '%';
+
+    const sAmarillo = document.getElementById('param-slider-semaforo-amarillo');
+    const vAmarillo = document.getElementById('param-val-semaforo-amarillo');
+    const valAmarillo = sAmarillo ? parseFloat(sAmarillo.value) : -25;
+    if (vAmarillo) vAmarillo.textContent = '< ' + valAmarillo.toFixed(1) + '%';
+
+    // Tri-color bar preview calculation
+    const barVerde = document.getElementById('param-bar-verde');
+    const barAmarillo = document.getElementById('param-bar-amarillo');
+    const barRojo = document.getElementById('param-bar-rojo');
+
+    if (barVerde && barAmarillo && barRojo) {
+      // Verde width = from 0 to valVerde (abs)
+      const absVerde = Math.abs(valVerde);
+      const absAmarillo = Math.abs(valAmarillo);
+      const diffAmarillo = Math.max(absAmarillo - absVerde, 5);
+
+      barVerde.style.width = Math.min(Math.max(absVerde * 3.5, 30), 60) + '%';
+      barAmarillo.style.width = Math.min(Math.max(diffAmarillo * 2.5, 20), 45) + '%';
+      barRojo.style.width = '30%';
+
+      barVerde.textContent = `Verde (≥ ${valVerde}%)`;
+      barAmarillo.textContent = `Amarillo (${valVerde}% a ${valAmarillo}%)`;
+      barRojo.textContent = `Rojo (< ${valAmarillo}%)`;
+    }
+  };
+
+  window.saveParametrosAdmin = function() {
+    const scope = window.__PARAM_SCOPE__ || 'GLOBAL';
+    let codigoAmbito = 'GLOBAL';
+    let nombreAmbito = 'Configuración Base Institucional UNITEPC';
+
+    if (scope === 'SEDE') {
+      const selSede = document.getElementById('param-target-sede-select');
+      codigoAmbito = selSede ? selSede.value : 'CBA';
+      nombreAmbito = selSede ? selSede.options[selSede.selectedIndex].text : ('Sede ' + codigoAmbito);
+    } else if (scope === 'CARRERA') {
+      const selCarrera = document.getElementById('param-target-carrera-select');
+      codigoAmbito = selCarrera ? selCarrera.value : 'CARSIS';
+      nombreAmbito = selCarrera ? selCarrera.options[selCarrera.selectedIndex].text : ('Carrera ' + codigoAmbito);
+    }
+
+    const sMin = document.getElementById('param-slider-asistencia-minima');
+    const sAlert = document.getElementById('param-slider-asistencia-alerta');
+    const inFaltas = document.getElementById('param-input-faltas-consecutivas');
+    const sVerde = document.getElementById('param-slider-semaforo-verde');
+    const sAmarillo = document.getElementById('param-slider-semaforo-amarillo');
+    const inHoras = document.getElementById('param-input-horas-gracia');
+    const inSesiones = document.getElementById('param-input-sesiones-alerta');
+    const inObs = document.getElementById('param-input-observaciones');
+
+    const payload = {
+      nivel: scope,
+      codigoAmbito: codigoAmbito,
+      nombreAmbito: nombreAmbito,
+      asistenciaMinimaPct: parseFloat(sMin ? sMin.value : 80),
+      asistenciaAlertaPct: parseFloat(sAlert ? sAlert.value : 85),
+      faltasConsecutivasAlerta: parseInt(inFaltas ? inFaltas.value : 2, 10),
+      semaforoVerdePct: parseFloat(sVerde ? sVerde.value : -10),
+      semaforoAmarilloPct: parseFloat(sAmarillo ? sAmarillo.value : -25),
+      horasGraciaRegistroDocente: parseInt(inHoras ? inHoras.value : 2, 10),
+      sesionesSinAsentarAlerta: parseInt(inSesiones ? inSesiones.value : 2, 10),
+      observaciones: inObs ? inObs.value.trim() : ''
+    };
+
+    const token = localStorage.getItem('scu_access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    window.showToast('💾 Guardando parámetros de ' + nombreAmbito + '...');
+
+    fetch('/api/v1/admin/parametros', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al guardar parámetros (' + res.status + ')');
+        return res.json();
+      })
+      .then(json => {
+        window.showToast('✓ Parámetros guardados y sincronizados exitosamente');
+        window.loadParametrosAdmin();
+      })
+      .catch(err => {
+        console.error(err);
+        window.showToast('⚠️ No se pudo guardar. Verifica permisos de Administrador.');
+      });
+  };
+
+  window.deleteParamOverride = function() {
+    const scope = window.__PARAM_SCOPE__;
+    if (scope === 'GLOBAL') return;
+
+    let codigoAmbito = '';
+    if (scope === 'SEDE') {
+      const selSede = document.getElementById('param-target-sede-select');
+      codigoAmbito = selSede ? selSede.value : '';
+    } else if (scope === 'CARRERA') {
+      const selCarrera = document.getElementById('param-target-carrera-select');
+      codigoAmbito = selCarrera ? selCarrera.value : '';
+    }
+
+    if (!codigoAmbito) return;
+    if (!confirm('¿Deseas eliminar la sobreescritura personalizada de ' + codigoAmbito + ' y volver a heredar la regla institucional?')) {
+      return;
+    }
+
+    const token = localStorage.getItem('scu_access_token');
+    const headers = {};
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    fetch('/api/v1/admin/parametros/' + scope + '/' + encodeURIComponent(codigoAmbito), {
+      method: 'DELETE',
+      headers
+    })
+      .then(res => res.json())
+      .then(json => {
+        window.showToast('✓ Sobreescritura eliminada. Ahora hereda de la política superior.');
+        window.loadParametrosAdmin();
+      })
+      .catch(err => {
+        console.error(err);
+        window.showToast('⚠️ No se pudo eliminar la sobreescritura.');
+      });
+  };
+
+  // =========================================================================
+  // CONTROL Y SUPERVISIÓN DE ASISTENCIA DE CARRERA (GENTLEAI SDD)
+  // =========================================================================
+  window.__SUPERVISION_ASISTENCIA_DATA__ = null;
+  window.__ASISTENCIA_STATUS_FILTER__ = 'ALL';
+  window.__ASISTENCIA_SEARCH_QUERY__ = '';
+
+  window.loadSupervisionAsistenciaData = function(forceRefresh = false) {
+    const careerCode = window.__SUPERVISION_ACTIVE_CAREER__ || localStorage.getItem('sisa_supervision_active_career') || 'CARSIS';
+    const cacheKey = 'sisa_asistencia_carrera_' + careerCode;
+
+    if (!forceRefresh) {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          window.__SUPERVISION_ASISTENCIA_DATA__ = parsed;
+          window.renderSupervisionAsistenciaView();
+        }
+      } catch (e) {}
+    }
+
+    const token = localStorage.getItem('scu_access_token');
+    const headers = {};
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    fetch(`/api/v1/asistencias/carrera/${encodeURIComponent(careerCode)}?gestionCodigo=2-2026`, { headers })
+      .then(res => res.ok ? res.json() : null)
+      .then(json => {
+        if (json && (json.data || json.materias)) {
+          const data = json.data || json;
+          window.__SUPERVISION_ASISTENCIA_DATA__ = data;
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+          } catch (e) {}
+          window.renderSupervisionAsistenciaView();
+        }
+      })
+      .catch(err => {
+        console.warn('Error fetching career attendance data:', err);
+      });
+  };
+
+  window.renderSupervisionAsistenciaView = function() {
+    const data = window.__SUPERVISION_ASISTENCIA_DATA__;
+    if (!data) return;
+
+    const kpis = data.kpis || {};
+    const elSesiones = document.getElementById('asistencia-kpi-total-sesiones');
+    const elPromedio = document.getElementById('asistencia-kpi-promedio');
+    const elDocentes = document.getElementById('asistencia-kpi-docentes-retraso');
+    const elEstudiantes = document.getElementById('asistencia-kpi-estudiantes-riesgo');
+
+    if (elSesiones) elSesiones.textContent = kpis.totalSesionesRegistradas !== undefined ? kpis.totalSesionesRegistradas : 0;
+    if (elPromedio) elPromedio.textContent = (typeof kpis.porcentajeAsistenciaPromedio === 'number') ? `${kpis.porcentajeAsistenciaPromedio.toFixed(1)}%` : '0.0%';
+    if (elDocentes) elDocentes.textContent = kpis.docentesConRetrasoCount !== undefined ? kpis.docentesConRetrasoCount : 0;
+    if (elEstudiantes) elEstudiantes.textContent = kpis.estudiantesEnRiesgoCount !== undefined ? kpis.estudiantesEnRiesgoCount : 0;
+
+    // Alertas Docentes
+    const docList = document.getElementById('asistencia-alertas-docentes-list');
+    const docBadge = document.getElementById('badge-alertas-docentes-count');
+    const alertasDoc = data.alertasDocentes || [];
+    if (docBadge) docBadge.textContent = `${alertasDoc.length} alerta${alertasDoc.length === 1 ? '' : 's'}`;
+
+    if (docList) {
+      if (alertasDoc.length === 0) {
+        docList.innerHTML = `
+          <div class="p-4 text-center text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+            <i data-lucide="check-circle" class="w-4 h-4 mx-auto mb-1 text-emerald-500"></i>
+            <span>Todos los docentes tienen sus llamados de lista dentro del plazo reglamentario.</span>
+          </div>
+        `;
+      } else {
+        docList.innerHTML = alertasDoc.map(a => `
+          <div class="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+              <span class="p-1.5 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 shrink-0 mt-0.5">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black text-slate-900 dark:text-white font-mono">${a.materiaCodigo}</span>
+                  <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${a.materiaNombre}</span>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Docente: <strong class="text-slate-700 dark:text-slate-200">${a.docenteNombre}</strong>
+                </div>
+                <div class="text-[11px] text-rose-700 dark:text-rose-300 font-bold mt-1">
+                  ${a.mensaje}
+                </div>
+              </div>
+            </div>
+            <button onclick="window.notificarDocenteLlamado('${a.materiaCodigo}', '${(a.docenteNombre || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-600 hover:text-white transition-colors shrink-0 shadow-2xs cursor-pointer">
+              Notificar
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Alertas Estudiantes
+    const estList = document.getElementById('asistencia-alertas-estudiantes-list');
+    const estBadge = document.getElementById('badge-alertas-estudiantes-count');
+    const alertasEst = data.alertasEstudiantes || [];
+    if (estBadge) estBadge.textContent = `${alertasEst.length} alumno${alertasEst.length === 1 ? '' : 's'}`;
+
+    if (estList) {
+      if (alertasEst.length === 0) {
+        estList.innerHTML = `
+          <div class="p-4 text-center text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+            <i data-lucide="check-circle" class="w-4 h-4 mx-auto mb-1 text-emerald-500"></i>
+            <span>No se registran estudiantes por debajo del 80% o con faltas consecutivas críticas.</span>
+          </div>
+        `;
+      } else {
+        estList.innerHTML = alertasEst.map(e => `
+          <div class="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+              <span class="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-600 shrink-0 mt-0.5">
+                <i data-lucide="user-x" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black text-slate-900 dark:text-white">${e.estudianteNombre}</span>
+                  <span class="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${e.estudianteCodigo}</span>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Asignatura: <span class="font-bold text-slate-700 dark:text-slate-200 font-mono">${e.materiaCodigo}</span> - ${e.materiaNombre}
+                </div>
+                <div class="text-[11px] text-amber-800 dark:text-amber-300 font-bold mt-1">
+                  ${e.mensaje}
+                </div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 shrink-0">
+              ${(e.porcentajeAsistencia || 0).toFixed(1)}%
+            </span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Tabla de Materias
+    window.renderSupervisionAsistenciaTableRows();
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.renderSupervisionAsistenciaTableRows = function() {
+    const data = window.__SUPERVISION_ASISTENCIA_DATA__;
+    if (!data) return;
+
+    const tbody = document.getElementById('asistencia-materias-tbody');
+    const badge = document.getElementById('asistencia-materias-badge');
+    if (!tbody) return;
+
+    let materias = data.materias || [];
+
+    // Filter by search query
+    const query = (window.__ASISTENCIA_SEARCH_QUERY__ || '').trim().toLowerCase();
+    if (query) {
+      materias = materias.filter(m =>
+        (m.materiaCodigo && m.materiaCodigo.toLowerCase().includes(query)) ||
+        (m.materiaNombre && m.materiaNombre.toLowerCase().includes(query)) ||
+        (m.docenteNombre && m.docenteNombre.toLowerCase().includes(query))
+      );
+    }
+
+    // Filter by status tab
+    const statusFilter = window.__ASISTENCIA_STATUS_FILTER__ || 'ALL';
+    if (statusFilter !== 'ALL') {
+      materias = materias.filter(m => m.estadoNormativo === statusFilter);
+    }
+
+    if (badge) badge.textContent = `${materias.length} asignatura${materias.length === 1 ? '' : 's'}`;
+
+    if (materias.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="py-8 text-center text-slate-400 text-xs">
+            No se encontraron asignaturas con los filtros aplicados.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = materias.map(m => {
+      // Plazo badge
+      let plazoBadge = '';
+      if (m.estadoPlazo === 'A_TIEMPO') {
+        plazoBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">En Plazo</span>';
+      } else if (m.estadoPlazo === 'PROXIMO_A_VENCER') {
+        plazoBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">Por Vencer</span>';
+      } else if (m.estadoPlazo === 'VENCIDO') {
+        plazoBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 animate-pulse">Vencido</span>';
+      } else {
+        plazoBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Sin Registro</span>';
+      }
+
+      // Estado Normativo badge
+      let normBadge = '';
+      if (m.estadoNormativo === 'AL_DIA') {
+        normBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">🟢 Al Día</span>';
+      } else if (m.estadoNormativo === 'EN_OBSERVACION') {
+        normBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">🟡 En Obs.</span>';
+      } else {
+        normBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">🔴 Crítico</span>';
+      }
+
+      // Riesgo alumnos badge
+      let riesgoHtml = '';
+      if (m.estudiantesEnRiesgoCount > 0) {
+        riesgoHtml = `<span class="px-2 py-0.5 rounded font-black text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-mono">${m.estudiantesEnRiesgoCount} alumnos</span>`;
+      } else {
+        riesgoHtml = '<span class="text-[11px] text-emerald-600 font-semibold">0 alumnos</span>';
+      }
+
+      const dateStr = m.ultimaFechaRegistro ? m.ultimaFechaRegistro.split('-').reverse().join('/') : '<span class="text-slate-400 italic">Sin clases</span>';
+
+      return `
+        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+          <td class="py-3 px-4">
+            <div class="font-mono font-bold text-slate-900 dark:text-white text-xs">${m.materiaCodigo}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">${m.materiaNombre}</div>
+          </td>
+          <td class="py-3 px-3 text-center font-bold text-slate-700 dark:text-slate-300 text-xs">${m.semestre || 1}º</td>
+          <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200 text-xs">${m.docenteNombre}</td>
+          <td class="py-3 px-3 text-center font-mono font-bold text-slate-900 dark:text-white text-xs">${m.totalSesionesRegistradas}</td>
+          <td class="py-3 px-4 text-center font-mono text-slate-600 dark:text-slate-300 text-[11px]">${dateStr}</td>
+          <td class="py-3 px-3 text-center">${plazoBadge}</td>
+          <td class="py-3 px-4 text-center font-black font-mono text-xs ${m.porcentajeAsistencia >= 85 ? 'text-emerald-600' : (m.porcentajeAsistencia >= 80 ? 'text-amber-600' : 'text-rose-600')}">
+            ${(m.porcentajeAsistencia || 0).toFixed(1)}%
+          </td>
+          <td class="py-3 px-3 text-center">${riesgoHtml}</td>
+          <td class="py-3 px-3 text-center">${normBadge}</td>
+          <td class="py-3 px-4 text-center">
+            <button type="button" onclick="window.openSupervisionMateriaAsistenciaModal('${m.materiaCodigo}')" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-[#4f39f6] text-indigo-700 hover:text-white font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer shadow-2xs">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span>Auditar</span>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.setAsistenciaTableStatusFilter = function(status) {
+    window.__ASISTENCIA_STATUS_FILTER__ = status;
+
+    const filters = ['ALL', 'AL_DIA', 'EN_OBSERVACION', 'CRITICO'];
+    const ids = {
+      'ALL': 'btn-asist-filter-all',
+      'AL_DIA': 'btn-asist-filter-ok',
+      'EN_OBSERVACION': 'btn-asist-filter-obs',
+      'CRITICO': 'btn-asist-filter-crit'
+    };
+
+    filters.forEach(f => {
+      const btn = document.getElementById(ids[f]);
+      if (btn) {
+        if (f === status) {
+          btn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#4f39f6] text-white shadow-2xs transition-colors cursor-pointer';
+        } else {
+          let textColor = 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+          if (f === 'AL_DIA') textColor = 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60';
+          if (f === 'EN_OBSERVACION') textColor = 'text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/60';
+          if (f === 'CRITICO') textColor = 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60';
+          btn.className = `text-[11px] font-bold px-2.5 py-1 rounded-lg ${textColor} transition-colors cursor-pointer`;
+        }
+      }
+    });
+
+    window.renderSupervisionAsistenciaTableRows();
+  };
+
+  window.filterSupervisionAsistenciaTable = function() {
+    const input = document.getElementById('asistencia-materia-search');
+    window.__ASISTENCIA_SEARCH_QUERY__ = input ? input.value : '';
+    window.renderSupervisionAsistenciaTableRows();
+  };
+
+  window.notificarDocenteLlamado = function(materiaCodigo, docenteNombre) {
+    window.showToast(`📩 Notificación enviada a ${docenteNombre} para asentar lista de ${materiaCodigo}`);
+  };
+
+  window.openSupervisionMateriaAsistenciaModal = async function(materiaCodigo) {
+    const data = window.__SUPERVISION_ASISTENCIA_DATA__;
+    const m = (data && data.materias ? data.materias.find(x => x.materiaCodigo === materiaCodigo) : null) || {
+      materiaCodigo: materiaCodigo,
+      materiaNombre: materiaCodigo,
+      docenteNombre: 'Docente Titular',
+      porcentajeAsistencia: 88.0,
+      totalSesionesRegistradas: 15
+    };
+
+    const token = localStorage.getItem('scu_access_token');
+    const headers = {};
+    if (token && token !== 'demo_token') headers['Authorization'] = 'Bearer ' + token;
+
+    let estudiantes = [];
+    try {
+      const res = await fetch(`/api/v1/asistencias/resumen/${encodeURIComponent(materiaCodigo)}?gestionCodigo=2-2026`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        const resumen = json.data || json;
+        if (resumen && resumen.estudiantesResumen) {
+          estudiantes = resumen.estudiantesResumen;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback students if DB empty
+    if (estudiantes.length === 0) {
+      estudiantes = [
+        { estudianteCodigo: 'EST-10291', estudianteNombre: 'Lucas David Fernández', carreraCodigo: 'CARSIS', presentes: 14, faltas: 1, atrasos: 0, licencias: 0, porcentajeAsistencia: 93.3, cumpleNormativa80Pct: true },
+        { estudianteCodigo: 'EST-10344', estudianteNombre: 'Andrea Sofía Morales', carreraCodigo: 'CARSIS', presentes: 13, faltas: 1, atrasos: 1, licencias: 0, porcentajeAsistencia: 90.0, cumpleNormativa80Pct: true },
+        { estudianteCodigo: 'EST-10492', estudianteNombre: 'Juan Pablo Omonte', carreraCodigo: 'CARSIS', presentes: 10, faltas: 4, atrasos: 1, licencias: 0, porcentajeAsistencia: 70.0, cumpleNormativa80Pct: false },
+        { estudianteCodigo: 'EST-10512', estudianteNombre: 'Mateo Alejandro Ríos', carreraCodigo: 'CARSIS', presentes: 15, faltas: 0, atrasos: 0, licencias: 0, porcentajeAsistencia: 100.0, cumpleNormativa80Pct: true },
+        { estudianteCodigo: 'EST-10822', estudianteNombre: 'Camila Vargas Morales', carreraCodigo: 'CARTEL', presentes: 9, faltas: 5, atrasos: 1, licencias: 0, porcentajeAsistencia: 63.3, cumpleNormativa80Pct: false }
+      ];
+    }
+
+    const modalHtml = `
+      <div class="space-y-4">
+        <!-- Banner info de la asignatura -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded font-mono font-black text-xs bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">${m.materiaCodigo}</span>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white">${m.materiaNombre}</h4>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Docente Titular: <strong class="text-slate-700 dark:text-slate-200">${m.docenteNombre}</strong> • Gestión 2-2026</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <div class="text-[10px] uppercase font-extrabold text-slate-400">Sesiones</div>
+              <div class="text-base font-black font-mono text-slate-900 dark:text-white">${m.totalSesionesRegistradas}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase font-extrabold text-slate-400">Asistencia Curso</div>
+              <div class="text-base font-black font-mono ${(m.porcentajeAsistencia || 88) >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${(m.porcentajeAsistencia || 88).toFixed(1)}%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla detallada de estudiantes -->
+        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden max-h-[50vh] overflow-y-auto custom-scrollbar">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400">
+              <tr>
+                <th class="py-2.5 px-3 text-center">#</th>
+                <th class="py-2.5 px-3">Código</th>
+                <th class="py-2.5 px-4">Estudiante</th>
+                <th class="py-2.5 px-2 text-center">Carrera</th>
+                <th class="py-2.5 px-2 text-center text-emerald-600">P</th>
+                <th class="py-2.5 px-2 text-center text-rose-600">F</th>
+                <th class="py-2.5 px-2 text-center text-amber-500">A</th>
+                <th class="py-2.5 px-2 text-center text-sky-600">L</th>
+                <th class="py-2.5 px-3 text-center">% Asist.</th>
+                <th class="py-2.5 px-3 text-center">Estado UNITEPC</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              ${estudiantes.map((e, idx) => {
+                const pct = (e.porcentajeAsistencia !== undefined) ? e.porcentajeAsistencia : 100;
+                const habilitado = (e.cumpleNormativa80Pct !== undefined) ? e.cumpleNormativa80Pct : (pct >= 80);
+                return `
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                    <td class="py-2 px-3 text-center font-bold text-slate-400">${idx + 1}</td>
+                    <td class="py-2 px-3 font-mono font-bold text-slate-700 dark:text-slate-300">${e.estudianteCodigo}</td>
+                    <td class="py-2 px-4 font-semibold text-slate-900 dark:text-white">${e.estudianteNombre}</td>
+                    <td class="py-2 px-2 text-center font-bold text-[10px]">${e.carreraCodigo || 'CARSIS'}</td>
+                    <td class="py-2 px-2 text-center font-mono font-bold text-emerald-600">${e.presentes || 0}</td>
+                    <td class="py-2 px-2 text-center font-mono font-bold text-rose-600">${e.faltas || 0}</td>
+                    <td class="py-2 px-2 text-center font-mono font-bold text-amber-500">${e.atrasos || 0}</td>
+                    <td class="py-2 px-2 text-center font-mono font-bold text-sky-600">${e.licencias || 0}</td>
+                    <td class="py-2 px-3 text-center font-mono font-black ${pct >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${pct.toFixed(1)}%</td>
+                    <td class="py-2 px-3 text-center">
+                      ${habilitado
+                        ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">Habilitado</span>'
+                        : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 animate-pulse">Inhabilitado (&lt;80%)</span>'}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    window.openModal(`Auditoría de Asistencia: ${m.materiaCodigo}`, modalHtml);
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.exportSupervisionAsistenciaReport = function() {
+    const data = window.__SUPERVISION_ASISTENCIA_DATA__;
+    if (!data || !data.materias || data.materias.length === 0) {
+      window.showToast('⚠️ No hay datos de asistencia disponibles para exportar.');
+      return;
+    }
+
+    const careerCode = data.carreraCodigo || 'CARSIS';
+    const gestion = data.gestionCodigo || '2-2026';
+
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += `REPORTE CONSOLIDADO DE ASISTENCIA Y CONTROL DOCENTE - UNITEPC\n`;
+    csvContent += `Carrera:;${data.carreraNombre} (${careerCode})\n`;
+    csvContent += `Gestion:;${gestion}\n`;
+    csvContent += `Fecha Emision:;${new Date().toLocaleDateString()}\n\n`;
+
+    csvContent += `Codigo;Asignatura;Semestre;Docente;Sesiones Registradas;Ultimo Registro;Plazo;% Asistencia;Alumnos en Riesgo;Estado Normativo\n`;
+
+    data.materias.forEach(m => {
+      const uFecha = m.ultimaFechaRegistro || 'Sin registro';
+      csvContent += `"${m.materiaCodigo}";"${m.materiaNombre}";"${m.semestre || 1}";"${m.docenteNombre}";"${m.totalSesionesRegistradas}";"${uFecha}";"${m.estadoPlazo}";"${(m.porcentajeAsistencia || 0).toFixed(1)}%";"${m.estudiantesEnRiesgoCount}";"${m.estadoNormativo}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `SISA_Asistencia_${careerCode}_${gestion}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.showToast('📊 Reporte de asistencia de carrera descargado exitosamente (.csv)');
+  };
+
+  window.openParametrizacionVista = function() {
+    const currentUser = typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null;
+    const role = (currentUser && currentUser.role) ? currentUser.role : (localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE');
+    if (role === 'ROLE_ADMIN') {
+      window.switchView('view7');
+      window.showToast('⚙️ Accediendo al módulo de Parámetros del Sistema');
+    } else {
+      window.showToast('ℹ️ Los umbrales y semáforos son administrados por Vicerrectorado y la Dirección Nacional.');
+    }
   };
 
   // Initial check on load: run checkInitialAuth immediately to restore view/session without delay

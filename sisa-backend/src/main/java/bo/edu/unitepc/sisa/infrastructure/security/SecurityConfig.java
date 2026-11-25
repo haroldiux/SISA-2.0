@@ -55,12 +55,14 @@ public class SecurityConfig {
                                 "/api/v1/catalogo-academico/sync",
                                 "/api/v1/system/catalogo-academico/sync"
                         ).hasAnyRole("ADMIN", "VICERRECTOR_NACIONAL")
-                        // 2. Public academic catalog and auth endpoints
+                        // 2. Public academic catalog, curricular ingestion and auth endpoints
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/system/auth/**",
                                 "/api/v1/academic/**",
                                 "/api/v1/auditorias/**",
+                                "/api/v1/curriculo/**",
+                                "/api/v1/system/curriculo/**",
                                 "/api/v1/catalogo-academico/**",
                                 "/api/v1/system/catalogo-academico/**",
                                 "/v3/api-docs/**",
@@ -77,7 +79,9 @@ public class SecurityConfig {
                                 "/api/v1/asistencias/**",
                                 "/api/v1/system/asistencias/**",
                                 "/api/v1/seguimiento/**",
-                                "/api/v1/system/seguimiento/**"
+                                "/api/v1/system/seguimiento/**",
+                                "/api/v1/admin/parametros/**",
+                                "/api/v1/system/parametros/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

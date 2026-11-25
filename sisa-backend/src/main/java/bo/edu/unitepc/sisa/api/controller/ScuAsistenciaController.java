@@ -1,11 +1,13 @@
 package bo.edu.unitepc.sisa.api.controller;
 
+import bo.edu.unitepc.sisa.api.dto.AsistenciaCarreraReporteDto;
 import bo.edu.unitepc.sisa.api.dto.AsistenciaResumenDto;
 import bo.edu.unitepc.sisa.api.dto.AsistenciaSesionDto;
 import bo.edu.unitepc.sisa.api.request.GuardarAsistenciaRequest;
 import bo.edu.unitepc.sisa.builder.ResourceBuilder;
 import bo.edu.unitepc.sisa.builder.ResourcesBuilder;
 import bo.edu.unitepc.sisa.domain.repository.AsistenciaSesionRepository;
+import bo.edu.unitepc.sisa.service.command.ScuGetAsistenciaCarreraCmd;
 import bo.edu.unitepc.sisa.service.command.ScuGetAsistenciaResumenCmd;
 import bo.edu.unitepc.sisa.service.command.ScuGetAsistenciaSesionCmd;
 import bo.edu.unitepc.sisa.service.command.ScuSaveAsistenciaCmd;
@@ -34,16 +36,19 @@ public class ScuAsistenciaController {
     private final ScuSaveAsistenciaCmd saveAsistenciaCmd;
     private final ScuGetAsistenciaSesionCmd getAsistenciaSesionCmd;
     private final ScuGetAsistenciaResumenCmd getAsistenciaResumenCmd;
+    private final ScuGetAsistenciaCarreraCmd getAsistenciaCarreraCmd;
     private final AsistenciaSesionRepository sesionRepository;
 
     public ScuAsistenciaController(
             ScuSaveAsistenciaCmd saveAsistenciaCmd,
             ScuGetAsistenciaSesionCmd getAsistenciaSesionCmd,
             ScuGetAsistenciaResumenCmd getAsistenciaResumenCmd,
+            ScuGetAsistenciaCarreraCmd getAsistenciaCarreraCmd,
             AsistenciaSesionRepository sesionRepository) {
         this.saveAsistenciaCmd = saveAsistenciaCmd;
         this.getAsistenciaSesionCmd = getAsistenciaSesionCmd;
         this.getAsistenciaResumenCmd = getAsistenciaResumenCmd;
+        this.getAsistenciaCarreraCmd = getAsistenciaCarreraCmd;
         this.sesionRepository = sesionRepository;
     }
 
@@ -101,6 +106,18 @@ public class ScuAsistenciaController {
         return ResponseEntity.ok(
                 ResourceBuilder.of(resumen)
                         .message("Resumen de asistencia y cumplimiento 80% obtenido exitosamente")
+                        .build()
+        );
+    }
+
+    @GetMapping("/carrera/{carreraCodigo}")
+    public ResponseEntity<Map<String, Object>> getAsistenciaCarrera(
+            @PathVariable String carreraCodigo,
+            @RequestParam(defaultValue = "2-2026") String gestionCodigo) {
+        AsistenciaCarreraReporteDto reporte = this.getAsistenciaCarreraCmd.execute(carreraCodigo, gestionCodigo);
+        return ResponseEntity.ok(
+                ResourceBuilder.of(reporte)
+                        .message("Reporte de supervisión de asistencia de carrera obtenido exitosamente")
                         .build()
         );
     }

@@ -60,7 +60,20 @@ public class PacPracticoParser implements PacParserStrategy {
         try {
             byte[] bytes = inputStream.readAllBytes();
             try (XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
-                XSSFSheet sh = wb.getSheet("PAC");
+                XSSFSheet sh = null;
+                // 1. Prioritize sheet explicitly marked "Opción 2"
+                for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                    String name = wb.getSheetName(i).toUpperCase();
+                    if (name.contains("OPCION 2") || name.contains("OPCIÓN 2") || name.contains("OPCION2") || name.contains("OPCIÓN2")) {
+                        sh = wb.getSheetAt(i);
+                        break;
+                    }
+                }
+                // 2. If not found, try "PAC"
+                if (sh == null) {
+                    sh = wb.getSheet("PAC");
+                }
+                // 3. Fallback to first sheet
                 if (sh == null && wb.getNumberOfSheets() > 0) {
                     sh = wb.getSheetAt(0);
                 }
@@ -86,7 +99,17 @@ public class PacPracticoParser implements PacParserStrategy {
         try (InputStream templateIs = openTemplateStream()) {
             if (templateIs != null) {
                 try (XlsxTemplateCloner cloner = new XlsxTemplateCloner(templateIs)) {
-                    XSSFSheet sheet = cloner.getSheetAt(0);
+                    XSSFSheet sheet = null;
+                    for (int i = 0; i < cloner.getWorkbook().getNumberOfSheets(); i++) {
+                        String name = cloner.getWorkbook().getSheetName(i).toUpperCase();
+                        if (name.contains("OPCION 2") || name.contains("OPCIÓN 2")) {
+                            sheet = cloner.getSheetAt(i);
+                            break;
+                        }
+                    }
+                    if (sheet == null) sheet = cloner.getSheet("PAC");
+                    if (sheet == null) sheet = cloner.getSheetAt(0);
+
                     populatePracticoSheet(sheet, pacDto);
                     return cloner.toByteArray();
                 }
@@ -182,11 +205,39 @@ public class PacPracticoParser implements PacParserStrategy {
                 }
             } else if ("SEC_5".equals(currentSection)) {
                 if (colB.toLowerCase().contains("competencia global")) {
-                    String cg = !colC.isEmpty() ? colC : colD;
+                    String cg = !colD.isEmpty() ? colD : colC;
                     if (!cg.isEmpty()) req.setCompetenciaGlobal(cg);
                 } else if (colB.toLowerCase().contains("unidad de competencia")) {
-                    String uc = !colC.isEmpty() ? colC : colD;
+                    String uc = !colD.isEmpty() ? colD : colC;
                     if (!uc.isEmpty()) req.setUnidadCompetencia(uc);
+                } else if (!colB.isBlank() && !colB.toUpperCase().contains("ELEMENTOS DE COMPETENCIA")
+                        && !colB.toUpperCase().contains("5. ALINEACIÓN") && !colB.toUpperCase().contains("5.- ALINEACIÓN")) {
+                    // Opción 2 tabular matrix: Col B = Elemento, Col D = Criterio, Col F = Procedimental, Col H = Actitudinal, Col J = Evidencias
+                    String elem = colB.trim();
+                    String crit = colD.trim();
+                    String proc = cellStr(row, 5).trim(); // Col F (idx 5)
+                    String act  = colH.trim();
+                    String evid = colJ.trim();
+
+                    if (!elem.isEmpty()) {
+                        req.getElementosCompetencia().add(elem);
+                        if (elem.startsWith("1.") || req.getElementoCompetencia1() == null) {
+                            req.setElementoCompetencia1(elem);
+                        } else if (elem.startsWith("2.") && req.getElementoCompetencia2() == null) {
+                            req.setElementoCompetencia2(elem);
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, String>> matrizComp = (List<Map<String, String>>) req.getSeccionesIdentificacion()
+                                .computeIfAbsent("matrizCompetencias", k -> new ArrayList<>());
+                        Map<String, String> rowMap = new LinkedHashMap<>();
+                        rowMap.put("elemento", elem);
+                        rowMap.put("criterio", crit);
+                        rowMap.put("saberProcedimental", proc);
+                        rowMap.put("saberActitudinal", act);
+                        rowMap.put("evidencias", evid);
+                        matrizComp.add(rowMap);
+                    }
                 }
             } else if ("SEC_6".equals(currentSection)) {
                 // 6. CONTENIDOS DE LA PRÁCTICA: Col B = N° de la práctica, Col C = Título, Col G = Resultado
@@ -300,18 +351,27 @@ public class PacPracticoParser implements PacParserStrategy {
         if (dto.getJustificacion() != null) setCell(sheet, 24, 1, dto.getJustificacion());
         if (dto.getPropositoGeneral() != null) setCell(sheet, 28, 1, dto.getPropositoGeneral());
 
-        // Alineación Curricular
-        if (dto.getCompetenciaGlobal() != null) setCell(sheet, 32, 2, dto.getCompetenciaGlobal());
-        if (dto.getUnidadCompetencia() != null) setCell(sheet, 33, 2, dto.getUnidadCompetencia());
+        // Alineación Curricular (Opción 2)
+        if (dto.getCompetenciaGlobal() != null) setCell(sheet, 32, 3, dto.getCompetenciaGlobal());
+        if (dto.getUnidadCompetencia() != null) setCell(sheet, 33, 3, dto.getUnidadCompetencia());
 
-        // Section 8: Cronograma de la Práctica (rows 90 to 109)
+        // Elementos de Competencia (Rows 36, 41, 46, 51, 56 -> 0-based 35, 40, 45, 50, 55)
+        if (dto.getElementosCompetencia() != null && !dto.getElementosCompetencia().isEmpty()) {
+            int[] elemRows = {35, 40, 45, 50, 55};
+            for (int i = 0; i < Math.min(dto.getElementosCompetencia().size(), elemRows.length); i++) {
+                setCell(sheet, elemRows[i], 1, dto.getElementosCompetencia().get(i));
+            }
+        }
+
+        // Section 8: Cronograma de la Práctica (Opción 2: Excel rows 97 to 115 -> 0-based 96 to 114)
         if (dto.getMatriz7() != null) {
-            int rowIdx = 90;
+            int rowIdx = 96;
             for (ScuSesionMatriz7Dto s : dto.getMatriz7()) {
-                if (rowIdx > 110) break;
+                if (rowIdx > 114) break;
                 Row r = sheet.getRow(rowIdx);
                 if (r == null) r = sheet.createRow(rowIdx);
 
+                setCell(sheet, rowIdx, 1, String.valueOf(s.getSemana() != null ? s.getSemana() : (rowIdx - 95))); // Semana
                 setCell(sheet, rowIdx, 2, s.getUnidadTematica()); // Título de la práctica
                 setCell(sheet, rowIdx, 4, s.getContenidoEspecifico()); // Actividad de la práctica
                 setCell(sheet, rowIdx, 6, s.getSaberProcedimental()); // Desempeño procedimental

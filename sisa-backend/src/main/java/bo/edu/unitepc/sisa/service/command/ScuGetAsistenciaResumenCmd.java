@@ -25,12 +25,15 @@ public class ScuGetAsistenciaResumenCmd {
 
     private final AsistenciaSesionRepository sesionRepository;
     private final AsistenciaEstudianteRepository estudianteRepository;
+    private final bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService;
 
     public ScuGetAsistenciaResumenCmd(
             AsistenciaSesionRepository sesionRepository,
-            AsistenciaEstudianteRepository estudianteRepository) {
+            AsistenciaEstudianteRepository estudianteRepository,
+            bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService) {
         this.sesionRepository = sesionRepository;
         this.estudianteRepository = estudianteRepository;
+        this.parametroService = parametroService;
     }
 
     @Transactional(readOnly = true)
@@ -85,7 +88,11 @@ public class ScuGetAsistenciaResumenCmd {
                     .setScale(2, RoundingMode.HALF_UP).doubleValue()
                     : 100.0;
 
-            boolean cumple80 = porcentaje >= 80.0;
+            bo.edu.unitepc.sisa.api.dto.ParametroConfiguracionDto params =
+                    this.parametroService.resolveEffectiveConfig(carreraCod, null);
+            double umbralMinimo = (params.asistenciaMinimaPct() != null)
+                    ? params.asistenciaMinimaPct().doubleValue() : 80.0;
+            boolean cumple80 = porcentaje >= umbralMinimo;
 
             estudiantesResumen.add(new AsistenciaEstudianteResumenDto(
                     codEst,

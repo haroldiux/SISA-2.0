@@ -5,9 +5,12 @@ import bo.edu.unitepc.sisa.api.dto.SemaforoCarreraResponse.SemaforoKpisDto;
 import bo.edu.unitepc.sisa.api.dto.SemaforoCarreraResponse.SemaforoMateriaDto;
 import bo.edu.unitepc.sisa.domain.enums.ColorSemaforo;
 import bo.edu.unitepc.sisa.domain.model.Carrera;
+import bo.edu.unitepc.sisa.domain.model.SeaCarrera;
+import bo.edu.unitepc.sisa.domain.model.SeaMateria;
 import bo.edu.unitepc.sisa.domain.repository.AsignaturaRepository;
 import bo.edu.unitepc.sisa.domain.repository.CarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.PlanDeClaseRepository;
+import bo.edu.unitepc.sisa.domain.repository.SeaCarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeaMateriaRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeguimientoClaseRepository;
 import bo.edu.unitepc.sisa.domain.repository.projection.MateriaSeguimientoAggregation;
@@ -56,6 +59,12 @@ class ScuGetSemaforoCarreraCmdTest {
     @Mock
     private SeaMateriaRepository seaMateriaRepository;
 
+    @Mock
+    private SeaCarreraRepository seaCarreraRepository;
+
+    @Mock
+    private bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService;
+
     @InjectMocks
     private ScuGetSemaforoCarreraCmd cmd;
 
@@ -65,9 +74,19 @@ class ScuGetSemaforoCarreraCmdTest {
         mockCarrera.setCodigo("CARSIS");
         mockCarrera.setNombre("Ingeniería de Sistemas");
 
+        lenient().when(parametroService.resolveEffectiveConfig(any(), any())).thenReturn(
+                bo.edu.unitepc.sisa.api.dto.ParametroConfiguracionDto.builder()
+                        .asistenciaMinimaPct(new BigDecimal("80.00"))
+                        .semaforoVerdePct(new BigDecimal("-10.00"))
+                        .semaforoAmarilloPct(new BigDecimal("-25.00"))
+                        .build()
+        );
+
         lenient().when(carreraRepository.findByCodigo(anyString())).thenReturn(Optional.of(mockCarrera));
         lenient().when(asignaturaRepository.findByCarreraId(any())).thenReturn(Collections.emptyList());
-        lenient().when(seaMateriaRepository.findAll()).thenReturn(Collections.emptyList());
+        lenient().when(seaCarreraRepository.findByCodigo(anyString())).thenReturn(Collections.emptyList());
+        lenient().when(seaCarreraRepository.findFirstByCodigo(anyString())).thenReturn(Optional.empty());
+        lenient().when(seaMateriaRepository.findByCarreraId(anyString())).thenReturn(Collections.emptyList());
         lenient().when(seguimientoRepository.aggregateByCarrera(anyString())).thenReturn(Collections.emptyList());
         lenient().when(planDeClaseRepository.countPlanesByMateriaCodigo(anyString())).thenReturn(0L);
     }
@@ -211,5 +230,28 @@ class ScuGetSemaforoCarreraCmdTest {
         // Puntaje real 30.0 / 36 = 83.33% avance real vs 65.00% planeado = +18.33% delta
         assertEquals(new BigDecimal("83.33"), sis501.avanceRealPorcentaje());
         assertEquals(new BigDecimal("18.33"), sis501.diferenciaPorcentaje());
+    }
+
+    @Test
+    @DisplayName("Caso 8: Filtro estricto por carrera SEA (no mezcla materias de otras carreras ni llama findAll)")
+    void testExecute_FiltroEstrictoPorCarreraSea() {
+        Carrera mockMed = new Carrera();
+        mockMed.setCodigo("CARMED");
+        mockMed.setNombre("Medicina Humana");
+        when(carreraRepository.findByCodigo("CARMED")).thenReturn(Optional.of(mockMed));
+        when(carreraRepository.findByCodigo("MED")).thenReturn(Optional.empty());
+
+        SeaCarrera seaMed = new SeaCarrera("sea-med-1", "CARMED", "Medicina Humana", "CBA");
+        when(seaCarreraRepository.findByCodigo("CARMED")).thenReturn(List.of(seaMed));
+
+        SeaMateria med101 = new SeaMateria("m-1", "MED-101", "Anatomía Humana I", (short) 1, "syl-med-1", "sea-med-1");
+        when(seaMateriaRepository.findByCarreraId("sea-med-1")).thenReturn(List.of(med101));
+
+        SemaforoCarreraResponse response = cmd.execute("CARMED", "2-2026", 13);
+
+        verify(seaMateriaRepository, never()).findAll();
+        verify(seaMateriaRepository).findByCarreraId("sea-med-1");
+        assertEquals(1, response.materias().size());
+        assertEquals("MED-101", response.materias().get(0).materiaCodigo());
     }
 }

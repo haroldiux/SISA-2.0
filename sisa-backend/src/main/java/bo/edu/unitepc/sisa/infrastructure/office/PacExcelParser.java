@@ -83,6 +83,8 @@ public class PacExcelParser {
                 currentSection = "SEC_5";
             } else if (matchesAnchor(colB, "6.- Elementos", "6. Elementos", "6. ELEMENTOS")) {
                 currentSection = "SEC_6";
+            } else if (matchesAnchor(colB, "8. CRONOGRAMA SEMESTRAL", "8.- CRONOGRAMA SEMESTRAL", "CRONOGRAMA SEMESTRAL DE LA PRÁCTICA", "CRONOGRAMA SEMESTRAL DE LA PRACTICA")) {
+                currentSection = "SEC_8_PRACTICO";
             } else if (matchesAnchor(colB, "7.- Estructura", "7. Estructura", "7. ESTRUCTURA", "CRONOGRAMA")) {
                 currentSection = "SEC_7";
             } else if (matchesAnchor(colB, "8. Metodología", "8.- Metodología", "8. METODOLOGÍA")) {
@@ -210,6 +212,31 @@ public class PacExcelParser {
                         .instrumentoEvaluacion(instrEnum(inst))
                         .hitoEvaluativo(hitoEnum(nroTema + " " + titTema))
                         .build());
+                }
+            } else if ("SEC_8_PRACTICO".equals(currentSection)) {
+                Integer parsedWeek = parseNumericWeek(colB);
+                if (parsedWeek != null) {
+                    String tit = cellStr(row, 2); // Col C
+                    String act = cellStr(row, 4); // Col E
+                    String proc = cellStr(row, 6); // Col G
+                    String inst = cellStr(row, 8); // Col I
+                    String evid = cellStr(row, 9); // Col J
+
+                    outSessions.add(ScuSesionMatriz7Dto.builder()
+                            .semana(parsedWeek)
+                            .nroSesion(outSessions.size() + 1)
+                            .fechaProgramada(LocalDate.now())
+                            .tipoSesion(TipoSesion.PRACTICA)
+                            .unidadTematica(!tit.isBlank() ? tit : ("Práctica Semana " + parsedWeek))
+                            .contenidoEspecifico(!act.isBlank() ? act : tit)
+                            .saberConceptual(tit)
+                            .saberProcedimental(proc)
+                            .saberActitudinal("Responsabilidad y bioseguridad")
+                            .criterioDesempeno(proc)
+                            .evidenciaAprendizaje(!evid.isBlank() ? evid : "Guía evaluada")
+                            .instrumentoEvaluacion(instrEnum(inst))
+                            .hitoEvaluativo(parsedWeek == 7 ? HitoEvaluativo.PRIMER_PARCIAL : (parsedWeek == 13 ? HitoEvaluativo.SEGUNDO_PARCIAL : (parsedWeek == 18 ? HitoEvaluativo.EXAMEN_FINAL : HitoEvaluativo.REGULAR)))
+                            .build());
                 }
             } else if ("SEC_8".equals(currentSection)) {
 

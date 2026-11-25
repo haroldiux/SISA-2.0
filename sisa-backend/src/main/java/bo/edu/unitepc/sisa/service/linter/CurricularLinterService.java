@@ -8,9 +8,13 @@ import bo.edu.unitepc.sisa.api.request.ScuProgramaAnaliticoRequest;
 import bo.edu.unitepc.sisa.api.request.ScuTemaAnaliticoDto;
 import bo.edu.unitepc.sisa.api.request.ScuUnidadAprendizajeDto;
 import bo.edu.unitepc.sisa.api.request.ScuSesionMatriz7Dto;
+import bo.edu.unitepc.sisa.api.request.ScuPacDto;
 import bo.edu.unitepc.sisa.api.request.ScuPacRequest;
+import bo.edu.unitepc.sisa.api.request.ScuPlanClaseRequest;
 import bo.edu.unitepc.sisa.infrastructure.office.PacExcelParser;
+import bo.edu.unitepc.sisa.infrastructure.office.PlanesClaseExcelParser;
 import bo.edu.unitepc.sisa.infrastructure.office.ProgramaAnaliticoDocxParser;
+import bo.edu.unitepc.sisa.infrastructure.office.strategy.impl.PacPracticoParser;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -48,15 +52,23 @@ public class CurricularLinterService {
 
     private final ProgramaAnaliticoDocxParser docxParser;
     private final PacExcelParser pacExcelParser;
+    private final PlanesClaseExcelParser planesClaseParser;
+    private final PacPracticoParser pacPracticoParser;
 
     private static final Pattern UNIT_REGEX = Pattern.compile("^(?:UNIDAD\\s+(?:DE\\s+APRENDIZAJE\\s+)?)([IVXLCDM\\d]+)[.:\\s-]+(.*)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern TEMA_REGEX = Pattern.compile("^TEMA\\s+(?:N[º°.]?\\s*)?(\\d+)[.:\\s-]+(.*)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern NUMERIC_TOPIC_PREFIX = Pattern.compile("^(\\d{1,2})\\.(\\d{1,2})?[.:\\s-]+(.*)$");
     private static final Pattern APA_YEAR_REGEX = Pattern.compile("\\((19\\d{2}|20\\d{2})\\)");
 
-    public CurricularLinterService(ProgramaAnaliticoDocxParser docxParser, PacExcelParser pacExcelParser) {
+    public CurricularLinterService(
+            ProgramaAnaliticoDocxParser docxParser,
+            PacExcelParser pacExcelParser,
+            PlanesClaseExcelParser planesClaseParser,
+            PacPracticoParser pacPracticoParser) {
         this.docxParser = docxParser;
         this.pacExcelParser = pacExcelParser;
+        this.planesClaseParser = planesClaseParser;
+        this.pacPracticoParser = pacPracticoParser;
     }
 
     /**
@@ -119,6 +131,169 @@ public class CurricularLinterService {
                     .ubicacion("Estructura de archivo")
                     .descripcion("El archivo no es un documento Word (.docx) válido o se encuentra dañado: " + e.getMessage())
                     .sugerencia("Verificá que el archivo guardado en tu computadora abra normalmente en Microsoft Word antes de subirlo.")
+                    .build());
+        }
+
+        report.recalcularEstado();
+        return report;
+    }
+
+    /**
+     * Strict audit of PAC Practico Excel XLSX in memory.
+     */
+    public CurricularValidationReport validatePacPracticoXlsx(
+            byte[] fileBytes,
+            String filename,
+            Long asignacionId,
+            String expectedCourseCode,
+            String expectedCourseName,
+            Integer requiredSessions) {
+
+        int targetSessions = (requiredSessions != null && requiredSessions > 0) ? requiredSessions : 19;
+
+        CurricularValidationReport report = CurricularValidationReport.builder()
+                .tipoDocumento("PAC_PRACTICO")
+                .archivoNombre(filename)
+                .archivoTamanoBytes((long) fileBytes.length)
+                .asignacionId(asignacionId)
+                .codigoEsperado(expectedCourseCode)
+                .materiaEsperada(expectedCourseName)
+                .discrepancias(new ArrayList<>())
+                .resumenContenido(new HashMap<>())
+                .build();
+
+        try {
+            ScuPacDto parsedPac = this.pacPracticoParser.parse(new ByteArrayInputStream(fileBytes), filename);
+            List<ScuSesionMatriz7Dto> sesiones = parsedPac.getMatriz7() != null ? parsedPac.getMatriz7() : List.of();
+
+            report.setTotalSesiones(sesiones.size());
+            Set<Integer> uniqueWeeks = new HashSet<>();
+            for (ScuSesionMatriz7Dto s : sesiones) {
+                if (s.getSemana() != null) uniqueWeeks.add(s.getSemana());
+            }
+            report.setTotalSemanas(uniqueWeeks.size());
+
+            if (sesiones.isEmpty()) {
+                report.addDiscrepancia(CurricularDiscrepancy.builder()
+                        .severidad(CurricularSeverity.BLOQUEANTE)
+                        .codigoRegla("PAC_PRACTICO_SIN_SESIONES")
+                        .seccion("Cronograma Práctico")
+                        .ubicacion("Hoja de Prácticas")
+                        .descripcion("No se detectaron sesiones o guías prácticas en el archivo Excel.")
+                        .sugerencia("Verificá que el archivo contenga las sesiones de práctica o laboratorio correspondientes.")
+                        .build());
+            }
+
+            // Validar coincidencia de código de materia
+            if (expectedCourseCode != null && !expectedCourseCode.isBlank() && parsedPac.getCodigoAsignatura() != null && !parsedPac.getCodigoAsignatura().isBlank()) {
+                String cleanParsed = parsedPac.getCodigoAsignatura().replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+                String cleanExp = expectedCourseCode.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+                if (!cleanParsed.isEmpty() && !cleanExp.isEmpty() && !cleanParsed.equals(cleanExp)) {
+                    report.addDiscrepancia(CurricularDiscrepancy.builder()
+                            .severidad(CurricularSeverity.BLOQUEANTE)
+                            .codigoRegla("CODIGO_MATERIA_DISCORDANTE")
+                            .seccion("Datos Generales")
+                            .ubicacion("Código de Asignatura")
+                            .descripcion(String.format("El código de asignatura '%s' en el PAC Práctico no coincide con la materia esperada '%s'.",
+                                    parsedPac.getCodigoAsignatura(), expectedCourseCode))
+                            .sugerencia("Verificá que el archivo de PAC Práctico subido corresponda a la materia seleccionada.")
+                            .build());
+                }
+            }
+
+            int validSaberes = 0;
+            for (ScuSesionMatriz7Dto s : sesiones) {
+                if (!isBlank(s.getContenidoEspecifico()) || !isBlank(s.getUnidadTematica())) validSaberes++;
+            }
+
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("totalGuiasPracticas", sesiones.size());
+            summary.put("totalSemanas", uniqueWeeks.size());
+            summary.put("totalSaberesCompletos", validSaberes);
+            if (parsedPac.getUnidadCompetencia() != null) {
+                summary.put("unidadCompetencia", parsedPac.getUnidadCompetencia());
+            }
+            if (parsedPac.getElementosCompetencia() != null) {
+                summary.put("elementosCompetencia", parsedPac.getElementosCompetencia().size());
+            }
+            report.setResumenContenido(summary);
+
+        } catch (Exception e) {
+            log.error("Fatal error inspecting Excel PAC Practico: {}", e.getMessage(), e);
+            report.addDiscrepancia(CurricularDiscrepancy.builder()
+                    .severidad(CurricularSeverity.BLOQUEANTE)
+                    .codigoRegla("FORMATO_EXCEL_CORRUPTO")
+                    .seccion("Archivo Excel (.xlsx)")
+                    .ubicacion("Estructura de archivo")
+                    .descripcion("No se pudo leer el archivo de PAC Práctico: " + e.getMessage())
+                    .sugerencia("Asegurate de que el archivo sea un Excel (.xlsx) oficial de PAC Práctico de UNITEPC.")
+                    .build());
+        }
+
+        report.recalcularEstado();
+        return report;
+    }
+
+    /**
+     * Strict audit of Plan de Clases Excel XLSX in memory.
+     */
+    public CurricularValidationReport validatePlanClaseXlsx(
+            byte[] fileBytes,
+            String filename,
+            Long asignacionId,
+            String expectedCourseCode,
+            String expectedCourseName,
+            String planType) {
+
+        String docType = (planType != null && !planType.isBlank()) ? planType : "PLAN_CLASE";
+
+        CurricularValidationReport report = CurricularValidationReport.builder()
+                .tipoDocumento(docType)
+                .archivoNombre(filename)
+                .archivoTamanoBytes((long) fileBytes.length)
+                .asignacionId(asignacionId)
+                .codigoEsperado(expectedCourseCode)
+                .materiaEsperada(expectedCourseName)
+                .discrepancias(new ArrayList<>())
+                .resumenContenido(new HashMap<>())
+                .build();
+
+        try {
+            List<ScuPlanClaseRequest> planes = this.planesClaseParser.parsePlanes(new ByteArrayInputStream(fileBytes), 1L);
+            report.setTotalSesiones(planes.size());
+
+            if (planes.isEmpty()) {
+                report.addDiscrepancia(CurricularDiscrepancy.builder()
+                        .severidad(CurricularSeverity.BLOQUEANTE)
+                        .codigoRegla("SIN_HOJAS_DE_PLAN_DE_CLASE")
+                        .seccion("Planes de Clase")
+                        .ubicacion("Libro Excel")
+                        .descripcion("No se detectaron hojas de Unidades de Aprendizaje (ej: UA-1, UA-2...) en el archivo.")
+                        .sugerencia("Asegurate de que las hojas del libro contengan los planes por unidad (UA-1, UA-2, etc.).")
+                        .build());
+            }
+
+            int validMomentosCount = 0;
+            for (ScuPlanClaseRequest p : planes) {
+                if (p.getMomentos() != null && !p.getMomentos().isEmpty()) {
+                    validMomentosCount += p.getMomentos().size();
+                }
+            }
+
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("totalPlanesUnidad", planes.size());
+            summary.put("totalMomentosDidacticos", validMomentosCount);
+            report.setResumenContenido(summary);
+
+        } catch (Exception e) {
+            log.error("Fatal error inspecting Excel Plan de Clases: {}", e.getMessage(), e);
+            report.addDiscrepancia(CurricularDiscrepancy.builder()
+                    .severidad(CurricularSeverity.BLOQUEANTE)
+                    .codigoRegla("FORMATO_PLAN_CLASE_INVALIDO")
+                    .seccion("Archivo Excel (.xlsx)")
+                    .ubicacion("Estructura de archivo")
+                    .descripcion("Error al leer el archivo de Plan de Clases: " + e.getMessage())
+                    .sugerencia("Verificá que el archivo siga el formato oficial de microplanificación didáctica.")
                     .build());
         }
 
@@ -347,23 +522,23 @@ public class CurricularLinterService {
 
         if (!docTextUpper.contains("CARACTERIZACI") && !docTextUpper.contains("FUNDAMENTACI")) {
             report.addDiscrepancia(CurricularDiscrepancy.builder()
-                    .severidad(CurricularSeverity.BLOQUEANTE)
+                    .severidad(CurricularSeverity.ADVERTENCIA)
                     .codigoRegla("SECCION_CARACTERIZACION_FALTANTE")
                     .seccion("Puntos 1-3: Caracterización")
                     .ubicacion("Cuerpo del documento")
-                    .descripcion("Falta la sección obligatoria de 'Caracterización y Fundamentación de la Asignatura'.")
-                    .sugerencia("Asegurate de incluir el acápite de fundamentación curricular.")
+                    .descripcion("No se detectó un acápite explícito de 'Caracterización y Fundamentación de la Asignatura'.")
+                    .sugerencia("Se sugiere incluir el acápite de fundamentación curricular.")
                     .build());
         }
 
         if (!docTextUpper.contains("COMPETENCIA")) {
             report.addDiscrepancia(CurricularDiscrepancy.builder()
-                    .severidad(CurricularSeverity.BLOQUEANTE)
+                    .severidad(CurricularSeverity.ADVERTENCIA)
                     .codigoRegla("SECCION_COMPETENCIAS_FALTANTE")
                     .seccion("Punto 4: Macrocompetencias")
                     .ubicacion("Cuerpo del documento")
-                    .descripcion("Falta la sección obligatoria de 'Competencias Profesionales / Macrocompetencias'.")
-                    .sugerencia("Declarar los elementos de competencia del perfil del egresado.")
+                    .descripcion("No se detectó un acápite explícito de 'Competencias Profesionales / Macrocompetencias'.")
+                    .sugerencia("Se sugiere declarar los elementos de competencia del perfil del egresado.")
                     .build());
         }
 
@@ -393,7 +568,8 @@ public class CurricularLinterService {
     private void auditUnitsAndTopicsCorrelativity(XWPFDocument doc, CurricularValidationReport report) {
         int expectedUnitNumber = 1;
         int currentUnitNumber = 0;
-        int expectedTopicNumber = 1;
+        int unitTopicCounter = 0;
+        int lastGlobalTopicNum = 0;
         int totalTopicsCount = 0;
         int totalUnitsCount = 0;
 
@@ -434,32 +610,39 @@ public class CurricularLinterService {
 
                 currentUnitNumber = detectedUnitNum;
                 expectedUnitNumber++;
-                expectedTopicNumber = 1; // reset topic counter for the new unit
+                unitTopicCounter = 0; // reset local topic counter for new unit
             }
             // Topic Header
             else if ((mt.matches() || (upper.startsWith("TEMA") && (text.contains(":") || text.contains(".-") || text.contains(".")))) && currentUnitNumber > 0) {
                 totalTopicsCount++;
-                int detectedTopicNum = expectedTopicNumber;
+                int fallbackExpected = (lastGlobalTopicNum > 0 && lastGlobalTopicNum >= unitTopicCounter) ? (lastGlobalTopicNum + 1) : (unitTopicCounter + 1);
+                int detectedTopicNum = fallbackExpected;
                 if (mt.matches()) {
-                    detectedTopicNum = parseNumSafe(mt.group(1), expectedTopicNumber);
+                    detectedTopicNum = parseNumSafe(mt.group(1), fallbackExpected);
                 } else {
-                    detectedTopicNum = extractLeadingNum(text.replaceFirst("(?i)TEMA", ""), expectedTopicNumber);
+                    detectedTopicNum = extractLeadingNum(text.replaceFirst("(?i)TEMA", ""), fallbackExpected);
                 }
 
-                if (detectedTopicNum != expectedTopicNumber) {
+                int expectedLocal = unitTopicCounter + 1;
+                int expectedGlobal = lastGlobalTopicNum + 1;
+
+                // Valid if it matches consecutive local (1, 2, 3 in unit) OR consecutive global (1..N across course)
+                boolean matchesCorrelativity = (detectedTopicNum == expectedLocal) || (detectedTopicNum == expectedGlobal);
+
+                if (!matchesCorrelativity) {
                     report.addDiscrepancia(CurricularDiscrepancy.builder()
                             .severidad(CurricularSeverity.BLOQUEANTE)
                             .codigoRegla("SALTO_CORRELATIVO_TEMAS")
                             .seccion("Unidad " + currentUnitNumber)
                             .ubicacion("Párrafo: '" + truncate(text, 50) + "'")
-                            .descripcion(String.format("En la Unidad %d se detectó un salto correlativo: se esperaba 'Tema %d', pero figura 'Tema %d' (falta el tema intermedio o está mal numerado).",
-                                    currentUnitNumber, expectedTopicNumber, detectedTopicNum))
+                            .descripcion(String.format("En la Unidad %d se detectó un salto correlativo: figura 'Tema %d', pero se esperaba 'Tema %d' (local) o 'Tema %d' (global acumulado).",
+                                    currentUnitNumber, detectedTopicNum, expectedLocal, expectedGlobal))
                             .sugerencia("Verificá la numeración de los temas en el documento Word para asegurar que no falte ningún capítulo.")
                             .build());
-                    expectedTopicNumber = detectedTopicNum;
                 }
 
-                expectedTopicNumber++;
+                unitTopicCounter = (detectedTopicNum == expectedLocal) ? detectedTopicNum : (unitTopicCounter + 1);
+                lastGlobalTopicNum = detectedTopicNum;
             }
             // Suspicious broken topic format
             else if (currentUnitNumber > 0 && !upper.startsWith("SABER") && !upper.startsWith("CRITERIO") && !upper.startsWith("HORAS")) {

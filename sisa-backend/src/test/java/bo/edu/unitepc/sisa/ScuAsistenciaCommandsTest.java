@@ -42,13 +42,21 @@ public class ScuAsistenciaCommandsTest {
     @Mock
     private AsistenciaEstudianteRepository estudianteRepository;
 
+    @Mock
+    private bo.edu.unitepc.sisa.service.ParametroConfiguracionService parametroService;
+
     private ScuSaveAsistenciaCmd saveAsistenciaCmd;
     private ScuGetAsistenciaResumenCmd getResumenCmd;
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(this.parametroService.resolveEffectiveConfig(any(), any())).thenReturn(
+                bo.edu.unitepc.sisa.api.dto.ParametroConfiguracionDto.builder()
+                        .asistenciaMinimaPct(new java.math.BigDecimal("80.00"))
+                        .build()
+        );
         this.saveAsistenciaCmd = new ScuSaveAsistenciaCmd(this.sesionRepository);
-        this.getResumenCmd = new ScuGetAsistenciaResumenCmd(this.sesionRepository, this.estudianteRepository);
+        this.getResumenCmd = new ScuGetAsistenciaResumenCmd(this.sesionRepository, this.estudianteRepository, this.parametroService);
     }
 
     @Test
