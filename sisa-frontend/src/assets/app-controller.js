@@ -13142,6 +13142,8 @@ document.addEventListener('change', (e) => {
     // Reset errors and clear sensitive fields
     const errBox = document.getElementById('login-error-container');
     if (errBox) errBox.classList.add('hidden');
+    const userInput = document.getElementById('login-username');
+    if (userInput) userInput.value = '';
     const pwdInput = document.getElementById('login-password');
     if (pwdInput) pwdInput.value = '';
 
