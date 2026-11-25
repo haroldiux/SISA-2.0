@@ -32,15 +32,15 @@ export class AppComponent implements AfterViewInit {
     const ci = select.value;
     if (typeof (window as any).selectDocenteFromApi === 'function') {
       (window as any).selectDocenteFromApi(ci, false);
-    } else if (typeof (window as any).onDocenteSelectorChange === 'function') {
-      (window as any).onDocenteSelectorChange(ci);
+    } else if (typeof (window as any).handleDocenteSelectorChange === 'function') {
+      (window as any).handleDocenteSelectorChange(ci);
     }
   }
 
   public onSessionSelectChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
-    if (select && typeof (window as any).onAttendanceSessionSelect === 'function') {
-      (window as any).onAttendanceSessionSelect(select.value, select.selectedIndex);
+    if (select && typeof (window as any).handleAttendanceSessionSelect === 'function') {
+      (window as any).handleAttendanceSessionSelect(select.value, select.selectedIndex);
     }
   }
 

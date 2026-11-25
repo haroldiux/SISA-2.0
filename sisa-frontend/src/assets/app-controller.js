@@ -1,6 +1,6 @@
 
     // ── GLOBAL SELECTOR HOOKS ───────────────────────────────────────────
-    window.onDocenteSelectorChange = function(ci) {
+    window.handleDocenteSelectorChange = function(ci) {
       if (typeof window.selectDocenteFromApi === 'function') {
         window.selectDocenteFromApi(ci, false);
       }
@@ -7527,7 +7527,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onDocenteSelectorChange = function(ci) {
+  window.handleDocenteSelectorChange = function(ci) {
     if (typeof window.selectDocenteFromApi === 'function') {
       window.selectDocenteFromApi(ci, false);
     }
@@ -9761,7 +9761,7 @@ document.addEventListener('change', (e) => {
       selectEl.value = cCode;
     }
 
-    window.onSupervisionCareerChange = function(newCareerCode) {
+    window.handleSupervisionCareerChange = function(newCareerCode) {
       if (!newCareerCode) return;
       localStorage.setItem('sisa_supervision_active_career', newCareerCode);
       const info = window.__SUPERVISION_CAREER_MAP__[newCareerCode];
@@ -10798,7 +10798,7 @@ document.addEventListener('change', (e) => {
     if (window.lucide) window.lucide.createIcons();
   };
 
-  window.onSupervisionSedeChange = function(newSede) {
+  window.handleSupervisionSedeChange = function(newSede) {
     const branchInfo = (window.__SUPERVISION_SEDES_MAP__ && window.__SUPERVISION_SEDES_MAP__[newSede]) || { name: newSede };
     window.__SUPERVISION_ACTIVE_SEDE__ = newSede;
     if (typeof window.showToast === 'function') {
@@ -10809,7 +10809,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onSupervisionGestionChange = function(newGestion) {
+  window.handleSupervisionGestionChange = function(newGestion) {
     window.__SUPERVISION_ACTIVE_GESTION__ = newGestion;
     if (typeof window.showToast === 'function') {
       window.showToast(`📅 Gestión Académica activa: ${newGestion}`);
@@ -13645,7 +13645,7 @@ document.addEventListener('change', (e) => {
       list = list.filter(u => u.mustChangePassword === true);
     }
 
-    window.renderAdminUsersTable(list);
+    window.renderAdminUsersTable(list, 1);
   };
 
   window.renderFallbackAdminUsers = function() {
@@ -13880,14 +13880,14 @@ document.addEventListener('change', (e) => {
   };
 
   let _adminSearchDebounce = null;
-  window.onAdminSearchInput = function() {
+  window.handleAdminSearchInput = function() {
     clearTimeout(_adminSearchDebounce);
     _adminSearchDebounce = setTimeout(() => {
       window.renderAdminUsersFiltered();
     }, 200);
   };
 
-  window.onAdminRoleFilterChange = function() {
+  window.handleAdminRoleFilterChange = function() {
     window.renderAdminUsersFiltered();
   };
 
@@ -13947,7 +13947,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onAdminAsignacionSedeChange = async function() {
+  window.handleAdminAsignacionSedeChange = async function() {
     const sedeSel = document.getElementById('admin-asignacion-sede');
     const carSel = document.getElementById('admin-asignacion-carrera');
     const asigSel = document.getElementById('admin-asignacion-asignatura');
@@ -14001,7 +14001,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onAdminAsignacionCarreraChange = async function() {
+  window.handleAdminAsignacionCarreraChange = async function() {
     const sedeSel = document.getElementById('admin-asignacion-sede');
     const carSel = document.getElementById('admin-asignacion-carrera');
     const asigSel = document.getElementById('admin-asignacion-asignatura');
@@ -14428,7 +14428,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onSeaTeacherCheckChange = function() {
+  window.handleSeaTeacherCheckChange = function() {
     const checkboxes = document.querySelectorAll('.sea-teacher-checkbox');
     const checked = Array.from(checkboxes).filter(cb => cb.checked);
     const countSpan = document.getElementById('sea-selected-count');
@@ -14484,7 +14484,7 @@ document.addEventListener('change', (e) => {
       html += `
         <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
           <td class="py-3 px-4 text-center">
-            <input type="checkbox" class="sea-teacher-checkbox rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" data-ci="${ciVal}" data-status="${t.status}" onchange="if(typeof window.onSeaTeacherCheckChange==='function')window.onSeaTeacherCheckChange()">
+            <input type="checkbox" class="sea-teacher-checkbox rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer" data-ci="${ciVal}" data-status="${t.status}" onchange="if(typeof window.handleSeaTeacherCheckChange==='function')window.handleSeaTeacherCheckChange()">
           </td>
           <td class="py-3 px-4 font-mono">
             <div class="font-bold text-indigo-600 dark:text-indigo-400 text-xs">${ciVal}</div>
@@ -14515,8 +14515,8 @@ document.addEventListener('change', (e) => {
     });
 
     tbody.innerHTML = html;
-    if (typeof window.onSeaTeacherCheckChange === 'function') {
-      window.onSeaTeacherCheckChange();
+    if (typeof window.handleSeaTeacherCheckChange === 'function') {
+      window.handleSeaTeacherCheckChange();
     }
     if (window.lucide) window.lucide.createIcons();
   };
@@ -14531,19 +14531,19 @@ document.addEventListener('change', (e) => {
         cb.checked = false;
       }
     });
-    if (typeof window.onSeaTeacherCheckChange === 'function') {
-      window.onSeaTeacherCheckChange();
+    if (typeof window.handleSeaTeacherCheckChange === 'function') {
+      window.handleSeaTeacherCheckChange();
     }
   };
 
-  window.onSeaSelectAll = function(master) {
+  window.handleSeaSelectAll = function(master) {
     const isChecked = !!(master && master.checked);
     const checkboxes = document.querySelectorAll('.sea-teacher-checkbox');
     checkboxes.forEach(cb => {
       cb.checked = isChecked;
     });
-    if (typeof window.onSeaTeacherCheckChange === 'function') {
-      window.onSeaTeacherCheckChange();
+    if (typeof window.handleSeaTeacherCheckChange === 'function') {
+      window.handleSeaTeacherCheckChange();
     }
   };
 
@@ -14619,7 +14619,7 @@ document.addEventListener('change', (e) => {
   };
 
   let _seaSearchDebounce = null;
-  window.onSeaSearchInput = function() {
+  window.handleSeaSearchInput = function() {
     clearTimeout(_seaSearchDebounce);
     _seaSearchDebounce = setTimeout(() => {
       const query = (document.getElementById('sea-search-input')?.value || '').trim().toLowerCase();
@@ -16276,7 +16276,7 @@ document.addEventListener('change', (e) => {
 
     // Native change event binding to ensure execution across browser environments
     select.onchange = function() {
-      window.onAttendanceSessionSelect(this.value, this.selectedIndex);
+      window.handleAttendanceSessionSelect(this.value, this.selectedIndex);
     };
 
     if (selectedSession) {
@@ -16284,7 +16284,7 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onAttendanceSessionSelect = function(sessionKey, sessionIndex) {
+  window.handleAttendanceSessionSelect = function(sessionKey, sessionIndex) {
     const list = window.courseOfficialSessions || courseOfficialSessions || [];
     let ses = null;
     if (sessionKey) {
@@ -16403,11 +16403,11 @@ document.addEventListener('change', (e) => {
     }
   };
 
-  window.onAttendanceParamChange = function() {
+  window.handleAttendanceParamChange = function() {
     window.loadAttendanceForDate();
   };
 
-  window.onAttendanceTopicInput = function(val) {
+  window.handleAttendanceTopicInput = function(val) {
     currentAttendanceSession.tema = val;
   };
 
@@ -17514,7 +17514,7 @@ document.addEventListener('change', (e) => {
     window.loadParametrosAdmin();
   };
 
-  window.onParamTargetChange = function() {
+  window.handleParamTargetChange = function() {
     window.loadParametrosAdmin();
   };
 

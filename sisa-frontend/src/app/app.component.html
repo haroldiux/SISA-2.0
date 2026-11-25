@@ -327,7 +327,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div class="space-y-1">
               <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">SEDE</label>
-              <select id="admin-asignacion-sede" onchange="if(typeof window.onAdminAsignacionSedeChange==='function'){window.onAdminAsignacionSedeChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+              <select id="admin-asignacion-sede" onchange="if(typeof window.handleAdminAsignacionSedeChange==='function'){window.handleAdminAsignacionSedeChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
                 <option value="">Seleccionar sede...</option>
                 <option value="1" data-code="CBA">CBA • Sede Central Cochabamba</option>
                 <option value="2" data-code="LPZ">LPZ • Sede Regional La Paz</option>
@@ -342,7 +342,7 @@
             </div>
             <div class="space-y-1">
               <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">CARRERA</label>
-              <select id="admin-asignacion-carrera" disabled onchange="if(typeof window.onAdminAsignacionCarreraChange==='function'){window.onAdminAsignacionCarreraChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer">
+              <select id="admin-asignacion-carrera" disabled onchange="if(typeof window.handleAdminAsignacionCarreraChange==='function'){window.handleAdminAsignacionCarreraChange();}" class="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer">
                 <option value="">Seleccionar carrera...</option>
               </select>
             </div>
@@ -2901,7 +2901,7 @@
                     <label for="asistencia-tema-input" class="font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap flex items-center gap-1.5">
                       <i data-lucide="book-open" class="w-4 h-4 text-teal-600"></i> Tema / Contenido:
                     </label>
-                    <input type="text" id="asistencia-tema-input" placeholder="Tema o contenido pedagógico desarrollado en la sesión..." class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 outline-none" oninput="window.onAttendanceTopicInput(this.value)">
+                    <input type="text" id="asistencia-tema-input" placeholder="Tema o contenido pedagógico desarrollado en la sesión..." class="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 outline-none" oninput="window.handleAttendanceTopicInput(this.value)">
                   </div>
 
                   <!-- Hidden backward-compatibility elements for scripts -->
@@ -3390,7 +3390,7 @@
                 <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                   <i data-lucide="calendar" class="w-3 h-3 text-[#4f39f6]"></i> Gestión Académica
                 </label>
-                <select id="supervision-gestion-select" onchange="window.onSupervisionGestionChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                <select id="supervision-gestion-select" onchange="window.handleSupervisionGestionChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-black text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
                   <option value="II-2026" selected>II-2026 (Gestión Activa)</option>
                   <option value="I-2026">I-2026 (Anterior)</option>
                   <option value="II-2025">II-2025 (Histórico)</option>
@@ -3402,7 +3402,7 @@
                 <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                   <i data-lucide="building-2" class="w-3 h-3 text-[#4f39f6]"></i> Sede Académica
                 </label>
-                <select id="supervision-sede-select" onchange="window.onSupervisionSedeChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                <select id="supervision-sede-select" onchange="window.handleSupervisionSedeChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
                   <option value="CBA" selected>COCHABAMBA (CBA)</option>
                   <option value="LPZ">LA PAZ (LPZ)</option>
                   <option value="EAL">EL ALTO (EAL)</option>
@@ -3420,7 +3420,7 @@
                 <label for="supervision-career-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                   <i data-lucide="graduation-cap" class="w-3 h-3 text-[#4f39f6]"></i> Carrera
                 </label>
-                <select id="supervision-career-select" onchange="window.onSupervisionCareerChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
+                <select id="supervision-career-select" onchange="window.handleSupervisionCareerChange(this.value)" class="w-full bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer focus:border-[#4f39f6]">
                   <option value="CARSIS" selected>LICENCIATURA EN INGENIERÍA DE SISTEMAS (CARSIS)</option>
                   <option value="CARELE">LICENCIATURA EN INGENIERÍA ELECTRÓNICA (CARELE)</option>
                   <option value="CARSON">LICENCIATURA EN INGENIERÍA DE SONIDO (CARSON)</option>
@@ -4509,12 +4509,12 @@
             <!-- Search input -->
             <div class="relative flex-1">
               <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-              <input id="admin-search-input" type="text" placeholder="Buscar por CI, nombre o rol..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.onAdminSearchInput()">
+              <input id="admin-search-input" type="text" placeholder="Buscar por CI, nombre o rol..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.handleAdminSearchInput()">
             </div>
 
             <!-- Role Dropdown Filter -->
             <div class="flex items-center gap-2">
-              <select id="admin-role-filter" onchange="window.onAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+              <select id="admin-role-filter" onchange="window.handleAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                 <option value="">Todos los roles</option>
                 <option value="ROLE_ADMIN">Administrador del sistema</option>
                 <option value="ROLE_VICERRECTOR_NACIONAL">Vicerrector nacional</option>
@@ -4529,7 +4529,7 @@
 
             <!-- Status / Sede Dropdown Filter -->
             <div class="flex items-center gap-2">
-              <select id="admin-status-filter" onchange="window.onAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+              <select id="admin-status-filter" onchange="window.handleAdminRoleFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                 <option value="">Todos los estados / Sedes</option>
                 <option value="ACTIVO">Activos</option>
                 <option value="INACTIVO">Inactivos</option>
@@ -4664,7 +4664,7 @@
         <div class="px-6 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
           <div class="relative flex-1 max-w-md">
             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input id="sea-search-input" type="text" placeholder="Buscar docente por CI o nombre..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.onSeaSearchInput()">
+            <input id="sea-search-input" type="text" placeholder="Buscar docente por CI o nombre..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-1.5 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" oninput="window.handleSeaSearchInput()">
           </div>
           <div id="sea-records-counter" class="text-xs text-slate-500 dark:text-slate-400 font-mono">
             0 registros mostrados
@@ -4678,7 +4678,7 @@
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th class="py-3 px-4 text-center w-12">
-                    <input type="checkbox" id="sea-select-all" onchange="window.onSeaSelectAll(this)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                    <input type="checkbox" id="sea-select-all" onchange="window.handleSeaSelectAll(this)" class="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                   </th>
                   <th class="py-3 px-4">CI</th>
                   <th class="py-3 px-4">DOCENTE OFICIAL SEA</th>
@@ -5000,7 +5000,7 @@
             <!-- Sede Dropdown -->
             <div id="param-target-sede-wrapper" class="hidden flex items-center gap-2">
               <label for="param-target-sede-select" class="text-xs font-bold text-slate-700 dark:text-slate-300">Seleccionar Sede:</label>
-              <select id="param-target-sede-select" onchange="window.onParamTargetChange()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-[#4f39f6] cursor-pointer">
+              <select id="param-target-sede-select" onchange="window.handleParamTargetChange()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-[#4f39f6] cursor-pointer">
                 <option value="CBA" selected>COCHABAMBA (CBA) - Central</option>
                 <option value="LPZ">LA PAZ (LPZ)</option>
                 <option value="EAL">EL ALTO (EAL)</option>
@@ -5016,7 +5016,7 @@
             <!-- Carrera Dropdown -->
             <div id="param-target-carrera-wrapper" class="hidden flex items-center gap-2">
               <label for="param-target-carrera-select" class="text-xs font-bold text-slate-700 dark:text-slate-300">Seleccionar Carrera:</label>
-              <select id="param-target-carrera-select" onchange="window.onParamTargetChange()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-[#4f39f6] cursor-pointer max-w-[320px]">
+              <select id="param-target-carrera-select" onchange="window.handleParamTargetChange()" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-[#4f39f6] cursor-pointer max-w-[320px]">
                 <option value="CARSIS" selected>INGENIERÍA DE SISTEMAS (CARSIS)</option>
                 <option value="CARMED">MEDICINA (CARMED)</option>
                 <option value="CARDER">DERECHO (CARDER)</option>
