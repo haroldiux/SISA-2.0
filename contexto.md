@@ -1,7 +1,7 @@
 # SISA 2.0 — Contexto Integral y Arquitectura del Sistema
 **Sistema Integral de Seguimiento Académico y Supervisión Curricular**  
 **Universidad Técnica Privada Cosmos (UNITEPC)**  
-*Fecha de corte: 31 de Octubre de 2026*
+*Fecha de corte: 25 de Noviembre de 2026*
 
 ---
 
@@ -248,7 +248,10 @@ Para evitar que materias de carreras sin plan estático se acumulen erróneament
 | **Desincronización de Sesiones en Tab 5** | `loadAttendanceForCurrentSelection` forzaba `match = courseOfficialSessions[0]`, dejando las insignias desincronizadas con la macroplanificación. | Eliminación del forzado arbitrario, exposición global de `courseOfficialSessions` y sincronización unificada en `onAttendanceSessionSelect` y `applySelectedSession`. |
 | **Arrastre de Asistencia entre Clases** | `currentAttendanceSession.estudiantes` no se reseteaba al conmutar sesión, heredando marcas previas en sesiones no tomadas. | Reseteo estricto del mapa de estudiantes en `loadAttendanceForDate` con inicialización limpia (`PRESENTE`) por sesión y cohorte. |
 | **Estructura Estática Teórica vs Práctica** | La tarjeta de Macroplanificación no conmutaba los campos según la modalidad de la sesión. | Conmutación dinámica: Despliega Matriz 7 (Saberes) en clases teóricas y Sección 8 (Actividad, Desempeño, Evidencias, Rúbrica) en clases de laboratorio. |
-| **Dependencia de Seeder Estático vs SEA SSOT** | Se percibía el seeder SQL V9 como la fuente primaria de datos, cuando el SEA es la única autoridad de docentes, materias y grupos. | Implementación del Sincronizador Activo (`POST /api/v1/catalogo-academico/sync`), botón web "Sincronizar SEA", scripts `sync-sea.ps1` / `sync-sea.sh` y reclasificación del seeder como simple espejo sandbox offline. |
+| **Aislamiento de Cátedras y Semáforo por Carrera** | `ScuGetSemaforoCarreraCmd` cargaba todas las materias sin filtrar por carrera. | Filtrado estricto de `SeaMateria` por carrera mediante `SeaCarreraRepository.findByCodigo` + `findByCarreraId`. |
+| **Colisión DNS de upstream Nginx en `red-proxy`** | `sisa-frontend/nginx.conf` apuntaba a `backend:8080`, colisionando con otro servicio en la red compartida de Portainer. | Cambio de `proxy_pass` al nombre de contenedor único `http://sisa-backend:8080`. |
+| **Handlers `window.on*` anulados por Angular `Zone.js`** | Eventos inline `oninput`/`onchange`/`onclick` nombrados `window.on*` (como el filtro dinámico de usuarios) eran sobrescritos en runtime. | Renombrado de 15 handlers globales de `window.on*` a `window.handle*` en `app.component.html`, `app.component.ts` y `app-controller.js`. |
+| **Login y UI institucional en modo claro** | Botones demo rápidos, toggle de tema oscuro visible y placeholder `9465510` en el formulario de acceso. | Modo claro forzado por defecto, `#theme-toggle-btn` y botones demo ocultos/removidos, `autocomplete="off"`/`new-password` y placeholder neutro. |
 
 ---
 
@@ -301,10 +304,29 @@ docker compose up -d frontend
 docker compose ps
 ```
 
-- **Frontend SISA**: `http://localhost:4200`
-- **Backend API**: `http://localhost:8080/api/v1`
-- **Credenciales Rápidas de Prueba**:
-  - `admin` / `Unitepc2026!` (Administrador Nacional)
-  - `dir.carrera.sis` / `Unitepc2026!` (Directora Multicarrera: Sistemas + Medicina)
-  - `3065087` / `3065087` (Docente Rosmery Luizaga - Programación I)
-  - `9465510` / `9465510` (Docente - Cátedras Teórico-Prácticas)
+- **Entorno Staging / Pruebas en Vivo (Portainer + Nginx Proxy Manager)**:
+  - URL pública: `https://sisa.unitepc.pro` (SSL Let's Encrypt).
+  - Orquestación Portainer (Stack `sisa`, ID `85`, compose `docker-compose.portainer.yml`) con contenedores `sisa-postgres`, `sisa-backend` y `sisa-frontend` conectado a la red externa `red-proxy`.
+- **Entorno Local**:
+  - Frontend SISA: `http://localhost:4200`
+  - Backend API: `http://localhost:8080/api/v1`
+- **Flujo Institucional Verificado y Manual de Pruebas**:
+  - Manual paso a paso en `Manual_SISA_Docente_Director_Lic_Camacho.pdf` (14 páginas con capturas reales en modo claro).
+  - **Orden operativo real**: (1) **Director de Carrera** (`ROLE_DIR_CARRERA`) carga Programa Analítico (`.docx`), PAC y Cronograma 20 Semanas (Matriz 7) vía *Centro de Carga & Linter*; (2) **Docente** (`ROLE_DOCENTE`) consulta Docs 1–3 en modo solo lectura (`Oficial Cátedra`) y edita únicamente su **Plan de Clase personal** (adaptado automáticamente según SEA a Teórico `TA`, Guía Práctica `PL/PA` o Dual), más **Seguimiento Pedagógico** y **Lista (Regla 80%)**; (3) **Director de Carrera** audita en **Semáforo de Avance** y **Control de Asistencia**.
+- **Cuentas de Evaluación en Staging**:
+  - `dir.camacho.enf` (Director de Carrera de Licenciatura en Enfermería `CARENL` — Sede Cochabamba, `mustChangePassword=true`).
+  - `6420833` (Docente Titular Lic. Manuel Camacho Arce, Sede Cochabamba, `mustChangePassword=true`).
+  - `dir.carrera.sis` (Directora Multicarrera Sistemas + Medicina).
+  - `3065087` (Docente Rosmery Luizaga - Programación I).
+
+---
+
+## 10. Traspaso Multi-PC (Continuar en Otra Computadora)
+
+```bash
+git pull origin main
+docker compose up -d --build   # Para desarrollo local en http://localhost:4200
+```
+
+- Memoria persistente guardada en **Engram** bajo el proyecto `sisa` (`topic_key`: `sisa/staging-deployment-and-handover`).
+- En staging/producción (`https://sisa.unitepc.pro`), tras hacer `git push origin main`, redesplegar el Stack `sisa` (ID `85`) desde Portainer (`docker-compose.portainer.yml`).
