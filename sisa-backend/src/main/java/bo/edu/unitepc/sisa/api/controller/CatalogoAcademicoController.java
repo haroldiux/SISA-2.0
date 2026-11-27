@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +48,12 @@ public class CatalogoAcademicoController {
     private final SeaGrupoRepository seaGrupoRepository;
     private final bo.edu.unitepc.sisa.service.SeaDocenteAutoProvisionService seaDocenteAutoProvisionService;
     private final SeaSyncAuditLogRepository seaSyncAuditLogRepository;
+
+    private static final long CACHE_PERSIST_COOLDOWN_MS = 10 * 60 * 1000L;
+    private final AtomicLong lastSedesSyncMs = new AtomicLong(0L);
+    private final Map<String, Long> lastCareersSyncByBranch = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastCoursesSyncByKey = new ConcurrentHashMap<>();
+    private final AtomicLong lastGroupsSyncMs = new AtomicLong(0L);
 
     @Autowired(required = false)
     private CacheManager cacheManager;
@@ -124,6 +132,12 @@ public class CatalogoAcademicoController {
         int docentesCount = 0;
 
         try {
+            // Reset persistence cooldowns on explicit sync
+            this.lastSedesSyncMs.set(0L);
+            this.lastCareersSyncByBranch.clear();
+            this.lastCoursesSyncByKey.clear();
+            this.lastGroupsSyncMs.set(0L);
+
             // 1. Sincronizar Sedes
             List<BranchOfficeDto> sedes = this.gatewayClient.getBranchOffices();
             if (sedes != null && !sedes.isEmpty()) {
@@ -142,7 +156,7 @@ public class CatalogoAcademicoController {
                     try {
                         List<CourseDto> courses = this.gatewayClient.getCourses(branchOfficeCode, car.code());
                         if (courses != null && !courses.isEmpty()) {
-                            updateLocalCoursesCache(courses);
+                            updateLocalCoursesCache(courses, branchOfficeCode, car.code());
                             materiasCount += courses.size();
                         }
                     } catch (Exception ex) {
@@ -297,7 +311,7 @@ public class CatalogoAcademicoController {
         try {
             List<CourseDto> remote = this.gatewayClient.getCourses(branchOfficeCode, careerCode);
             if (remote != null && !remote.isEmpty()) {
-                updateLocalCoursesCache(remote);
+                updateLocalCoursesCache(remote, branchOfficeCode, careerCode);
                 return ResponseEntity.ok(remote);
             }
         } catch (Exception ex) {
@@ -434,6 +448,15 @@ public class CatalogoAcademicoController {
 
         // Local mirror fallback
         var allGrupos = this.seaGrupoRepository.findAll();
+        Set<String> allMatIds = allGrupos.stream()
+                .map(bo.edu.unitepc.sisa.domain.model.SeaGrupo::getMateriaId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<String, SeaMateria> matById = allMatIds.isEmpty()
+                ? Collections.emptyMap()
+                : this.seaMateriaRepository.findAllById(allMatIds).stream()
+                        .collect(Collectors.toMap(SeaMateria::getId, m -> m, (a, b) -> a));
+
         Map<String, List<bo.edu.unitepc.sisa.domain.model.SeaGrupo>> porCi = allGrupos.stream()
                 .filter(g -> g.getDocenteCi() != null && !g.getDocenteCi().isBlank())
                 .collect(java.util.stream.Collectors.groupingBy(bo.edu.unitepc.sisa.domain.model.SeaGrupo::getDocenteCi));
@@ -448,10 +471,10 @@ public class CatalogoAcademicoController {
 
                     List<String> materiasNombres = gruposDocente.stream()
                             .map(g -> {
-                                if (g.getMateriaId() != null) {
-                                    return this.seaMateriaRepository.findById(g.getMateriaId())
-                                            .map(m -> m.getCodigo() + " - " + m.getNombre())
-                                            .orElse(g.getMateriaId());
+                                String matId = g.getMateriaId();
+                                if (matId != null) {
+                                    SeaMateria mat = matById.get(matId);
+                                    return mat != null ? (mat.getCodigo() + " - " + mat.getNombre()) : matId;
                                 }
                                 return "Materia Asignada";
                             })
@@ -499,19 +522,18 @@ public class CatalogoAcademicoController {
                 .distinct()
                 .toList();
 
-        List<CourseDto> courses = materiaIds.stream()
-                .map(this.seaMateriaRepository::findById)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(m -> new CourseDto(
-                        m.getId(),
-                        m.getCodigo(),
-                        m.getNombre(),
-                        m.getSemestre() != null ? m.getSemestre().intValue() : 1,
-                        m.getSyllabusCourseId(),
-                        m.getCarreraId()
-                ))
-                .toList();
+        List<CourseDto> courses = materiaIds.isEmpty()
+                ? Collections.emptyList()
+                : this.seaMateriaRepository.findAllById(materiaIds).stream()
+                        .map(m -> new CourseDto(
+                                m.getId(),
+                                m.getCodigo(),
+                                m.getNombre(),
+                                m.getSemestre() != null ? m.getSemestre().intValue() : 1,
+                                m.getSyllabusCourseId(),
+                                m.getCarreraId()
+                        ))
+                        .toList();
 
         if (!courses.isEmpty()) {
             return ResponseEntity.ok(courses);
@@ -708,7 +730,27 @@ public class CatalogoAcademicoController {
 
     // --- Private Cache-Aside synchronizers ---
 
+    private boolean tryAcquireSyncSlot(AtomicLong tracker) {
+        long now = System.currentTimeMillis();
+        long prev = tracker.get();
+        if (prev != 0L && (now - prev) < CACHE_PERSIST_COOLDOWN_MS) {
+            return false;
+        }
+        return tracker.compareAndSet(prev, now);
+    }
+
+    private boolean tryAcquireKeyedSyncSlot(Map<String, Long> map, String key) {
+        long now = System.currentTimeMillis();
+        Long prev = map.get(key);
+        if (prev != null && (now - prev) < CACHE_PERSIST_COOLDOWN_MS) {
+            return false;
+        }
+        map.put(key, now);
+        return true;
+    }
+
     private void updateLocalSedesCache(List<BranchOfficeDto> dtos) {
+        if (!tryAcquireSyncSlot(this.lastSedesSyncMs)) return;
         try {
             for (BranchOfficeDto dto : dtos) {
                 if (dto.id() != null && dto.code() != null) {
@@ -721,11 +763,18 @@ public class CatalogoAcademicoController {
     }
 
     private void updateLocalCareersCache(List<CareerDto> dtos) {
+        if (dtos == null || dtos.isEmpty()) return;
+        String key = dtos.get(0).branchOfficeCode() != null ? dtos.get(0).branchOfficeCode() : "DEFAULT";
+        if (!tryAcquireKeyedSyncSlot(this.lastCareersSyncByBranch, key)) return;
         try {
+            List<SeaCarrera> toSave = new ArrayList<>();
             for (CareerDto dto : dtos) {
                 if (dto.id() != null && dto.code() != null) {
-                    this.seaCarreraRepository.save(new SeaCarrera(dto.id(), dto.code(), dto.name(), dto.branchOfficeCode()));
+                    toSave.add(new SeaCarrera(dto.id(), dto.code(), dto.name(), dto.branchOfficeCode()));
                 }
+            }
+            if (!toSave.isEmpty()) {
+                this.seaCarreraRepository.saveAll(toSave);
             }
         } catch (Exception e) {
             log.debug("Could not persist careers cache: {}", e.getMessage());
@@ -733,10 +782,21 @@ public class CatalogoAcademicoController {
     }
 
     private void updateLocalCoursesCache(List<CourseDto> dtos) {
+        updateLocalCoursesCache(dtos, null, null);
+    }
+
+    private void updateLocalCoursesCache(List<CourseDto> dtos, String branchOfficeCode, String careerCode) {
+        if (dtos == null || dtos.isEmpty()) return;
+        String bKey = (branchOfficeCode != null && !branchOfficeCode.isBlank()) ? branchOfficeCode : "CBA";
+        String cKey = (careerCode != null && !careerCode.isBlank())
+                ? careerCode
+                : (dtos.get(0).careerCode() != null ? dtos.get(0).careerCode() : "ALL");
+        if (!tryAcquireKeyedSyncSlot(this.lastCoursesSyncByKey, bKey + "_" + cKey)) return;
         try {
+            List<SeaMateria> toSave = new ArrayList<>();
             for (CourseDto dto : dtos) {
                 if (dto.id() != null && dto.code() != null) {
-                    this.seaMateriaRepository.save(new SeaMateria(
+                    toSave.add(new SeaMateria(
                             dto.id(),
                             dto.code(),
                             dto.name(),
@@ -746,6 +806,9 @@ public class CatalogoAcademicoController {
                     ));
                 }
             }
+            if (!toSave.isEmpty()) {
+                this.seaMateriaRepository.saveAll(toSave);
+            }
         } catch (Exception e) {
             log.debug("Could not persist courses cache: {}", e.getMessage());
         }
@@ -753,29 +816,59 @@ public class CatalogoAcademicoController {
 
     private void updateLocalGroupsCache(List<GroupItemDto> remoteGroups) {
         if (remoteGroups == null || remoteGroups.isEmpty()) return;
+        if (!tryAcquireSyncSlot(this.lastGroupsSyncMs)) return;
         try {
+            Set<String> neededMatIds = new LinkedHashSet<>();
+            Set<String> groupIds = new LinkedHashSet<>();
             for (GroupItemDto dto : remoteGroups) {
                 if (dto.id() == null) continue;
-                String matId = dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen";
-                if (this.seaMateriaRepository != null && !this.seaMateriaRepository.existsById(matId)) {
-                    String matName = dto.courseName() != null ? dto.courseName() : "Materia " + matId;
-                    String matCode = matId.length() <= 30 ? matId : "MAT-" + matId.substring(0, 10);
-                    String seaCarreraId = null;
-                    if (this.seaCarreraRepository != null && dto.careerCode() != null) {
-                        var scOpt = this.seaCarreraRepository.findFirstByCodigo(dto.careerCode());
-                        if (scOpt.isPresent()) {
-                            seaCarreraId = scOpt.get().getId();
-                        }
-                    }
-                    try {
-                        this.seaMateriaRepository.save(new SeaMateria(matId, matCode, matName, (short) 1, matId, seaCarreraId));
-                    } catch (Exception mEx) {
-                        log.debug("Materia mirror already created: {}", mEx.getMessage());
+                groupIds.add(dto.id());
+                neededMatIds.add(dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen");
+            }
+
+            Map<String, SeaCarrera> carrerasByCode = new HashMap<>();
+            if (this.seaCarreraRepository != null) {
+                for (SeaCarrera sc : this.seaCarreraRepository.findAll()) {
+                    if (sc.getCodigo() != null) {
+                        carrerasByCode.putIfAbsent(sc.getCodigo(), sc);
                     }
                 }
-                var existing = this.seaGrupoRepository.findById(dto.id());
-                if (existing.isEmpty()) {
-                    var nuevo = new bo.edu.unitepc.sisa.domain.model.SeaGrupo(
+            }
+
+            if (this.seaMateriaRepository != null && !neededMatIds.isEmpty()) {
+                Set<String> existingMatIds = this.seaMateriaRepository.findAllById(neededMatIds).stream()
+                        .map(SeaMateria::getId)
+                        .collect(Collectors.toSet());
+                Map<String, SeaMateria> missingMaterias = new LinkedHashMap<>();
+                for (GroupItemDto dto : remoteGroups) {
+                    if (dto.id() == null) continue;
+                    String matId = dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen";
+                    if (!existingMatIds.contains(matId) && !missingMaterias.containsKey(matId)) {
+                        String matName = dto.courseName() != null ? dto.courseName() : "Materia " + matId;
+                        String matCode = matId.length() <= 30 ? matId : "MAT-" + matId.substring(0, 10);
+                        SeaCarrera sc = dto.careerCode() != null ? carrerasByCode.get(dto.careerCode()) : null;
+                        String seaCarreraId = sc != null ? sc.getId() : null;
+                        missingMaterias.put(matId, new SeaMateria(matId, matCode, matName, (short) 1, matId, seaCarreraId));
+                    }
+                }
+                if (!missingMaterias.isEmpty()) {
+                    this.seaMateriaRepository.saveAll(missingMaterias.values());
+                }
+            }
+
+            Map<String, bo.edu.unitepc.sisa.domain.model.SeaGrupo> existingGrupos = new HashMap<>();
+            if (!groupIds.isEmpty()) {
+                for (var g : this.seaGrupoRepository.findAllById(groupIds)) {
+                    existingGrupos.put(g.getId(), g);
+                }
+            }
+
+            Map<String, bo.edu.unitepc.sisa.domain.model.SeaGrupo> gruposToSave = new LinkedHashMap<>(remoteGroups.size());
+            for (GroupItemDto dto : remoteGroups) {
+                if (dto.id() == null) continue;
+                var g = gruposToSave.getOrDefault(dto.id(), existingGrupos.get(dto.id()));
+                if (g == null) {
+                    g = new bo.edu.unitepc.sisa.domain.model.SeaGrupo(
                             dto.id(),
                             dto.name() != null ? dto.name() : "G1",
                             dto.classType() != null ? dto.classType() : "TEORICA",
@@ -786,9 +879,7 @@ public class CatalogoAcademicoController {
                             dto.campus() != null ? dto.campus() : "Campus Central",
                             dto.syllabusCourseId() != null ? dto.syllabusCourseId() : "mat-gen"
                     );
-                    this.seaGrupoRepository.save(nuevo);
                 } else {
-                    var g = existing.get();
                     if (dto.name() != null) g.setCodigoGrupo(dto.name());
                     if (dto.classType() != null) g.setTipoClase(dto.classType());
                     if (dto.teacherName() != null) g.setDocenteNombre(dto.teacherName());
@@ -797,8 +888,11 @@ public class CatalogoAcademicoController {
                     if (dto.classroom() != null) g.setAula(dto.classroom());
                     if (dto.campus() != null) g.setCampus(dto.campus());
                     if (dto.syllabusCourseId() != null) g.setMateriaId(dto.syllabusCourseId());
-                    this.seaGrupoRepository.save(g);
                 }
+                gruposToSave.put(dto.id(), g);
+            }
+            if (!gruposToSave.isEmpty()) {
+                this.seaGrupoRepository.saveAll(gruposToSave.values());
             }
         } catch (Exception e) {
             log.warn("Could not sync remote groups to local cache: {}", e.getMessage());

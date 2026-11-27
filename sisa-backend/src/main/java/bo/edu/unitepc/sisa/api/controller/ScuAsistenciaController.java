@@ -86,7 +86,7 @@ public class ScuAsistenciaController {
             @PathVariable String materiaCodigo,
             @RequestParam(defaultValue = "2-2026") String gestionCodigo) {
         List<AsistenciaSesionDto> list = this.sesionRepository
-                .findByMateriaCodigoAndGestionCodigoOrderByFechaDesc(materiaCodigo, gestionCodigo)
+                .findByMateriaCodigoAndGestionCodigoWithEstudiantes(materiaCodigo, gestionCodigo)
                 .stream()
                 .map(ScuSaveAsistenciaCmd::mapToDto)
                 .collect(Collectors.toList());

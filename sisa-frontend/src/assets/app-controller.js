@@ -3068,7 +3068,7 @@
       if (master) master.checked = all.every(c => c.checked);
     };
 
-    window.downloadOfficialFolderPdf = function() {
+    window.downloadOfficialFolderPdf = async function() {
       const currentRole = (typeof window.getCurrentUser === 'function' && window.getCurrentUser()?.role) || localStorage.getItem('sisa_user_role') || 'ROLE_DOCENTE';
       const canDownload = (typeof window.canDownloadDocumentation === 'function')
         ? window.canDownloadDocumentation(currentRole)
@@ -3117,6 +3117,9 @@
       renderDiv.innerHTML = docHtml;
       document.body.appendChild(renderDiv);
 
+      if (typeof window.ensureHtml2PdfLoaded === 'function') {
+        await window.ensureHtml2PdfLoaded();
+      }
       if (typeof html2pdf !== 'undefined') {
         const opt = {
           margin:       [6, 6, 6, 6],
@@ -9305,6 +9308,8 @@ document.addEventListener('change', (e) => {
   };
 
   window.logoutUser = function() {
+    window._seaShellBootstrapped = false;
+    window._initialAuthChecked = false;
     window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
     window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
     try {
@@ -11065,7 +11070,7 @@ document.addEventListener('change', (e) => {
     window.print();
   };
 
-  window.downloadMallaReportPdf = function() {
+  window.downloadMallaReportPdf = async function() {
     const printableEl = document.getElementById('malla-report-printable-content');
     if (!printableEl) {
       window.print();
@@ -11075,6 +11080,10 @@ document.addEventListener('change', (e) => {
     const career = (window.__SUPERVISION_DATA__ && window.__SUPERVISION_DATA__.careerInfo) ? window.__SUPERVISION_DATA__.careerInfo.code : 'CARSIS';
     const filename = `Malla_Curricular_UNITEPC_${career}_2026_II.pdf`;
 
+    if (typeof window.ensureHtml2PdfLoaded === 'function') {
+      window.showToast('⏳ Cargando motor de PDF oficial...');
+      await window.ensureHtml2PdfLoaded();
+    }
     if (typeof html2pdf !== 'undefined') {
       window.showToast('⏳ Generando y descargando PDF oficial...');
       const opt = {
@@ -13245,6 +13254,9 @@ document.addEventListener('change', (e) => {
         window.switchDocMainTab(savedDocTab);
       }
     }
+    if (typeof window.bootstrapAuthenticatedSeaContext === 'function') {
+      window.bootstrapAuthenticatedSeaContext(currentUser);
+    }
     if (window.lucide) window.lucide.createIcons();
   };
 
@@ -15103,12 +15115,15 @@ document.addEventListener('change', (e) => {
   };
 
 
-  // Check auth session on startup
+  // Check auth session on startup (guarded against duplicate init calls)
+  window._initialAuthChecked = false;
   window.checkInitialAuth = async function() {
+    if (window._initialAuthChecked) return;
     const token = window.getAuthToken();
     const user = window.getCurrentUser();
 
     if (!token) {
+      window._initialAuthChecked = true;
       window.showLoginView();
       return;
     }
@@ -15122,6 +15137,7 @@ document.addEventListener('change', (e) => {
       }, 25);
       return;
     }
+    window._initialAuthChecked = true;
 
     // 1. Immediate synchronous UI hydration to prevent any reload login flicker
     try {
@@ -18194,14 +18210,48 @@ document.addEventListener('change', (e) => {
     }
   };
 
+  // Lazy-load html2pdf only when user exports PDF (saves ~885 KB on initial load)
+  window._html2pdfPromise = null;
+  window.ensureHtml2PdfLoaded = function() {
+    if (typeof html2pdf !== 'undefined') return Promise.resolve();
+    if (window._html2pdfPromise) return window._html2pdfPromise;
+    window._html2pdfPromise = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'assets/html2pdf.bundle.min.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
+    return window._html2pdfPromise;
+  };
+
+  // Bootstrap SEA context ONLY after authentication (avoids unauthenticated heavy /docentes calls on login)
+  window._seaShellBootstrapped = false;
+  window.bootstrapAuthenticatedSeaContext = function(currentUser) {
+    if (window._seaShellBootstrapped) return;
+    window._seaShellBootstrapped = true;
+    setTimeout(() => {
+      if (typeof window.checkSeaGatewayHealth === 'function') {
+        window.checkSeaGatewayHealth();
+      }
+      const user = currentUser || (typeof window.getCurrentUser === 'function' ? window.getCurrentUser() : null);
+      if (user && user.role === 'ROLE_DOCENTE' && (user.ci || user.username)) {
+        const cleanCi = String(user.ci || user.username).trim();
+        const savedAuditCourse = localStorage.getItem('sisa_supervision_audit_course');
+        if (typeof window.selectDocenteFromApi === 'function') {
+          window.selectDocenteFromApi(cleanCi, true, savedAuditCourse);
+        }
+      } else if (typeof window.loadDocentesFromApi === 'function') {
+        window.loadDocentesFromApi();
+      }
+    }, 30);
+  };
+
   // Initial check on load: run checkInitialAuth immediately to restore view/session without delay
   if (typeof window.checkInitialAuth === 'function') {
     window.checkInitialAuth();
   }
-  setTimeout(() => {
-    window.checkSeaGatewayHealth();
-    window.loadDocentesFromApi();
-  }, 50);
 })();
 
 

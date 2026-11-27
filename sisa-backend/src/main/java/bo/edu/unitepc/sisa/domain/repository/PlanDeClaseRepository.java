@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,4 +32,16 @@ public interface PlanDeClaseRepository
         WHERE a.codigo = :materiaCodigo
         """, nativeQuery = true)
     long countPlanesByMateriaCodigo(@Param("materiaCodigo") String materiaCodigo);
+
+    @Query(value = """
+        SELECT UPPER(a.codigo) AS materia_codigo, COUNT(pc.id) AS total_planes
+        FROM planes_clase pc
+        JOIN sesiones_matriz7 sm ON pc.sesion_id = sm.id
+        JOIN pacs p ON sm.pac_id = p.id
+        JOIN asignaciones_docentes ad ON p.asignacion_id = ad.id
+        JOIN asignaturas a ON ad.asignatura_id = a.id
+        WHERE UPPER(a.codigo) IN (:codigos)
+        GROUP BY UPPER(a.codigo)
+        """, nativeQuery = true)
+    List<Object[]> countPlanesGroupedByCodigos(@Param("codigos") Collection<String> codigos);
 }

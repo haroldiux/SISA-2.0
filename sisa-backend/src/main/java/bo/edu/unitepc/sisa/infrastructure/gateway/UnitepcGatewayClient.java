@@ -46,14 +46,21 @@ public class UnitepcGatewayClient {
             @Value("${app.unitepc.gateway.client-id:dev-syseng-research}") String clientId,
             @Value("${app.unitepc.gateway.client-secret:1XqjSsWL01xegB12z3mGKpF6eeFQLsZd}") String clientSecret,
             @Value("${app.unitepc.gateway.request-client-id:sea-evaluaciones}") String requestClientId,
-            @Value("${app.unitepc.gateway.token-endpoint:/auth/token}") String tokenEndpoint) {
+            @Value("${app.unitepc.gateway.token-endpoint:/auth/token}") String tokenEndpoint,
+            @Value("${app.unitepc.gateway.connect-timeout-ms:5000}") int connectTimeoutMs,
+            @Value("${app.unitepc.gateway.read-timeout-ms:10000}") int readTimeoutMs) {
         this.baseUrl = baseUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.requestClientId = requestClientId;
         this.tokenEndpoint = tokenEndpoint;
+        org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(java.time.Duration.ofMillis(Math.max(1000, connectTimeoutMs)));
+        requestFactory.setReadTimeout(java.time.Duration.ofMillis(Math.max(1000, readTimeoutMs)));
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }

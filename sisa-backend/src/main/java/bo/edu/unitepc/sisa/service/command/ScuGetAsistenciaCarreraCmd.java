@@ -8,11 +8,13 @@ import bo.edu.unitepc.sisa.domain.model.Asignatura;
 import bo.edu.unitepc.sisa.domain.model.AsistenciaEstudiante;
 import bo.edu.unitepc.sisa.domain.model.AsistenciaSesion;
 import bo.edu.unitepc.sisa.domain.model.Carrera;
+import bo.edu.unitepc.sisa.domain.model.SeaCarrera;
 import bo.edu.unitepc.sisa.domain.model.SeaMateria;
 import bo.edu.unitepc.sisa.domain.repository.AsignaturaRepository;
 import bo.edu.unitepc.sisa.domain.repository.AsistenciaEstudianteRepository;
 import bo.edu.unitepc.sisa.domain.repository.AsistenciaSesionRepository;
 import bo.edu.unitepc.sisa.domain.repository.CarreraRepository;
+import bo.edu.unitepc.sisa.domain.repository.SeaCarreraRepository;
 import bo.edu.unitepc.sisa.domain.repository.SeaMateriaRepository;
 import bo.edu.unitepc.sisa.service.ParametroConfiguracionService;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class ScuGetAsistenciaCarreraCmd {
     private final AsistenciaEstudianteRepository estudianteRepository;
     private final CarreraRepository carreraRepository;
     private final AsignaturaRepository asignaturaRepository;
+    private final SeaCarreraRepository seaCarreraRepository;
     private final SeaMateriaRepository seaMateriaRepository;
     private final ParametroConfiguracionService parametroService;
 
@@ -49,12 +52,14 @@ public class ScuGetAsistenciaCarreraCmd {
             AsistenciaEstudianteRepository estudianteRepository,
             CarreraRepository carreraRepository,
             AsignaturaRepository asignaturaRepository,
+            SeaCarreraRepository seaCarreraRepository,
             SeaMateriaRepository seaMateriaRepository,
             ParametroConfiguracionService parametroService) {
         this.sesionRepository = sesionRepository;
         this.estudianteRepository = estudianteRepository;
         this.carreraRepository = carreraRepository;
         this.asignaturaRepository = asignaturaRepository;
+        this.seaCarreraRepository = seaCarreraRepository;
         this.seaMateriaRepository = seaMateriaRepository;
         this.parametroService = parametroService;
     }
@@ -97,9 +102,16 @@ public class ScuGetAsistenciaCarreraCmd {
 
         LocalDate hoy = LocalDate.now();
 
+        // Batch-load all attendance sessions and their student marks for the term in 1 query (0 N+1)
+        Map<String, List<AsistenciaSesion>> sesionesPorMateria = this.sesionRepository
+                .findAllWithEstudiantesByGestionCodigo(cleanGestion)
+                .stream()
+                .filter(s -> s.getMateriaCodigo() != null)
+                .collect(Collectors.groupingBy(s -> s.getMateriaCodigo().trim().toUpperCase()));
+
         for (MateriaDescriptor m : catalogo) {
-            List<AsistenciaSesion> sesionesDb = this.sesionRepository
-                    .findByMateriaCodigoAndGestionCodigoOrderByFechaDesc(m.codigo, cleanGestion);
+            List<AsistenciaSesion> sesionesDb = sesionesPorMateria
+                    .getOrDefault(m.codigo.trim().toUpperCase(), Collections.emptyList());
 
             int totalSesiones;
             LocalDate ultimaFecha;
@@ -113,8 +125,14 @@ public class ScuGetAsistenciaCarreraCmd {
                 totalSesiones = sesionesDb.size();
                 ultimaFecha = sesionesDb.get(0).getFecha();
 
-                List<AsistenciaEstudiante> todasMarcas = this.estudianteRepository
-                        .findByMateriaAndGestion(m.codigo, cleanGestion);
+                // Collect marks chronologically (sesionesDb is ordered by fecha DESC, iterate backwards for ASC)
+                List<AsistenciaEstudiante> todasMarcas = new ArrayList<>();
+                for (int idx = sesionesDb.size() - 1; idx >= 0; idx--) {
+                    List<AsistenciaEstudiante> ests = sesionesDb.get(idx).getEstudiantes();
+                    if (ests != null && !ests.isEmpty()) {
+                        todasMarcas.addAll(ests);
+                    }
+                }
 
                 Map<String, List<AsistenciaEstudiante>> marcasPorEstudiante = todasMarcas.stream()
                         .collect(Collectors.groupingBy(AsistenciaEstudiante::getEstudianteCodigo, LinkedHashMap::new, Collectors.toList()));
@@ -371,11 +389,12 @@ public class ScuGetAsistenciaCarreraCmd {
     private List<MateriaDescriptor> resolveMateriasCatalogo(String carreraCodigo) {
         Map<String, MateriaDescriptor> map = new LinkedHashMap<>();
 
-        // Materias representativas base
-        map.put("SIS-213", new MateriaDescriptor("SIS-213", "Programación III", 3, "4892104", "Ing. Carlos Alberto Morales Siles"));
-        map.put("SIS-311", new MateriaDescriptor("SIS-311", "Base de Datos I", 4, "3719024", "Lic. Roberto Gómez Fernández"));
-        map.put("MAT-101", new MateriaDescriptor("MAT-101", "Cálculo I", 1, "5291038", "Ing. Jaime Villarroel Soliz"));
-        map.put("SIS-412", new MateriaDescriptor("SIS-412", "Sistemas Operativos", 5, "6102941", "Ing. Fernando Morales Peñaranda"));
+        if ("CARSIS".equalsIgnoreCase(carreraCodigo) || "SIS".equalsIgnoreCase(carreraCodigo)) {
+            map.put("SIS-213", new MateriaDescriptor("SIS-213", "Programación III", 3, "4892104", "Ing. Carlos Alberto Morales Siles"));
+            map.put("SIS-311", new MateriaDescriptor("SIS-311", "Base de Datos I", 4, "3719024", "Lic. Roberto Gómez Fernández"));
+            map.put("MAT-101", new MateriaDescriptor("MAT-101", "Cálculo I", 1, "5291038", "Ing. Jaime Villarroel Soliz"));
+            map.put("SIS-412", new MateriaDescriptor("SIS-412", "Sistemas Operativos", 5, "6102941", "Ing. Fernando Morales Peñaranda"));
+        }
 
         // Catalogo Asignaturas JPA
         Optional<Carrera> carOpt = this.carreraRepository.findByCodigo(carreraCodigo);
@@ -392,16 +411,22 @@ public class ScuGetAsistenciaCarreraCmd {
             }
         }
 
-        // Catalogo SEA Materias
-        List<SeaMateria> seaList = this.seaMateriaRepository.findAll();
-        for (SeaMateria sm : seaList) {
-            map.putIfAbsent(sm.getCodigo().toUpperCase(), new MateriaDescriptor(
-                    sm.getCodigo(),
-                    sm.getNombre(),
-                    (int) sm.getSemestre(),
-                    "4892104",
-                    "Docente Titular"
-            ));
+        // Catalogo SEA Materias filtrado estrictamente por la carrera solicitada
+        List<SeaCarrera> seaCarreras = this.seaCarreraRepository.findByCodigo(carreraCodigo);
+        if (seaCarreras != null) {
+            for (SeaCarrera sc : seaCarreras) {
+                if (sc.getId() == null) continue;
+                List<SeaMateria> seaList = this.seaMateriaRepository.findByCarreraId(sc.getId());
+                for (SeaMateria sm : seaList) {
+                    map.putIfAbsent(sm.getCodigo().toUpperCase(), new MateriaDescriptor(
+                            sm.getCodigo(),
+                            sm.getNombre(),
+                            sm.getSemestre() != null ? (int) sm.getSemestre() : 1,
+                            "4892104",
+                            "Docente Titular"
+                    ));
+                }
+            }
         }
 
         return new ArrayList<>(map.values());

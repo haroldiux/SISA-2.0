@@ -24,6 +24,12 @@ public interface AsistenciaSesionRepository extends JpaRepository<AsistenciaSesi
     List<AsistenciaSesion> findByMateriaCodigoAndGestionCodigoOrderByFechaDesc(
             String materiaCodigo, String gestionCodigo);
 
+    @Query("SELECT DISTINCT s FROM AsistenciaSesion s LEFT JOIN FETCH s.estudiantes " +
+           "WHERE s.materiaCodigo = :materiaCodigo AND s.gestionCodigo = :gestionCodigo ORDER BY s.fecha DESC")
+    List<AsistenciaSesion> findByMateriaCodigoAndGestionCodigoWithEstudiantes(
+            @Param("materiaCodigo") String materiaCodigo,
+            @Param("gestionCodigo") String gestionCodigo);
+
     List<AsistenciaSesion> findByGestionCodigoOrderByFechaDesc(String gestionCodigo);
 
     @Query("SELECT DISTINCT s FROM AsistenciaSesion s LEFT JOIN FETCH s.estudiantes WHERE s.id = :id")

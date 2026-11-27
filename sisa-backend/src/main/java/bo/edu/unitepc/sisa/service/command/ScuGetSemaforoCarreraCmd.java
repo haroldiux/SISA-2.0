@@ -103,6 +103,22 @@ public class ScuGetSemaforoCarreraCmd {
         BigDecimal umbralAmarillo = (params.semaforoAmarilloPct() != null)
                 ? params.semaforoAmarilloPct() : new BigDecimal("-25.00");
 
+        List<String> codigosCatalogo = materiasCatalogo.stream()
+                .map(m -> m.codigo.toUpperCase())
+                .distinct()
+                .toList();
+        Map<String, Long> planesPorCodigo = new HashMap<>();
+        if (!codigosCatalogo.isEmpty()) {
+            List<Object[]> grouped = this.planDeClaseRepository.countPlanesGroupedByCodigos(codigosCatalogo);
+            if (grouped != null) {
+                for (Object[] row : grouped) {
+                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                        planesPorCodigo.put(String.valueOf(row[0]).toUpperCase(), ((Number) row[1]).longValue());
+                    }
+                }
+            }
+        }
+
         List<SemaforoMateriaDto> materiasDto = new ArrayList<>();
         int alDiaVerde = 0;
         int atencionAmarillo = 0;
@@ -112,7 +128,8 @@ public class ScuGetSemaforoCarreraCmd {
 
         for (MateriaDescriptor m : materiasCatalogo) {
             MateriaSeguimientoAggregation agg = aggMap.get(m.codigo.toUpperCase());
-            SemaforoMateriaDto dto = calcularSemaforoMateria(m, semanaCorte, avancePlaneado, agg, umbralVerde, umbralAmarillo);
+            long planesDb = planesPorCodigo.getOrDefault(m.codigo.toUpperCase(), 0L);
+            SemaforoMateriaDto dto = calcularSemaforoMateria(m, semanaCorte, avancePlaneado, agg, planesDb, umbralVerde, umbralAmarillo);
             materiasDto.add(dto);
 
             if (dto.colorSemaforo() == ColorSemaforo.VERDE) {
@@ -159,6 +176,7 @@ public class ScuGetSemaforoCarreraCmd {
             int semanaCorte,
             BigDecimal planeado,
             MateriaSeguimientoAggregation agg,
+            long planesDb,
             BigDecimal umbralVerde,
             BigDecimal umbralAmarillo) {
 
@@ -211,8 +229,7 @@ public class ScuGetSemaforoCarreraCmd {
             countCierre = 0;
         }
 
-        // Consultar Planes de Clase
-        long planesDb = this.planDeClaseRepository.countPlanesByMateriaCodigo(m.codigo);
+        // Planes de Clase precalculados en lote
         boolean tienePlanClase;
         int totalPlanes;
 

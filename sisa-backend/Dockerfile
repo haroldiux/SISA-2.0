@@ -7,7 +7,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -Dmaven.wagon.http.retryHandler.count=5
 
 # Runtime Stage
-FROM maven:3.9.8-eclipse-temurin-21-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN addgroup -S sisa && adduser -S sisa -G sisa
 USER sisa

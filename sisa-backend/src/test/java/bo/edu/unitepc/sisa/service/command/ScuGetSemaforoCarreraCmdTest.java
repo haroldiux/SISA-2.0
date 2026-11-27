@@ -88,7 +88,7 @@ class ScuGetSemaforoCarreraCmdTest {
         lenient().when(seaCarreraRepository.findFirstByCodigo(anyString())).thenReturn(Optional.empty());
         lenient().when(seaMateriaRepository.findByCarreraId(anyString())).thenReturn(Collections.emptyList());
         lenient().when(seguimientoRepository.aggregateByCarrera(anyString())).thenReturn(Collections.emptyList());
-        lenient().when(planDeClaseRepository.countPlanesByMateriaCodigo(anyString())).thenReturn(0L);
+        lenient().when(planDeClaseRepository.countPlanesGroupedByCodigos(any())).thenReturn(Collections.emptyList());
     }
 
     @Test
@@ -214,7 +214,9 @@ class ScuGetSemaforoCarreraCmdTest {
         when(aggMock.getCountCierre()).thenReturn(30L);
 
         when(seguimientoRepository.aggregateByCarrera("CARSIS")).thenReturn(List.of(aggMock));
-        when(planDeClaseRepository.countPlanesByMateriaCodigo("SIS-501")).thenReturn(30L);
+        when(planDeClaseRepository.countPlanesGroupedByCodigos(any())).thenReturn(
+                Collections.singletonList(new Object[]{"SIS-501", 30L})
+        );
 
         SemaforoCarreraResponse response = cmd.execute("CARSIS", "2-2026", 13);
 

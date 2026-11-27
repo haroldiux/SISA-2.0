@@ -18,6 +18,7 @@ import bo.edu.unitepc.sisa.service.command.ScuChangePasswordCmd;
 import bo.edu.unitepc.sisa.service.command.ScuRefreshTokenCmd;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ public class ScuAuthController {
     }
 
     @GetMapping("/me")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> getCurrentUser() {
         TenantInfo tenant = TenantContext.getTenantInfo();
         if (tenant == null || tenant.getUserId() == null) {

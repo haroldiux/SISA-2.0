@@ -32,8 +32,8 @@ services:
       DB_NAME: ${POSTGRES_DB:-sisa_db}
       DB_USER: ${POSTGRES_USER:-sisa_admin}
       DB_PASS: ${DB_PASS:-sisa_secret_pass_2026}
-      SPRING_PROFILES_ACTIVE: dev
-      JAVA_OPTS: "-Xms256m -Xmx768m"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx640m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication"
     networks:
       - sisa-internal
 
