@@ -19,8 +19,10 @@ import lombok.Setter;
 public class AcademicaAsignacionDto {
     private Long id;
     private Long sedeId;
+    private String sedeCodigo;
     private String sedeNombre;
     private Long carreraId;
+    private String carreraCodigo;
     private String carreraNombre;
     private Long asignaturaId;
     private String asignaturaNombre;
