@@ -25,6 +25,7 @@ public class ScuUserResponse {
     private String username;
     private String email;
     private RolUsuario role;
+    private List<RolUsuario> roles;
     private Long sedeId;
     private String sedeNombre;
     private String nombres;

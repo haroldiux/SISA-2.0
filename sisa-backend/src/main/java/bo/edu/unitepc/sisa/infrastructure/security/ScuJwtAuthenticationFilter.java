@@ -15,7 +15,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * JWT Authentication Filter populating Spring Security context and TenantContext ThreadLocal.
@@ -43,14 +44,21 @@ public class ScuJwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = this.tokenProvider.getUsernameFromToken(jwt);
                 Long userId = this.tokenProvider.getUserIdFromToken(jwt);
                 RolUsuario role = this.tokenProvider.getRoleFromToken(jwt);
+                List<RolUsuario> roles = this.tokenProvider.getRolesFromToken(jwt);
                 Long sedeId = this.tokenProvider.getSedeIdFromToken(jwt);
 
                 if (username != null && role != null) {
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(r -> new SimpleGrantedAuthority(r.name()))
+                            .collect(Collectors.toList());
+                    if (authorities.isEmpty()) {
+                        authorities = List.of(new SimpleGrantedAuthority(role.name()));
+                    }
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     username,
                                     null,
-                                    Collections.singletonList(new SimpleGrantedAuthority(role.name()))
+                                    authorities
                             );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -59,6 +67,7 @@ public class ScuJwtAuthenticationFilter extends OncePerRequestFilter {
                             .userId(userId)
                             .username(username)
                             .rol(role)
+                            .roles(roles)
                             .sedeId(sedeId)
                             .build();
                     TenantContext.setTenantInfo(tenantInfo);

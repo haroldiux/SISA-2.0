@@ -10,7 +10,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Spring Security UserDetailsService implementation for SISA users.
@@ -36,10 +37,14 @@ public class ScuUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User account is inactive: " + username);
         }
 
+        List<SimpleGrantedAuthority> authorities = usuario.getEffectiveRoles().stream()
+                .map(r -> new SimpleGrantedAuthority(r.name()))
+                .collect(Collectors.toList());
+
         return new User(
                 usuario.getUsername(),
                 usuario.getPasswordHash(),
-                Collections.singletonList(new SimpleGrantedAuthority(usuario.getRol().name()))
+                authorities
         );
     }
 }

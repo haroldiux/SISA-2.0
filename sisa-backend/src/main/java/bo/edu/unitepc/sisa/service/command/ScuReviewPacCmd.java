@@ -58,7 +58,10 @@ public class ScuReviewPacCmd {
         }
 
         TenantInfo tenant = TenantContext.getTenantInfo();
-        if (tenant != null && RolUsuario.ROLE_DIR_CARRERA.equals(tenant.getRol())
+        if (tenant != null && tenant.hasRole(RolUsuario.ROLE_DIR_CARRERA)
+                && !tenant.hasRole(RolUsuario.ROLE_ADMIN)
+                && !tenant.hasRole(RolUsuario.ROLE_VICERRECTOR_NACIONAL)
+                && !tenant.hasRole(RolUsuario.ROLE_DIR_ACADEMICA)
                 && tenant.getCarreraIds() != null && !tenant.getCarreraIds().isEmpty()) {
             if (pac.getAsignacion() != null
                     && pac.getAsignacion().getAsignatura() != null

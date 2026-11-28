@@ -63,8 +63,12 @@ public class ScuBatchReviewPacCmd {
                 : null;
 
         // Authority validation for ROLE_DIR_CARRERA
-        if (tenant != null && RolUsuario.ROLE_DIR_CARRERA.equals(tenant.getRol())
-                && tenant.getCarreraIds() != null && !tenant.getCarreraIds().isEmpty()) {
+        boolean restrictedDirScope = tenant != null && tenant.hasRole(RolUsuario.ROLE_DIR_CARRERA)
+                && !tenant.hasRole(RolUsuario.ROLE_ADMIN)
+                && !tenant.hasRole(RolUsuario.ROLE_VICERRECTOR_NACIONAL)
+                && !tenant.hasRole(RolUsuario.ROLE_DIR_ACADEMICA)
+                && tenant.getCarreraIds() != null && !tenant.getCarreraIds().isEmpty();
+        if (restrictedDirScope) {
             if (resolvedCarreraId != null && !tenant.getCarreraIds().contains(resolvedCarreraId)) {
                 throw new ScuException(
                         "UNAUTHORIZED_CAREER_REVIEW",
@@ -108,8 +112,7 @@ public class ScuBatchReviewPacCmd {
         }
 
         // Cross-check authority on individual target PACs
-        if (tenant != null && RolUsuario.ROLE_DIR_CARRERA.equals(tenant.getRol())
-                && tenant.getCarreraIds() != null && !tenant.getCarreraIds().isEmpty()) {
+        if (restrictedDirScope) {
             for (Pac p : targetPacs) {
                 if (p.getAsignacion() != null
                         && p.getAsignacion().getAsignatura() != null

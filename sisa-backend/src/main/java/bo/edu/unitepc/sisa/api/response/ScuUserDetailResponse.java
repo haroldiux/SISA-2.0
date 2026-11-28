@@ -33,6 +33,8 @@ public class ScuUserDetailResponse {
     private String apellidos;
     private String email;
     private RolUsuario rol;
+    @Builder.Default
+    private List<RolUsuario> roles = new ArrayList<>();
     private Boolean activo;
     private Boolean mustChangePassword;
     private OffsetDateTime creadoEn;

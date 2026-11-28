@@ -9,9 +9,13 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * JWT Token Provider for issuing and validating HMAC-SHA512 signed authentication tokens.
@@ -37,10 +41,12 @@ public class JwtTokenProvider {
 
     public String generateAccessToken(Usuario user) {
         Map<String, Object> claims = new HashMap<>();
+        List<String> roleNames = user.getEffectiveRoles().stream().map(Enum::name).toList();
         claims.put("userId", user.getId());
         claims.put("username", user.getUsername());
         claims.put("email", user.getEmail());
         claims.put("role", user.getRol().name());
+        claims.put("roles", roleNames);
         claims.put("sedeId", user.getSede() != null ? user.getSede().getId() : null);
         claims.put("sedeNombre", user.getSede() != null ? user.getSede().getNombre() : "Nacional");
         claims.put("nombres", user.getNombres());
@@ -61,10 +67,12 @@ public class JwtTokenProvider {
 
     public String generatePasswordChangeToken(Usuario user) {
         Map<String, Object> claims = new HashMap<>();
+        List<String> roleNames = user.getEffectiveRoles().stream().map(Enum::name).toList();
         claims.put("userId", user.getId());
         claims.put("username", user.getUsername());
         claims.put("email", user.getEmail());
         claims.put("role", user.getRol() != null ? user.getRol().name() : null);
+        claims.put("roles", roleNames);
         claims.put("sedeId", user.getSede() != null ? user.getSede().getId() : null);
         claims.put("sedeNombre", user.getSede() != null ? user.getSede().getNombre() : "Nacional");
         claims.put("nombres", user.getNombres());
@@ -117,6 +125,30 @@ public class JwtTokenProvider {
     public RolUsuario getRoleFromToken(String token) {
         String roleStr = (String) this.getClaimsFromToken(token).get("role");
         return (roleStr != null) ? RolUsuario.valueOf(roleStr) : null;
+    }
+
+    public List<RolUsuario> getRolesFromToken(String token) {
+        Claims claims = this.getClaimsFromToken(token);
+        Set<RolUsuario> resolved = new LinkedHashSet<>();
+        Object rolesObj = claims.get("roles");
+        if (rolesObj instanceof List<?> list) {
+            for (Object item : list) {
+                if (item != null) {
+                    try {
+                        resolved.add(RolUsuario.valueOf(String.valueOf(item)));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            }
+        }
+        String primaryStr = (String) claims.get("role");
+        if (primaryStr != null) {
+            try {
+                resolved.add(RolUsuario.valueOf(primaryStr));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return new ArrayList<>(resolved);
     }
 
     public Long getSedeIdFromToken(String token) {

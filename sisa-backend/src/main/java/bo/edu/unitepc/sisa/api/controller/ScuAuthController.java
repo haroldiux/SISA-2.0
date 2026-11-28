@@ -113,6 +113,7 @@ public class ScuAuthController {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRol())
+                .roles(user.getEffectiveRoles())
                 .sedeId(user.getSede() != null ? user.getSede().getId() : null)
                 .sedeNombre(user.getSede() != null ? user.getSede().getNombre() : "Nacional")
                 .nombres(user.getNombres())

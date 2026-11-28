@@ -8,10 +8,13 @@ import lombok.Setter;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * System user entity with 5-tier role and optional regional sede association.
+ * System user entity supporting primary and multi-role institutional profiles.
  *
  * @author GentleAI SISA Architecture Team
  */
@@ -43,6 +46,12 @@ public class Usuario {
     @Column(nullable = false, length = 30)
     private RolUsuario rol;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol", length = 30)
+    private Set<RolUsuario> roles = new LinkedHashSet<>();
+
     @Column(nullable = false, length = 100)
     private String nombres;
 
@@ -66,6 +75,54 @@ public class Usuario {
 
     public String getNombreCompleto() {
         return this.nombres + " " + this.apellidos;
+    }
+
+    /**
+     * Returns all distinct roles assigned to this user, always placing primary role first.
+     */
+    public List<RolUsuario> getEffectiveRoles() {
+        Set<RolUsuario> ordered = new LinkedHashSet<>();
+        if (this.rol != null) {
+            ordered.add(this.rol);
+        }
+        if (this.roles != null) {
+            for (RolUsuario r : this.roles) {
+                if (r != null) {
+                    ordered.add(r);
+                }
+            }
+        }
+        return new ArrayList<>(ordered);
+    }
+
+    public boolean hasRole(RolUsuario target) {
+        return target != null && this.getEffectiveRoles().contains(target);
+    }
+
+    /**
+     * Synchronizes primary role and full role set without losing consistency.
+     */
+    public void syncRoles(RolUsuario primaryRole, Collection<RolUsuario> requestedRoles) {
+        Set<RolUsuario> normalized = new LinkedHashSet<>();
+        if (primaryRole != null) {
+            normalized.add(primaryRole);
+        }
+        if (requestedRoles != null) {
+            for (RolUsuario r : requestedRoles) {
+                if (r != null) {
+                    normalized.add(r);
+                }
+            }
+        }
+        if (normalized.isEmpty()) {
+            normalized.add(RolUsuario.ROLE_DOCENTE);
+        }
+        this.rol = (primaryRole != null) ? primaryRole : normalized.iterator().next();
+        if (this.roles == null) {
+            this.roles = new LinkedHashSet<>();
+        }
+        this.roles.clear();
+        this.roles.addAll(normalized);
     }
 
     public void addAsignacionAcademica(UsuarioAsignacionAcademica asignacion) {

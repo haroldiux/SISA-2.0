@@ -23,12 +23,23 @@ public class TenantInfo {
     private Long userId;
     private String username;
     private RolUsuario rol;
+    private List<RolUsuario> roles;
     private Long sedeId;
     private List<Long> carreraIds;
 
+    public boolean hasRole(RolUsuario target) {
+        if (target == null) {
+            return false;
+        }
+        if (this.roles != null && !this.roles.isEmpty()) {
+            return this.roles.contains(target);
+        }
+        return target.equals(this.rol);
+    }
+
     public boolean isNationalScope() {
-        return RolUsuario.ROLE_VICERRECTOR_NACIONAL.equals(this.rol)
-                || RolUsuario.ROLE_ADMIN.equals(this.rol)
+        return this.hasRole(RolUsuario.ROLE_VICERRECTOR_NACIONAL)
+                || this.hasRole(RolUsuario.ROLE_ADMIN)
                 || this.sedeId == null;
     }
 }

@@ -271,7 +271,7 @@ public class ScuGetPacByCarreraCmd {
         Gestion gestion = this.gestionRepository.findById(gestionId).orElse(null);
         Carrera carrera = this.carreraRepository.findById(carreraId).orElse(null);
         Usuario docente = this.usuarioRepository.findAll().stream()
-                .filter(u -> u.getRol() == RolUsuario.ROLE_DOCENTE)
+                .filter(u -> u.hasRole(RolUsuario.ROLE_DOCENTE))
                 .findFirst()
                 .orElseGet(() -> this.usuarioRepository.findById(1L).orElse(null));
         Campus campus = this.campusRepository.findAll().stream().findFirst().orElse(null);

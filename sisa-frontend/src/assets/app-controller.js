@@ -353,14 +353,87 @@
       if (window.lucide) window.lucide.createIcons();
     };
 
+    window.getRoleShortLabel = function(role) {
+      if (role === 'ROLE_ADMIN') return 'Admin';
+      if (role === 'ROLE_VICERRECTOR_NACIONAL') return 'Vicerrector Nal.';
+      if (role === 'ROLE_VICERRECTOR_SEDE') return 'Vicerrector Sede';
+      if (role === 'ROLE_DIR_ACADEMICA') return 'Dir. Académica';
+      if (role === 'ROLE_DIR_CARRERA') return 'Dir. Carrera';
+      if (role === 'ROLE_DOCENTE') return 'Docente';
+      return role || 'Usuario';
+    };
+
+    window.updateActiveRoleSwitcherUi = function(user) {
+      const topSwitcher = document.getElementById('active-role-switcher');
+      const menuSection = document.getElementById('menu-role-switcher-section');
+      const menuButtons = document.getElementById('menu-role-switcher-buttons');
+
+      if (!user) {
+        if (topSwitcher) topSwitcher.classList.add('hidden');
+        if (menuSection) menuSection.classList.add('hidden');
+        return;
+      }
+
+      const roles = (Array.isArray(user.roles) && user.roles.length > 0)
+        ? [...new Set(user.roles)]
+        : (user.role ? [user.role] : ['ROLE_DOCENTE']);
+      const activeRole = user.role || roles[0];
+
+      if (roles.length <= 1) {
+        if (topSwitcher) topSwitcher.classList.add('hidden');
+        if (menuSection) menuSection.classList.add('hidden');
+        return;
+      }
+
+      if (topSwitcher) {
+        topSwitcher.classList.remove('hidden');
+        topSwitcher.innerHTML = roles.map(r => {
+          const isActive = (r === activeRole);
+          const icon = (r === 'ROLE_DOCENTE') ? '📘' : '🎓';
+          const cls = isActive
+            ? 'bg-[var(--sp-purple)] text-white shadow-xs font-bold'
+            : 'text-slate-600 hover:bg-white hover:text-slate-900 font-medium';
+          return `<button type="button" onclick="window.switchUserRole('${r}')" class="px-2.5 py-1 rounded-lg text-[11px] transition-all flex items-center gap-1 cursor-pointer ${cls}" title="Cambiar a vista ${window.getRoleShortLabel(r)}"><span>${icon}</span><span>${window.getRoleShortLabel(r)}</span></button>`;
+        }).join('');
+      }
+
+      if (menuSection && menuButtons) {
+        menuSection.classList.remove('hidden');
+        menuButtons.innerHTML = roles.map(r => {
+          const isActive = (r === activeRole);
+          const icon = (r === 'ROLE_DOCENTE') ? '📘' : '🎓';
+          return `<button type="button" onclick="window.switchUserRole('${r}'); if(typeof window.toggleUserDropdown==='function'){window.toggleUserDropdown();}" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${isActive ? 'bg-[var(--sp-purple-soft)] text-[var(--sp-purple-dark)] font-bold' : 'hover:bg-[var(--sp-surface-hover)] text-[var(--sp-ink)] font-medium'}"><span class="flex items-center gap-2"><span>${icon}</span><span>Modo ${window.getRoleShortLabel(r)}</span></span>${isActive ? '<span class="text-[10px] font-extrabold">ACTIVO</span>' : ''}</button>`;
+        }).join('');
+      }
+    };
+
     window.switchUserRole = function(newRole) {
       if (!newRole) return;
-      localStorage.setItem('sisa_user_role', newRole);
       let user = null;
       try {
         const cached = localStorage.getItem('scu_user_info');
         if (cached) user = JSON.parse(cached);
       } catch(e) {}
+
+      if (user && Array.isArray(user.roles) && user.roles.length > 0 && !user.roles.includes(newRole)) {
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ No tienes habilitado ese rol en tu cuenta.');
+        }
+        return;
+      }
+
+      localStorage.setItem('sisa_user_role', newRole);
+      localStorage.setItem('sisa_active_role', newRole);
+
+      if (newRole === 'ROLE_DOCENTE') {
+        window.__SUPERVISION_AUDIT_COURSE_CODE__ = null;
+        window.__SUPERVISION_AUDIT_COURSE_NAME__ = null;
+        try {
+          localStorage.removeItem('sisa_supervision_audit_course');
+          localStorage.removeItem('sisa_supervision_audit_course_name');
+        } catch(e) {}
+      }
+
       if (user) {
         user.role = newRole;
         localStorage.setItem('scu_user_info', JSON.stringify(user));
@@ -376,6 +449,23 @@
       }
       if (typeof window.updateSidebarNavForRole === 'function') {
         window.updateSidebarNavForRole(newRole);
+      }
+
+      const defaultTargetView = (newRole === 'ROLE_ADMIN')
+        ? 'view6'
+        : ((newRole === 'ROLE_DIR_CARRERA') ? 'view2' : 'view-dashboard');
+      if (typeof window.switchView === 'function') {
+        window.switchView(defaultTargetView);
+      }
+
+      if (newRole === 'ROLE_DOCENTE' && user) {
+        const teacherCi = user.ci || user.username;
+        if (teacherCi && typeof window.selectDocenteFromApi === 'function') {
+          window.selectDocenteFromApi(teacherCi, true);
+        }
+      }
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🔄 Vista cambiada a ${window.getRoleShortLabel(newRole)}`);
       }
     };
 
@@ -9290,15 +9380,24 @@ document.addEventListener('change', (e) => {
       localStorage.setItem('scu_access_token', token);
     }
     if (user) {
+      const roles = (Array.isArray(user.roles) && user.roles.length > 0)
+        ? [...new Set(user.roles)]
+        : (user.role ? [user.role] : ['ROLE_DOCENTE']);
+      user.roles = roles;
+      const savedActiveRole = localStorage.getItem('sisa_active_role');
+      const effectiveRole = (savedActiveRole && roles.includes(savedActiveRole))
+        ? savedActiveRole
+        : (user.role || roles[0]);
+      user.role = effectiveRole;
+
       localStorage.setItem('scu_user_info', JSON.stringify(user));
-      if (user.role) {
-        localStorage.setItem('sisa_user_role', user.role);
-        if (typeof window.applyUserRolePermissions === 'function') {
-          window.applyUserRolePermissions(user.role);
-        }
+      localStorage.setItem('sisa_user_role', effectiveRole);
+      localStorage.setItem('sisa_active_role', effectiveRole);
+      if (typeof window.applyUserRolePermissions === 'function') {
+        window.applyUserRolePermissions(effectiveRole);
       }
       window.updateUserProfileUi(user);
-      if (user.role === 'ROLE_DOCENTE') {
+      if (effectiveRole === 'ROLE_DOCENTE') {
         const teacherCi = user.ci || user.username;
         if (teacherCi && typeof window.selectDocenteFromApi === 'function') {
           window.selectDocenteFromApi(teacherCi, true);
@@ -9317,6 +9416,8 @@ document.addEventListener('change', (e) => {
       localStorage.removeItem('sisa_supervision_audit_course_name');
       localStorage.removeItem('sisa_active_view_id');
       localStorage.removeItem('sisa_active_doc_tab');
+      localStorage.removeItem('sisa_active_role');
+      localStorage.removeItem('sisa_user_role');
       document.documentElement.classList.remove('sisa-authenticated');
     } catch (e) {}
     localStorage.removeItem('scu_access_token');
@@ -13116,7 +13217,10 @@ document.addEventListener('change', (e) => {
       else dashRoleSubtext.innerText = 'Visualizando todas las sedes, carreras y docentes asignados en la gestión activa.';
     }
 
-    // 5. Dynamic Sidebar and Workspace Role Filtering
+    // 5. Dynamic Sidebar, Multi-Role Switcher and Workspace Role Filtering
+    if (typeof window.updateActiveRoleSwitcherUi === 'function') {
+      window.updateActiveRoleSwitcherUi(user);
+    }
     if (typeof window.updateSidebarNavForRole === 'function') {
       window.updateSidebarNavForRole(user.role);
     }
@@ -13642,13 +13746,16 @@ document.addEventListener('change', (e) => {
       list = list.filter(u => {
         const ci = (u.ci || u.username || '').toLowerCase();
         const nom = (u.nombreCompleto || '').toLowerCase();
-        const rol = (u.rol || '').toLowerCase();
-        return ci.includes(searchVal) || nom.includes(searchVal) || rol.includes(searchVal);
+        const rolesJoined = (Array.isArray(u.roles) && u.roles.length > 0 ? u.roles.join(' ') : (u.rol || '')).toLowerCase();
+        return ci.includes(searchVal) || nom.includes(searchVal) || rolesJoined.includes(searchVal);
       });
     }
 
     if (roleVal) {
-      list = list.filter(u => u.rol === roleVal);
+      list = list.filter(u => {
+        const rolesArr = (Array.isArray(u.roles) && u.roles.length > 0) ? u.roles : [u.rol];
+        return rolesArr.includes(roleVal);
+      });
     }
 
     if (statusVal === 'ACTIVO') {
@@ -13786,10 +13893,14 @@ document.addEventListener('change', (e) => {
     let html = '';
     pagedUsers.forEach(u => {
       const ciVal = u.ci || u.username;
-      const isSea = (u.rol === 'ROLE_DOCENTE' || (u.email && u.email.includes('@unitepc.edu.bo')));
+      const userRoles = (Array.isArray(u.roles) && u.roles.length > 0) ? u.roles : [u.rol || 'ROLE_DOCENTE'];
+      const isSea = (userRoles.includes('ROLE_DOCENTE') || (u.email && u.email.includes('@unitepc.edu.bo')));
       const safeName = (u.nombreCompleto || u.username || '').replace(/'/g, "\\'");
-      const roleBadgeClass = roleBadges[u.rol] || 'bg-slate-100 text-slate-700 border-slate-200';
-      const roleText = roleLabels[u.rol] || u.rol;
+      const rolesBadgesHtml = userRoles.map(r => {
+        const cls = roleBadges[r] || 'bg-slate-100 text-slate-700 border-slate-200';
+        const lbl = roleLabels[r] || r;
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${cls} inline-flex items-center gap-1">${lbl}</span>`;
+      }).join(' ');
 
       // Alcance
       let alcanceTitle = '1 sede • 1 carrera • Grupos SEA';
@@ -13832,9 +13943,7 @@ document.addEventListener('change', (e) => {
           </td>
           <!-- Role -->
           <td class="py-3.5 px-5">
-            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${roleBadgeClass} inline-flex items-center gap-1">
-              ${roleText}
-            </span>
+            <div class="flex flex-wrap gap-1">${rolesBadgesHtml}</div>
           </td>
           <!-- Alcance -->
           <td class="py-3.5 px-5">
@@ -13907,6 +14016,26 @@ document.addEventListener('change', (e) => {
 
   // ── REGISTRAR / EDITAR USUARIO MODAL (EXACT REFERENCE UI) ─────────────
 
+  window.syncAdminExtraRolesUi = function(selectedRolesList) {
+    const rolSelect = document.getElementById('admin-user-rol');
+    const primaryRole = rolSelect ? rolSelect.value : 'ROLE_DOCENTE';
+    const cbs = document.querySelectorAll('.admin-extra-role-cb');
+    cbs.forEach(cb => {
+      const label = cb.closest('label');
+      if (cb.value === primaryRole) {
+        cb.checked = false;
+        cb.disabled = true;
+        if (label) label.classList.add('opacity-40', 'cursor-not-allowed');
+      } else {
+        cb.disabled = false;
+        if (label) label.classList.remove('opacity-40', 'cursor-not-allowed');
+        if (Array.isArray(selectedRolesList)) {
+          cb.checked = selectedRolesList.includes(cb.value);
+        }
+      }
+    });
+  };
+
   window.openRegisterUserModal = function() {
     const modal = document.getElementById('modal-register-user');
     const idInput = document.getElementById('admin-user-id');
@@ -13924,6 +14053,7 @@ document.addEventListener('change', (e) => {
       ciInput.disabled = false;
     }
     if (rolSelect) rolSelect.value = 'ROLE_DOCENTE';
+    window.syncAdminExtraRolesUi([]);
     if (nombreInput) nombreInput.value = '';
     if (activoInput) activoInput.checked = true;
 
@@ -14155,10 +14285,16 @@ document.addEventListener('change', (e) => {
       saveBtn.innerText = 'Guardando...';
     }
 
+    const extraRoles = Array.from(document.querySelectorAll('.admin-extra-role-cb'))
+      .filter(cb => cb.checked && !cb.disabled)
+      .map(cb => cb.value);
+    const roles = [...new Set([rol, ...extraRoles])];
+
     const payload = {
       ci: ci,
       username: ci,
       rol: rol,
+      roles: roles,
       nombreCompleto: nombreCompleto,
       activo: activo,
       isActive: activo,
@@ -14236,6 +14372,7 @@ document.addEventListener('change', (e) => {
       ciInput.disabled = true; // CI is immutable during edit
     }
     if (rolSelect) rolSelect.value = user.rol || 'ROLE_DOCENTE';
+    window.syncAdminExtraRolesUi(Array.isArray(user.roles) ? user.roles : []);
     if (nombreInput) nombreInput.value = user.nombreCompleto || '';
     if (activoInput) activoInput.checked = (user.activo === true || user.isActive === true);
 
@@ -18248,9 +18385,156 @@ document.addEventListener('change', (e) => {
     }, 30);
   };
 
+  // Global 401 interceptor for expired tokens (e.g. laptop reopened after weekend)
+  if (typeof window.fetch === 'function' && !window.__SISA_FETCH_WRAPPED__) {
+    window.__SISA_FETCH_WRAPPED__ = true;
+    const _nativeFetch = window.fetch.bind(window);
+    let _handling401 = false;
+    window.fetch = async function(input, init) {
+      const response = await _nativeFetch(input, init);
+      try {
+        const url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
+        const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/change-password');
+        if (response && response.status === 401 && url.includes('/api/') && !isAuthEndpoint && window.getAuthToken() && !_handling401) {
+          _handling401 = true;
+          try {
+            if (typeof window.logoutUser === 'function') {
+              window.logoutUser();
+            }
+            if (typeof window.showToast === 'function') {
+              window.showToast('⏰ Tu sesión expiró por inactividad. Ingresa nuevamente.');
+            }
+          } finally {
+            setTimeout(() => { _handling401 = false; }, 2000);
+          }
+        }
+      } catch (e) {}
+      return response;
+    };
+  }
+
+  // Automatic Version Update & 15-Minute Idle / Laptop Sleep Watcher
+  window.initAppUpdateAndIdleWatcher = function() {
+    if (window.__SISA_UPDATE_WATCHER_INIT__) return;
+    window.__SISA_UPDATE_WATCHER_INIT__ = true;
+
+    const IDLE_RELOAD_MS = 15 * 60 * 1000; // 15 minutes
+    const CHECK_INTERVAL_MS = 60 * 1000;   // Check every 60 seconds
+    let currentVersion = window.__SISA_APP_VERSION__ || null;
+    let lastActivityAt = Date.now();
+    let hiddenSinceAt = null;
+    let isChecking = false;
+    let isReloading = false;
+
+    const touchActivity = (() => {
+      let lastTouch = 0;
+      return () => {
+        const now = Date.now();
+        if (now - lastTouch > 5000) {
+          lastTouch = now;
+          lastActivityAt = now;
+        }
+      };
+    })();
+
+    ['pointerdown', 'keydown', 'scroll', 'click', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, touchActivity, { passive: true, capture: true });
+    });
+
+    const triggerHardReload = (reasonMsg) => {
+      if (isReloading) return;
+      isReloading = true;
+      if (reasonMsg && typeof window.showToast === 'function') {
+        window.showToast(reasonMsg);
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    };
+
+    const fetchServerVersion = async () => {
+      try {
+        const resp = await fetch('/version.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return data && data.version ? String(data.version) : null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const checkAppState = async (source) => {
+      if (isChecking || isReloading) return;
+      isChecking = true;
+      try {
+        const now = Date.now();
+        const idleElapsed = now - lastActivityAt;
+        const hiddenElapsed = hiddenSinceAt ? (now - hiddenSinceAt) : 0;
+
+        // 1. Always verify deployed version against server
+        const serverVer = await fetchServerVersion();
+        if (serverVer && serverVer !== 'dev') {
+          if (!currentVersion || currentVersion === 'dev') {
+            currentVersion = serverVer;
+          } else if (serverVer !== currentVersion) {
+            triggerHardReload('🔄 Nueva actualización de SISA disponible. Actualizando...');
+            return;
+          }
+        }
+
+        // 2. If inactive or laptop suspended >= 15 minutes, validate session or refresh view
+        if ((idleElapsed >= IDLE_RELOAD_MS || hiddenElapsed >= IDLE_RELOAD_MS) && !window._isAuthScreenActive) {
+          const token = (typeof window.getAuthToken === 'function') ? window.getAuthToken() : null;
+          if (token) {
+            try {
+              const meResp = await fetch('/api/v1/auth/me', {
+                headers: window.getAuthHeaders(),
+                cache: 'no-store'
+              });
+              if (meResp.status === 401 || meResp.status === 403) {
+                if (typeof window.logoutUser === 'function') window.logoutUser();
+                return;
+              }
+            } catch (e) {}
+          }
+          lastActivityAt = Date.now();
+          hiddenSinceAt = null;
+          triggerHardReload('🔄 Sesión reactivada tras inactividad. Actualizando plataforma...');
+        }
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        hiddenSinceAt = Date.now();
+      } else {
+        checkAppState('visibility');
+        hiddenSinceAt = null;
+        lastActivityAt = Date.now();
+      }
+    });
+
+    window.addEventListener('focus', () => checkAppState('focus'));
+    window.addEventListener('pageshow', (e) => {
+      if (e && e.persisted) {
+        triggerHardReload('🔄 Actualizando vista restaurada...');
+      } else {
+        checkAppState('pageshow');
+      }
+    });
+
+    setInterval(() => checkAppState('interval'), CHECK_INTERVAL_MS);
+    setTimeout(() => checkAppState('startup'), 3000);
+  };
+
   // Initial check on load: run checkInitialAuth immediately to restore view/session without delay
   if (typeof window.checkInitialAuth === 'function') {
     window.checkInitialAuth();
+  }
+  if (typeof window.initAppUpdateAndIdleWatcher === 'function') {
+    window.initAppUpdateAndIdleWatcher();
   }
 })();
 

@@ -28,6 +28,8 @@ public class ScuUpdateUserRequest {
 
     private RolUsuario rol;
 
+    private List<RolUsuario> roles;
+
     @JsonProperty("activo")
     private Boolean activo;
 

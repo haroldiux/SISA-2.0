@@ -238,7 +238,7 @@ public class SeaDocenteAutoProvisionService {
         Usuario user = new Usuario();
         user.setUsername(ci);
         user.setCi(ci);
-        user.setRol(RolUsuario.ROLE_DOCENTE);
+        user.syncRoles(RolUsuario.ROLE_DOCENTE, null);
         user.setActivo(true);
         user.setMustChangePassword(true);
         user.setPasswordHash(this.passwordEncoder.encode(ci));
@@ -675,7 +675,7 @@ public class SeaDocenteAutoProvisionService {
                 rol = matchedUser.getRol() != null ? matchedUser.getRol().name() : null;
                 matchedSisaUserIds.add(String.valueOf(matchedUser.getId()));
 
-                if (Boolean.TRUE.equals(matchedUser.getActivo()) && matchedUser.getRol() == RolUsuario.ROLE_DOCENTE) {
+                if (Boolean.TRUE.equals(matchedUser.getActivo()) && matchedUser.hasRole(RolUsuario.ROLE_DOCENTE)) {
                     status = "CON_ACCESO";
                     conAcceso++;
                 } else {
@@ -698,7 +698,7 @@ public class SeaDocenteAutoProvisionService {
 
         int yaNoEstan = 0;
         for (Usuario u : allUsers) {
-            if (u.getRol() == RolUsuario.ROLE_DOCENTE && !matchedSisaUserIds.contains(String.valueOf(u.getId()))) {
+            if (u.hasRole(RolUsuario.ROLE_DOCENTE) && !matchedSisaUserIds.contains(String.valueOf(u.getId()))) {
                 String uCi = u.getCi() != null ? u.getCi().trim().toLowerCase() : "";
                 String uUser = u.getUsername() != null ? u.getUsername().trim().toLowerCase() : "";
                 boolean inSea = (!uCi.isEmpty() && seaTeachersMap.containsKey(uCi))

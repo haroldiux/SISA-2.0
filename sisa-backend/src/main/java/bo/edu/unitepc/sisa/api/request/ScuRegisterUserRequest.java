@@ -31,6 +31,9 @@ public class ScuRegisterUserRequest {
     @NotNull(message = "El rol institucional es obligatorio")
     private RolUsuario rol;
 
+    @Builder.Default
+    private List<RolUsuario> roles = new ArrayList<>();
+
     @NotBlank(message = "El nombre completo es obligatorio")
     private String nombreCompleto;
 

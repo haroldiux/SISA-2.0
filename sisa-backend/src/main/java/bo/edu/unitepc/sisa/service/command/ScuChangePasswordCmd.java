@@ -128,6 +128,7 @@ public class ScuChangePasswordCmd {
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
                 .role(savedUser.getRol())
+                .roles(savedUser.getEffectiveRoles())
                 .sedeId(savedUser.getSede() != null ? savedUser.getSede().getId() : null)
                 .sedeNombre(savedUser.getSede() != null ? savedUser.getSede().getNombre() : "Nacional")
                 .nombres(savedUser.getNombres())

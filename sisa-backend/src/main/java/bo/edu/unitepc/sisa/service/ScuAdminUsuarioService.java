@@ -118,7 +118,7 @@ public class ScuAdminUsuarioService {
         Usuario user = new Usuario();
         user.setUsername(ci);
         user.setCi(ci);
-        user.setRol(request.getRol());
+        user.syncRoles(request.getRol(), request.getRoles());
         user.setActivo(request.getActivo() != null ? request.getActivo() : true);
         user.setMustChangePassword(true);
         user.setPasswordHash(this.passwordEncoder.encode(ci));
@@ -177,8 +177,9 @@ public class ScuAdminUsuarioService {
             user.setEmail(newEmail);
         }
 
-        if (request.getRol() != null) {
-            user.setRol(request.getRol());
+        if (request.getRol() != null || request.getRoles() != null) {
+            RolUsuario primary = request.getRol() != null ? request.getRol() : user.getRol();
+            user.syncRoles(primary, request.getRoles());
         }
 
         if (request.getActivo() != null) {
@@ -298,6 +299,7 @@ public class ScuAdminUsuarioService {
                 .apellidos(user.getApellidos())
                 .email(user.getEmail())
                 .rol(user.getRol())
+                .roles(user.getEffectiveRoles())
                 .activo(user.getActivo())
                 .mustChangePassword(user.getMustChangePassword())
                 .creadoEn(user.getCreadoEn())
@@ -323,7 +325,11 @@ public class ScuAdminUsuarioService {
             }
 
             if (rol != null) {
-                predicates.add(cb.equal(root.get("rol"), rol));
+                Join<Usuario, RolUsuario> rolesJoin = root.join("roles", JoinType.LEFT);
+                predicates.add(cb.or(
+                        cb.equal(root.get("rol"), rol),
+                        cb.equal(rolesJoin, rol)
+                ));
             }
 
             if (sedeId != null) {
